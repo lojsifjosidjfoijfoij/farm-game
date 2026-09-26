@@ -117,6 +117,49 @@ enum EffectPainter {
             return Canvas.image(size) { ctx in
                 Paint.softSpot(ctx, CGPoint(x: size.width / 2, y: size.height / 2), size.width / 2, UIColor(hex: 0xFFC766))
             }
+        case "fx_sparkle":
+            return Canvas.image(size) { ctx in
+                let c = CGPoint(x: size.width / 2, y: size.height / 2)
+                Paint.softSpot(ctx, c, size.width * 0.45, UIColor(hex: 0xFFF3C4).withAlpha(0.6))
+                let r = size.width * 0.46, t = size.width * 0.07
+                let star = Paint.polygon([
+                    CGPoint(x: c.x, y: c.y - r), CGPoint(x: c.x + t, y: c.y - t), CGPoint(x: c.x + r, y: c.y),
+                    CGPoint(x: c.x + t, y: c.y + t), CGPoint(x: c.x, y: c.y + r), CGPoint(x: c.x - t, y: c.y + t),
+                    CGPoint(x: c.x - r, y: c.y), CGPoint(x: c.x - t, y: c.y - t),
+                ])
+                Paint.fill(ctx, star, UIColor(hex: 0xFFFBEA))
+            }
+        case "fx_harvest_pop":
+            return Canvas.image(size) { ctx in
+                let c = CGPoint(x: size.width / 2, y: size.height / 2)
+                for k in 0..<10 {
+                    let a = CGFloat(k) / 10 * .pi * 2 + rng.cg(-0.2...0.2)
+                    let d = size.width * rng.cg(0.25...0.42)
+                    let p = CGPoint(x: c.x + cos(a) * d, y: c.y + sin(a) * d)
+                    let color = k % 3 == 0 ? UIColor(hex: 0x7A5638) : UIColor(hex: 0x8AB85C)
+                    Paint.dab(ctx, p, size.width * 0.06, size.width * 0.035, color, rotation: a)
+                }
+            }
+        case "fx_water_drops":
+            return Canvas.image(size) { ctx in
+                for _ in 0..<7 {
+                    let p = CGPoint(x: rng.cg(size.width * 0.2...size.width * 0.8), y: rng.cg(size.height * 0.2...size.height * 0.8))
+                    let r = size.width * rng.cg(0.04...0.07)
+                    let drop = CGMutablePath()
+                    drop.move(to: CGPoint(x: p.x, y: p.y - r * 2))
+                    drop.addQuadCurve(to: CGPoint(x: p.x, y: p.y + r), control: CGPoint(x: p.x + r * 1.6, y: p.y + r * 0.6))
+                    drop.addQuadCurve(to: CGPoint(x: p.x, y: p.y - r * 2), control: CGPoint(x: p.x - r * 1.6, y: p.y + r * 0.6))
+                    Paint.fill(ctx, drop, top: UIColor(hex: 0xCFE6F2), bottom: UIColor(hex: 0x6FA6C8))
+                    Paint.dab(ctx, CGPoint(x: p.x - r * 0.3, y: p.y - r * 0.2), r * 0.3, r * 0.2, UIColor.white.withAlpha(0.8))
+                }
+            }
+        case "fx_dust_puff":
+            return Canvas.image(size) { ctx in
+                for _ in 0..<5 {
+                    let c = CGPoint(x: size.width / 2 + rng.cg(-8...8), y: size.height / 2 + rng.cg(-6...6))
+                    Paint.softSpot(ctx, c, size.width * rng.cg(0.22...0.36), UIColor(hex: 0xC2A27A).withAlpha(0.75))
+                }
+            }
         case "fx_tile_highlight":
             return Canvas.image(size) { ctx in
                 let inset = size.width * 0.08

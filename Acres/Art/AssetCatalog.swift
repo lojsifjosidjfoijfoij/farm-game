@@ -15,6 +15,7 @@ final class AssetCatalog {
     static let shared = AssetCatalog()
 
     private var textures: [String: SKTexture] = [:]
+    private var uiImages: [String: UIImage] = [:]
     private var warnedMissing = Set<String>()
 
     func texture(_ name: String) -> SKTexture {
@@ -23,6 +24,14 @@ final class AssetCatalog {
         texture.filteringMode = .linear
         textures[name] = texture
         return texture
+    }
+
+    /// Cached image for SwiftUI (item icons and the like).
+    func uiImage(_ name: String) -> UIImage {
+        if let cached = uiImages[name] { return cached }
+        let result = image(name)
+        uiImages[name] = result
+        return result
     }
 
     /// Uncached image lookup (real art → placeholder → missing marker).

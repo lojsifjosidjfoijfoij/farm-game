@@ -76,36 +76,36 @@ procedurally in code.
 
 | Name | Pixels | World size (tiles) | Anchor | Phase | Description |
 |---|---|---|---|---:|---|
-| `crop_wheat_stage0` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Wheat, just planted: small mounds of soil with a hint of seed. |
-| `crop_wheat_stage1` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Wheat, sprout: two or three tiny leaves. |
-| `crop_wheat_stage2` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Wheat, young plant: clearly the crop, still small. |
-| `crop_wheat_stage3` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Wheat, almost grown: full size, not yet ripe. |
-| `crop_wheat_stage4` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Wheat, ready to harvest: ripe, the most colorful and detailed stage. |
-| `crop_potato_stage0` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Potato, just planted: small mounds of soil with a hint of seed. |
-| `crop_potato_stage1` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Potato, sprout: two or three tiny leaves. |
-| `crop_potato_stage2` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Potato, young plant: clearly the crop, still small. |
-| `crop_potato_stage3` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Potato, almost grown: full size, not yet ripe. |
-| `crop_potato_stage4` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Potato, ready to harvest: ripe, the most colorful and detailed stage. |
-| `crop_carrot_stage0` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Carrot, just planted: small mounds of soil with a hint of seed. |
-| `crop_carrot_stage1` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Carrot, sprout: two or three tiny leaves. |
-| `crop_carrot_stage2` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Carrot, young plant: clearly the crop, still small. |
-| `crop_carrot_stage3` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Carrot, almost grown: full size, not yet ripe. |
-| `crop_carrot_stage4` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Carrot, ready to harvest: ripe, the most colorful and detailed stage. |
-| `crop_corn_stage0` | 128 × 256 | 1 × 2 | 0.1 | 2 | Corn, just planted: small mounds of soil with a hint of seed. |
-| `crop_corn_stage1` | 128 × 256 | 1 × 2 | 0.1 | 2 | Corn, sprout: two or three tiny leaves. |
-| `crop_corn_stage2` | 128 × 256 | 1 × 2 | 0.1 | 2 | Corn, young plant: clearly the crop, still small. |
-| `crop_corn_stage3` | 128 × 256 | 1 × 2 | 0.1 | 2 | Corn, almost grown: full size, not yet ripe. |
-| `crop_corn_stage4` | 128 × 256 | 1 × 2 | 0.1 | 2 | Corn, ready to harvest: ripe, the most colorful and detailed stage. |
-| `crop_strawberry_stage0` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Strawberry, just planted: small mounds of soil with a hint of seed. |
-| `crop_strawberry_stage1` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Strawberry, sprout: two or three tiny leaves. |
-| `crop_strawberry_stage2` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Strawberry, young plant: clearly the crop, still small. |
-| `crop_strawberry_stage3` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Strawberry, almost grown: full size, not yet ripe. |
-| `crop_strawberry_stage4` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Strawberry, ready to harvest: ripe, the most colorful and detailed stage. |
-| `crop_pumpkin_stage0` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Pumpkin, just planted: small mounds of soil with a hint of seed. |
-| `crop_pumpkin_stage1` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Pumpkin, sprout: two or three tiny leaves. |
-| `crop_pumpkin_stage2` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Pumpkin, young plant: clearly the crop, still small. |
-| `crop_pumpkin_stage3` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Pumpkin, almost grown: full size, not yet ripe. |
-| `crop_pumpkin_stage4` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Pumpkin, ready to harvest: ripe, the most colorful and detailed stage. |
+| `crop_wheat_stage0` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Wheat, stage 0 of 4: freshly sown row, a few golden seeds on dark soil. One tile of plants standing on the soil tile. |
+| `crop_wheat_stage1` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Wheat, stage 1 of 4: short green sprouts. One tile of plants standing on the soil tile. |
+| `crop_wheat_stage2` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Wheat, stage 2 of 4: a tuft of green blades. One tile of plants standing on the soil tile. |
+| `crop_wheat_stage3` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Wheat, stage 3 of 4: tall green stalks with young green ears. One tile of plants standing on the soil tile. |
+| `crop_wheat_stage4` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Wheat, stage 4 of 4: tall golden stalks with heavy ears, gently nodding. One tile of plants standing on the soil tile. |
+| `crop_carrot_stage0` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Carrot, stage 0 of 4: sown soil with tiny seeds. One tile of plants standing on the soil tile. |
+| `crop_carrot_stage1` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Carrot, stage 1 of 4: thin feathery seedlings. One tile of plants standing on the soil tile. |
+| `crop_carrot_stage2` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Carrot, stage 2 of 4: small feathery carrot tops. One tile of plants standing on the soil tile. |
+| `crop_carrot_stage3` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Carrot, stage 3 of 4: lush feathery tops, a hint of orange at the soil. One tile of plants standing on the soil tile. |
+| `crop_carrot_stage4` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Carrot, stage 4 of 4: big feathery tops with bright orange carrot shoulders showing. One tile of plants standing on the soil tile. |
+| `crop_potato_stage0` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Potato, stage 0 of 4: a small mound with a seed potato. One tile of plants standing on the soil tile. |
+| `crop_potato_stage1` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Potato, stage 1 of 4: a few round leaves breaking the soil. One tile of plants standing on the soil tile. |
+| `crop_potato_stage2` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Potato, stage 2 of 4: a leafy young potato plant. One tile of plants standing on the soil tile. |
+| `crop_potato_stage3` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Potato, stage 3 of 4: a full bushy plant with small white-lilac flowers. One tile of plants standing on the soil tile. |
+| `crop_potato_stage4` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Potato, stage 4 of 4: yellowing bush with potatoes peeking out at the base. One tile of plants standing on the soil tile. |
+| `crop_strawberry_stage0` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Strawberry, stage 0 of 4: sown soil. One tile of plants standing on the soil tile. |
+| `crop_strawberry_stage1` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Strawberry, stage 1 of 4: tiny three-part leaves. One tile of plants standing on the soil tile. |
+| `crop_strawberry_stage2` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Strawberry, stage 2 of 4: a low leafy rosette. One tile of plants standing on the soil tile. |
+| `crop_strawberry_stage3` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Strawberry, stage 3 of 4: rosette with white flowers. One tile of plants standing on the soil tile. |
+| `crop_strawberry_stage4` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Strawberry, stage 4 of 4: rosette hung with ripe red strawberries. One tile of plants standing on the soil tile. |
+| `crop_corn_stage0` | 128 × 256 | 1 × 2 | 0.1 | 2 | Corn, stage 0 of 4: sown soil. One tile of plants standing on the soil tile. |
+| `crop_corn_stage1` | 128 × 256 | 1 × 2 | 0.1 | 2 | Corn, stage 1 of 4: a single green sprout. One tile of plants standing on the soil tile. |
+| `crop_corn_stage2` | 128 × 256 | 1 × 2 | 0.1 | 2 | Corn, stage 2 of 4: knee-high stalks with long leaves. One tile of plants standing on the soil tile. |
+| `crop_corn_stage3` | 128 × 256 | 1 × 2 | 0.1 | 2 | Corn, stage 3 of 4: tall green stalks. One tile of plants standing on the soil tile. |
+| `crop_corn_stage4` | 128 × 256 | 1 × 2 | 0.1 | 2 | Corn, stage 4 of 4: tall stalks with tassels and ripe yellow cobs in green husks. One tile of plants standing on the soil tile. |
+| `crop_pumpkin_stage0` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Pumpkin, stage 0 of 4: sown soil. One tile of plants standing on the soil tile. |
+| `crop_pumpkin_stage1` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Pumpkin, stage 1 of 4: two round seed leaves. One tile of plants standing on the soil tile. |
+| `crop_pumpkin_stage2` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Pumpkin, stage 2 of 4: a young vine with big lobed leaves. One tile of plants standing on the soil tile. |
+| `crop_pumpkin_stage3` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Pumpkin, stage 3 of 4: vine with a small green pumpkin. One tile of plants standing on the soil tile. |
+| `crop_pumpkin_stage4` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Pumpkin, stage 4 of 4: vine with a big ribbed orange pumpkin. One tile of plants standing on the soil tile. |
 
 ## Trees
 
@@ -353,18 +353,18 @@ procedurally in code.
 
 | Name | Pixels | World size (tiles) | Anchor | Phase | Description |
 |---|---|---|---|---:|---|
-| `item_wheat` | 132 × 132 | UI | — | 2 | Harvested wheat, inventory icon. |
-| `item_seeds_wheat` | 132 × 132 | UI | — | 2 | Seed packet for wheat with its picture. |
-| `item_potato` | 132 × 132 | UI | — | 2 | Harvested potato, inventory icon. |
-| `item_seeds_potato` | 132 × 132 | UI | — | 2 | Seed packet for potato with its picture. |
-| `item_carrot` | 132 × 132 | UI | — | 2 | Harvested carrot, inventory icon. |
-| `item_seeds_carrot` | 132 × 132 | UI | — | 2 | Seed packet for carrot with its picture. |
-| `item_corn` | 132 × 132 | UI | — | 2 | Harvested corn, inventory icon. |
-| `item_seeds_corn` | 132 × 132 | UI | — | 2 | Seed packet for corn with its picture. |
-| `item_strawberry` | 132 × 132 | UI | — | 2 | Harvested strawberry, inventory icon. |
-| `item_seeds_strawberry` | 132 × 132 | UI | — | 2 | Seed packet for strawberry with its picture. |
-| `item_pumpkin` | 132 × 132 | UI | — | 2 | Harvested pumpkin, inventory icon. |
-| `item_seeds_pumpkin` | 132 × 132 | UI | — | 2 | Seed packet for pumpkin with its picture. |
+| `item_wheat` | 132 × 132 | UI | — | 2 | A bundle of golden wheat ears tied with twine. Inventory icon. |
+| `item_seeds_wheat` | 132 × 132 | UI | — | 2 | Paper seed packet with a picture of wheat on it. |
+| `item_carrot` | 132 × 132 | UI | — | 2 | Two fresh carrots with green tops. Inventory icon. |
+| `item_seeds_carrot` | 132 × 132 | UI | — | 2 | Paper seed packet with a picture of carrots on it. |
+| `item_potato` | 132 × 132 | UI | — | 2 | Three earthy potatoes. Inventory icon. |
+| `item_seeds_potato` | 132 × 132 | UI | — | 2 | Paper seed packet with a picture of potatoes on it. |
+| `item_strawberry` | 132 × 132 | UI | — | 2 | Two glossy red strawberries. Inventory icon. |
+| `item_seeds_strawberry` | 132 × 132 | UI | — | 2 | Paper seed packet with a picture of strawberries on it. |
+| `item_corn` | 132 × 132 | UI | — | 2 | An ear of corn with the husk pulled back. Inventory icon. |
+| `item_seeds_corn` | 132 × 132 | UI | — | 2 | Paper seed packet with a picture of corn on it. |
+| `item_pumpkin` | 132 × 132 | UI | — | 2 | A round orange pumpkin with a curly stem. Inventory icon. |
+| `item_seeds_pumpkin` | 132 × 132 | UI | — | 2 | Paper seed packet with a picture of pumpkins on it. |
 | `item_egg` | 132 × 132 | UI | — | 4 | Brown egg, inventory icon. |
 | `item_milk` | 132 × 132 | UI | — | 4 | Glass bottle of milk, inventory icon. |
 | `item_wool` | 132 × 132 | UI | — | 4 | Ball of cream wool, inventory icon. |
@@ -403,7 +403,7 @@ procedurally in code.
 | `fx_coin` | 38 × 38 | 0.3 × 0.3 | — | 2 | Gold coin that flies to the money counter. |
 | `fx_harvest_pop` | 77 × 77 | 0.6 × 0.6 | — | 2 | Burst of leaves and soil when harvesting. |
 | `fx_water_drops` | 77 × 77 | 0.6 × 0.6 | — | 2 | Water droplets when watering. |
-| `fx_dust_puff` | 64 × 64 | 0.5 × 0.5 | — | 3 | Beige dust puff behind the truck on dirt roads. |
+| `fx_dust_puff` | 64 × 64 | 0.5 × 0.5 | — | 2 | Beige dust puff: plowing, and behind the truck on dirt roads. |
 | `fx_headlight_cone` | 256 × 384 | 2 × 3 | — | 3 | Soft headlight beam, pointing up, additive. *(additive light)* |
 | `fx_wood_chip` | 19 × 19 | 0.15 × 0.15 | — | 4 | Wood chip flying off when chopping. |
 | `fx_feather` | 19 × 19 | 0.15 × 0.15 | — | 4 | Small feather. |

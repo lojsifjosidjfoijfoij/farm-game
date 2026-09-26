@@ -8,6 +8,10 @@ public enum SimEvent: Equatable, Sendable {
     case newDay(CalendarDate)
     /// A new season began. Always accompanied by a `.newDay`.
     case newSeason(Season, year: Int)
+    /// A crop finished growing and is waiting to be harvested.
+    case cropReady(TileCoord, cropID: String)
+    /// The farmer reached a new level.
+    case levelUp(Int)
 }
 
 /// How a stretch of time is being simulated.
@@ -42,7 +46,15 @@ public struct StepContext {
 /// `Balance.simulationMaxStep`, and advancing in many small steps must give
 /// the same result as advancing in fewer large ones (tests enforce this).
 public protocol SimulationSystem: Sendable {
+    /// True if `step` is exact for *any* `dt` and doesn't interact with other
+    /// systems. Such systems get one call for the whole span instead of one
+    /// per fixed step, which keeps long catch-ups cheap.
+    var handlesAnyStepSize: Bool { get }
     func step(_ state: inout GameState, _ context: inout StepContext)
+}
+
+extension SimulationSystem {
+    public var handlesAnyStepSize: Bool { false }
 }
 
 /// Owns the game state and advances it through time.
@@ -56,6 +68,7 @@ public struct Simulation: Sendable {
 
     /// Systems in the order they run each step.
     public static let defaultSystems: [any SimulationSystem] = [
+        CropSystem(),
         ClockSystem(),
     ]
 
@@ -74,12 +87,20 @@ public struct Simulation: Sendable {
     public mutating func advance(by seconds: TimeInterval, mode: AdvanceMode) -> [SimEvent] {
         guard seconds > 0, seconds.isFinite else { return [] }
         var events: [SimEvent] = []
+
+        // Systems that are exact for any step size run once for the whole span.
+        var bulkContext = StepContext(dt: seconds, mode: mode, balance: balance)
+        for system in systems where system.handlesAnyStepSize {
+            system.step(&state, &bulkContext)
+        }
+        events += bulkContext.events
+
         var remaining = seconds
         let maxStep = max(balance.simulationMaxStep, 0.001)
         while remaining > 1e-9 {
             let dt = min(remaining, maxStep)
             var context = StepContext(dt: dt, mode: mode, balance: balance)
-            for system in systems {
+            for system in systems where !system.handlesAnyStepSize {
                 system.step(&state, &context)
             }
             state.worldTime += dt
@@ -99,6 +120,11 @@ public struct Simulation: Sendable {
         let before = state.clock
         state.clock.jumpToNextMorning()
         return ClockSystem.transitions(from: before, to: state.clock, balance: balance)
+    }
+
+    /// Performs a farming action (plow, plant, water, harvest) on a tile.
+    public mutating func perform(_ action: FarmAction, at tile: TileCoord, on map: WorldMap) -> FarmResult {
+        Farming(map: map, balance: balance).perform(action, at: tile, in: &state)
     }
 
     /// Direct state access for player actions and debug tools. Keep uses

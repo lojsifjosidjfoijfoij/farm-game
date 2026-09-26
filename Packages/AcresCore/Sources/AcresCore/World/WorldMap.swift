@@ -73,6 +73,8 @@ public struct WorldMap: Sendable {
     private let terrain: [Terrain]
     public let objects: [MapObject]
     private let objectIndicesByChunk: [ChunkCoord: [Int]]
+    /// Tiles covered by solid objects (buildings, trees, the pond, …): no farming there.
+    public let blockedTiles: Set<TileCoord>
 
     public init(name: String, width: Int, height: Int, terrain: [Terrain], objects: [MapObject]) {
         precondition(width > 0 && height > 0 && terrain.count == width * height)
@@ -87,7 +89,21 @@ public struct WorldMap: Sendable {
             index[Self.chunk(containing: object.position), default: []].append(i)
         }
         self.objectIndicesByChunk = index
+
+        var blocked = Set<TileCoord>()
+        for object in objects {
+            guard let rect = ObjectFootprint.rect(for: object) else { continue }
+            let x0 = Int(rect.minX.rounded(.down)), x1 = Int((rect.maxX - 1e-9).rounded(.down))
+            let y0 = Int(rect.minY.rounded(.down)), y1 = Int((rect.maxY - 1e-9).rounded(.down))
+            guard x0 <= x1, y0 <= y1 else { continue }
+            for y in y0...y1 {
+                for x in x0...x1 { blocked.insert(TileCoord(x, y)) }
+            }
+        }
+        self.blockedTiles = blocked
     }
+
+    public func isBlocked(_ tile: TileCoord) -> Bool { blockedTiles.contains(tile) }
 
     public var bounds: TileRect { TileRect(x: 0, y: 0, width: Double(width), height: Double(height)) }
 

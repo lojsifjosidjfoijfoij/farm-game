@@ -3,7 +3,8 @@ import UIKit
 import AcresCore
 
 /// The world view. Renders the simulation owned by `GameController`; it never
-/// changes game rules itself. Input here is camera movement and taps.
+/// changes game rules itself. Input: camera movement, taps, long-presses and
+/// drag-painting over fields.
 @MainActor
 final class GameScene: SKScene, UIGestureRecognizerDelegate {
     private let game: GameController
@@ -12,18 +13,28 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     private let groundLayer = SKNode()
     private let flatLayer = SKNode()
     private let objectLayer = SKNode()
+    /// Particles and floating labels, above standing objects.
+    private let effectsLayer = SKNode()
     private let cameraNode = SKCameraNode()
     /// Full-screen color multiplied over the world: the day/night grade.
     private let gradeOverlay = SKSpriteNode(color: .white, size: CGSize(width: 16, height: 16))
 
     private var cameraController: CameraController?
     private var chunks: ChunkManager?
+    private var fields: FieldRenderer?
     private var truckNode: SKNode?
     private var truckShadow: SKNode?
     private var gestures: [UIGestureRecognizer] = []
     private var lastUpdateTime: TimeInterval?
     private var lastLightingHour: Double = -1
     private var presentationTimer: TimeInterval = 0
+    private var fieldSyncTimer: TimeInterval = 0
+    private var syncedFarmRevision = -1
+
+    /// What a one-finger drag is doing: moving the camera or painting actions.
+    private enum DragMode { case none, camera, paint }
+    private var dragMode = DragMode.none
+    private var lastPaintTile: TileCoord?
 
     var showsChunkBorders = false {
         didSet { chunks?.showsBorders = showsChunkBorders }
@@ -59,9 +70,11 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     private func buildWorld() {
         let map = game.map
         flatLayer.zPosition = ZLayer.flat
+        effectsLayer.zPosition = ZLayer.effects
         addChild(groundLayer)
         addChild(flatLayer)
         addChild(objectLayer)
+        addChild(effectsLayer)
 
         camera = cameraNode
         addChild(cameraNode)
@@ -72,12 +85,17 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
 
         // Warm the texture cache so the first frames don't hitch.
         assets.preload(["terrain_grass", "terrain_dirt", "terrain_gravel", "terrain_asphalt", "terrain_variation",
-                        "fx_shadow_soft", "fx_smoke_puff", "fx_tile_highlight"])
+                        "fx_shadow_soft", "fx_smoke_puff", "fx_tile_highlight", "field_soil_plowed", "field_soil_watered"])
 
-        chunks = ChunkManager(
+        let chunkManager = ChunkManager(
             map: map, terrain: TerrainRenderer(assets: assets), factory: WorldObjectFactory(assets: assets),
             groundLayer: groundLayer, flatLayer: flatLayer, objectLayer: objectLayer)
-        chunks?.showsBorders = showsChunkBorders
+        chunkManager.showsBorders = showsChunkBorders
+        chunkManager.isTileCleared = { [weak self] tile in
+            self?.game.simulation.state.plots[tile] != nil
+        }
+        chunks = chunkManager
+        fields = FieldRenderer(assets: assets, flatLayer: flatLayer, objectLayer: objectLayer)
 
         let bounds = World.rect(map.bounds)
         let camera = CameraController(camera: cameraNode, worldBounds: bounds, center: World.point(HomeValleyMap.farmCenter))
@@ -91,7 +109,8 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
 
         placeTruck()
         game.onWorldReset = { [weak self] in self?.worldWasReset() }
-        chunks?.update(visibleRect: camera.visibleRect)
+        chunkManager.update(visibleRect: camera.visibleRect)
+        syncFields()
         updateLighting(force: true)
     }
 
@@ -110,9 +129,17 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     /// Called after a reset or a big time jump: rebuild what depends on state.
     private func worldWasReset() {
         placeTruck()
-        if game.presentation.cameraCenter == nil {
-            cameraController?.focus(on: World.point(HomeValleyMap.farmCenter), animated: true)
+        dragMode = .none
+        // Weeds may need to come back (after a reset), so reload the chunks.
+        chunks?.unloadAll()
+        fields?.removeAll()
+        if let camera = cameraController {
+            if game.presentation.cameraCenter == nil {
+                camera.focus(on: World.point(HomeValleyMap.farmCenter), animated: true)
+            }
+            chunks?.update(visibleRect: camera.visibleRect)
         }
+        syncFields()
         updateLighting(force: true)
     }
 
@@ -141,12 +168,28 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         chunks?.update(visibleRect: camera.visibleRect)
         updateLighting(force: false)
 
+        // Crops change slowly: re-check a few times a second, or at once after an action.
+        fieldSyncTimer += dt
+        if fieldSyncTimer > 0.25 || game.farmRevision != syncedFarmRevision {
+            syncFields()
+        }
+
         // Remember where the player was looking (saved with the game).
         presentationTimer += dt
         if presentationTimer > 1 {
             presentationTimer = 0
             game.presentation.cameraCenter = World.tiles(camera.center)
             game.presentation.cameraZoom = Double(camera.zoom)
+        }
+    }
+
+    private func syncFields() {
+        fieldSyncTimer = 0
+        syncedFarmRevision = game.farmRevision
+        guard let chunks else { return }
+        let state = game.simulation.state
+        fields?.sync(plots: state.plots, now: state.worldTime) { tile in
+            chunks.isLoaded(WorldMap.chunk(containing: tile.center))
         }
     }
 
@@ -171,29 +214,75 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         pinch.delegate = self
         let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         tap.delegate = self
-        gestures = [pan, pinch, tap]
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+        longPress.minimumPressDuration = 0.4
+        longPress.delegate = self
+        gestures = [pan, pinch, tap, longPress]
         for gesture in gestures { view.addGestureRecognizer(gesture) }
     }
 
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
                            shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        // Pan and pinch together: two fingers can move and zoom at once.
-        !(gestureRecognizer is UITapGestureRecognizer || otherGestureRecognizer is UITapGestureRecognizer)
+        // Only pan + pinch run together: two fingers can move and zoom at once.
+        let pair: (UIGestureRecognizer) -> Bool = { $0 is UIPanGestureRecognizer || $0 is UIPinchGestureRecognizer }
+        return pair(gestureRecognizer) && pair(otherGestureRecognizer)
+    }
+
+    private func tile(atScreen point: CGPoint) -> TileCoord? {
+        guard let camera = cameraController else { return nil }
+        return TileCoord(containing: World.tiles(camera.worldPoint(fromScreen: point)))
     }
 
     @objc private func handlePan(_ gesture: UIPanGestureRecognizer) {
         guard let view = gesture.view, let camera = cameraController else { return }
         switch gesture.state {
         case .began:
-            camera.beginDrag()
+            // One finger starting on farmland paints; anything else moves the camera.
+            let location = gesture.location(in: view)
+            let moved = gesture.translation(in: view)
+            let start = CGPoint(x: location.x - moved.x, y: location.y - moved.y)
+            if gesture.numberOfTouches == 1, let startTile = tile(atScreen: start),
+               let outcome = game.beginPaint(at: startTile) {
+                dragMode = .paint
+                lastPaintTile = startTile
+                showFeedback(outcome, at: startTile, painting: true)
+                paint(to: location)
+            } else {
+                dragMode = .camera
+                camera.beginDrag()
+            }
         case .changed:
-            camera.drag(byScreenDelta: gesture.translation(in: view))
-            gesture.setTranslation(.zero, in: view)
+            switch dragMode {
+            case .paint:
+                paint(to: gesture.location(in: view))
+            case .camera:
+                camera.drag(byScreenDelta: gesture.translation(in: view))
+                gesture.setTranslation(.zero, in: view)
+            case .none:
+                break
+            }
         case .ended, .cancelled, .failed:
-            camera.endDrag(screenVelocity: gesture.velocity(in: view))
+            if dragMode == .paint {
+                game.endPaint()
+            } else if dragMode == .camera {
+                camera.endDrag(screenVelocity: gesture.velocity(in: view))
+            }
+            dragMode = .none
+            lastPaintTile = nil
         default:
             break
         }
+    }
+
+    /// Applies the paint action to every tile between the last one and the finger.
+    private func paint(to screenPoint: CGPoint) {
+        guard let target = tile(atScreen: screenPoint), let last = lastPaintTile, target != last else { return }
+        for tile in Self.tiles(from: last, to: target) {
+            if let outcome = game.paint(tile) {
+                showFeedback(outcome, at: tile, painting: true)
+            }
+        }
+        lastPaintTile = target
     }
 
     @objc private func handlePinch(_ gesture: UIPinchGestureRecognizer) {
@@ -214,11 +303,42 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
             Haptics.tap()
             return
         }
-        // Otherwise highlight the tapped tile (fields and actions arrive in Phase 2).
         let tile = TileCoord(containing: World.tiles(point))
         guard game.map.isInside(tile) else { return }
+        switch game.tap(tile) {
+        case .performed(let outcome):
+            showFeedback(outcome, at: tile, painting: false)
+        case .inspected, .nothing:
+            showTileHighlight(tile)
+        }
+    }
+
+    @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began, let view = gesture.view, let tile = tile(atScreen: gesture.location(in: view)),
+              game.map.isInside(tile) else { return }
+        game.inspect(tile)
         showTileHighlight(tile)
-        Haptics.selection()
+    }
+
+    // MARK: Feedback
+
+    private func showFeedback(_ outcome: FarmOutcome, at tile: TileCoord, painting: Bool) {
+        switch outcome {
+        case .plowed:
+            chunks?.clearDecor(at: tile)
+            FieldEffects.plowed(at: tile, in: effectsLayer, assets: assets)
+        case .planted:
+            FieldEffects.planted(at: tile, in: effectsLayer, assets: assets)
+        case .watered:
+            FieldEffects.watered(at: tile, in: effectsLayer, assets: assets)
+        case .harvested(let cropID, let amount, _):
+            FieldEffects.harvested(at: tile, itemIcon: "item_\(cropID)", amount: amount, in: effectsLayer, assets: assets)
+        case .failed(let failure):
+            if !painting || failure == .storageFull {
+                FieldEffects.refused(at: tile, in: flatLayer, assets: assets)
+            }
+        }
+        if outcome.succeeded { syncFields() }
     }
 
     private func showTileHighlight(_ tile: TileCoord) {
@@ -235,5 +355,21 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
             .fadeOut(withDuration: 0.4),
             .removeFromParent(),
         ]))
+    }
+
+    /// Tiles on the line from `a` to `b` (excluding `a`), so fast strokes don't skip tiles.
+    static func tiles(from a: TileCoord, to b: TileCoord) -> [TileCoord] {
+        var result: [TileCoord] = []
+        var x = a.x, y = a.y
+        let dx = abs(b.x - a.x), dy = -abs(b.y - a.y)
+        let sx = a.x < b.x ? 1 : -1, sy = a.y < b.y ? 1 : -1
+        var error = dx + dy
+        while x != b.x || y != b.y {
+            let e2 = 2 * error
+            if e2 >= dy { error += dy; x += sx }
+            if e2 <= dx { error += dx; y += sy }
+            result.append(TileCoord(x, y))
+        }
+        return result
     }
 }

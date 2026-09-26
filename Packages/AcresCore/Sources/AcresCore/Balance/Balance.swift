@@ -37,6 +37,30 @@ public struct Balance: Sendable, Equatable {
     /// first) stay correct during fast-forward. 3 days ≈ 4,300 steps.
     public var simulationMaxStep: TimeInterval = 60
 
+    // MARK: - Farming
+
+    /// Growth speed of crops in dry soil, relative to watered soil. Crops never
+    /// stop growing (the world keeps living), but watering doubles the pace.
+    public var dryGrowthRate: Double = 0.5
+
+    /// How long soil stays wet after watering (real seconds; 20 min = one
+    /// in-game day of play).
+    public var soilWetDuration: TimeInterval = 20 * 60
+
+    /// Items the farm can store (seeds don't count). Harvesting stops when full.
+    public var storageCapacity: Int = 100
+
+    /// What's in the seed pouch at the start of a new game.
+    public var startingItems: [String: Int] = ["seeds_wheat": 12, "seeds_carrot": 8, "seeds_potato": 4]
+
+    // MARK: - Progression
+
+    /// Experience needed to go from `level` to `level + 1`.
+    public func xpToNextLevel(from level: Int) -> Int {
+        let l = Double(max(1, level) - 1)
+        return 20 + Int((25 * pow(l, 1.5)).rounded())
+    }
+
     // MARK: - Economy
 
     /// Coins in the pocket at the start of a new game.

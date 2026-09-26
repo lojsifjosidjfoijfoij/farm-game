@@ -24,7 +24,12 @@ final class ChunkManager {
     private let flatLayer: SKNode
     private let objectLayer: SKNode
     private var loaded: [ChunkCoord: LoadedChunk] = [:]
+    /// Weeds, flowers and pebbles by tile, so plowing can clear them.
+    private var clearableDecor: [TileCoord: [SKNode]] = [:]
     private var lightIntensity: CGFloat = 0
+
+    /// Asked while loading: decoration on tiles that are already farmland is skipped.
+    var isTileCleared: ((TileCoord) -> Bool)?
     /// Season used to pick object art. (Seasonal art arrives in Phase 7.)
     private let season: Season = .summer
 
@@ -43,6 +48,16 @@ final class ChunkManager {
     }
 
     var loadedCount: Int { loaded.count }
+
+    func isLoaded(_ chunk: ChunkCoord) -> Bool { loaded[chunk] != nil }
+
+    /// Removes weeds, flowers and pebbles from a freshly plowed tile.
+    func clearDecor(at tile: TileCoord) {
+        guard let decor = clearableDecor.removeValue(forKey: tile) else { return }
+        for node in decor {
+            node.run(.sequence([.group([.fadeOut(withDuration: 0.25), .scale(to: 0.3, duration: 0.25)]), .removeFromParent()]))
+        }
+    }
 
     init(map: WorldMap, terrain: TerrainRenderer, factory: WorldObjectFactory,
          groundLayer: SKNode, flatLayer: SKNode, objectLayer: SKNode) {
@@ -100,9 +115,13 @@ final class ChunkManager {
         let chunk = LoadedChunk(ground: ground)
 
         for object in map.objects(in: coord) {
+            let clearable = ObjectFootprint.isClearable(object.kind)
+            let tile = TileCoord(containing: object.position)
+            if clearable, isTileCleared?(tile) == true { continue }
             guard let nodes = factory.makeNodes(for: object, season: season) else { continue }
             (nodes.isFlat ? flatLayer : objectLayer).addChild(nodes.main)
             chunk.nodes.append(nodes.main)
+            if clearable { clearableDecor[tile, default: []].append(nodes.main) }
             if let shadow = nodes.shadow {
                 flatLayer.addChild(shadow)
                 chunk.nodes.append(shadow)
@@ -119,6 +138,9 @@ final class ChunkManager {
         chunk.ground.removeFromParent()
         for node in chunk.nodes { node.removeFromParent() }
         chunk.border?.removeFromParent()
+        for tile in Array(clearableDecor.keys) where WorldMap.chunk(containing: tile.center) == coord {
+            clearableDecor[tile] = nil
+        }
     }
 
     private func updateBorder(_ chunk: LoadedChunk, _ coord: ChunkCoord) {

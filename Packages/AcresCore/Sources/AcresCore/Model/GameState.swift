@@ -33,6 +33,15 @@ public struct GameState: Codable, Equatable, Sendable {
 
     public var stats: PlayStats
 
+    /// Tilled farmland and the crops growing in it. (v2)
+    public var plots: FarmPlots
+
+    /// Farm storage plus the seed pouch. (v2)
+    public var inventory: Inventory
+
+    /// IDs from `PropertyCatalog` the player owns, sorted. (v2)
+    public var ownedProperties: [String]
+
     public init(
         worldTime: TimeInterval,
         clock: GameClock,
@@ -40,7 +49,10 @@ public struct GameState: Codable, Equatable, Sendable {
         progress: FarmerProgress,
         truck: TruckState,
         rng: SeededRandom,
-        stats: PlayStats
+        stats: PlayStats,
+        plots: FarmPlots = FarmPlots(),
+        inventory: Inventory = Inventory(),
+        ownedProperties: [String] = [PropertyCatalog.homeFarm.id]
     ) {
         self.worldTime = worldTime
         self.clock = clock
@@ -49,9 +61,12 @@ public struct GameState: Codable, Equatable, Sendable {
         self.truck = truck
         self.rng = rng
         self.stats = stats
+        self.plots = plots
+        self.inventory = inventory
+        self.ownedProperties = ownedProperties
     }
 
-    /// A brand-new game: Year 1, Spring 1, 06:00, a little money and an old truck.
+    /// A brand-new game: Year 1, Spring 1, 06:00, a little money, a few seeds and an old truck.
     public static func newGame(seed: UInt64, balance: Balance = .standard) -> GameState {
         GameState(
             worldTime: 0,
@@ -60,7 +75,10 @@ public struct GameState: Codable, Equatable, Sendable {
             progress: FarmerProgress(level: 1, xp: 0),
             truck: TruckState(position: HomeValleyMap.truckParkingSpot, heading: .pi),
             rng: SeededRandom(seed: seed),
-            stats: PlayStats()
+            stats: PlayStats(),
+            plots: FarmPlots(),
+            inventory: Inventory(items: balance.startingItems),
+            ownedProperties: [PropertyCatalog.homeFarm.id]
         )
     }
 }

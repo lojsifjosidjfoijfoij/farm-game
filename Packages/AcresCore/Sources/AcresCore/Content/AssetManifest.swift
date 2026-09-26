@@ -31,7 +31,7 @@ public enum AssetManifest {
 
     // MARK: - Shared content lists (temporary until the content catalogs arrive in later phases)
 
-    public static let cropNames = ["wheat", "potato", "carrot", "corn", "strawberry", "pumpkin"]
+    public static var cropNames: [String] { CropCatalog.all.map(\.id) }
     public static let seasonalTreeSpecies = ["oak", "birch", "pine", "maple", "apple", "cherry"]
 
     private static func capitalizedFirst(_ text: String) -> String {
@@ -80,18 +80,12 @@ public enum AssetManifest {
 
     // MARK: - Crops
 
-    static let crops: [AssetSpec] = cropNames.flatMap { crop -> [AssetSpec] in
-        let tall = crop == "corn"
-        let stages = [
-            "just planted: small mounds of soil with a hint of seed",
-            "sprout: two or three tiny leaves",
-            "young plant: clearly the crop, still small",
-            "almost grown: full size, not yet ripe",
-            "ready to harvest: ripe, the most colorful and detailed stage",
-        ]
-        return stages.enumerated().map { stage, text in
-            .sprite("crop_\(crop)_stage\(stage)", .crop, tiles: 1, tall ? 2 : 1.25, anchorY: 0.1,
-                    phase: 2, family: "crop_\(crop)", "\(crop.capitalized), \(text).")
+    static let crops: [AssetSpec] = CropCatalog.all.flatMap { crop -> [AssetSpec] in
+        let tall = crop.id == "corn"
+        return crop.stageNotes.enumerated().map { stage, text in
+            .sprite("crop_\(crop.id)_stage\(stage)", .crop, tiles: 1, tall ? 2 : 1.25, anchorY: 0.1,
+                    phase: 2, family: "crop_\(crop.id)",
+                    "\(crop.name), stage \(stage) of 4: \(text). One tile of plants standing on the soil tile.")
         }
     }
 
@@ -313,9 +307,10 @@ public enum AssetManifest {
 
     static let items: [AssetSpec] = {
         var result: [AssetSpec] = []
-        for crop in cropNames {
-            result.append(.ui("item_\(crop)", .item, points: 44, 44, phase: 2, "Harvested \(crop), inventory icon."))
-            result.append(.ui("item_seeds_\(crop)", .item, points: 44, 44, phase: 2, "Seed packet for \(crop) with its picture."))
+        for crop in CropCatalog.all {
+            result.append(.ui("item_\(crop.id)", .item, points: 44, 44, phase: 2, "\(crop.produceNotes) Inventory icon."))
+            result.append(.ui("item_seeds_\(crop.id)", .item, points: 44, 44, phase: 2,
+                              "Paper seed packet with a picture of \(crop.plural) on it."))
         }
         let goods: [(String, Int, String)] = [
             ("egg", 4, "Brown egg"), ("milk", 4, "Glass bottle of milk"), ("wool", 4, "Ball of cream wool"),
@@ -347,7 +342,7 @@ public enum AssetManifest {
         .sprite("fx_coin", .effect, tiles: 0.3, 0.3, layer: .particle, anchorY: 0.5, phase: 2, "Gold coin that flies to the money counter."),
         .sprite("fx_harvest_pop", .effect, tiles: 0.6, 0.6, layer: .particle, anchorY: 0.5, phase: 2, "Burst of leaves and soil when harvesting."),
         .sprite("fx_water_drops", .effect, tiles: 0.6, 0.6, layer: .particle, anchorY: 0.5, phase: 2, "Water droplets when watering."),
-        .sprite("fx_dust_puff", .effect, tiles: 0.5, 0.5, layer: .particle, anchorY: 0.5, phase: 3, "Beige dust puff behind the truck on dirt roads."),
+        .sprite("fx_dust_puff", .effect, tiles: 0.5, 0.5, layer: .particle, anchorY: 0.5, phase: 2, "Beige dust puff: plowing, and behind the truck on dirt roads."),
         .sprite("fx_headlight_cone", .effect, tiles: 2, 3, layer: .light, anchorY: 0.0, phase: 3, "Soft headlight beam, pointing up, additive."),
         .sprite("fx_wood_chip", .effect, tiles: 0.15, 0.15, layer: .particle, anchorY: 0.5, phase: 4, "Wood chip flying off when chopping."),
         .sprite("fx_feather", .effect, tiles: 0.15, 0.15, layer: .particle, anchorY: 0.5, phase: 4, "Small feather."),

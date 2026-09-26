@@ -61,6 +61,30 @@ All rules live in `OfflineCatchUp.swift` and are covered by `OfflineCatchUpTests
   deterministic and testable.
 - Timestamps in state are `worldTime` seconds, never wall-clock `Date`s.
 
+## Farming (Phase 2)
+
+- **Content:** `CropCatalog` (growth time, seasons, seed cost, price range, yield, XP, unlock
+  level, art notes). Items and seed packets are derived from it (`ItemCatalog`), and so are the
+  crop and item entries in the asset manifest. A new crop is one entry.
+- **State:** `GameState.plots` (tilled tiles: `wetUntil`, planted crop with accumulated `growth`),
+  `inventory` (storage + seed pouch), `ownedProperties`.
+- **Growth** (`CropSystem`): full speed while `worldTime < wetUntil`, `Balance.dryGrowthRate` (½)
+  when dry, so crops never stop. The wet part of any time span is computed exactly, so the
+  system opts into `handlesAnyStepSize` and runs once per advance: a 3-day catch-up of a full
+  farm takes ~2 ms. Ripe crops never rot.
+- **Rules** (`Farming`): plow only on owned land, with the truck parked there, on grass or dirt,
+  not under buildings, trees or the truck (`WorldMap.blockedTiles` from `ObjectFootprint`). Weeds,
+  flowers and pebbles are cleared by plowing. Planting needs a seed and the right season.
+  Harvest needs storage room: the yield is rolled on a copy of the RNG, so a refused harvest
+  doesn't change luck.
+- **Input:** `Farming.suggestedAction` picks the one sensible action for a tap. Drag-painting
+  repeats the first tile's action kind along the stroke (Bresenham, so fast strokes don't skip
+  tiles).
+- **Forecast** (`FarmForecast`): time until ripe, given the current wetness. Used for tile info,
+  the away summary and harvest reminders (local notifications, device setting).
+- **XP** (`Progression`): harvests give XP; `Balance.xpToNextLevel` is the curve. Unlocks come in
+  Phase 7.
+
 ## Saves
 
 - File: `Application Support/Saves/farm.json` plus `farm.backup.json` (the previous save).
@@ -128,3 +152,7 @@ drag anywhere else pans; two fingers always pan and zoom.
   be cached to disk or moved off the main thread.
 - Seasonal visuals (trees, grass, snow) are listed in the manifest but arrive in Phase 7; the
   world currently always renders summer foliage.
+- Crop sprites use individual textures. Big fields may want a runtime texture atlas so SpriteKit
+  can batch them (Phase 8 performance pass).
+- Seeds can't be bought yet (the seed shop comes with the village in Phase 3); the debug panel
+  can add them.

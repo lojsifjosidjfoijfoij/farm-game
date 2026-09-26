@@ -40,6 +40,8 @@ enum ZLayer {
     static let flat: CGFloat = -500
     /// Standing objects occupy roughly 100 … 30 (see `World.depth`).
     static let objects: CGFloat = 100
+    /// Particles and floating labels (above objects, below the day/night grade).
+    static let effects: CGFloat = 200
     /// Day/night color grade (child of the camera).
     static let lightingOverlay: CGFloat = 800
     /// Additive night lights, *relative to their owner* (owner ≈ 100 → ≈ 1000, above the grade).

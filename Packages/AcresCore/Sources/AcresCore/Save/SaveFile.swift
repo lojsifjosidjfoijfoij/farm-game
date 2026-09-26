@@ -12,7 +12,8 @@ public struct SaveFile: Codable, Equatable, Sendable {
     ///
     /// History:
     /// - v1: initial format (Phase 1).
-    public static let currentVersion = 1
+    /// - v2: farmland (`plots`), `inventory`, `ownedProperties` (Phase 2).
+    public static let currentVersion = 2
 
     /// Format version of this file.
     public var version: Int
@@ -53,10 +54,13 @@ public struct PresentationState: Codable, Equatable, Sendable {
     public var cameraCenter: Vec2?
     /// Camera zoom (world points per screen point).
     public var cameraZoom: Double?
+    /// The crop the seed button is set to. (v2)
+    public var selectedSeed: String?
 
-    public init(cameraCenter: Vec2? = nil, cameraZoom: Double? = nil) {
+    public init(cameraCenter: Vec2? = nil, cameraZoom: Double? = nil, selectedSeed: String? = nil) {
         self.cameraCenter = cameraCenter
         self.cameraZoom = cameraZoom
+        self.selectedSeed = selectedSeed
     }
 }
 

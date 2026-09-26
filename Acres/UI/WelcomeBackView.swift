@@ -1,11 +1,9 @@
 import SwiftUI
 import AcresCore
 
-/// "While you were away": a friendly summary after returning to the game.
-/// Phase 2+ add crops ready, eggs collected, storage full, etc.
+/// "While you were away": what grew, what's ready and what needs care.
 struct WelcomeBackView: View {
-    let report: OfflineReport
-    let balance: Balance
+    let summary: AwaySummary
     let onContinue: () -> Void
 
     var body: some View {
@@ -14,18 +12,22 @@ struct WelcomeBackView: View {
                 .font(Theme.title(28))
                 .foregroundStyle(Theme.ink)
 
-            Text("You were away for \(Self.format(report.awayDuration)).")
+            Text("You were away for \(Self.format(summary.awayDuration)).")
                 .font(Theme.label(16))
                 .foregroundStyle(Theme.inkSoft)
                 .multilineTextAlignment(.center)
 
             VStack(alignment: .leading, spacing: 10) {
-                ForEach(lines, id: \.text) { line in
-                    HStack(alignment: .top, spacing: 10) {
-                        Image(systemName: line.symbol)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(line.tint)
-                            .frame(width: 22)
+                ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
+                    HStack(alignment: .center, spacing: 10) {
+                        if let asset = line.asset {
+                            ItemIcon(name: asset, size: 26)
+                        } else {
+                            Image(systemName: line.symbol)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(line.tint)
+                                .frame(width: 26)
+                        }
                         Text(line.text)
                             .font(Theme.label(15))
                             .foregroundStyle(Theme.ink)
@@ -61,36 +63,47 @@ struct WelcomeBackView: View {
     }
 
     private struct Line {
-        let symbol: String
-        let tint: Color
+        var symbol = "leaf.fill"
+        var asset: String?
+        var tint = Theme.leaf
         let text: String
     }
 
     private var lines: [Line] {
-        var result: [Line] = []
-        if report.clockWentBackwards {
-            result.append(Line(symbol: "clock.arrow.circlepath", tint: Theme.inkSoft,
-                               text: "Your device's clock seems to have changed, so no time passed on the farm."))
-        }
-        for event in report.events {
-            if case .newSeason(let season, _) = event {
-                result.append(Line(symbol: Theme.seasonSymbol(season), tint: Theme.seasonColor(season),
-                                   text: "\(season.name) has arrived!"))
+        summary.lines.map { line in
+            switch line {
+            case .clockChanged:
+                return Line(symbol: "clock.arrow.circlepath", tint: Theme.inkSoft,
+                            text: "Your device's clock seems to have changed, so no time passed on the farm.")
+            case .newSeason(let season):
+                return Line(symbol: Theme.seasonSymbol(season), tint: Theme.seasonColor(season), text: "\(season.name) has arrived!")
+            case .newDay(let date):
+                return Line(symbol: "sunrise.fill", tint: Theme.gold,
+                            text: "A new day begins: \(date.season.name) \(date.dayOfSeason), Year \(date.year).")
+            case .cropsReady(let cropID, let count):
+                return Line(asset: "item_\(cropID)", text: "\(Self.count(count, cropID)) ready to harvest.")
+            case .cropsGrowing(let cropID, let count, let secondsLeft):
+                return Line(asset: "item_\(cropID)",
+                            text: "\(Self.count(count, cropID)) still growing, all ripe in \(Format.duration(secondsLeft)).")
+            case .thirstyCrops(let count):
+                return Line(symbol: "drop.fill", tint: Color(red: 0.35, green: 0.6, blue: 0.8),
+                            text: "\(count) thirsty \(count == 1 ? "crop" : "crops"): water them to grow twice as fast.")
+            case .storageFull(let used, let capacity):
+                return Line(symbol: "shippingbox.fill", tint: Color(red: 0.8, green: 0.3, blue: 0.25),
+                            text: "Storage is full (\(used)/\(capacity)).")
+            case .capped(let seconds):
+                return Line(symbol: "hourglass", tint: Theme.inkSoft,
+                            text: "The farm only catches up on \(Self.format(seconds)) at a time.")
+            case .nothingNew:
+                return Line(text: "The farm is just as you left it.")
             }
         }
-        if report.startedNewDay {
-            let date = report.dateAfter
-            result.append(Line(symbol: "sunrise.fill", tint: Theme.gold,
-                               text: "A new day begins: \(date.season.name) \(date.dayOfSeason), Year \(date.year)."))
-        }
-        if report.wasCapped {
-            result.append(Line(symbol: "hourglass", tint: Theme.inkSoft,
-                               text: "The farm only catches up on \(Self.format(balance.offlineCatchUpCap)) at a time."))
-        }
-        if result.isEmpty {
-            result.append(Line(symbol: "leaf.fill", tint: Theme.leaf, text: "The farm is just as you left it."))
-        }
-        return result
+    }
+
+    /// "1 carrot", "4 carrots", "3 wheat".
+    static func count(_ count: Int, _ cropID: String) -> String {
+        guard let crop = CropCatalog.crop(cropID) else { return "\(count) \(cropID)" }
+        return "\(count) \(count == 1 ? crop.name.lowercased() : crop.plural)"
     }
 
     static func format(_ seconds: TimeInterval) -> String {

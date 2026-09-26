@@ -16,7 +16,10 @@ enum PlaceholderPainter {
         case .building: return BuildingPainter.paint(spec, rng: &rng)
         case .vehicle: return VehiclePainter.paint(spec, rng: &rng)
         case .effect: return EffectPainter.paint(spec, rng: &rng)
-        case .field, .crop, .animal, .item, .ui: return nil  // arrive in later phases
+        case .field: return CropPainter.paintSoil(spec, rng: &rng)
+        case .crop: return CropPainter.paintCrop(spec, rng: &rng)
+        case .item: return CropPainter.paintItem(spec, rng: &rng)
+        case .animal, .ui: return nil  // arrive in later phases
         }
     }
 

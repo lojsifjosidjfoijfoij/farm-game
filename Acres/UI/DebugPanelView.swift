@@ -33,6 +33,13 @@ struct DebugPanelView: View {
                     Text("Runs the real offline catch-up, as if the app had been closed that long.")
                 }
 
+                Section("Farm") {
+                    Button("+10 of every seed") { game.debugAddSeeds(10) }
+                    Button("Water all crops") { game.debugWaterEverything() }
+                    Button("Ripen all crops") { game.debugRipenEverything() }
+                    Button("Empty storage") { game.debugEmptyStorage() }
+                }
+
                 Section("World") {
                     Toggle("Chunk borders", isOn: $game.showsChunkBorders)
                     Toggle("FPS / nodes / draw calls", isOn: $game.showsPerformanceStats)

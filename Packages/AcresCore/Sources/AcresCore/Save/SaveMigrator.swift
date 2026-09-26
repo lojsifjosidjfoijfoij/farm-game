@@ -27,9 +27,22 @@ public struct SaveMigrator: Sendable {
     }
 
     /// The migrations the shipping game uses.
+    ///
+    /// Migrations are frozen history: never change one after release, and never
+    /// read from `Balance` or catalogs in them (those keep changing).
     public static let standard = SaveMigrator(
         currentVersion: SaveFile.currentVersion,
-        migrations: [:]  // v1 is the first format; nothing to migrate yet.
+        migrations: [
+            // v1 → v2 (Phase 2): farmland, inventory and land ownership. Phase 1
+            // farmers get the same starting seeds as a new game.
+            1: { json in
+                var state = json["state"] as? [String: Any] ?? [:]
+                state["plots"] = [Any]()
+                state["inventory"] = ["items": ["seeds_wheat": 12, "seeds_carrot": 8, "seeds_potato": 4]]
+                state["ownedProperties"] = ["home_farm"]
+                json["state"] = state
+            },
+        ]
     )
 
     /// Returns JSON data upgraded to `currentVersion`. Data that is already
