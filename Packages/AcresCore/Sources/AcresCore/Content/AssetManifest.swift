@@ -199,10 +199,12 @@ public enum AssetManifest {
         result += building("building_livestock_market", 7, 5, phase: 4, "Livestock market: a big open barn with a sign, pens and an auction shed.")
         result += building("building_hardware_store", 5, 4.5, phase: 5, lights: true, "Hardware store with tools displayed outside.")
         result += building("building_farmers_market_stall", 2.5, 2.5, phase: 3, "Farmers' market stall with striped awning.")
-        result += building("building_restaurant", 5, 4.5, phase: 5, lights: true, "Town restaurant (contract client) with terrace.")
+        result += building("building_restaurant", 5, 4.5, phase: 6, lights: true, "The Rusty Spoon: a cheerful diner (contract client).")
+        result += building("building_bakery", 4, 4.5, phase: 6, lights: true, "Hansen's Bakery: warm brick bakery with a bread sign (contract client).")
+        result += building("building_bank", 4, 4.5, phase: 6, lights: true, "Valley Savings Bank: small stone bank with columns.")
         result += building("building_wholesale_depot", 8, 6, phase: 5, lights: true, "Harbor wholesale depot: big warehouse with loading doors.")
         result += building("building_harbor_warehouse", 7, 5, phase: 5, "Old brick harbor warehouse.")
-        result += building("building_lumber_yard", 6, 5, phase: 5, "Lumber yard office with stacked timber.")
+        result += building("building_lumber_yard", 6, 5, phase: 6, "North Woods Lumber: yard office with stacked timber (contract client).")
         result += building("building_town_shop", 4, 4.5, phase: 6, lights: true, "Player-owned shop in town (sell your own goods).")
         result += building("building_cabin_lakeside", 4, 4, phase: 6, lights: true, "Lakeside log cabin with a small jetty.")
         result += building("building_farm_abandoned", 6, 6, phase: 6, "The old abandoned farmhouse, overgrown; a long-term restoration goal.")
@@ -435,6 +437,7 @@ public enum AssetManifest {
         .ui("ui_icon_goals", points: 32, 32, phase: 5, "Rolled-up checklist with a ribbon (goals)."),
         .ui("ui_icon_bed", points: 32, 32, phase: 5, "Cozy bed with a moon (go to bed)."),
         .ui("ui_icon_contracts", points: 32, 32, phase: 5, "Pinned note (contracts board)."),
+        .ui("ui_icon_phone", points: 32, 32, phase: 6, "Chunky flip phone (business phone: orders and money)."),
         .ui("ui_icon_worker", points: 32, 32, phase: 6, "Farmhand in a straw hat."),
         .ui("ui_icon_collection", points: 32, 32, phase: 7, "Leather-bound book (collection)."),
         .ui("ui_joystick_base", points: 140, 140, phase: 3, "Joystick ring, soft translucent."),

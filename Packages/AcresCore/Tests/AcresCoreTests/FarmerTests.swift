@@ -103,7 +103,8 @@ final class FarmerTests: XCTestCase {
         let counters = Set([GoalCounter.plowed, GoalCounter.planted, GoalCounter.harvested, GoalCounter.coinsFromSales,
                             GoalCounter.seedsBought, GoalCounter.slept, GoalCounter.treesChopped,
                             GoalCounter.fruitTreesPlanted, GoalCounter.collected("egg"), GoalCounter.collected("wool"),
-                            GoalCounter.collected("truffle")])
+                            GoalCounter.collected("truffle"),
+                            GoalCounter.contractsCompleted])
         XCTAssertEqual(Set(GoalCatalog.all.map(\.id)).count, GoalCatalog.all.count, "unique ids")
         for goal in GoalCatalog.all {
             switch goal.requirement {

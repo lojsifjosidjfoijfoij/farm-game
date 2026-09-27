@@ -57,6 +57,12 @@ public struct GameState: Codable, Equatable, Sendable {
     /// Progress toward goals, and which rewards were claimed. (v5)
     public var goals: GoalState
 
+    /// Orders from clients: on offer and accepted, plus reputation. (v6)
+    public var contracts: ContractBoard
+
+    /// The books: weekly ledger and any bank loan. (v6)
+    public var finance: Finance
+
     public init(
         worldTime: TimeInterval,
         clock: GameClock,
@@ -72,7 +78,9 @@ public struct GameState: Codable, Equatable, Sendable {
         ranch: Ranch = Ranch(),
         woodland: Woodland = Woodland(),
         farmer: FarmerState = FarmerState(),
-        goals: GoalState = GoalState()
+        goals: GoalState = GoalState(),
+        contracts: ContractBoard = ContractBoard(),
+        finance: Finance = Finance()
     ) {
         self.worldTime = worldTime
         self.clock = clock
@@ -89,6 +97,8 @@ public struct GameState: Codable, Equatable, Sendable {
         self.woodland = woodland
         self.farmer = farmer
         self.goals = goals
+        self.contracts = contracts
+        self.finance = finance
     }
 
     /// Where the farmer is: in the truck, or on foot.
@@ -111,7 +121,9 @@ public struct GameState: Codable, Equatable, Sendable {
             ranch: Ranch(),
             woodland: Woodland(),
             farmer: FarmerState(position: HomeValleyMap.farmhouseDoor, energy: balance.energyMax),
-            goals: GoalState()
+            goals: GoalState(),
+            contracts: ContractBoard(),
+            finance: Finance()
         )
     }
 }

@@ -33,6 +33,14 @@ public enum HomeValleyMap {
     /// The livestock market at the east end of the village (Phase 4).
     public static let livestockZone = TileRect(minX: 123, minY: 22.4, maxX: 134, maxY: 28.8)
 
+    // --- Business (Phase 6) --------------------------------------------------
+    /// The bank, east of the market square (its gravel apron).
+    public static let bankZone = TileRect(minX: 106.2, minY: 24.9, maxX: 111.2, maxY: 27.3)
+    /// Contract clients: where the truck stops to deliver.
+    public static let restaurantZone = TileRect(minX: 116.8, minY: 24.9, maxX: 121.8, maxY: 27.3)
+    public static let bakeryZone = TileRect(minX: 48, minY: 76.8, maxX: 55.2, maxY: 80)
+    public static let lumberYardZone = TileRect(minX: 57.8, minY: 67.6, maxX: 68, maxY: 72)
+
     /// The farmhouse door: where the farmer wakes up and goes to bed.
     public static let farmhouseDoor = Vec2(21, 35.5)
 
@@ -123,6 +131,8 @@ public enum HomeValleyMap {
         buildVillageAndBeyond(&b)
         // Phase 4.
         buildBackyardAndLivestock(&b)
+        // Phase 6.
+        buildBusinesses(&b)
 
         return b.build(name: "Home Valley")
     }
@@ -252,6 +262,42 @@ public enum HomeValleyMap {
         b.place("animal_lamb_eat", at: Vec2(138.4, 27.4), radius: 0.4)
         b.place("animal_cow_idle", at: Vec2(137.6, 25.9), variant: 1, radius: 0.8)
         b.place("animal_piglet_idle", at: Vec2(139, 26.6), radius: 0.3)
+    }
+
+    /// The bank, and the businesses that order from the farm (Phase 6).
+    private static func buildBusinesses(_ b: inout MapBuilder) {
+        func clear(_ rect: TileRect) {
+            b.removeObjects { object, _ in
+                (object.kind.hasPrefix("tree_") || object.kind.hasPrefix("nature_")) && rect.contains(object.position)
+            }
+            b.reserve(rect)
+        }
+        // Valley Savings Bank and The Rusty Spoon face the village street
+        // from the north side, each with a gravel apron to pull up on.
+        // (The cottage between them gets a front path instead of the side one.)
+        b.paintRect(.grass, TileRect(minX: 105.9, minY: 28.6, maxX: 112.4, maxY: 30.8))
+        b.paintPath(.dirt, through: [Vec2(114, 29.3), Vec2(114, 24.9)], width: 1.3, roughness: 0.2)
+
+        clear(TileRect(minX: 106, minY: 25, maxX: 111.4, maxY: 31))
+        b.paintRect(.gravel, TileRect(minX: 106, minY: 25, maxX: 111.4, maxY: 27.6))
+        b.place("building_bank", at: Vec2(108.6, 27.6), radius: 2)
+
+        clear(TileRect(minX: 116.6, minY: 25, maxX: 122, maxY: 31))
+        b.paintRect(.gravel, TileRect(minX: 116.6, minY: 25, maxX: 122, maxY: 27.6))
+        b.place("building_restaurant", at: Vec2(119.4, 27.6), radius: 2.6)
+        b.place("prop_lamp_post", at: Vec2(116.4, 28.2), radius: 0.3)
+
+        // Up the county road: a lumber yard in the woods and a bakery.
+        clear(TileRect(minX: 57.6, minY: 66, maxX: 70, maxY: 77.5))
+        b.paintRect(.gravel, TileRect(minX: 57.8, minY: 67.6, maxX: 68, maxY: 72))
+        b.place("building_lumber_yard", at: Vec2(63.5, 72.4), radius: 3.2)
+        b.place("prop_log_pile", at: Vec2(67.8, 73.4), variant: 1, radius: 0.9)
+        b.place("prop_log_pile", at: Vec2(59.4, 73.2), variant: 2, radius: 0.9)
+
+        clear(TileRect(minX: 46, minY: 74.5, maxX: 54.6, maxY: 85))
+        b.paintRect(.gravel, TileRect(minX: 48, minY: 76.8, maxX: 54.6, maxY: 80))
+        b.place("building_bakery", at: Vec2(50.8, 80.2), radius: 2.2)
+        b.place("prop_crate", at: Vec2(53.4, 80.4), variant: 2, radius: 0.4)
     }
 
     /// An old wooden fence around the home farm, with gaps and broken rails.

@@ -11,7 +11,10 @@ struct HUDView: View {
         VStack(spacing: 0) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
-                    moneyPill
+                    HStack(spacing: 8) {
+                        moneyPill
+                        phoneButton
+                    }
                     levelPill
                     if !game.tutorial.isActive, let goal = game.openGoals.first { goalTracker(goal) }
                 }
@@ -61,6 +64,10 @@ struct HUDView: View {
                 shopButton(shop)
                     .padding(.bottom, 10)
                     .transition(.scale.combined(with: .opacity))
+            } else if let client = game.nearbyClient {
+                clientButton(client)
+                    .padding(.bottom, 10)
+                    .transition(.scale.combined(with: .opacity))
             }
 
             if game.showsSeedPicker && !game.isDriving {
@@ -88,6 +95,7 @@ struct HUDView: View {
         .animation(.spring(duration: 0.35), value: game.inspection)
         .animation(.spring(duration: 0.35), value: game.showsSeedPicker)
         .animation(.spring(duration: 0.35), value: game.nearbyShop)
+        .animation(.spring(duration: 0.35), value: game.nearbyClient)
         .animation(.spring(duration: 0.35), value: game.tutorialCard)
         .animation(.spring(duration: 0.35), value: game.isDriving)
         .animation(.spring(duration: 0.35), value: game.jobCount > 0)
@@ -96,17 +104,62 @@ struct HUDView: View {
     // MARK: Top
 
     private var moneyPill: some View {
-        HStack(spacing: 8) {
+        let debt = game.money < 0
+        return HStack(spacing: 8) {
             CoinIcon(size: 22)
             Text(game.money, format: .number)
                 .font(Theme.number(19))
-                .foregroundStyle(Theme.ink)
+                .foregroundStyle(debt ? Theme.danger : Theme.ink)
                 .contentTransition(.numericText(value: Double(game.money)))
                 .animation(.snappy, value: game.money)
+            if debt {
+                Text("debt")
+                    .font(Theme.label(11, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 1)
+                    .background(Capsule().fill(Theme.danger))
+            }
         }
         .hudPanel()
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(game.money) coins")
+        .accessibilityLabel(debt ? "In debt: \(-game.money) coins" : "\(game.money) coins")
+    }
+
+    /// The business phone: orders and money. The badge counts orders on.
+    private var phoneButton: some View {
+        let active = game.contractBoard.active
+        let urgent = active.contains { game.daysLeft($0) <= 0 }
+        return Button {
+            Haptics.tap()
+            game.showsSeedPicker = false
+            game.showsBusiness = true
+        } label: {
+            ZStack(alignment: .topTrailing) {
+                GameIcon(asset: "ui_icon_phone", fallbackSymbol: "iphone.gen2", tint: Theme.ink, size: 22)
+                    .frame(width: 44, height: 44)
+                    .background(Circle().fill(Theme.parchment.opacity(0.95)).shadow(color: .black.opacity(0.2), radius: 5, y: 2))
+                    .overlay(Circle().strokeBorder(Theme.border, lineWidth: 1))
+                if !active.isEmpty {
+                    Text("\(active.count)")
+                        .font(Theme.number(12))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(urgent ? Theme.danger : Theme.leafDark))
+                        .offset(x: 4, y: -4)
+                } else if !game.contractBoard.offers.isEmpty {
+                    Circle()
+                        .fill(Theme.gold)
+                        .frame(width: 11, height: 11)
+                        .overlay(Circle().strokeBorder(.white, lineWidth: 1.5))
+                        .offset(x: 1, y: -1)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .pulsing(game.phoneNeedsAttention)
+        .accessibilityLabel(active.isEmpty ? "Business phone" : "Business phone, \(active.count) orders on")
     }
 
     private var levelPill: some View {
@@ -240,31 +293,55 @@ struct HUDView: View {
             case .seedShop: "Open the Seed Shop"
             case .gasStation: "Fill up the tank"
             case .livestock: "Visit \(shop.name)"
+            case .bank: "Visit the bank"
             }
-        }
-        let symbol: String = switch shop.kind {
-        case .market: "basket.fill"
-        case .seedShop: "leaf.fill"
-        case .gasStation: "fuelpump.fill"
-        case .livestock: "hare.fill"
         }
         return Button {
             game.openNearbyShop()
         } label: {
-            HStack(spacing: 10) {
-                Image(systemName: open ? symbol : "moon.zzz.fill")
-                    .font(.system(size: 20, weight: .semibold))
-                Text(title)
-                    .font(Theme.label(18, weight: .semibold))
-            }
-            .foregroundStyle(.white)
-            .padding(.horizontal, 22)
-            .frame(height: 54)
-            .background(Capsule().fill(open ? Theme.gold : Color(red: 0.5, green: 0.5, blue: 0.55))
-                .shadow(color: .black.opacity(0.25), radius: 6, y: 3))
+            placeLabel(title, symbol: open ? GameController.symbol(for: shop.kind) : "moon.zzz.fill", active: open)
         }
         .buttonStyle(.plain)
         .pulsing(open && game.tutorialFocus == .shopButton)
+    }
+
+    /// Parked at a client: hand over the goods for their orders.
+    private func clientButton(_ client: ClientDefinition) -> some View {
+        let open = client.isOpen(atHour: game.hour)
+        let hasOrder = game.contractBoard.active.contains { $0.clientID == client.id }
+        let title: String = if !open {
+            "\(client.name) · opens \(String(format: "%02d:00", client.opens))"
+        } else if hasOrder {
+            "Deliver to \(client.name)"
+        } else {
+            "\(client.name) · no orders"
+        }
+        return Button {
+            if open { game.deliverToNearbyClient() } else {
+                Haptics.warning()
+                game.showMessage("\(client.name) is closed. It opens at \(String(format: "%02d:00", client.opens)).")
+            }
+        } label: {
+            placeLabel(title, symbol: open ? GameController.symbol(for: client) : "moon.zzz.fill", active: open && hasOrder)
+        }
+        .buttonStyle(.plain)
+        .pulsing(open && hasOrder)
+    }
+
+    private func placeLabel(_ title: String, symbol: String, active: Bool) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: symbol)
+                .font(.system(size: 20, weight: .semibold))
+            Text(title)
+                .font(Theme.label(18, weight: .semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 22)
+        .frame(height: 54)
+        .background(Capsule().fill(active ? Theme.gold : Color(red: 0.5, green: 0.5, blue: 0.55))
+            .shadow(color: .black.opacity(0.25), radius: 6, y: 3))
     }
 
     // MARK: Bottom
@@ -300,7 +377,7 @@ struct HUDView: View {
                 Button {
                     game.drive(to: destination)
                 } label: {
-                    Label(destination.name, systemImage: destination.symbol)
+                    Label(destination.menuTitle, systemImage: destination.symbol)
                 }
             }
         } label: {

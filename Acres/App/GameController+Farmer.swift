@@ -444,6 +444,10 @@ extension GameController {
             } else {
                 showBanner("Good morning! It's \(date.weekday.name). ☀️")
             }
+            if !morningNews.isEmpty {
+                showBanner(([banner ?? ""] + morningNews).joined(separator: "\n"))
+                morningNews = []
+            }
             Haptics.success()
         } else {
             sleep = phase

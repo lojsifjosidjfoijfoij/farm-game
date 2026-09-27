@@ -13,6 +13,8 @@ enum Theme {
     static let gold = Color(red: 0.9, green: 0.68, blue: 0.2)
     static let leaf = Color(red: 0.4, green: 0.56, blue: 0.29)
     static let leafDark = Color(red: 0.3, green: 0.45, blue: 0.22)
+    /// Warnings: debt, low fuel, due today.
+    static let danger = Color(red: 0.8, green: 0.3, blue: 0.25)
 
     static func number(_ size: CGFloat) -> Font {
         .system(size: size, weight: .semibold, design: .rounded).monospacedDigit()

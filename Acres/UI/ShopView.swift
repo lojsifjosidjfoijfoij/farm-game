@@ -17,6 +17,7 @@ struct ShopView: View {
                     case .market: market
                     case .gasStation: gasStation
                     case .livestock: livestock
+                    case .bank: bank
                     }
                 }
                 .padding(16)
@@ -52,6 +53,7 @@ struct ShopView: View {
         case .market: "Prices change every day."
         case .gasStation: "Fill up before long trips."
         case .livestock: "Animals are delivered to your farm."
+        case .bank: "Loans are paid back on Mondays."
         }
     }
 
@@ -275,6 +277,77 @@ struct ShopView: View {
         }
     }
 
+    // MARK: Bank
+
+    private var bank: some View {
+        let interest = game.balance.loanInterest
+        return VStack(alignment: .leading, spacing: 12) {
+            if let loan = game.finance.loan {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Your loan")
+                        .font(Theme.title(18))
+                    Text("You owe \(loan.balance) coins: \(loan.weeklyPayment) every Monday for \(loan.weeksLeft) more \(loan.weeksLeft == 1 ? "week" : "weeks").")
+                        .font(Theme.label(14))
+                        .foregroundStyle(Theme.inkSoft)
+                        .fixedSize(horizontal: false, vertical: true)
+                    let total = max(1, Double(loan.amount) * (1 + interest))
+                    ProgressView(value: min(total, max(0, total - Double(loan.balance))), total: total)
+                        .tint(Theme.leaf)
+                }
+                .foregroundStyle(Theme.ink)
+                BigButton(title: game.money >= loan.balance ? "Pay it all off now" : "Not enough to pay it off yet",
+                          price: loan.balance, tint: game.money >= loan.balance ? Theme.leaf : Color.gray) { game.repayLoan() }
+                    .disabled(game.money < loan.balance)
+            }
+            Text("Borrow")
+                .font(Theme.title(18))
+                .foregroundStyle(Theme.ink)
+                .padding(.top, 4)
+            Text("Get coins now for seeds, animals or repairs. You pay back \(Int((interest * 100).rounded()))% more, a little every Monday with your bills. One loan at a time.")
+                .font(Theme.label(13))
+                .foregroundStyle(Theme.inkSoft)
+                .fixedSize(horizontal: false, vertical: true)
+            ForEach(Bank.offers) { offer in
+                loanRow(offer, interest: interest)
+            }
+        }
+    }
+
+    private func loanRow(_ offer: LoanOffer, interest: Double) -> some View {
+        let locked = game.level < offer.unlockLevel
+        let busy = game.finance.loan != nil
+        return ShopRow {
+            Image(systemName: "building.columns.fill")
+                .font(.system(size: 24, weight: .semibold))
+                .foregroundStyle(Theme.ink.opacity(locked ? 0.35 : 0.8))
+                .frame(width: 42, height: 42)
+        } info: {
+            HStack(spacing: 4) {
+                CoinIcon(size: 14)
+                Text("\(offer.amount)")
+                    .font(Theme.number(16))
+            }
+            Text("\(offer.weeklyPayment(interest: interest)) a week × \(offer.weeks) weeks")
+                .font(Theme.label(12))
+                .foregroundStyle(Theme.inkSoft)
+        } actions: {
+            if locked {
+                Label("Level \(offer.unlockLevel)", systemImage: "lock.fill")
+                    .font(Theme.label(13, weight: .semibold))
+                    .foregroundStyle(Theme.inkSoft)
+            } else {
+                Button("Borrow") { game.takeLoan(offer.amount) }
+                    .font(Theme.label(15, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 14)
+                    .frame(height: 40)
+                    .background(Capsule().fill(busy ? Color.gray : Theme.leafDark))
+                    .buttonStyle(.plain)
+                    .disabled(busy)
+            }
+        }
+    }
+
     // MARK: Gas station
 
     private var gasStation: some View {
@@ -296,7 +369,7 @@ struct ShopView: View {
                 EmptyNote(symbol: "checkmark.circle", text: "The tank is full. Safe travels!")
             } else {
                 BigButton(title: game.money >= cost ? "Fill up" : "Fill what I can afford",
-                          price: min(cost, game.money), tint: Theme.gold) { game.refuel() }
+                          price: max(0, min(cost, game.money)), tint: Theme.gold) { game.refuel() }
             }
         }
     }
@@ -305,7 +378,7 @@ struct ShopView: View {
 // MARK: - Pieces
 
 /// One line in a shop: icon, name and details, buttons.
-private struct ShopRow<Icon: View, Info: View, Actions: View>: View {
+struct ShopRow<Icon: View, Info: View, Actions: View>: View {
     @ViewBuilder let icon: () -> Icon
     @ViewBuilder let info: () -> Info
     @ViewBuilder let actions: () -> Actions
@@ -328,7 +401,7 @@ private struct ShopRow<Icon: View, Info: View, Actions: View>: View {
 }
 
 /// A small "buy/sell N for X coins" button.
-private struct PriceButton: View {
+struct PriceButton: View {
     let title: String
     let price: Int
     let enabled: Bool
@@ -357,7 +430,7 @@ private struct PriceButton: View {
 }
 
 /// A wide call-to-action button with a price.
-private struct BigButton: View {
+struct BigButton: View {
     let title: String
     let price: Int
     let tint: Color
@@ -407,7 +480,7 @@ private struct PriceTag: View {
     }
 }
 
-private struct EmptyNote: View {
+struct EmptyNote: View {
     let symbol: String
     let text: String
 

@@ -10,6 +10,8 @@ public enum ShopKind: String, Sendable, CaseIterable {
     case gasStation
     /// Sells young animals and feed. (Phase 4)
     case livestock
+    /// Lends money. (Phase 6)
+    case bank
 }
 
 /// A place to trade. You walk in (or stop the truck there); selling at the
@@ -52,6 +54,8 @@ public enum ShopCatalog {
                        opens: 7, closes: 19),
         ShopDefinition(id: "valley_livestock", name: "Valley Livestock", kind: .livestock, zone: HomeValleyMap.livestockZone,
                        opens: 8, closes: 17),
+        ShopDefinition(id: "valley_bank", name: "Valley Savings Bank", kind: .bank, zone: HomeValleyMap.bankZone,
+                       opens: 9, closes: 16),
     ]
 
     public static func shop(at position: Vec2) -> ShopDefinition? {
@@ -98,6 +102,8 @@ public enum TradeFailure: Error, Equatable, Sendable {
     case closed(opens: Int)
     /// Selling and refuelling need the truck at the shop, with the farmer.
     case truckNotHere(ShopKind)
+    case alreadyHaveLoan
+    case noLoan
 }
 
 /// Buying, selling, fuel and loading the truck. Pure rules over `GameState`.
@@ -142,6 +148,7 @@ public struct Trading: Sendable {
         let cost = crop.seedCost * count
         guard state.money >= cost else { throw .notEnoughMoney }
         state.money -= cost
+        state.finance.spend(cost, LedgerCategory.seeds)
         state.inventory.add(crop.seedItemID, count)
         state.goals.add(GoalCounter.seedsBought, count)
         return cost
@@ -155,6 +162,7 @@ public struct Trading: Sendable {
         let cost = tree.saplingCost * count
         guard state.money >= cost else { throw .notEnoughMoney }
         state.money -= cost
+        state.finance.spend(cost, LedgerCategory.seeds)
         state.inventory.add(tree.saplingItemID, count)
         return cost
     }
@@ -171,6 +179,7 @@ public struct Trading: Sendable {
         guard penState.animals.count < pen.capacity else { throw .penFull(penID: pen.id) }
         guard state.money >= species.price else { throw .notEnoughMoney }
         state.money -= species.price
+        state.finance.spend(species.price, LedgerCategory.animals)
         state.goals.add(GoalCounter.animalsBought)
         return Ranching.addYoungAnimal(species, to: pen.id, in: &state, balance: balance)
     }
@@ -183,6 +192,7 @@ public struct Trading: Sendable {
         guard state.money >= cost else { throw .notEnoughMoney }
         guard state.inventory.storageUsed + count <= balance.storageCapacity else { throw .storageFull }
         state.money -= cost
+        state.finance.spend(cost, LedgerCategory.animals)
         state.inventory.add("animal_feed", count)
         return cost
     }
@@ -198,6 +208,7 @@ public struct Trading: Sendable {
         state.truck.cargo.remove(itemID, amount)
         let earned = unitPrice * amount
         state.money += earned
+        state.finance.earn(earned, LedgerCategory.marketSales)
         state.goals.add(GoalCounter.coinsFromSales, earned)
         return earned
     }
@@ -226,6 +237,7 @@ public struct Trading: Sendable {
         guard fuel >= 1 else { throw .notEnoughMoney }
         let cost = Int((fuel * balance.fuelPrice).rounded(.up))
         state.money -= cost
+        state.finance.spend(cost, LedgerCategory.fuel)
         state.truck.fuel += fuel
         return (fuel, cost)
     }
@@ -233,6 +245,37 @@ public struct Trading: Sendable {
     /// Cost to fill the tank completely.
     public func fullTankCost(_ state: GameState) -> Int {
         Int(((balance.driving.fuelCapacity - state.truck.fuel) * balance.fuelPrice).rounded(.up))
+    }
+
+    // MARK: Bank
+
+    /// Loan offers open to this farmer.
+    public func loanOffers(_ state: GameState) -> [LoanOffer] {
+        Bank.offers.filter { state.progress.level >= $0.unlockLevel }
+    }
+
+    /// Takes out a loan: the money now, weekly instalments from next Monday.
+    public func takeLoan(_ amount: Int, state: inout GameState) throws(TradeFailure) -> Loan {
+        try requireShop(.bank, state)
+        guard state.finance.loan == nil else { throw .alreadyHaveLoan }
+        guard let offer = loanOffers(state).first(where: { $0.amount == amount }) else { throw .unknownItem }
+        let loan = Loan(amount: offer.amount, balance: offer.total(interest: balance.loanInterest),
+                        weeklyPayment: offer.weeklyPayment(interest: balance.loanInterest), weeksLeft: offer.weeks)
+        state.finance.loan = loan
+        state.money += offer.amount
+        state.finance.earn(offer.amount, LedgerCategory.loans)
+        return loan
+    }
+
+    /// Pays off what's left of the loan; returns the amount paid.
+    public func repayLoan(state: inout GameState) throws(TradeFailure) -> Int {
+        try requireShop(.bank, state)
+        guard let loan = state.finance.loan else { throw .noLoan }
+        guard state.money >= loan.balance else { throw .notEnoughMoney }
+        state.money -= loan.balance
+        state.finance.spend(loan.balance, LedgerCategory.loanPayments)
+        state.finance.loan = nil
+        return loan.balance
     }
 
     // MARK: Loading

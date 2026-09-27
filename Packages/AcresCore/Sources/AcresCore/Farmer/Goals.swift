@@ -32,6 +32,7 @@ public enum GoalCounter {
     public static let treesChopped = "treesChopped"
     public static let fruitTreesPlanted = "fruitTreesPlanted"
     public static let animalsBought = "animalsBought"
+    public static let contractsCompleted = "contractsCompleted"
     public static func collected(_ item: String) -> String { "collected:\(item)" }
 }
 
@@ -72,6 +73,8 @@ public enum GoalCatalog {
                        requirement: .count(GoalCounter.harvested, 20), coins: 80, xp: 10),
         GoalDefinition(id: "sell200", title: "Market day", detail: "Sell goods worth 200 coins at the market.",
                        requirement: .count(GoalCounter.coinsFromSales, 200), coins: 100, xp: 10),
+        GoalDefinition(id: "contract1", title: "First order", detail: "Accept an order on your phone, then truck the goods to the client.",
+                       requirement: .count(GoalCounter.contractsCompleted, 1), coins: 120, xp: 15),
         GoalDefinition(id: "seeds30", title: "Stock up", detail: "Buy 30 seeds at the seed shop.",
                        requirement: .count(GoalCounter.seedsBought, 30), coins: 60, xp: 10),
         GoalDefinition(id: "level2", title: "Getting the hang of it", detail: "Reach farmer level 2.",
@@ -88,6 +91,8 @@ public enum GoalCatalog {
                        requirement: .money(3_000), coins: 200, xp: 20),
         GoalDefinition(id: "orchard", title: "Orchard", detail: "Plant 2 fruit trees.",
                        requirement: .count(GoalCounter.fruitTreesPlanted, 2), coins: 150, xp: 20),
+        GoalDefinition(id: "contract5", title: "Reliable supplier", detail: "Finish 5 orders. Reliable farms get bigger ones.",
+                       requirement: .count(GoalCounter.contractsCompleted, 5), coins: 400, xp: 40),
         GoalDefinition(id: "cows2", title: "Dairy farmer", detail: "Own 2 cows.",
                        requirement: .animals("cow", 2), coins: 300, xp: 30),
         GoalDefinition(id: "harvest300", title: "Big harvest", detail: "Harvest 300 crops.",
@@ -138,6 +143,7 @@ extension Simulation {
         let events = modify { state -> [SimEvent] in
             state.goals.claimed.append(id)
             state.money += goal.coins
+            state.finance.earn(goal.coins, LedgerCategory.goals)
             return Progression.addXP(goal.xp, to: &state, balance: balance)
         }
         return (goal, events)

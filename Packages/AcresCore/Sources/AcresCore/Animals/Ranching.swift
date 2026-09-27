@@ -125,6 +125,7 @@ public struct Ranching: Sendable {
         guard state.progress.level >= pen.unlockLevel else { return fail(.locked(level: pen.unlockLevel)) }
         guard state.money >= pen.repairCost else { return fail(.notEnoughMoney) }
         state.money -= pen.repairCost
+        state.finance.spend(pen.repairCost, LedgerCategory.repairs)
         penState.isRepaired = true
         // Fresh water comes with the repair.
         penState.waterUntil = state.worldTime + balance.troughWaterDuration

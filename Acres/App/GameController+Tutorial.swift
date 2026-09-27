@@ -104,7 +104,7 @@ extension GameController {
         switch tutorial.step {
         case .drive, .sell: ShopCatalog.first(.market)?.zone.center
         case .buySeeds: ShopCatalog.first(.seedShop)?.zone.center
-        default: nil
+        default: deliveryTarget
         }
     }
 

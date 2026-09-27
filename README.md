@@ -4,7 +4,7 @@ A cozy, top-down farming and business game for iPhone: a farmer's version of Big
 You start with a run-down farm, a beat-up pickup truck and one farmer, and grow it into an
 agricultural empire.
 
-**Status: Phase 5 (The farmer's life) is done.** Phase 6 (Contracts and bills) starts when you say so.
+**Status: Phase 6 (Contracts and bills) is done.** Phase 7 (Your own shop) is next.
 
 | Phase | Scope | Status |
 |---|---|---|
@@ -13,8 +13,8 @@ agricultural empire.
 | 3 | Truck and world: driving, village, first market, tutorial | ✅ |
 | 4 | Animals and trees: pens, livestock market, woodlot, saplings, fruit | ✅ |
 | 5 | The farmer's life: a farmer you walk around, clock and days, energy and sleep, tap-to-drive, goals, new HUD | ✅ |
-| 6 | Contracts and deliveries, weekly bills, a bank loan | ⏳ next |
-| 7 | Your own shop in town: rent, stock, prices, customers | |
+| 6 | Contracts and deliveries, weekly bills, a bank loan | ✅ |
+| 7 | Your own shop in town: rent, stock, prices, customers | ⏳ next |
 | 8 | Hired workers; buy land, buildings and machines | |
 | 9 | Polish: art pass, sound, weather, seasons visuals, balancing | |
 
@@ -34,6 +34,39 @@ Tests: press **⌘U** in Xcode (runs the simulation tests in `AcresCore`), or fr
 cd Packages/AcresCore
 swift test
 ```
+
+## Phase 6: what to test
+
+Your save carries over (format v6: your books start this week, the first orders are waiting on
+your phone).
+
+1. **The business phone** (the round phone button next to your coins). Two tabs:
+   - **Orders:** new orders from clients in the valley, each with the goods, the pay, the XP and
+     how many days you get. It also shows how many of those goods you already have on the truck or
+     at the farm. *Accept* up to 3 at a time; *Not now* removes an offer. New orders come in every
+     morning and stay up for two days.
+   - **Money:** coins, this week's income and expenses by category (market sales, orders, seeds,
+     fuel, repairs …), Monday's bills, your loan, and last week's totals.
+   A gold dot means there are new orders; the badge counts your orders in progress (red: one is
+   due today).
+2. **Clients:** *The Rusty Spoon* (a diner on the village street, 07–22: vegetables, eggs, milk,
+   truffles), *Hansen's Bakery* (up the county road, 05–17: wheat, eggs, milk, fruit) and *North
+   Woods Lumber* (the lumber yard in the northern woods, 07–18: logs). They're on the map menu too;
+   the ones you have orders from are listed first.
+3. **Delivering:** load the goods at the farm, drive to the client and stop on the gravel in front.
+   Tap **Deliver to …**. Everything on the truck that an order needs is handed over; a finished
+   order pays at once. With goods for an order on the truck, the guide arrow points to the client.
+4. **Deadlines and reputation:** an order not finished by its due day is cancelled and costs
+   reputation (shown on the Orders tab). Finishing orders raises it; better reputation means
+   bigger, better-paid orders. Missed deadlines overnight are reported when you wake up.
+5. **Weekly bills:** every Monday at 06:00 the property tax (100 coins per property) and any loan
+   instalment are paid, and a card sums up the week that ended. If the coins run short, you go
+   into debt (red money pill): buying stops until you're back above zero.
+6. **The bank** (Valley Savings Bank, east of the market square, 09–16): borrow 1,000 coins now
+   (5,000 at level 4, 20,000 at level 8), paid back with 12% interest in weekly instalments on
+   Mondays. One loan at a time; you can pay it off early at the bank.
+7. **New goals:** *First order* and *Reliable supplier*.
+8. **Debug extras:** *Skip to Monday (bills day)*.
 
 ## Phase 5: what to test
 
@@ -206,8 +239,8 @@ especially helpful, since that art is drawn entirely in code.
 ```
 Acres.xcodeproj
 Acres/                      iOS app (SwiftUI + SpriteKit): rendering, input, UI
-  App/                      AcresApp, GameController (+Farmer, +Driving, +Trade, +Tutorial, +Ranch), Haptics
-  UI/                       HUD, shops, inventory, Welcome-back card, debug panel, theme
+  App/                      AcresApp, GameController (+Farmer, +Driving, +Trade, +Business, +Tutorial, +Ranch), Haptics
+  UI/                       HUD, shops, business phone, inventory, Welcome-back card, debug panel, theme
   World/                    GameScene, camera, chunk streaming, terrain shader, sprites, trees, pens
   Art/                      AssetCatalog + procedural placeholder painters
   Resources/Assets.xcassets Real art goes in Art/ (see docs/ASSETS.md)
@@ -221,6 +254,7 @@ Packages/AcresCore/         Pure Swift simulation (no UIKit/SpriteKit), plus uni
   Animals/                  Animal simulation, pen rules (repair, collect, water, feed)
   Trees/                    Tree growth, forestry rules (chop, clear, plant, pick)
   Farmer/                   Energy, sleep, goals
+  Business/                 Clients and contracts, the books (ledger), bills, loans, places
   Save/                     Versioned save files, migrations, file store
   World/                    Map data, the Home Valley map
   Content/                  Crops, items, properties, asset and audio manifests

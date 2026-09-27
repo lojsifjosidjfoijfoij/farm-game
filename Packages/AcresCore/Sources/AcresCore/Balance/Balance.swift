@@ -106,6 +106,25 @@ public struct Balance: Sendable, Equatable {
     /// Staying up until this hour, the farmer falls asleep on the spot.
     public var passOutHour: Int = 2
 
+    // MARK: - Business (Phase 6)
+
+    /// Property tax on each property, every Monday.
+    public var propertyTaxPerWeek: Int = 100
+
+    /// Orders on the contract board at once, and how many can be taken.
+    public var contractOffersOnBoard: Int = 3
+    public var maxActiveContracts: Int = 3
+
+    /// Contracts pay this much over market value (plus a little for reputation).
+    public var contractBonus: Double = 0.35
+
+    /// Reputation gained per finished contract, lost per missed one.
+    public var reputationPerContract: Int = 5
+    public var reputationPerFailure: Int = 10
+
+    /// Flat interest on bank loans.
+    public var loanInterest: Double = 0.12
+
     // MARK: - Progression
 
     /// Experience needed to go from `level` to `level + 1`.

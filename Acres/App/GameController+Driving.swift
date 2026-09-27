@@ -8,6 +8,10 @@ struct Destination: Identifiable, Equatable {
     let name: String
     let symbol: String
     let target: Vec2
+    /// Extra words for the menu ("order").
+    var note: String? = nil
+
+    var menuTitle: String { note.map { "\(name) · \($0)" } ?? name }
 }
 
 extension GameController {
@@ -85,15 +89,25 @@ extension GameController {
     var destinations: [Destination] {
         var result = [Destination(id: "home", name: "Home farm", symbol: "house.fill", target: HomeValleyMap.truckParkingSpot)]
         for shop in ShopCatalog.all {
-            let symbol = switch shop.kind {
-            case .market: "basket.fill"
-            case .seedShop: "leaf.fill"
-            case .gasStation: "fuelpump.fill"
-            case .livestock: "hare.fill"
-            }
-            result.append(Destination(id: shop.id, name: shop.name, symbol: symbol, target: shop.zone.center))
+            result.append(Destination(id: shop.id, name: shop.name, symbol: Self.symbol(for: shop.kind), target: shop.zone.center))
+        }
+        // Clients with orders on, then the rest.
+        let busy = Set(contractBoard.active.map(\.clientID))
+        for client in ClientCatalog.all.sorted(by: { busy.contains($0.id) && !busy.contains($1.id) }) {
+            result.append(Destination(id: client.id, name: client.name, symbol: Self.symbol(for: client), target: client.zone.center,
+                                      note: busy.contains(client.id) ? "order" : nil))
         }
         return result
+    }
+
+    static func symbol(for kind: ShopKind) -> String {
+        switch kind {
+        case .market: "basket.fill"
+        case .seedShop: "leaf.fill"
+        case .gasStation: "fuelpump.fill"
+        case .livestock: "hare.fill"
+        case .bank: "building.columns.fill"
+        }
     }
 
     func drive(to destination: Destination) {
@@ -143,11 +157,14 @@ extension GameController {
         }
         let stopped = !isDriving || motion.isStopped
         let here = simulation.state.farmerPosition
-        let shop = stopped ? ShopCatalog.all.first { $0.zone.insetBy(-1).contains(here) } : nil
+        let place = stopped ? Place.near(here) : nil
+        let shop = place?.shop
         if shop != nearbyShop {
             nearbyShop = shop
             if shop?.kind == .market { advanceTutorial(.arrivedAtMarket) }
         }
+        let client = place?.client
+        if client != nearbyClient { nearbyClient = client }
         let atFarm = trading.truckIsAtFarm(simulation.state)
         if atFarm != truckAtFarm { truckAtFarm = atFarm }
     }

@@ -16,7 +16,8 @@ public struct SaveFile: Codable, Equatable, Sendable {
     /// - v3: truck `fuel` and `cargo`, `tutorial` (Phase 3).
     /// - v4: `ranch` (pens and animals), `woodland` (changed trees) (Phase 4).
     /// - v5: `farmer` (position, energy, in the truck), `goals` (Phase 5).
-    public static let currentVersion = 5
+    /// - v6: `contracts` (offers, accepted, reputation), `finance` (ledger, loan) (Phase 6).
+    public static let currentVersion = 6
 
     /// Format version of this file.
     public var version: Int

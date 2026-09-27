@@ -69,6 +69,20 @@ public struct SaveMigrator: Sendable {
                 state["goals"] = ["counters": [String: Int](), "claimed": [String]()] as [String: Any]
                 json["state"] = state
             },
+            // v5 → v6 (Phase 6): an empty contract board (the first orders go up
+            // at once) and fresh books starting this week, so no bills are
+            // charged for the past.
+            5: { json in
+                var state = json["state"] as? [String: Any] ?? [:]
+                let clock = state["clock"] as? [String: Any] ?? [:]
+                let minutes = (clock["totalMinutes"] as? Double) ?? Double(clock["totalMinutes"] as? Int ?? 0)
+                let day = Int((minutes / 1440).rounded(.down))
+                state["contracts"] = ["offers": [Any](), "active": [Any](), "reputation": 10, "completed": 0,
+                                      "failed": 0, "nextID": 1] as [String: Any]
+                state["finance"] = ["thisWeek": ["week": day / 7 + 1, "income": [String: Int](), "expenses": [String: Int]()] as [String: Any],
+                                    "lastProcessedDay": day] as [String: Any]
+                json["state"] = state
+            },
         ]
     )
 

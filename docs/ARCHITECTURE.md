@@ -162,6 +162,25 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
 - **Goals** (`GoalCatalog`, `GoalState`): a ladder of goals, three open at a time. Actions count
   toward them in the core (`GoalCounter`); rewards are claimed from the goals sheet.
 
+## Business (Phase 6)
+
+- **Places** (`Place`): shops and clients, each with a stopping zone on the map. Zones never
+  overlap (a test checks); where their one-tile margins do, the closest zone wins.
+- **Contracts** (`Contracts`, `ContractBoard`): clients (`ClientCatalog`) order goods the farm can
+  make at its level. Order size follows level and reputation; the reward is the goods' average
+  value plus a bonus (`Balance.contractBonus`, more with reputation). Accepting restarts the
+  deadline from today. Delivering hands over matching truck cargo, earliest deadline first, and
+  needs the farmer and the truck at the client during opening hours. Late orders fail and cost
+  reputation.
+- **The books** (`Finance`, `Ledger`): every coin in or out is booked under a category for the
+  current week. `Bank.weeklyBills` lists what's due on Mondays (property tax per property, the
+  loan instalment); money may go negative (debt), which blocks buying.
+- **`BusinessSystem`** runs each game morning once, in order, for every day the calendar passed
+  (`Finance.lastProcessedDay`): fail late orders, pay bills on Mondays (closing the week's books),
+  refresh the order board. It's deterministic (the order board draws from the seeded RNG).
+- **Loans** (`Bank.offers`): flat interest, equal weekly instalments, one at a time, repayable
+  early at the bank.
+
 ## Saves
 
 - File: `Application Support/Saves/farm.json` plus `farm.backup.json` (the previous save).
@@ -182,7 +201,8 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
 - History: v1 (Phase 1), v2 (Phase 2: plots, inventory, properties), v3 (Phase 3: truck fuel and
   cargo, tutorial). A migrated save starts the tutorial too, because the loop it teaches (load,
   drive, sell) is new to existing players; it can be skipped in one tap. v4 (Phase 4: `ranch`,
-  `woodland`). v5 (Phase 5: `farmer`, `goals`).
+  `woodland`). v5 (Phase 5: `farmer`, `goals`). v6 (Phase 6: `contracts`, `finance`; a migrated
+  save starts its books in the current week and gets fresh orders on the first step).
 
 ## Rendering
 
@@ -234,8 +254,8 @@ avatar and farmed wherever the truck was parked; Phase 5 replaced that with the 
   world currently always renders summer foliage.
 - Crop sprites use individual textures. Big fields may want a runtime texture atlas so SpriteKit
   can batch them (Phase 8 performance pass).
-- There is one market with one price per item per day. Several markets, supply and demand and
-  contracts come in Phase 5.
+- There is one market with one price per item per day. Contracts (Phase 6) are the second way to
+  sell; your own shop (Phase 7) will be the third.
 - Animals are delivered straight to their pen; carrying them home in the truck could come later.
 - Old wooden fences don't block the truck (they run along tile edges); pens, trees and
   buildings do.

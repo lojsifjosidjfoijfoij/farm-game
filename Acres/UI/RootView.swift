@@ -23,6 +23,16 @@ struct RootView: View {
                     .foregroundStyle(.white.opacity(sleep.darkness))
             }
 
+            if let report = game.weeklyReport, game.welcome == nil, game.sleep == nil {
+                Color.black.opacity(0.25)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+                WeeklyReportCard(report: report) {
+                    withAnimation(.easeOut(duration: 0.25)) { game.weeklyReport = nil }
+                }
+                .transition(.scale(scale: 0.92).combined(with: .opacity))
+            }
+
             if let summary = game.welcome {
                 Color.black.opacity(0.25)
                     .ignoresSafeArea()
@@ -34,6 +44,7 @@ struct RootView: View {
             }
         }
         .animation(.easeOut(duration: 0.3), value: game.welcome != nil)
+        .animation(.easeOut(duration: 0.3), value: game.weeklyReport)
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
         .onChange(of: scenePhase) { _, newPhase in
@@ -49,6 +60,10 @@ struct RootView: View {
         }
         .sheet(isPresented: $game.showsGoals) {
             GoalsView(game: game)
+                .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $game.showsBusiness) {
+            BusinessView(game: game)
                 .presentationDetents([.medium, .large])
         }
         .sheet(item: $game.openShop) { shop in

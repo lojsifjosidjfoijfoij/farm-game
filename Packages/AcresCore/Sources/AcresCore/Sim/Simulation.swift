@@ -20,6 +20,10 @@ public enum SimEvent: Equatable, Sendable {
     case treeGrown(TileCoord)
     /// A fruit tree has fruit to pick.
     case fruitReady(TileCoord)
+    /// An accepted contract ran past its deadline.
+    case contractFailed(id: Int, clientID: String)
+    /// Monday morning: the week's bills were paid.
+    case weeklyBills(week: Int, total: Int)
 }
 
 /// How a stretch of time is being simulated.
@@ -81,6 +85,7 @@ public struct Simulation: Sendable {
         TreeSystem(),
         FarmerSystem(),
         ClockSystem(),
+        BusinessSystem(),
     ]
 
     public init(

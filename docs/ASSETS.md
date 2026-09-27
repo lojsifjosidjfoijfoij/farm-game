@@ -37,15 +37,15 @@ procedurally in code.
 | Crops | 30 | 0 |
 | Trees | 40 | 4 |
 | Nature props | 14 | 10 |
-| Buildings | 52 | 3 |
+| Buildings | 56 | 3 |
 | Props | 30 | 10 |
 | Vehicles | 116 | 1 |
 | Characters | 33 | 0 |
 | Animals | 70 | 0 |
 | Item icons | 37 | 0 |
 | Effects & particles | 33 | 4 |
-| User interface | 29 | 15 |
-| **Total** | **499** | **52** |
+| User interface | 30 | 15 |
+| **Total** | **504** | **52** |
 | Audio files | 57 | 0 |
 
 ## Terrain (tileable ground textures)
@@ -215,12 +215,16 @@ procedurally in code.
 | `building_hardware_store` | 640 × 576 | 5 × 4.5 | 0.06 | 5 | Hardware store with tools displayed outside. |
 | `building_hardware_store_lights` | 640 × 576 | 5 × 4.5 | — | 5 | Night overlay for building_hardware_store: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
 | `building_farmers_market_stall` | 320 × 320 | 2.5 × 2.5 | 0.06 | 3 | Farmers' market stall with striped awning. |
-| `building_restaurant` | 640 × 576 | 5 × 4.5 | 0.06 | 5 | Town restaurant (contract client) with terrace. |
-| `building_restaurant_lights` | 640 × 576 | 5 × 4.5 | — | 5 | Night overlay for building_restaurant: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
+| `building_restaurant` | 640 × 576 | 5 × 4.5 | 0.06 | 6 | The Rusty Spoon: a cheerful diner (contract client). |
+| `building_restaurant_lights` | 640 × 576 | 5 × 4.5 | — | 6 | Night overlay for building_restaurant: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
+| `building_bakery` | 512 × 576 | 4 × 4.5 | 0.06 | 6 | Hansen's Bakery: warm brick bakery with a bread sign (contract client). |
+| `building_bakery_lights` | 512 × 576 | 4 × 4.5 | — | 6 | Night overlay for building_bakery: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
+| `building_bank` | 512 × 576 | 4 × 4.5 | 0.06 | 6 | Valley Savings Bank: small stone bank with columns. |
+| `building_bank_lights` | 512 × 576 | 4 × 4.5 | — | 6 | Night overlay for building_bank: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
 | `building_wholesale_depot` | 1024 × 768 | 8 × 6 | 0.06 | 5 | Harbor wholesale depot: big warehouse with loading doors. |
 | `building_wholesale_depot_lights` | 1024 × 768 | 8 × 6 | — | 5 | Night overlay for building_wholesale_depot: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
 | `building_harbor_warehouse` | 896 × 640 | 7 × 5 | 0.06 | 5 | Old brick harbor warehouse. |
-| `building_lumber_yard` | 768 × 640 | 6 × 5 | 0.06 | 5 | Lumber yard office with stacked timber. |
+| `building_lumber_yard` | 768 × 640 | 6 × 5 | 0.06 | 6 | North Woods Lumber: yard office with stacked timber (contract client). |
 | `building_town_shop` | 512 × 576 | 4 × 4.5 | 0.06 | 6 | Player-owned shop in town (sell your own goods). |
 | `building_town_shop_lights` | 512 × 576 | 4 × 4.5 | — | 6 | Night overlay for building_town_shop: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
 | `building_cabin_lakeside` | 512 × 512 | 4 × 4 | 0.06 | 6 | Lakeside log cabin with a small jetty. |
@@ -500,6 +504,7 @@ procedurally in code.
 | `ui_icon_goals` | 96 × 96 | UI | — | 5 | Rolled-up checklist with a ribbon (goals). |
 | `ui_icon_bed` | 96 × 96 | UI | — | 5 | Cozy bed with a moon (go to bed). |
 | `ui_icon_contracts` | 96 × 96 | UI | — | 5 | Pinned note (contracts board). |
+| `ui_icon_phone` | 96 × 96 | UI | — | 6 | Chunky flip phone (business phone: orders and money). |
 | `ui_icon_worker` | 96 × 96 | UI | — | 6 | Farmhand in a straw hat. |
 | `ui_icon_collection` | 96 × 96 | UI | — | 7 | Leather-bound book (collection). |
 | `ui_joystick_base` | 420 × 420 | UI | — | 3 | Joystick ring, soft translucent. |

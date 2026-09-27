@@ -73,6 +73,13 @@ public struct TileRect: Codable, Hashable, Sendable {
         p.x >= minX && p.x < maxX && p.y >= minY && p.y < maxY
     }
 
+    /// Distance from a point to the rectangle (0 inside).
+    public func distance(to p: Vec2) -> Double {
+        let dx = max(minX - p.x, 0, p.x - maxX)
+        let dy = max(minY - p.y, 0, p.y - maxY)
+        return (dx * dx + dy * dy).squareRoot()
+    }
+
     public func intersects(_ other: TileRect) -> Bool {
         minX < other.maxX && other.minX < maxX && minY < other.maxY && other.minY < maxY
     }

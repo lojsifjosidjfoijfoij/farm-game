@@ -37,6 +37,12 @@ enum VillagePainter {
         var awning: UIColor?
         /// Part of the width (from the left) given to a gas-station canopy.
         var canopy: CGFloat = 0
+        /// Part of the width (from the left) given to stacked timber (lumber yard).
+        var timberYard: CGFloat = 0
+        /// Stone pillars beside the door (the bank).
+        var columns = false
+
+        var sideYard: CGFloat { max(canopy, timberYard) }
     }
 
     static let cottageStyles: [String: CottageStyle] = [
@@ -47,6 +53,15 @@ enum VillagePainter {
                                            sign: "SEEDS", signColor: UIColor(hex: 0x4E7A36), awning: UIColor(hex: 0x6F9E48)),
         "building_gas_station": CottageStyle(wall: UIColor(hex: 0xEFEDE6), roof: UIColor(hex: 0x8C8F92), door: UIColor(hex: 0x4A5560),
                                              sign: "GAS", signColor: UIColor(hex: 0xB8432F), awning: nil, canopy: 0.5),
+        // Phase 6: the bank and the clients that take deliveries.
+        "building_bank": CottageStyle(wall: UIColor(hex: 0xD6D2C8), roof: UIColor(hex: 0x4F5A66), door: UIColor(hex: 0x3A4A5E),
+                                      trim: UIColor(hex: 0xF2EEE4), sign: "BANK", signColor: UIColor(hex: 0x2F4F7A), columns: true),
+        "building_bakery": CottageStyle(wall: UIColor(hex: 0xC98A6A), roof: UIColor(hex: 0x7A3E2E), door: UIColor(hex: 0x6E4A30),
+                                        sign: "BAKERY", signColor: UIColor(hex: 0x8A4B2A), awning: UIColor(hex: 0xE0A25A)),
+        "building_restaurant": CottageStyle(wall: UIColor(hex: 0xF0E0C0), roof: UIColor(hex: 0xB8432F), door: UIColor(hex: 0x3F5E7A),
+                                            sign: "DINER", signColor: UIColor(hex: 0xB8432F), awning: UIColor(hex: 0xC8453A)),
+        "building_lumber_yard": CottageStyle(wall: UIColor(hex: 0xB08A5E), roof: UIColor(hex: 0x5A4A3A), door: UIColor(hex: 0x4A3A2A),
+                                             sign: "LUMBER", signColor: UIColor(hex: 0x5A3E22), timberYard: 0.36),
     ]
 
     /// Layout in unit coordinates (top-left origin) of the building part.
@@ -58,7 +73,7 @@ enum VillagePainter {
 
         init(size: CGSize, style: CottageStyle) {
             let w = size.width, h = size.height
-            let left = w * (style.canopy > 0 ? style.canopy + 0.04 : 0.14)
+            let left = w * (style.sideYard > 0 ? style.sideYard + 0.04 : 0.14)
             let right = w * 0.86
             let top = h * 0.58, bottom = h * 0.94
             wall = CGRect(x: left, y: top, width: right - left, height: bottom - top)
@@ -80,6 +95,9 @@ enum VillagePainter {
         return Canvas.image(size) { ctx in
             if style.canopy > 0 {
                 canopy(ctx, size: size, width: style.canopy)
+            }
+            if style.timberYard > 0 {
+                timberStacks(ctx, size: size, width: style.timberYard, rng: &rng)
             }
             // Roof seen from above: front slope, a thin back slope, a chimney for homes.
             let eave = wall.minY + 3
@@ -128,6 +146,15 @@ enum VillagePainter {
 
             // Windows, door, awning and sign.
             for window in layout.windows { windowShape(ctx, window, trim: style.trim) }
+            if style.columns {
+                for x in [layout.door.minX - wall.width * 0.1, layout.door.maxX + wall.width * 0.04] {
+                    let pillar = CGRect(x: x, y: wall.minY + h * 0.05, width: wall.width * 0.06, height: wall.maxY - wall.minY - h * 0.05 - 8)
+                    Paint.fillHorizontal(ctx, Paint.roundedRect(pillar, 2), left: style.trim, right: style.wall.shaded(-0.12))
+                    Paint.outline(ctx, Paint.roundedRect(pillar, 2), ink, width: 1.5)
+                    let capital = CGRect(x: pillar.minX - 3, y: pillar.minY - 4, width: pillar.width + 6, height: 6)
+                    Paint.fill(ctx, Paint.roundedRect(capital, 1.5), style.trim)
+                }
+            }
             let door = Paint.roundedRect(layout.door, 3)
             Paint.fill(ctx, door, top: style.door.shaded(0.05), bottom: style.door.shaded(-0.1))
             Paint.outline(ctx, door, style.trim, width: 4)
@@ -174,6 +201,44 @@ enum VillagePainter {
             if style.sign != nil {
                 Paint.softSpot(ctx, CGPoint(x: layout.sign.midX, y: layout.sign.midY), layout.sign.width * 0.7, warm.withAlpha(0.25))
             }
+        }
+    }
+
+    /// Timber stacked on the left of the canvas: sawn planks on top of log ends.
+    static func timberStacks(_ ctx: CGContext, size: CGSize, width fraction: CGFloat, rng: inout SeededRandom) {
+        let w = size.width, h = size.height
+        let ground = h * 0.94
+        let area = CGRect(x: w * 0.03, y: h * 0.6, width: w * (fraction - 0.03), height: ground - h * 0.6)
+        let bark = UIColor(hex: 0x6E4B2E), wood = UIColor(hex: 0xE2C08A), ink = UIColor(hex: 0x2E2419).withAlpha(0.5)
+        Paint.dab(ctx, CGPoint(x: area.midX, y: ground - 2), area.width * 0.55, 7, UIColor.black.withAlpha(0.18))
+        // Three rows of log ends, fewer on each row up.
+        let radius = area.width / 9
+        for row in 0..<3 {
+            let count = 4 - row
+            let y = ground - radius * (1 + CGFloat(row) * 1.75)
+            let start = area.midX - CGFloat(count - 1) * radius
+            for i in 0..<count {
+                let center = CGPoint(x: start + CGFloat(i) * radius * 2 + rng.cg(-1.5...1.5), y: y)
+                let end = CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2)
+                ctx.setFillColor(bark.cgColor)
+                ctx.fillEllipse(in: end)
+                ctx.setFillColor(wood.cgColor)
+                ctx.fillEllipse(in: end.insetBy(dx: radius * 0.22, dy: radius * 0.22))
+                ctx.setStrokeColor(bark.withAlpha(0.45).cgColor)
+                ctx.setLineWidth(1.2)
+                ctx.strokeEllipse(in: end.insetBy(dx: radius * 0.5, dy: radius * 0.5))
+                ctx.setStrokeColor(ink.cgColor)
+                ctx.setLineWidth(1.5)
+                ctx.strokeEllipse(in: end)
+            }
+        }
+        // A stack of planks on top.
+        let top = ground - radius * 5.5 - 7
+        for i in 0..<3 {
+            let plank = CGRect(x: area.minX + area.width * 0.12 + CGFloat(i) * 2, y: top - CGFloat(i) * 7,
+                               width: area.width * 0.76, height: 7)
+            Paint.fill(ctx, Paint.roundedRect(plank, 1.5), top: wood.shaded(0.05), bottom: wood.shaded(-0.12))
+            Paint.outline(ctx, Paint.roundedRect(plank, 1.5), ink, width: 1.2)
         }
     }
 

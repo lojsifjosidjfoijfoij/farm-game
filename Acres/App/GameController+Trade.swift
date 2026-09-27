@@ -138,19 +138,22 @@ extension GameController {
         case .notAtShop(.market): "Drive to the market to sell."
         case .notAtShop(.gasStation): "Drive to the gas station to fill up."
         case .notAtShop(.livestock): "Drive to the livestock market."
+        case .notAtShop(.bank): "Drive to the bank in the village."
         case .penNotRepaired(let penID): "Fix up the \(PenCatalog.pen(penID)?.name.lowercased() ?? "pen") at your farm first."
         case .penFull(let penID): "The \(PenCatalog.pen(penID)?.name.lowercased() ?? "pen") is full."
         case .closed(let opens): "Closed for the night. Opens at \(String(format: "%02d:00", opens))."
         case .truckNotHere(.market): "Bring the truck: your goods are in the truck bed."
         case .truckNotHere: "Bring the truck to fill it up."
         case .notAtFarm: "Park the truck at your farm to load it."
-        case .notEnoughMoney: "Not enough coins."
+        case .notEnoughMoney: money < 0 ? "You're in debt. Earn some coins to get back in the black first." : "Not enough coins."
         case .locked(let level): "Unlocks at level \(level)."
         case .unknownItem: "Nothing to move."
         case .nothingToSell: "The truck is empty. Load your harvest at the farm."
         case .cargoFull: "The truck bed is full."
         case .storageFull: "Farm storage is full."
         case .tankFull: "The tank is already full."
+        case .alreadyHaveLoan: "Pay off your current loan first."
+        case .noLoan: "You don't owe the bank anything."
         }
     }
 }

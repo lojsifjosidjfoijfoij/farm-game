@@ -104,6 +104,19 @@ final class GameController {
     /// The shop sheet that's open.
     var openShop: ShopDefinition?
 
+    // MARK: Business (observed)
+
+    /// Contracts and the books, copied from the state when they change.
+    var contractBoard = ContractBoard()
+    var finance = Finance()
+    /// The client the truck is stopped at, if any (shows the delivery button).
+    var nearbyClient: ClientDefinition?
+    /// The business phone: orders and money.
+    var showsBusiness = false
+    var businessTab = BusinessTab.orders
+    /// Monday morning's look back at the week that ended.
+    var weeklyReport: WeeklyReport?
+
     // MARK: The farmer and the clock (observed)
 
     /// "Mon 06:00".
@@ -171,6 +184,8 @@ final class GameController {
     @ObservationIgnored private var lateWarningDay = -1
     /// Tap-to-drive destination, for the scene's marker.
     @ObservationIgnored var destination: Vec2?
+    /// Things that happened overnight, told when the farmer wakes up.
+    @ObservationIgnored var morningNews: [String] = []
 
     var balance: Balance { simulation.balance }
     var farming: Farming { Farming(map: map, balance: simulation.balance) }
@@ -626,6 +641,18 @@ final class GameController {
                 hasLevelUp = true
             case .cropReady, .animalProductReady, .treeGrown, .fruitReady:
                 break  // they show in the world (sparkles, bubbles, fruit); no need to interrupt
+            case .contractFailed(_, let clientID):
+                let name = ClientCatalog.client(clientID)?.name ?? "A client"
+                let text = "Missed a deadline: \(name) cancelled their order. Reputation fell."
+                if sleep != nil {
+                    morningNews.append(text)  // told on waking up
+                } else if !quiet {
+                    showBanner(text)
+                    Haptics.warning()
+                }
+            case .weeklyBills(let week, let total):
+                weeklyReport = WeeklyReport(week: week - 1, ledger: simulation.state.finance.lastWeek ?? Ledger(week: week - 1),
+                                            billsPaid: total, moneyAfter: simulation.state.money)
             case .animalGrewUp(let penID, let id):
                 if !quiet, let animal = simulation.state.ranch[penID].animals.first(where: { $0.id == id }),
                    let species = animal.species {
@@ -696,6 +723,7 @@ final class GameController {
         let left = ((minutesPerSeason - into) / balance.gameMinutesPerRealSecond / 60).rounded(.up) * 60
         if seasonTimeLeft != left { seasonTimeLeft = left }
         refreshGoals()
+        refreshBusiness()
     }
 
     func refreshInventory() {
@@ -722,6 +750,15 @@ final class GameController {
     func debugSkipToNextMorning() {
         handle(simulation.startNextMorning())
         refreshDisplay()
+    }
+
+    /// Runs the calendar to Monday 06:00 (bills day).
+    func debugSkipToMonday() {
+        let clock = simulation.state.clock
+        let monday = Double(clock.dayIndex + 7 - clock.dayIndex % 7) * GameClock.minutesPerDay
+        handle(simulation.advance(by: (monday - clock.totalMinutes) / balance.gameMinutesPerRealSecond, mode: .live))
+        refreshDisplay()
+        farmRevision += 1
     }
 
     func debugRefillEnergy() {
@@ -832,6 +869,9 @@ final class GameController {
         autopilot = nil
         destination = nil
         openShop = nil
+        showsBusiness = false
+        weeklyReport = nil
+        morningNews = []
         sleep = nil
         cancelJobs()
         tutorial = simulation.state.tutorial
