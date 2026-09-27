@@ -84,6 +84,8 @@ final class GameController {
     private(set) var selectedSeed: String?
     private(set) var inspection: TileInspection?
     var showsSeedPicker = false
+    /// The tool in hand: taps and drags on the field only ever do its job.
+    var tool: BeltTool = .hand
     var showsInventory = false
     var showsGoals = false
     private(set) var remindersEnabled: Bool
@@ -266,7 +268,7 @@ final class GameController {
         refreshTruck()
         refreshFarmer()
         refreshGoals()
-        _ = resolvedSeed()  // so the seed button shows a packet from the start
+        pickSeedsIfNoneInHand()  // so the seed bag shows a packet from the start
         if simulation.state.farmer.inTruck {
             // Saved mid-drive: start parked, with the farmer beside the truck.
             isDriving = true
@@ -355,6 +357,7 @@ final class GameController {
         selectedSeed = id
         presentation.selectedSeed = id
         showsSeedPicker = false
+        tool = .seeds
         Haptics.selection()
     }
 
@@ -442,28 +445,29 @@ final class GameController {
         return result.outcome
     }
 
-    /// Crop seeds to plant, unless a sapling is picked.
-    var resolvedCropSeed: String? {
-        let seed = resolvedSeed()
-        return seed.flatMap { CropCatalog.crop($0) } != nil ? seed : nil
+    /// The crop whose seeds are in hand (the picked packet), unless it's a sapling.
+    var cropSeedInHand: String? {
+        guard let seed = selectedSeed, CropCatalog.crop(seed) != nil else { return nil }
+        return seed
     }
 
-    /// The tree species to plant, if a sapling is picked (and in the pouch).
-    var resolvedSapling: String? {
-        guard let seed = resolvedSeed(), seed.hasPrefix("sapling_") else { return nil }
+    /// The tree species in hand, if a sapling packet is picked (and there are some left).
+    var saplingInHand: String? {
+        guard let seed = selectedSeed, seed.hasPrefix("sapling_"), (inventoryItems[seed] ?? 0) > 0 else { return nil }
         return String(seed.dropFirst("sapling_".count))
     }
 
-    /// The packet to plant: the selected one if possible, else the first
-    /// plantable crop. (Saplings are never picked automatically.)
-    func resolvedSeed() -> String? {
-        if let selected = selectedSeed, selected.hasPrefix("sapling_"), (inventoryItems[selected] ?? 0) > 0 { return selected }
-        let plantable = farming.plantableSeeds(in: simulation.state)
-        if let selected = selectedSeed, plantable.contains(where: { $0.id == selected }) { return selected }
-        guard let first = plantable.first else { return nil }
+    /// Picks a packet when none is in hand (the first plantable crop), so the
+    /// seed bag isn't empty at the start or after buying seeds. Never switches
+    /// packets on its own while one is still in the pouch.
+    func pickSeedsIfNoneInHand() {
+        if let selected = selectedSeed {
+            let item = CropCatalog.crop(selected)?.seedItemID ?? selected
+            if (inventoryItems[item] ?? 0) > 0 { return }
+        }
+        guard let first = farming.plantableSeeds(in: simulation.state).first else { return }
         selectedSeed = first.id
         presentation.selectedSeed = first.id
-        return first.id
     }
 
     private func message(for failure: FarmFailure) -> String? {
@@ -489,29 +493,29 @@ final class GameController {
             if let crop = plot.crop, let def = crop.definition {
                 let detail: String
                 if crop.isReady {
-                    detail = "Ready to harvest! Tap to pick."
+                    detail = "Ready to harvest! Use the sickle, or tap it with your hand."
                 } else {
                     let eta = FarmForecast.secondsUntilReady(plot, now: state.worldTime, balance: balance) ?? 0
-                    let water = plot.isWet(at: state.worldTime) ? "Watered" : "Thirsty: water it to grow twice as fast"
+                    let water = plot.isWet(at: state.worldTime) ? "Watered" : "Thirsty: the watering can makes it grow twice as fast"
                     detail = "Ready in \(Format.duration(eta)) · \(water)"
                 }
                 return TileInspection(target: .tile(tile), title: def.name, detail: detail, icon: "item_\(def.id)", symbol: "leaf.fill")
             }
-            let seedName = resolvedSapling.flatMap { TreeCatalog.species($0).map { "a \($0.name.lowercased()) sapling" } }
-                ?? resolvedCropSeed.flatMap { CropCatalog.crop($0)?.name.lowercased() }
+            let seedName = saplingInHand.flatMap { TreeCatalog.species($0).map { "a \($0.name.lowercased()) sapling" } }
+                ?? cropSeedInHand.flatMap { CropCatalog.crop($0)?.name.lowercased() }
             return TileInspection(target: .tile(tile), title: "Plowed soil",
-                                  detail: seedName.map { "Tap to plant \($0)." } ?? "No seeds to plant this season.",
+                                  detail: seedName.map { "Pick the seed bag to plant \($0)." } ?? "Buy seeds at the village seed shop.",
                                   icon: nil, symbol: "square.grid.3x3.fill")
         }
         switch farming.plowProblem(at: tile, in: state, checkReach: false) {
         case nil:
-            return TileInspection(target: .tile(tile), title: "Your land", detail: "Tap to plow. Drag to plow a whole row.",
+            return TileInspection(target: .tile(tile), title: "Your land", detail: "Pick the hoe, then tap or drag to plow.",
                                   icon: nil, symbol: "square.dashed")
         case .notYourLand?:
             return TileInspection(target: .tile(tile), title: "Not your land", detail: "Land can be bought later on.",
                                   icon: nil, symbol: "signpost.right.fill")
         case .tooFar?, .tooTired?:
-            return TileInspection(target: .tile(tile), title: "Your land", detail: "Tap to plow. Drag to line up a whole row.",
+            return TileInspection(target: .tile(tile), title: "Your land", detail: "Pick the hoe, then tap or drag to plow.",
                                   icon: nil, symbol: "square.dashed")
         default:
             return TileInspection(target: .tile(tile), title: "Your land", detail: "Something's in the way.",

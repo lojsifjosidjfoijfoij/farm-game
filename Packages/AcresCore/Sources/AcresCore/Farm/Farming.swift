@@ -20,7 +20,7 @@ public enum FarmAction: Equatable, Sendable {
 }
 
 /// Why an action could not happen. The UI turns these into friendly messages.
-public enum FarmFailure: Equatable, Sendable {
+public enum FarmFailure: Error, Equatable, Sendable {
     case notYourLand
     /// The farmer has to walk over first (or get out of the truck).
     case tooFar
@@ -114,6 +114,35 @@ public struct Farming: Sendable {
         if crop.isReady { return .harvest }
         if !plot.isWet(at: state.worldTime) { return .water }
         return nil
+    }
+
+    /// What one chosen tool does on this tile, or why it can't. The tool
+    /// belt uses this: a tool only ever does its own job (the hoe never
+    /// plants, the seeds never plow). `seed` is the packet in hand.
+    public func toolAction(_ kind: FarmAction.Kind, at tile: TileCoord, in state: GameState, seed: String?,
+                           checkReach: Bool = true) -> Result<FarmAction, FarmFailure> {
+        if let problem = accessProblem(at: tile, in: state, checkReach: checkReach) { return .failure(problem) }
+        switch kind {
+        case .plow:
+            if let problem = plowProblem(at: tile, in: state, checkReach: checkReach) { return .failure(problem) }
+            return .success(.plow)
+        case .plant:
+            guard let plot = state.plots[tile] else { return .failure(.notPlowed) }
+            guard plot.crop == nil else { return .failure(.alreadyPlanted) }
+            guard let seed, let crop = CropCatalog.crop(seed) else { return .failure(.unknownCrop) }
+            let season = state.clock.date(daysPerSeason: balance.daysPerSeason).season
+            guard crop.canBePlanted(in: season) else { return .failure(.outOfSeason(cropID: seed, season: season)) }
+            guard state.inventory.count(crop.seedItemID) > 0 else { return .failure(.noSeeds(cropID: seed)) }
+            return .success(.plant(cropID: seed))
+        case .water:
+            guard let plot = state.plots[tile] else { return .failure(.notPlowed) }
+            guard let crop = plot.crop, !crop.isReady else { return .failure(.nothingToWater) }
+            guard !plot.isWet(at: state.worldTime) else { return .failure(.alreadyWet) }
+            return .success(.water)
+        case .harvest:
+            guard let crop = state.plots[tile]?.crop, crop.isReady else { return .failure(.notReady) }
+            return .success(.harvest)
+        }
     }
 
     // MARK: Actions

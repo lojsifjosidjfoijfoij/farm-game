@@ -6,6 +6,8 @@ enum WorldFeedback {
     case field(FarmOutcome, tile: TileCoord)
     case pen(RanchOutcome, penID: String)
     case tree(TreeOutcome, tile: TileCoord, position: Vec2)
+    /// A tool couldn't work this tile (a little shake).
+    case refused(TileCoord)
 }
 
 extension GameController {
@@ -164,9 +166,9 @@ extension GameController {
         case .stump:
             if let record = info.record, let age = record.stumpAge, species != nil {
                 let left = max(0, balance.stumpRegrowSeconds - age)
-                return card("Tap to clear it away. Left alone, it sprouts again in \(Format.duration(left)).", icon: "item_log")
+                return card("Clear it with the axe. Left alone, it sprouts again in \(Format.duration(left)).", icon: "item_log")
             }
-            return card("Tap to clear it away.", icon: "item_log")
+            return card("Clear it away with the axe.", icon: "item_log")
         case .sapling, .young:
             let left = max(0, (species?.growSeconds ?? 0) - (info.record?.growth ?? 0))
             return card("\(info.stage == .sapling ? "A sapling" : "Growing") · full-grown in \(Format.duration(left))", icon: sapling)
@@ -183,7 +185,7 @@ extension GameController {
                 }
                 return card(detail, icon: "item_\(fruitID)", action: .chopTree(tile), actionTitle: "Chop down")
             }
-            return card("Tap to chop: \(species.logs.lowerBound)–\(species.logs.upperBound) logs. The stump grows back.", icon: "item_log")
+            return card("Chop it with the axe: \(species.logs.lowerBound)–\(species.logs.upperBound) logs. The stump grows back.", icon: "item_log")
         }
     }
 
@@ -197,7 +199,7 @@ extension GameController {
             if let pen = PenCatalog.pen(id) { queuePenJob(pen, repair: true) }
             dismissInspection()
         case .chopTree(let tile):
-            queueTreeJob(tile, chop: true)
+            queueAxeJob(tile, force: true)
             dismissInspection()
         case .goToBed:
             goToBed()

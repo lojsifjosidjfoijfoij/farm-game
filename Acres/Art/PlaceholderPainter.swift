@@ -23,7 +23,7 @@ enum PlaceholderPainter {
         case .crop: return CropPainter.paintCrop(spec, rng: &rng)
         case .item: return CropPainter.paintItem(spec, rng: &rng) ?? RanchPainter.paint(spec, rng: &rng)
         case .animal: return AnimalPainter.paint(spec, rng: &rng)
-        case .ui: return nil  // arrives in later phases
+        case .ui: return UIIconPainter.paint(spec)
         }
     }
 

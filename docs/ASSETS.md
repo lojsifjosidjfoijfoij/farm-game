@@ -44,8 +44,8 @@ procedurally in code.
 | Animals | 70 | 0 |
 | Item icons | 37 | 0 |
 | Effects & particles | 33 | 4 |
-| User interface | 30 | 15 |
-| **Total** | **533** | **52** |
+| User interface | 33 | 15 |
+| **Total** | **536** | **52** |
 | Audio files | 57 | 0 |
 
 ## Terrain (tileable ground textures)
@@ -526,6 +526,9 @@ procedurally in code.
 | `ui_icon_hoe` | 96 × 96 | UI | — | 2 | Hoe (plow action). |
 | `ui_icon_watering_can` | 96 × 96 | UI | — | 2 | Watering can. |
 | `ui_icon_basket` | 96 × 96 | UI | — | 2 | Harvest basket. |
+| `ui_icon_hand` | 96 × 96 | UI | — | 8 | Work glove (the bare-hand tool: walk, pick, tend animals). |
+| `ui_icon_sickle` | 96 × 96 | UI | — | 8 | Sickle with a wooden handle (harvest tool). |
+| `ui_icon_axe` | 96 × 96 | UI | — | 8 | Wood axe (chop trees, clear stumps). |
 | `ui_icon_map` | 96 × 96 | UI | — | 3 | Folded map. |
 | `ui_icon_fuel` | 72 × 72 | UI | — | 3 | Jerry can (fuel gauge). |
 | `ui_icon_truck` | 96 × 96 | UI | — | 3 | Pickup truck (drive button). |

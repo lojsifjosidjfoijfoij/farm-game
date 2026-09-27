@@ -480,6 +480,8 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
             case .repaired: ranch?.repaired(penID)
             case .failed: break
             }
+        case .refused(let tile):
+            FieldEffects.refused(at: tile, in: flatLayer, assets: assets)
         case .tree(let outcome, let tile, let position):
             switch outcome {
             case .chopped(let speciesID, let logs, _):

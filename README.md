@@ -35,6 +35,24 @@ cd Packages/AcresCore
 swift test
 ```
 
+## Farming tools (new): what to test
+
+Farming no longer guesses what you mean. A **tool belt** sits above the bottom buttons:
+
+- **Hand** (glove): tap to walk, pick ripe crops and fruit, tend animals, open the house. Dragging
+  with the hand moves the map. It never plows or plants.
+- **Hoe:** tap or drag over grass on your land to plow. Only plows.
+- **Seeds** (shows the packet in hand and how many): tap or drag over plowed soil to plant that
+  packet. Tap the bag again to pick other seeds (or saplings). If the packet runs out mid-row, the
+  farmer stops and asks instead of switching seeds.
+- **Watering can:** tap or drag over crops to water them.
+- **Sickle:** tap or drag over ripe crops to harvest.
+- **Axe:** tap a grown tree to chop it, or a stump to clear it (the hand only picks fruit).
+
+With a tool in hand, a one-finger drag on the field lines up that tool's job on every tile it
+crosses (nothing else); **two fingers move and zoom the map**. A line above the belt says how to
+use the tool in hand. The tutorial now teaches picking the tools.
+
 ## Phase 7: what to test
 
 Your save carries over (format v7: the corner shop is waiting, for rent).

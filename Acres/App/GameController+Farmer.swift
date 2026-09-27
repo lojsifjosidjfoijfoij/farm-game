@@ -6,12 +6,14 @@ import AcresCore
 /// restart the farmer just stands where they were.
 struct FarmerJob: Equatable {
     enum Kind: Equatable {
-        /// Field work; the kind is re-checked on arrival (the tile may have changed).
+        /// Plow, water or harvest; re-checked on arrival (the tile may have changed).
         case field(TileCoord, FarmAction.Kind)
+        /// Planting the packet that was in hand when the job was lined up.
+        case plantCrop(TileCoord, cropID: String)
         case plantTree(TileCoord, speciesID: String)
-        /// Chop, clear or pick: decided on arrival.
+        /// The hand on a tree: pick its fruit.
         case tree(TileCoord)
-        /// A forced chop (the card's "Chop down" for fruit trees).
+        /// The axe: fell the tree or clear its stump (decided on arrival).
         case chopTree(TileCoord)
         case pen(String, repair: Bool)
         case enterTruck
@@ -27,7 +29,7 @@ struct FarmerJob: Equatable {
 
     var tile: TileCoord? {
         switch kind {
-        case .field(let tile, _), .plantTree(let tile, _), .tree(let tile), .chopTree(let tile): tile
+        case .field(let tile, _), .plantCrop(let tile, _), .plantTree(let tile, _), .tree(let tile), .chopTree(let tile): tile
         default: nil
         }
     }
@@ -60,7 +62,9 @@ extension GameController {
 
     // MARK: Lining up jobs
 
-    /// A tap in the world (tile units): line up the sensible job there, or walk.
+    /// A tap in the world (tile units). A field tool on the field does only
+    /// its own job; everything else (pens, the house, walking) works the same
+    /// whatever is in hand.
     func handleTap(at spot: Vec2) {
         guard welcome == nil, sleep == nil else { return }
         if isDriving {
@@ -71,13 +75,13 @@ extension GameController {
         let tile = TileCoord(containing: spot)
         guard map.isInside(tile) else { return }
 
-        // Fields first (they're what you tap most), then trees, pens, the farmhouse.
-        if state.plots[tile] != nil {
-            queueFieldJob(at: tile, reportProblems: true)
+        // Soil first: a field tool on a field does only its own job.
+        if let kind = tool.fieldAction, state.plots[tile] != nil {
+            queueToolJob(kind, at: tile, reportProblems: true)
             return
         }
         if let treeTile = treeTile(at: spot) {
-            queueTreeJob(treeTile)
+            if tool == .axe { queueAxeJob(treeTile) } else { queueTreeJob(treeTile) }
             return
         }
         if let pen = PenCatalog.pen(tappedAt: spot) {
@@ -88,15 +92,37 @@ extension GameController {
             inspect(.farmhouse)
             return
         }
-        if queueFieldJob(at: tile, reportProblems: false) { return }
-        // Nothing to do there: just walk over (and forget the lined-up jobs).
-        let obstacles = Obstacles(map: map, state: state)
-        guard !obstacles.isBlocked(tile) else {
-            if state.plots[tile] != nil || PropertyCatalog.property(containing: tile) != nil { inspect(.tile(tile)) }
+        if tool == .hoe, isFieldTarget(tile, for: .plow) {
+            queueToolJob(.plow, at: tile, reportProblems: true)
             return
         }
+        if let kind = tool.fieldAction, kind != .plow, farming.plowProblem(at: tile, in: state, checkReach: false) == nil {
+            // Seeds, can or sickle on bare grass of your land.
+            showMessage(kind == .plant ? "Plow it first: pick the hoe." : "Nothing planted here.")
+            onFeedback?(.refused(tile))
+            return
+        }
+        if let plot = state.plots[tile] {
+            // The bare hand picks ripe crops; anything else shows what's there.
+            if plot.crop?.isReady == true {
+                queueToolJob(.harvest, at: tile, reportProblems: true)
+            } else {
+                inspect(.tile(tile))
+            }
+            return
+        }
+        // Nothing to do there: just walk over (and forget the lined-up jobs).
+        let obstacles = Obstacles(map: map, state: state)
+        guard !obstacles.isBlocked(tile) else { return }
         cancelJobs()
         enqueue(FarmerJob(kind: .walk, spot: spot, marker: spot))
+    }
+
+    /// Where a field tool counts as working the field: soil for most tools,
+    /// any land of a property for the hoe.
+    func isFieldTarget(_ tile: TileCoord, for kind: FarmAction.Kind) -> Bool {
+        if simulation.state.plots[tile] != nil { return true }
+        return kind == .plow && PropertyCatalog.property(containing: tile) != nil
     }
 
     /// Where tapping counts as tapping the farmhouse (its picture).
@@ -119,40 +145,109 @@ extension GameController {
         }
     }
 
-    /// Lines up field work on a tile. Returns false if there's nothing to do.
+    /// Lines up one tool's job on a tile. Returns false if the tool can't
+    /// work there (and, when asked, says why).
     @discardableResult
-    func queueFieldJob(at tile: TileCoord, reportProblems: Bool, kind wanted: FarmAction.Kind? = nil) -> Bool {
+    func queueToolJob(_ kind: FarmAction.Kind, at tile: TileCoord, reportProblems: Bool) -> Bool {
         let state = simulation.state
-        if let species = resolvedSapling, let plot = state.plots[tile], plot.crop == nil, wanted == nil || wanted == .plant {
+        if kind == .plant, selectedSeed?.hasPrefix("sapling_") == true {
+            guard let species = saplingInHand else {
+                if reportProblems { outOfSeeds() }
+                return false
+            }
+            guard let plot = state.plots[tile], plot.crop == nil else {
+                if reportProblems { showMessage(state.plots[tile] == nil ? "Plow it first: pick the hoe." : "Something's already growing here.") }
+                return false
+            }
             enqueue(FarmerJob(kind: .plantTree(tile, speciesID: species), spot: tile.center, marker: tile.center))
             return true
         }
-        guard let action = farming.suggestedAction(at: tile, in: state, seed: resolvedCropSeed, checkReach: false),
-              wanted == nil || action.kind == wanted else {
-            if reportProblems {
-                // Empty soil but nothing to plant: open the seed picker.
-                if let plot = state.plots[tile], plot.crop == nil,
-                   farming.accessProblem(at: tile, in: state, checkReach: false) == nil, resolvedSeed() == nil {
-                    showMessage("No seeds you can plant in \(season.name). Pick another packet.")
-                    showsSeedPicker = true
-                } else {
-                    inspect(.tile(tile))
-                }
-            }
+        switch farming.toolAction(kind, at: tile, in: state, seed: cropSeedInHand, checkReach: false) {
+        case .success(let action):
+            let job: FarmerJob.Kind = if case .plant(let cropID) = action { .plantCrop(tile, cropID: cropID) } else { .field(tile, kind) }
+            enqueue(FarmerJob(kind: job, spot: tile.center, marker: tile.center))
+            return true
+        case .failure(let failure):
+            if reportProblems { explain(failure, kind: kind, at: tile) }
             return false
         }
-        enqueue(FarmerJob(kind: .field(tile, action.kind), spot: tile.center, marker: tile.center))
-        return true
     }
 
-    func queueTreeJob(_ tile: TileCoord, chop: Bool = false) {
+    /// Why a tool can't work a tile, in words (only for taps, not drags).
+    private func explain(_ failure: FarmFailure, kind: FarmAction.Kind, at tile: TileCoord) {
         let state = simulation.state
-        guard chop || forestry.suggestedAction(at: tile, in: state, checkReach: false) != nil else {
+        let text: String?
+        switch failure {
+        case .notYourLand: text = "This land isn't yours (yet)."
+        case .cannotPlowHere: text = "Can't plow here."
+        case .alreadyPlowed: text = state.plots[tile]?.crop == nil ? "Already plowed. Pick the seed bag to plant it." : nil
+        case .notPlowed: text = kind == .plant ? "Plow it first: pick the hoe." : "Nothing planted here."
+        case .alreadyPlanted: text = "Something's already growing here."
+        case .unknownCrop, .noSeeds:
+            outOfSeeds()
+            text = nil
+        case .outOfSeason(let crop, let season):
+            text = "\(CropCatalog.crop(crop)?.name ?? crop) can't be planted in \(season.name). Pick another packet."
+            showsSeedPicker = true
+        case .nothingToWater: text = state.plots[tile]?.crop?.isReady == true ? "It's ripe: harvest it with the sickle." : "Nothing to water here."
+        case .alreadyWet: text = "Already watered."
+        case .notReady:
+            if let plot = state.plots[tile], plot.crop != nil,
+               let eta = FarmForecast.secondsUntilReady(plot, now: state.worldTime, balance: balance) {
+                text = "Not ripe yet: ready in \(Format.duration(eta))."
+            } else {
+                text = "Nothing to harvest here."
+            }
+        case .tooFar, .tooTired, .storageFull: text = nil
+        }
+        if let text { showMessage(text) }
+        onFeedback?(.refused(tile))
+    }
+
+    /// The seed bag is empty (or nothing is picked): say so and open the picker.
+    func outOfSeeds() {
+        let name = selectedSeed.flatMap { CropCatalog.crop($0)?.name.lowercased() ?? TreeCatalog.species(String($0.dropFirst("sapling_".count)))?.name.lowercased() }
+        showMessage(name.map { "Out of \($0) seeds. Pick another packet or buy more at the seed shop." }
+                    ?? "Pick a seed packet first.")
+        showsSeedPicker = true
+    }
+
+    /// The hand on a tree: pick ripe fruit (chopping takes the axe).
+    func queueTreeJob(_ tile: TileCoord) {
+        let state = simulation.state
+        guard forestry.suggestedAction(at: tile, in: state, checkReach: false) == .pickFruit else {
             inspect(.tree(tile))
             return
         }
-        let spot = forestry.workSpot(for: tile, in: state)
-        enqueue(FarmerJob(kind: chop ? .chopTree(tile) : .tree(tile), spot: spot, marker: forestry.position(of: tile)))
+        enqueue(FarmerJob(kind: .tree(tile), spot: forestry.workSpot(for: tile, in: state), marker: forestry.position(of: tile)))
+    }
+
+    /// The axe on a tree: chop it down, or clear its stump.
+    func queueAxeJob(_ tile: TileCoord, force: Bool = false) {
+        let state = simulation.state
+        guard force || axeAction(at: tile) != nil else {
+            if let info = forestry.tree(at: tile, in: state), info.stage == .sapling || info.stage == .young {
+                showMessage("Let it grow first.")
+            } else if forestry.accessProblem(at: tile, in: state, checkReach: false) == .notYourLand {
+                showMessage("This tree isn't on your land.")
+            } else {
+                inspect(.tree(tile))
+            }
+            return
+        }
+        enqueue(FarmerJob(kind: .chopTree(tile), spot: forestry.workSpot(for: tile, in: state), marker: forestry.position(of: tile)))
+    }
+
+    /// What the axe does to a tree: clear a stump or fell a grown tree.
+    func axeAction(at tile: TileCoord, checkReach: Bool = false) -> TreeAction? {
+        let state = simulation.state
+        guard forestry.accessProblem(at: tile, in: state, checkReach: checkReach) == nil,
+              let info = forestry.tree(at: tile, in: state) else { return nil }
+        switch info.stage {
+        case .stump: return .clearStump
+        case .mature: return .chop
+        case .sapling, .young: return nil
+        }
     }
 
     func queuePenJob(_ pen: PenDefinition, repair: Bool = false) {
@@ -207,23 +302,23 @@ extension GameController {
 
     // MARK: Drag to line up a row
 
-    /// Starts a drag on the field: returns true if it lines up work (the
-    /// drag then keeps lining up the same kind of job).
+    /// Starts a drag: with a field tool on the field, the drag lines up that
+    /// tool's job on every tile it crosses (and nothing else). Returns false
+    /// otherwise (the drag moves the map).
     func beginPaint(at tile: TileCoord) -> Bool {
-        guard welcome == nil, sleep == nil, !isDriving else { return false }
-        let state = simulation.state
-        if resolvedSapling != nil, state.plots[tile]?.crop == nil, state.plots[tile] != nil {
-            paintKind = .plant
-            return queueFieldJob(at: tile, reportProblems: false, kind: .plant)
+        guard welcome == nil, sleep == nil, !isDriving, let kind = tool.fieldAction, isFieldTarget(tile, for: kind) else { return false }
+        if kind == .plant, cropSeedInHand == nil, saplingInHand == nil {
+            outOfSeeds()
+            return false
         }
-        guard let action = farming.suggestedAction(at: tile, in: state, seed: resolvedCropSeed, checkReach: false) else { return false }
-        paintKind = action.kind
-        return queueFieldJob(at: tile, reportProblems: false, kind: action.kind)
+        paintKind = kind
+        queueToolJob(kind, at: tile, reportProblems: false)
+        return true
     }
 
     func paint(_ tile: TileCoord) {
         guard let kind = paintKind else { return }
-        queueFieldJob(at: tile, reportProblems: false, kind: kind)
+        queueToolJob(kind, at: tile, reportProblems: false)
     }
 
     func endPaint() {
@@ -341,7 +436,7 @@ extension GameController {
         switch job.kind {
         case .field(_, .plow): .hoe
         case .field(_, .water): .can
-        case .tree, .chopTree: .axe
+        case .chopTree: .axe
         default: .hands
         }
     }
@@ -349,10 +444,11 @@ extension GameController {
     private func workDuration(_ job: FarmerJob) -> TimeInterval {
         switch job.kind {
         case .field(_, .plow): 0.9
-        case .field(_, .plant): 0.5
+        case .field(_, .plant), .plantCrop: 0.5
         case .field(_, .water), .field(_, .harvest): 0.6
         case .plantTree: 1.0
-        case .tree, .chopTree: 1.6
+        case .chopTree: 1.6
+        case .tree: 0.9
         case .pen: 1.1
         default: 0.3
         }
@@ -363,22 +459,33 @@ extension GameController {
         let state = simulation.state
         switch job.kind {
         case .field(let tile, let kind):
-            if kind == .plant, let species = resolvedSapling, state.plots[tile]?.crop == nil {
-                performTree(.plant(speciesID: species), at: tile)
-                return
-            }
-            guard let action = farming.suggestedAction(at: tile, in: state, seed: resolvedCropSeed),
-                  action.kind == kind else { return }  // the tile changed meanwhile
+            // Re-checked on arrival: the tile may have changed meanwhile.
+            guard case .success(let action) = farming.toolAction(kind, at: tile, in: state, seed: nil) else { return }
             let outcome = perform(action, at: tile, painting: true)
             onFeedback?(.field(outcome, tile: tile))
             if case .failed(.tooTired) = outcome { tooTired() }
+        case .plantCrop(let tile, let cropID):
+            switch farming.toolAction(.plant, at: tile, in: state, seed: cropID) {
+            case .success(let action):
+                let outcome = perform(action, at: tile, painting: true)
+                onFeedback?(.field(outcome, tile: tile))
+                if case .failed(.tooTired) = outcome { tooTired() }
+            case .failure(.noSeeds), .failure(.outOfSeason):
+                // The packet ran out: stop planting rather than switch seeds.
+                jobs.removeAll { if case .plantCrop = $0.kind { true } else { false } }
+                jobsChanged()
+                outOfSeeds()
+            case .failure:
+                break
+            }
         case .plantTree(let tile, let species):
             if case .failed(.tooTired) = performTree(.plant(speciesID: species), at: tile) { tooTired() }
         case .tree(let tile):
-            guard let action = forestry.suggestedAction(at: tile, in: state) else { return }
-            if case .failed(.tooTired) = performTree(action, at: tile) { tooTired() }
+            guard forestry.suggestedAction(at: tile, in: state) == .pickFruit else { return }
+            if case .failed(.tooTired) = performTree(.pickFruit, at: tile) { tooTired() }
         case .chopTree(let tile):
-            if case .failed(.tooTired) = performTree(.chop, at: tile) { tooTired() }
+            guard let action = axeAction(at: tile, checkReach: true) else { return }
+            if case .failed(.tooTired) = performTree(action, at: tile) { tooTired() }
         case .pen(let id, let repair):
             guard let pen = PenCatalog.pen(id) else { return }
             let action = repair ? .repair : ranching.suggestedAction(for: pen, in: state)

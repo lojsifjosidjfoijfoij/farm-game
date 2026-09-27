@@ -81,6 +81,13 @@ struct HUDView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
+            if !game.isDriving {
+                ToolBelt(game: game)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 8)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+
             HStack(alignment: .bottom, spacing: 12) {
                 #if DEBUG
                 debugButton
@@ -89,7 +96,6 @@ struct HUDView: View {
                 if game.isDriving { mapMenu }
                 Spacer()
                 if !game.isDriving && (game.isBedtime || game.tutorialFocus == .bedButton) { bedButton }
-                if !game.isDriving { seedButton }
                 inventoryButton
             }
             .padding(.horizontal, 16)
@@ -98,6 +104,7 @@ struct HUDView: View {
         .animation(.spring(duration: 0.35), value: game.banner)
         .animation(.spring(duration: 0.35), value: game.inspection)
         .animation(.spring(duration: 0.35), value: game.showsSeedPicker)
+        .animation(.spring(duration: 0.25), value: game.tool)
         .animation(.spring(duration: 0.35), value: game.nearbyShop)
         .animation(.spring(duration: 0.35), value: game.nearbyClient)
         .animation(.spring(duration: 0.35), value: game.nearbyStore)
@@ -420,35 +427,6 @@ struct HUDView: View {
         .accessibilityLabel("Go to bed")
     }
 
-    /// Shows the packet that tapping empty soil plants.
-    private var seedButton: some View {
-        Button {
-            Haptics.tap()
-            game.showsSeedPicker.toggle()
-        } label: {
-            ZStack(alignment: .topTrailing) {
-                Group {
-                    if let packet = game.selectedPacket {
-                        ItemIcon(name: packet.icon, size: 40)
-                    } else {
-                        Image(systemName: "leaf.fill")
-                            .font(.system(size: 24, weight: .semibold))
-                            .foregroundStyle(Theme.leaf)
-                    }
-                }
-                .frame(width: 60, height: 60)
-                .background(Circle().fill(Theme.parchment.opacity(0.95)).shadow(color: .black.opacity(0.2), radius: 6, y: 3))
-                .overlay(Circle().strokeBorder(game.showsSeedPicker ? Theme.leaf : Theme.border, lineWidth: game.showsSeedPicker ? 2.5 : 1))
-
-                if let packet = game.selectedPacket {
-                    CountBadge(count: packet.count)
-                }
-            }
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Seeds")
-    }
-
     private var inventoryButton: some View {
         Button {
             Haptics.tap()
@@ -578,6 +556,77 @@ struct InspectionCard: View {
             .hudPanel(cornerRadius: 16)
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// The farmer's tools. The one in hand is raised and ringed; taps and drags
+/// on the field only do its job. A short hint says how to use it.
+struct ToolBelt: View {
+    let game: GameController
+
+    var body: some View {
+        VStack(spacing: 6) {
+            if game.tool != .hand {
+                Text(game.tool.hint)
+                    .font(Theme.label(13, weight: .semibold))
+                    .foregroundStyle(Theme.ink)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background(Capsule().fill(Theme.parchment.opacity(0.92)))
+                    .transition(.opacity)
+                    .id(game.tool)
+            }
+            HStack(spacing: 6) {
+                ForEach(BeltTool.allCases) { tool in
+                    button(tool)
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(
+                Capsule().fill(Theme.parchment.opacity(0.95)).shadow(color: .black.opacity(0.2), radius: 6, y: 3)
+            )
+            .overlay(Capsule().strokeBorder(Theme.border, lineWidth: 1))
+        }
+    }
+
+    private func button(_ tool: BeltTool) -> some View {
+        let selected = game.tool == tool
+        return Button {
+            game.selectTool(tool)
+        } label: {
+            ZStack(alignment: .topTrailing) {
+                icon(tool)
+                    .frame(width: 44, height: 44)
+                    .background(Circle().fill(selected ? Theme.gold.opacity(0.35) : Color.clear))
+                    .overlay(Circle().strokeBorder(selected ? Theme.gold : Color.clear, lineWidth: 2.5))
+                    .scaleEffect(selected ? 1.1 : 1)
+                    .offset(y: selected ? -3 : 0)
+                if tool == .seeds, let packet = game.selectedPacket {
+                    CountBadge(count: packet.count)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .pulsing(game.tutorialFocus == .tool(tool))
+        .accessibilityLabel(tool == .seeds ? "Seeds" : tool.name)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    @ViewBuilder
+    private func icon(_ tool: BeltTool) -> some View {
+        if tool == .seeds {
+            if let packet = game.selectedPacket {
+                ItemIcon(name: packet.icon, size: 34)
+            } else {
+                Image(systemName: "leaf.fill")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(Theme.leaf)
+            }
+        } else if let name = tool.icon {
+            ItemIcon(name: name, size: 34)
+        }
     }
 }
 

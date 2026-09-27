@@ -288,6 +288,49 @@ final class FarmingTests: XCTestCase {
         XCTAssertNil(farming.suggestedAction(at: TileCoord(3, 3), in: sim.state, seed: "wheat", checkReach: false))
     }
 
+    func testEachToolOnlyDoesItsOwnJob() {
+        var sim = newSim()
+        let farming = Farming(map: map, balance: sim.balance)
+        let tile = plowableTiles(1, in: sim)[0]
+        func tool(_ kind: FarmAction.Kind, seed: String? = "wheat") -> Result<FarmAction, FarmFailure> {
+            farming.toolAction(kind, at: tile, in: sim.state, seed: seed, checkReach: false)
+        }
+
+        // Grass: only the hoe works; the seeds never plow.
+        XCTAssertEqual(tool(.plow), .success(.plow))
+        XCTAssertEqual(tool(.plant), .failure(.notPlowed))
+        XCTAssertEqual(tool(.water), .failure(.notPlowed))
+        XCTAssertEqual(tool(.harvest), .failure(.notReady))
+
+        // Plowed soil: the hoe does nothing more; seeds plant the packet in hand.
+        _ = sim.work(.plow, at: tile, on: map)
+        XCTAssertEqual(tool(.plow), .failure(.alreadyPlowed))
+        XCTAssertEqual(tool(.plant), .success(.plant(cropID: "wheat")))
+        XCTAssertEqual(tool(.plant, seed: nil), .failure(.unknownCrop))
+        XCTAssertEqual(tool(.plant, seed: "pumpkin"), .failure(.outOfSeason(cropID: "pumpkin", season: .spring)))
+        XCTAssertEqual(tool(.water), .failure(.nothingToWater))
+
+        // A seedling: water it once.
+        _ = sim.work(.plant(cropID: "wheat"), at: tile, on: map)
+        XCTAssertEqual(tool(.plant), .failure(.alreadyPlanted))
+        XCTAssertEqual(tool(.water), .success(.water))
+        _ = sim.work(.water, at: tile, on: map)
+        XCTAssertEqual(tool(.water), .failure(.alreadyWet))
+        XCTAssertEqual(tool(.harvest), .failure(.notReady))
+
+        sim.advance(by: GameTime.day + 1, mode: .live)
+        XCTAssertEqual(tool(.harvest), .success(.harvest))
+        XCTAssertEqual(tool(.water), .failure(.nothingToWater))
+
+        XCTAssertEqual(farming.toolAction(.plow, at: TileCoord(3, 3), in: sim.state, seed: nil, checkReach: false),
+                       .failure(.notYourLand))
+        sim.modify { $0.inventory.remove("seeds_carrot", $0.inventory.count("seeds_carrot")) }
+        let empty = TileCoord(tile.x + 1, tile.y)
+        _ = sim.work(.plow, at: empty, on: map)
+        XCTAssertEqual(farming.toolAction(.plant, at: empty, in: sim.state, seed: "carrot", checkReach: false),
+                       .failure(.noSeeds(cropID: "carrot")))
+    }
+
     func testPlantableSeedsFollowSeasonAndPouch() {
         let sim = newSim()
         let farming = Farming(map: map, balance: sim.balance)

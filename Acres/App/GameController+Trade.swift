@@ -36,6 +36,8 @@ extension GameController {
             Haptics.success()
             let name = CropCatalog.crop(cropID)?.name.lowercased() ?? cropID
             showMessage("Bought \(count) \(name) seeds for \(cost) coins.")
+            refreshInventory()
+            pickSeedsIfNoneInHand()
             advanceTutorial(.boughtSeeds)
         }
     }

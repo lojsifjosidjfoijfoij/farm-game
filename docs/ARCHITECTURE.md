@@ -255,6 +255,11 @@ that *starts on a field* lines up a row of jobs; a drag anywhere else pans; two 
 and zoom. While driving, taps set the destination and drags look around. (Phases 1–4 had no
 avatar and farmed wherever the truck was parked; Phase 5 replaced that with the farmer.)
 
+
+**Tool belt (after Phase 7).** Farming input is explicit: the player picks a tool (`BeltTool`, app
+side) and taps or drags only ever do that tool's job, checked by `Farming.toolAction` (core).
+The hand walks, picks and tends animals; one-finger drags with a field tool paint jobs, two
+fingers move the camera. Plant jobs carry the packet that was in hand when they were lined up.
 ## Adding content
 
 - **Map objects:** `HomeValleyMap.swift` (`place` for landmarks, `scatter` for nature). Every

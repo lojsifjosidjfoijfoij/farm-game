@@ -6,7 +6,8 @@ enum TutorialFocus: Equatable {
     case none
     case driveButton
     case basket
-    case seedButton
+    /// A tool on the belt.
+    case tool(BeltTool)
     case shopButton
     case bedButton
 }
@@ -53,21 +54,26 @@ extension GameController {
         switch tutorial.step {
         case .welcome:
             TutorialCard(title: "Welcome to your farm!",
-                         body: "This old place is yours now. Tap where you want your farmer to go, and they'll walk over and do the work.",
+                         body: "This old place is yours now. Tap where you want your farmer to go. Pick a tool on your belt, and they'll walk over and use it.",
                          button: "Let's go")
         case .plow:
-            TutorialCard(title: "Plow the land", body: "Tap the glowing spot inside the fence. Your farmer walks over and plows it.", button: nil)
+            TutorialCard(title: "Plow the land",
+                         body: tool == .hoe ? "Now tap the glowing spot inside the fence. Your farmer walks over and plows it."
+                             : "Pick the hoe on your tool belt (it's glowing).", button: nil)
         case .plowMore:
             TutorialCard(title: "Plow a row",
-                         body: "Drag your finger across the ground to line up a whole row of jobs. (\(tutorial.progress)/\(TutorialState.rowLength))",
+                         body: "With the hoe in hand, drag your finger across the grass to line up a whole row. Two fingers move the map. (\(tutorial.progress)/\(TutorialState.rowLength))",
                          button: nil)
         case .plant:
-            TutorialCard(title: "Plant seeds", body: "Tap the plowed soil to plant. The seed button shows which seeds you'll plant.", button: nil)
+            TutorialCard(title: "Plant seeds",
+                         body: "Pick the seed bag, then tap or drag over the plowed soil. Tap the bag again to choose other seeds.", button: nil)
         case .water:
-            TutorialCard(title: "Water it", body: "Tap the seedlings to water them. Watered crops grow twice as fast, and a watering lasts a day.", button: nil)
+            TutorialCard(title: "Water it",
+                         body: "Pick the watering can and tap or drag over the seedlings. Watered crops grow twice as fast, and a watering lasts a day.",
+                         button: nil)
         case .harvest:
             TutorialCard(title: "Sleep, then harvest",
-                         body: "Wheat takes a day to grow. Tap the bed to sleep until morning: the farm keeps growing. Harvest the wheat when it sparkles.",
+                         body: "Wheat takes a day to grow. Tap the bed to sleep until morning: the farm keeps growing. When it sparkles, harvest it with the sickle.",
                          button: nil)
         case .load:
             TutorialCard(title: "Load the truck", body: "Open the basket and tap Load all to put your harvest in the truck.", button: nil)
@@ -90,7 +96,12 @@ extension GameController {
 
     var tutorialFocus: TutorialFocus {
         switch tutorial.step {
-        case .harvest: simulation.state.plots.byTile.values.contains { $0.crop?.isReady == true } ? .none : .bedButton
+        case .plow, .plowMore: tool == .hoe ? .none : .tool(.hoe)
+        case .plant: tool == .seeds ? .none : .tool(.seeds)
+        case .water: tool == .can ? .none : .tool(.can)
+        case .harvest:
+            simulation.state.plots.byTile.values.contains { $0.crop?.isReady == true }
+                ? (tool == .sickle || tool == .hand ? .none : .tool(.sickle)) : .bedButton
         case .load: showsInventory ? .none : .basket
         case .drive: isDriving ? .none : .driveButton
         case .sell: nearbyShop?.kind == .market ? .shopButton : (isDriving ? .none : .driveButton)
