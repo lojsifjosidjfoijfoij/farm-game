@@ -10,6 +10,8 @@ public enum ItemCategory: String, Sendable, CaseIterable {
     case feed
     case seed
     case sapling
+    /// Things you place on the farm (sprinklers).
+    case machine
 
     public var title: String {
         switch self {
@@ -20,17 +22,18 @@ public enum ItemCategory: String, Sendable, CaseIterable {
         case .feed: "Animal feed"
         case .seed: "Seeds"
         case .sapling: "Saplings"
+        case .machine: "Machines"
         }
     }
 
     /// Seeds and saplings live in the seed pouch and don't take storage space.
-    public var usesStorage: Bool { self != .seed && self != .sapling }
+    public var usesStorage: Bool { self != .seed && self != .sapling && self != .machine }
 
     /// Things markets buy.
     public var isSellable: Bool {
         switch self {
         case .crop, .fruit, .animalProduct, .wood: true
-        case .feed, .seed, .sapling: false
+        case .feed, .seed, .sapling, .machine: false
         }
     }
 }
@@ -70,6 +73,10 @@ public enum ItemCatalog {
         for crop in CropCatalog.all {
             items.append(ItemDefinition(id: crop.seedItemID, name: "\(crop.name) seeds", plural: "\(crop.name.lowercased()) seeds",
                                         category: .seed, icon: "item_seeds_\(crop.id)", value: crop.seedCost...crop.seedCost))
+        }
+        for machine in MachineCatalog.all {
+            items.append(ItemDefinition(id: machine.id, name: machine.name, plural: machine.plural, category: .machine,
+                                        icon: machine.icon, value: machine.price...machine.price))
         }
         for tree in TreeCatalog.all {
             items.append(ItemDefinition(id: tree.saplingItemID, name: "\(tree.name) sapling",

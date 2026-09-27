@@ -23,6 +23,7 @@ struct BusinessView: View {
                         switch game.businessTab {
                         case .orders: orders
                         case .shop: shop
+                        case .farm: FarmTabView(game: game)
                         case .money: money
                         }
                     }

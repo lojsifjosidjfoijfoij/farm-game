@@ -198,7 +198,23 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   walking in off the street for each sale (visual only, a few at a time).
 - Rent is one more line in `Bank.weeklyBills`.
 
-## Saves
+## Growing the farm (Phase 8)
+
+- **Land** (`PropertyCatalog.forSale`): parcels with a price and a level. Ownership is just
+  `ownedProperties`; every farming, tree and pen rule already checks it, so bought land works at
+  once. Parcels never overlap (tested).
+- **Upgrades** (`EstateState`): storage and truck-bed levels. Capacities come from
+  `GameState.storageCapacity(_:)` / `truckCapacity(_:)`; level 0 is the base `Balance` value.
+  Storage buildings stand in `EstateLayout` spots off the fields and block the truck
+  (`Obstacles.built`).
+- **Sprinklers** (`MachineCatalog`, `SprinklerSystem`): bought into the pouch, placed on free
+  grass of your land. The system runs first and for the whole span, topping up `wetUntil` of
+  covered plots past its end, so `CropSystem` treats them as wet, online and offline.
+- **Farmhands** (`Worker`, `WorkerSystem`): work while the calendar runs during work hours. Work
+  builds up in `progress`; each whole unit does the most useful task nearest to them
+  (fields: harvest, then water; animals: collect, water, feed) through the same rules as the
+  farmer (`byWorker`: no reach, energy or XP). The app's `EstateRenderer` walks their sprite to
+  the last task's spot. Wages are a line in `Bank.weeklyBills`.
 
 - File: `Application Support/Saves/farm.json` plus `farm.backup.json` (the previous save).
   Writes are atomic; a crash can never lose both.
@@ -220,7 +236,7 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   drive, sell) is new to existing players; it can be skipped in one tap. v4 (Phase 4: `ranch`,
   `woodland`). v5 (Phase 5: `farmer`, `goals`). v6 (Phase 6: `contracts`, `finance`; a migrated
   save starts its books in the current week and gets fresh orders on the first step). v7 (Phase 7:
-  `store`, not rented).
+  `store`, not rented). v8 (Phase 8: `estate`: upgrades, sprinklers, farmhands).
 
 ## Rendering
 

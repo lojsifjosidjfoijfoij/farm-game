@@ -8,6 +8,8 @@ enum WorldFeedback {
     case tree(TreeOutcome, tile: TileCoord, position: Vec2)
     /// A tool couldn't work this tile (a little shake).
     case refused(TileCoord)
+    /// A sprinkler was just set up.
+    case sprinkler(TileCoord)
 }
 
 extension GameController {
@@ -203,6 +205,12 @@ extension GameController {
             dismissInspection()
         case .goToBed:
             goToBed()
+        case .pickUpSprinkler(let tile):
+            pickUpSprinkler(at: tile)
+        case .showFarm:
+            dismissInspection()
+            businessTab = .farm
+            showsBusiness = true
         }
     }
 

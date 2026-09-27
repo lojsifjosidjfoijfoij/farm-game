@@ -190,7 +190,7 @@ public struct Trading: Sendable {
         guard count > 0 else { throw .unknownItem }
         let cost = balance.feedPrice * count
         guard state.money >= cost else { throw .notEnoughMoney }
-        guard state.inventory.storageUsed + count <= balance.storageCapacity else { throw .storageFull }
+        guard state.inventory.storageUsed + count <= state.storageCapacity(balance) else { throw .storageFull }
         state.money -= cost
         state.finance.spend(cost, LedgerCategory.animals)
         state.inventory.add("animal_feed", count)
@@ -283,7 +283,7 @@ public struct Trading: Sendable {
     /// Moves items from farm storage into the truck bed; returns how many moved.
     public func load(_ itemID: String, count: Int, state: inout GameState) throws(TradeFailure) -> Int {
         guard truckIsAtFarm(state) else { throw .notAtFarm }
-        let room = balance.truckCargoCapacity - state.truck.cargoCount
+        let room = state.truckCapacity(balance) - state.truck.cargoCount
         guard room > 0 else { throw .cargoFull }
         let amount = min(count, room, state.inventory.count(itemID))
         guard amount > 0 else { throw .unknownItem }
@@ -299,10 +299,10 @@ public struct Trading: Sendable {
             .filter { $0.category.isSellable && state.inventory.count($0.id) > 0 }
             .sorted { $0.value.upperBound != $1.value.upperBound ? $0.value.upperBound > $1.value.upperBound : $0.id < $1.id }
         guard !goods.isEmpty else { throw .unknownItem }
-        guard state.truck.cargoCount < balance.truckCargoCapacity else { throw .cargoFull }
+        guard state.truck.cargoCount < state.truckCapacity(balance) else { throw .cargoFull }
         var moved = 0
         for item in goods {
-            let room = balance.truckCargoCapacity - state.truck.cargoCount
+            let room = state.truckCapacity(balance) - state.truck.cargoCount
             if room <= 0 { break }
             moved += try load(item.id, count: room, state: &state)
         }
@@ -312,7 +312,7 @@ public struct Trading: Sendable {
     /// Moves items from the truck back into farm storage.
     public func unload(_ itemID: String, count: Int, state: inout GameState) throws(TradeFailure) -> Int {
         guard truckIsAtFarm(state) else { throw .notAtFarm }
-        let room = balance.storageCapacity - state.inventory.storageUsed
+        let room = state.storageCapacity(balance) - state.inventory.storageUsed
         guard room > 0 else { throw .storageFull }
         let amount = min(count, room, state.truck.cargo.count(itemID))
         guard amount > 0 else { throw .unknownItem }

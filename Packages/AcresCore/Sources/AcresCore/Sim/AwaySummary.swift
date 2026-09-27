@@ -72,7 +72,8 @@ public struct AwaySummary: Equatable, Sendable {
         if fruit > 0 { lines.append(.fruitReady(count: fruit)) }
         if treesGrown > 0 { lines.append(.treesGrown(count: treesGrown)) }
         let used = state.inventory.storageUsed
-        if used >= balance.storageCapacity { lines.append(.storageFull(used: used, capacity: balance.storageCapacity)) }
+        let capacity = state.storageCapacity(balance)
+        if used >= capacity { lines.append(.storageFull(used: used, capacity: capacity)) }
         if report.wasCapped { lines.append(.capped(balance.offlineCatchUpCap)) }
         if lines.isEmpty { lines.append(.nothingNew) }
         return AwaySummary(awayDuration: report.awayDuration, lines: lines)

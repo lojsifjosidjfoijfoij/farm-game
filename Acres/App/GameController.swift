@@ -31,12 +31,16 @@ enum InspectionTarget: Equatable {
     case pen(String)
     case tree(TileCoord)
     case farmhouse
+    case sprinkler(TileCoord)
 }
 
 enum InspectionAction: Equatable {
     case repairPen(String)
     case chopTree(TileCoord)
     case goToBed
+    case pickUpSprinkler(TileCoord)
+    /// Opens the phone's Farm tab (land for sale).
+    case showFarm
 }
 
 /// A packet in the seed picker: crop seeds or a sapling.
@@ -123,6 +127,11 @@ final class GameController {
     /// The shop the truck (or the farmer) is at, if any.
     var nearbyStore: StoreDefinition?
     var showsStore = false
+    /// Upgrades, machines and farmhands, and the land owned (copied when they change).
+    var estateState = EstateState()
+    var ownedLand: [String] = []
+    /// A machine being placed: the next tap on your land puts it there.
+    var placingMachine: String?
 
     // MARK: The farmer and the clock (observed)
 
@@ -196,7 +205,10 @@ final class GameController {
 
     var balance: Balance { simulation.balance }
     var farming: Farming { Farming(map: map, balance: simulation.balance) }
-    var storageCapacity: Int { simulation.balance.storageCapacity }
+    var storageCapacity: Int { simulation.state.storageCapacity(simulation.balance) }
+    var truckCapacity: Int { simulation.state.truckCapacity(simulation.balance) }
+    /// Tiles under the farm's own buildings (for routes and the truck).
+    var builtTiles: Set<TileCoord> { EstateLayout.blockedTiles(simulation.state.estate) }
 
     // MARK: Lifecycle
 
@@ -414,6 +426,7 @@ final class GameController {
         case .farmhouse: farmhouseInspection
         case .pen(let id): penInspection(id)
         case .tree(let tile): treeInspection(tile)
+        case .sprinkler(let tile): sprinklerInspection(tile)
         }
     }
 
@@ -512,7 +525,8 @@ final class GameController {
             return TileInspection(target: .tile(tile), title: "Your land", detail: "Pick the hoe, then tap or drag to plow.",
                                   icon: nil, symbol: "square.dashed")
         case .notYourLand?:
-            return TileInspection(target: .tile(tile), title: "Not your land", detail: "Land can be bought later on.",
+            return landInspection(tile)
+                ?? TileInspection(target: .tile(tile), title: "Not your land", detail: "This belongs to someone else.",
                                   icon: nil, symbol: "signpost.right.fill")
         case .tooFar?, .tooTired?:
             return TileInspection(target: .tile(tile), title: "Your land", detail: "Pick the hoe, then tap or drag to plow.",
@@ -895,6 +909,7 @@ final class GameController {
         openShop = nil
         showsBusiness = false
         showsStore = false
+        placingMachine = nil
         weeklyReport = nil
         morningNews = []
         sleep = nil

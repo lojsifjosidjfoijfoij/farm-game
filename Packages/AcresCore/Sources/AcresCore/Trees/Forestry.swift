@@ -196,7 +196,7 @@ public struct Forestry: Sendable {
         guard info.stage == .mature, let species = info.species else { return fail(.notGrown) }
         var rng = state.rng
         let logs = roll(species.logs, &rng)
-        guard state.inventory.storageUsed + logs <= balance.storageCapacity else { return fail(.storageFull) }
+        guard state.inventory.storageUsed + logs <= state.storageCapacity(balance) else { return fail(.storageFull) }
         state.rng = rng
         state.inventory.add("log", logs)
         if info.isWild { state.woodland.hiddenMapTrees.insert(tile) }
@@ -221,7 +221,7 @@ public struct Forestry: Sendable {
         guard record.hasFruit else { return fail(.noFruit) }
         var rng = state.rng
         let amount = roll(species.fruitYield, &rng)
-        guard state.inventory.storageUsed + amount <= balance.storageCapacity else { return fail(.storageFull) }
+        guard state.inventory.storageUsed + amount <= state.storageCapacity(balance) else { return fail(.storageFull) }
         state.rng = rng
         state.inventory.add(fruitID, amount)
         record.fruit = 0

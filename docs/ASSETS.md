@@ -38,14 +38,14 @@ procedurally in code.
 | Trees | 40 | 4 |
 | Nature props | 14 | 10 |
 | Buildings | 56 | 3 |
-| Props | 32 | 10 |
+| Props | 33 | 10 |
 | Vehicles | 116 | 1 |
-| Characters | 60 | 0 |
+| Characters | 123 | 0 |
 | Animals | 70 | 0 |
-| Item icons | 37 | 0 |
+| Item icons | 39 | 0 |
 | Effects & particles | 33 | 4 |
 | User interface | 33 | 15 |
-| **Total** | **536** | **52** |
+| **Total** | **602** | **52** |
 | Audio files | 57 | 0 |
 
 ## Terrain (tileable ground textures)
@@ -252,6 +252,7 @@ procedurally in code.
 | `prop_sign_sold` | 115 × 166 | 0.9 × 1.3 | 0.05 | 6 | The same sign with a 'Sold' banner. |
 | `prop_scarecrow` | 128 × 218 | 1 × 1.7 | 0.05 | 2 | Friendly scarecrow with a straw hat. |
 | `prop_sprinkler` | 77 × 77 | 0.6 × 0.6 | 0.2 | 5 | Brass field sprinkler head. |
+| `prop_sprinkler_pro` | 102 × 115 | 0.8 × 0.9 | 0.15 | 8 | Big rotating sprinkler on a green stand. |
 | `prop_water_trough` | 192 × 102 | 1.5 × 0.8 | 0.15 | 4 | Animal water trough, full of fresh water. |
 | `prop_water_trough_empty` | 192 × 102 | 1.5 × 0.8 | 0.15 | 4 | The same trough, empty and dry. |
 | `prop_sign_repair` | 115 × 166 | 0.9 × 1.3 | 0.05 | 4 | Little wooden sign with a hammer on it: this pen can be repaired. |
@@ -323,6 +324,69 @@ procedurally in code.
 | `character_farmer_side_hands2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), picking something up / sowing. |
 | `character_farmer_side_axe1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), raising an axe. |
 | `character_farmer_side_axe2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), swinging an axe. |
+| `character_worker1_down_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, facing the camera, standing relaxed. |
+| `character_worker1_down_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, facing the camera, walking, left foot forward. |
+| `character_worker1_down_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, facing the camera, walking, right foot forward. |
+| `character_worker1_down_can1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, facing the camera, tilting a watering can. |
+| `character_worker1_down_can2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, facing the camera, pouring from a watering can. |
+| `character_worker1_down_hands1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, facing the camera, bending down to the ground. |
+| `character_worker1_down_hands2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, facing the camera, picking something up / sowing. |
+| `character_worker1_up_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, seen from behind, standing relaxed. |
+| `character_worker1_up_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, seen from behind, walking, left foot forward. |
+| `character_worker1_up_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, seen from behind, walking, right foot forward. |
+| `character_worker1_up_can1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, seen from behind, tilting a watering can. |
+| `character_worker1_up_can2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, seen from behind, pouring from a watering can. |
+| `character_worker1_up_hands1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, seen from behind, bending down to the ground. |
+| `character_worker1_up_hands2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, seen from behind, picking something up / sowing. |
+| `character_worker1_side_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, facing left (mirrored for right), standing relaxed. |
+| `character_worker1_side_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, facing left (mirrored for right), walking, left foot forward. |
+| `character_worker1_side_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, facing left (mirrored for right), walking, right foot forward. |
+| `character_worker1_side_can1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, facing left (mirrored for right), tilting a watering can. |
+| `character_worker1_side_can2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, facing left (mirrored for right), pouring from a watering can. |
+| `character_worker1_side_hands1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, facing left (mirrored for right), bending down to the ground. |
+| `character_worker1_side_hands2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, facing left (mirrored for right), picking something up / sowing. |
+| `character_worker2_down_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, facing the camera, standing relaxed. |
+| `character_worker2_down_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, facing the camera, walking, left foot forward. |
+| `character_worker2_down_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, facing the camera, walking, right foot forward. |
+| `character_worker2_down_can1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, facing the camera, tilting a watering can. |
+| `character_worker2_down_can2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, facing the camera, pouring from a watering can. |
+| `character_worker2_down_hands1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, facing the camera, bending down to the ground. |
+| `character_worker2_down_hands2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, facing the camera, picking something up / sowing. |
+| `character_worker2_up_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, seen from behind, standing relaxed. |
+| `character_worker2_up_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, seen from behind, walking, left foot forward. |
+| `character_worker2_up_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, seen from behind, walking, right foot forward. |
+| `character_worker2_up_can1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, seen from behind, tilting a watering can. |
+| `character_worker2_up_can2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, seen from behind, pouring from a watering can. |
+| `character_worker2_up_hands1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, seen from behind, bending down to the ground. |
+| `character_worker2_up_hands2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, seen from behind, picking something up / sowing. |
+| `character_worker2_side_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, facing left (mirrored for right), standing relaxed. |
+| `character_worker2_side_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, facing left (mirrored for right), walking, left foot forward. |
+| `character_worker2_side_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, facing left (mirrored for right), walking, right foot forward. |
+| `character_worker2_side_can1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, facing left (mirrored for right), tilting a watering can. |
+| `character_worker2_side_can2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, facing left (mirrored for right), pouring from a watering can. |
+| `character_worker2_side_hands1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, facing left (mirrored for right), bending down to the ground. |
+| `character_worker2_side_hands2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a blond ponytail, blue shirt and green dungarees, facing left (mirrored for right), picking something up / sowing. |
+| `character_worker3_down_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, facing the camera, standing relaxed. |
+| `character_worker3_down_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, facing the camera, walking, left foot forward. |
+| `character_worker3_down_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, facing the camera, walking, right foot forward. |
+| `character_worker3_down_can1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, facing the camera, tilting a watering can. |
+| `character_worker3_down_can2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, facing the camera, pouring from a watering can. |
+| `character_worker3_down_hands1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, facing the camera, bending down to the ground. |
+| `character_worker3_down_hands2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, facing the camera, picking something up / sowing. |
+| `character_worker3_up_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, seen from behind, standing relaxed. |
+| `character_worker3_up_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, seen from behind, walking, left foot forward. |
+| `character_worker3_up_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, seen from behind, walking, right foot forward. |
+| `character_worker3_up_can1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, seen from behind, tilting a watering can. |
+| `character_worker3_up_can2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, seen from behind, pouring from a watering can. |
+| `character_worker3_up_hands1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, seen from behind, bending down to the ground. |
+| `character_worker3_up_hands2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, seen from behind, picking something up / sowing. |
+| `character_worker3_side_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, facing left (mirrored for right), standing relaxed. |
+| `character_worker3_side_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, facing left (mirrored for right), walking, left foot forward. |
+| `character_worker3_side_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, facing left (mirrored for right), walking, right foot forward. |
+| `character_worker3_side_can1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, facing left (mirrored for right), tilting a watering can. |
+| `character_worker3_side_can2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, facing left (mirrored for right), pouring from a watering can. |
+| `character_worker3_side_hands1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, facing left (mirrored for right), bending down to the ground. |
+| `character_worker3_side_hands2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand with a beard, straw hat, white shirt and denim dungarees, facing left (mirrored for right), picking something up / sowing. |
 | `character_villager1_down_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: young woman with dark hair in a teal blouse and brown trousers, facing the camera, standing relaxed. |
 | `character_villager1_down_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: young woman with dark hair in a teal blouse and brown trousers, facing the camera, walking, left foot forward. |
 | `character_villager1_down_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: young woman with dark hair in a teal blouse and brown trousers, facing the camera, walking, right foot forward. |
@@ -461,6 +525,8 @@ procedurally in code.
 | `item_fish_perch` | 132 × 132 | UI | — | 6 | Perch, inventory icon. |
 | `item_fish_trout` | 132 × 132 | UI | — | 6 | Trout, inventory icon. |
 | `item_fish_pike` | 132 × 132 | UI | — | 6 | Pike, inventory icon. |
+| `item_sprinkler` | 132 × 132 | UI | — | 8 | Brass sprinkler head on a short stake, inventory icon. |
+| `item_sprinkler_pro` | 132 × 132 | UI | — | 8 | Big rotating sprinkler, green and brass, inventory icon. |
 | `item_sapling_oak` | 132 × 132 | UI | — | 4 | Oak sapling in a pot. |
 | `item_sapling_birch` | 132 × 132 | UI | — | 4 | Birch sapling in a pot. |
 | `item_sapling_pine` | 132 × 132 | UI | — | 4 | Pine sapling in a pot. |

@@ -35,6 +35,10 @@ public enum GoalCounter {
     public static let contractsCompleted = "contractsCompleted"
     public static let shopRented = "shopRented"
     public static let coinsFromShop = "coinsFromShop"
+    public static let landBought = "landBought"
+    public static let storageUpgrades = "storageUpgrades"
+    public static let sprinklersPlaced = "sprinklersPlaced"
+    public static let workersHired = "workersHired"
     public static func collected(_ item: String) -> String { "collected:\(item)" }
 }
 
@@ -91,14 +95,22 @@ public enum GoalCatalog {
                        requirement: .count(GoalCounter.treesChopped, 5), coins: 120, xp: 15),
         GoalDefinition(id: "shop1", title: "Open for business", detail: "Rent the corner shop in the village (level 3).",
                        requirement: .count(GoalCounter.shopRented, 1), coins: 150, xp: 20),
+        GoalDefinition(id: "storage1", title: "More room", detail: "Build a storage shed (phone → Farm).",
+                       requirement: .count(GoalCounter.storageUpgrades, 1), coins: 200, xp: 25),
         GoalDefinition(id: "money3k", title: "Nest egg", detail: "Have 3,000 coins.",
                        requirement: .money(3_000), coins: 200, xp: 20),
+        GoalDefinition(id: "land1", title: "Room to grow", detail: "Buy a parcel of land next to your farm.",
+                       requirement: .count(GoalCounter.landBought, 1), coins: 300, xp: 40),
         GoalDefinition(id: "orchard", title: "Orchard", detail: "Plant 2 fruit trees.",
                        requirement: .count(GoalCounter.fruitTreesPlanted, 2), coins: 150, xp: 20),
+        GoalDefinition(id: "sprinkler1", title: "Rain maker", detail: "Place a sprinkler in your fields.",
+                       requirement: .count(GoalCounter.sprinklersPlaced, 1), coins: 150, xp: 25),
         GoalDefinition(id: "contract5", title: "Reliable supplier", detail: "Finish 5 orders. Reliable farms get bigger ones.",
                        requirement: .count(GoalCounter.contractsCompleted, 5), coins: 400, xp: 40),
         GoalDefinition(id: "shop500", title: "Shopkeeper", detail: "Take in 500 coins at your shop.",
                        requirement: .count(GoalCounter.coinsFromShop, 500), coins: 250, xp: 30),
+        GoalDefinition(id: "worker1", title: "A helping hand", detail: "Hire a farmhand (phone → Farm).",
+                       requirement: .count(GoalCounter.workersHired, 1), coins: 300, xp: 40),
         GoalDefinition(id: "cows2", title: "Dairy farmer", detail: "Own 2 cows.",
                        requirement: .animals("cow", 2), coins: 300, xp: 30),
         GoalDefinition(id: "harvest300", title: "Big harvest", detail: "Harvest 300 crops.",

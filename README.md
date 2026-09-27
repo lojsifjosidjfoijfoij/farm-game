@@ -4,7 +4,7 @@ A cozy, top-down farming and business game for iPhone: a farmer's version of Big
 You start with a run-down farm, a beat-up pickup truck and one farmer, and grow it into an
 agricultural empire.
 
-**Status: Phase 7 (Your own shop) is done.** Phase 8 (Workers, land and machines) is next.
+**Status: Phase 8 (Workers, land and machines) is done.** Phase 9 (Polish) is next.
 
 | Phase | Scope | Status |
 |---|---|---|
@@ -15,8 +15,8 @@ agricultural empire.
 | 5 | The farmer's life: a farmer you walk around, clock and days, energy and sleep, tap-to-drive, goals, new HUD | ✅ |
 | 6 | Contracts and deliveries, weekly bills, a bank loan | ✅ |
 | 7 | Your own shop in town: rent, stock, prices, customers | ✅ |
-| 8 | Hired workers; buy land, buildings and machines | ⏳ next |
-| 9 | Polish: art pass, sound, weather, seasons visuals, balancing | |
+| 8 | Hired workers; buy land, buildings and machines | ✅ |
+| 9 | Polish: art pass, sound, weather, seasons visuals, balancing | ⏳ next |
 
 ## Running it
 
@@ -34,6 +34,28 @@ Tests: press **⌘U** in Xcode (runs the simulation tests in `AcresCore`), or fr
 cd Packages/AcresCore
 swift test
 ```
+
+## Phase 8: what to test
+
+Your save carries over (format v8). Everything is on the phone's new **Farm** tab.
+
+1. **Land for sale:** four parcels around the farm, each with a FOR SALE sign: East Meadow
+   (2,500, level 2), North Woods (4,000, level 4, full of timber), West Field (6,000, level 5) and
+   South Pasture (12,000, level 7). Tap the land (or the sign's area) for its card, or buy it on
+   the Farm tab. Bought land can be plowed and its trees chopped; each parcel adds 100 coins of
+   property tax on Mondays.
+2. **Buildings:** a storage shed (+150 storage, level 2), then two silos (level 4 and 6) appear by
+   the road south of the fence. A bigger truck bed (90, then 130 items per trip).
+3. **Sprinklers** (level 3; big ones at level 7): buy one, tap **Place**, then tap grass in your
+   fields. The farmer walks over and sets it up; it keeps the 8 tiles around it (5 × 5 for the big
+   one) watered day and night, even while the game is closed. Tap a sprinkler to pick it up.
+4. **Farmhands** (first at level 4, then 6 and 8; 350 coins a week each, the first week pro-rated):
+   a *field hand* waters thirsty crops and harvests ripe ones into storage; an *animal keeper*
+   collects, fills troughs and feeds. They work 08:00–17:00 while you play, walk to each job and
+   go home in the evening. Switch a farmhand's job or let them go on the Farm tab. Their harvests
+   don't give you XP: levels still come from your own work.
+5. **Money tab:** wages, land and buildings show up in the weekly books and Monday's bills.
+6. **New goals:** *More room*, *Room to grow*, *Rain maker*, *A helping hand*.
 
 ## Farming tools (new): what to test
 
@@ -283,7 +305,7 @@ especially helpful, since that art is drawn entirely in code.
 ```
 Acres.xcodeproj
 Acres/                      iOS app (SwiftUI + SpriteKit): rendering, input, UI
-  App/                      AcresApp, GameController (+Farmer, +Driving, +Trade, +Business, +Store, +Tutorial, +Ranch), Haptics
+  App/                      AcresApp, GameController (+Farmer, +Tools, +Driving, +Trade, +Business, +Store, +Estate, +Tutorial, +Ranch), Haptics
   UI/                       HUD, shops, business phone, your shop, inventory, Welcome-back card, debug panel, theme
   World/                    GameScene, camera, chunk streaming, terrain shader, sprites, trees, pens, shop customers
   Art/                      AssetCatalog + procedural placeholder painters
@@ -299,6 +321,7 @@ Packages/AcresCore/         Pure Swift simulation (no UIKit/SpriteKit), plus uni
   Trees/                    Tree growth, forestry rules (chop, clear, plant, pick)
   Farmer/                   Energy, sleep, goals
   Business/                 Clients and contracts, the books (ledger), bills, loans, your shop, places
+  Estate/                   Land, storage and truck upgrades, sprinklers, farmhands
   Save/                     Versioned save files, migrations, file store
   World/                    Map data, the Home Valley map
   Content/                  Crops, items, properties, asset and audio manifests

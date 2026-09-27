@@ -97,6 +97,7 @@ public struct Farming: Sendable {
         }
         if Self.truckFootprint(state.truck).contains(tile.center) { return .cannotPlowHere }
         if state.woodland[tile] != nil { return .cannotPlowHere }
+        if state.estate.sprinkler(at: tile) != nil { return .cannotPlowHere }
         return nil
     }
 
@@ -147,15 +148,18 @@ public struct Farming: Sendable {
 
     // MARK: Actions
 
-    public func perform(_ action: FarmAction, at tile: TileCoord, in state: inout GameState) -> FarmResult {
-        let cost = balance.energyCost.cost(of: action.kind)
-        if accessProblem(at: tile, in: state) == nil, state.farmer.energy < cost { return fail(.tooTired) }
+    /// Does a field job. A farmhand (`byWorker`) needs no reach or energy
+    /// and earns the farmer no experience.
+    public func perform(_ action: FarmAction, at tile: TileCoord, in state: inout GameState, byWorker: Bool = false) -> FarmResult {
+        let cost = byWorker ? 0 : balance.energyCost.cost(of: action.kind)
+        let reach = !byWorker
+        if accessProblem(at: tile, in: state, checkReach: reach) == nil, state.farmer.energy < cost { return fail(.tooTired) }
         let result: FarmResult
         switch action {
-        case .plow: result = plow(tile, &state)
-        case .plant(let cropID): result = plant(cropID, tile, &state)
-        case .water: result = water(tile, &state)
-        case .harvest: result = harvest(tile, &state)
+        case .plow: result = plow(tile, &state, reach)
+        case .plant(let cropID): result = plant(cropID, tile, &state, reach)
+        case .water: result = water(tile, &state, reach)
+        case .harvest: result = harvest(tile, &state, reach, xp: !byWorker)
         }
         if result.outcome.succeeded {
             state.farmer.energy = max(0, state.farmer.energy - cost)
@@ -174,14 +178,14 @@ public struct Farming: Sendable {
         FarmResult(outcome: .failed(failure), events: [])
     }
 
-    private func plow(_ tile: TileCoord, _ state: inout GameState) -> FarmResult {
-        if let problem = plowProblem(at: tile, in: state) { return fail(problem) }
+    private func plow(_ tile: TileCoord, _ state: inout GameState, _ reach: Bool) -> FarmResult {
+        if let problem = plowProblem(at: tile, in: state, checkReach: reach) { return fail(problem) }
         state.plots[tile] = Plot(tile: tile)
         return FarmResult(outcome: .plowed, events: [])
     }
 
-    private func plant(_ cropID: String, _ tile: TileCoord, _ state: inout GameState) -> FarmResult {
-        if let problem = accessProblem(at: tile, in: state) { return fail(problem) }
+    private func plant(_ cropID: String, _ tile: TileCoord, _ state: inout GameState, _ reach: Bool) -> FarmResult {
+        if let problem = accessProblem(at: tile, in: state, checkReach: reach) { return fail(problem) }
         guard var plot = state.plots[tile] else { return fail(.notPlowed) }
         guard plot.crop == nil else { return fail(.alreadyPlanted) }
         guard let def = CropCatalog.crop(cropID) else { return fail(.unknownCrop) }
@@ -193,8 +197,8 @@ public struct Farming: Sendable {
         return FarmResult(outcome: .planted(cropID: cropID), events: [])
     }
 
-    private func water(_ tile: TileCoord, _ state: inout GameState) -> FarmResult {
-        if let problem = accessProblem(at: tile, in: state) { return fail(problem) }
+    private func water(_ tile: TileCoord, _ state: inout GameState, _ reach: Bool) -> FarmResult {
+        if let problem = accessProblem(at: tile, in: state, checkReach: reach) { return fail(problem) }
         guard var plot = state.plots[tile] else { return fail(.notPlowed) }
         guard let crop = plot.crop, !crop.isReady else { return fail(.nothingToWater) }
         guard !plot.isWet(at: state.worldTime) else { return fail(.alreadyWet) }
@@ -203,8 +207,8 @@ public struct Farming: Sendable {
         return FarmResult(outcome: .watered, events: [])
     }
 
-    private func harvest(_ tile: TileCoord, _ state: inout GameState) -> FarmResult {
-        if let problem = accessProblem(at: tile, in: state) { return fail(problem) }
+    private func harvest(_ tile: TileCoord, _ state: inout GameState, _ reach: Bool, xp giveXP: Bool) -> FarmResult {
+        if let problem = accessProblem(at: tile, in: state, checkReach: reach) { return fail(problem) }
         guard var plot = state.plots[tile], var crop = plot.crop else { return fail(.notReady) }
         guard let def = crop.definition, crop.isReady else { return fail(.notReady) }
 
@@ -212,7 +216,7 @@ public struct Farming: Sendable {
         // space must not change the outcome of the next attempt.
         var rng = state.rng
         let amount = def.yield.lowerBound + Int(rng.nextUnit() * Double(def.yield.count)) % def.yield.count
-        guard state.inventory.storageUsed + amount <= balance.storageCapacity else { return fail(.storageFull) }
+        guard state.inventory.storageUsed + amount <= state.storageCapacity(balance) else { return fail(.storageFull) }
         state.rng = rng
 
         state.inventory.add(def.produceItemID, amount)
@@ -225,8 +229,9 @@ public struct Farming: Sendable {
             plot.crop = nil
         }
         state.plots[tile] = plot
-        let events = Progression.addXP(def.xp, to: &state, balance: balance)
-        return FarmResult(outcome: .harvested(cropID: def.id, amount: amount, xp: def.xp), events: events)
+        let xp = giveXP ? def.xp : 0
+        let events = xp > 0 ? Progression.addXP(xp, to: &state, balance: balance) : []
+        return FarmResult(outcome: .harvested(cropID: def.id, amount: amount, xp: xp), events: events)
     }
 
     // MARK: Helpers

@@ -169,7 +169,7 @@ public struct Storekeeping: Sendable {
         guard state.store.shelves.indices.contains(index) else { throw .unknownShelf }
         let shelf = state.store.shelves[index]
         guard let itemID = shelf.itemID, shelf.stock > 0 else { throw .nothingToStock }
-        let room = balance.truckCargoCapacity - state.truck.cargoCount
+        let room = state.truckCapacity(balance) - state.truck.cargoCount
         let amount = min(shelf.stock, room)
         guard amount > 0 else { throw .cargoFull }
         state.store.shelves[index].stock -= amount
@@ -249,9 +249,9 @@ public struct Storekeeping: Sendable {
             let rate = salesPerHour(shelf, in: snapshot)
             guard rate > 0, let itemID = shelf.itemID else { continue }
             shelf.progress += rate * hours
-            let sold = min(shelf.stock, Int(shelf.progress.rounded(.down)))
+            let sold = min(shelf.stock, Int((shelf.progress + 1e-9).rounded(.down)))
             if sold > 0 {
-                shelf.progress -= Double(sold)
+                shelf.progress = max(0, shelf.progress - Double(sold))
                 shelf.stock -= sold
                 let coins = unitPrice(itemID, factor: shelf.priceFactor) * sold
                 state.money += coins
@@ -285,16 +285,22 @@ public struct StoreSystem: SimulationSystem {
         // The clock has already moved on this step: look back over the span it covered.
         let end = state.clock.totalMinutes
         let start = end - context.dt * context.balance.gameMinutesPerRealSecond
-        let minutes = Self.openMinutes(from: start, to: end, store: .corner)
+        let minutes = Self.openMinutes(from: start, to: end, opens: StoreDefinition.corner.opens, closes: StoreDefinition.corner.closes)
         guard minutes > 0 else { return }
         context.events += Storekeeping(balance: context.balance).runSales(&state, hours: minutes / 60)
     }
 
     /// Opening minutes between two clock readings (in total game minutes).
     static func openMinutes(from start: Double, to end: Double, store: StoreDefinition) -> Double {
+        openMinutes(from: start, to: end, opens: store.opens, closes: store.closes)
+    }
+
+    /// Minutes between two clock readings that fall between two wall-clock
+    /// hours of a game day (both after 06:00).
+    static func openMinutes(from start: Double, to end: Double, opens openHour: Int, closes closeHour: Int) -> Double {
         guard end > start else { return 0 }
-        let opens = (Double(store.opens) - GameClock.dayStartHour) * 60
-        let closes = (Double(store.closes) - GameClock.dayStartHour) * 60
+        let opens = (Double(openHour) - GameClock.dayStartHour) * 60
+        let closes = (Double(closeHour) - GameClock.dayStartHour) * 60
         let first = Int((start / GameClock.minutesPerDay).rounded(.down))
         let last = Int((end / GameClock.minutesPerDay).rounded(.down))
         var total = 0.0

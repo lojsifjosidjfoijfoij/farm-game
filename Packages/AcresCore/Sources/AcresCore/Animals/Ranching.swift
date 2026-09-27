@@ -88,14 +88,16 @@ public struct Ranching: Sendable {
         return nil
     }
 
-    public func perform(_ action: PenAction, on pen: PenDefinition, in state: inout GameState) -> RanchResult {
-        if let problem = accessProblem(pen, in: state) { return fail(problem) }
-        let cost = action == .repair ? 0 : balance.energyCost.pen
+    /// Works a pen. A farmhand (`byWorker`) needs no reach or energy and
+    /// earns the farmer no experience.
+    public func perform(_ action: PenAction, on pen: PenDefinition, in state: inout GameState, byWorker: Bool = false) -> RanchResult {
+        if let problem = accessProblem(pen, in: state, checkReach: !byWorker) { return fail(problem) }
+        let cost = action == .repair || byWorker ? 0 : balance.energyCost.pen
         guard state.farmer.energy >= cost else { return fail(.tooTired) }
         let result: RanchResult
         switch action {
         case .repair: result = repair(pen, &state)
-        case .collect: result = collect(pen, &state)
+        case .collect: result = collect(pen, &state, xp: !byWorker)
         case .water: result = water(pen, &state)
         case .feed: result = feed(pen, &state)
         }
@@ -133,7 +135,7 @@ public struct Ranching: Sendable {
         return RanchResult(outcome: .repaired(penID: pen.id), events: [])
     }
 
-    private func collect(_ pen: PenDefinition, _ state: inout GameState) -> RanchResult {
+    private func collect(_ pen: PenDefinition, _ state: inout GameState, xp giveXP: Bool) -> RanchResult {
         var penState = state.ranch[pen.id]
         guard penState.isRepaired else { return fail(.notRepaired) }
         var collected: [String: Int] = [:]
@@ -145,20 +147,20 @@ public struct Ranching: Sendable {
             // Roll on a copy: a product left behind for lack of space keeps its luck.
             var rng = state.rng
             let amount = 1 + (rng.nextUnit() < Self.bonusChance(happiness: animal.happiness) ? 1 : 0)
-            guard state.inventory.storageUsed + amount <= balance.storageCapacity else {
+            guard state.inventory.storageUsed + amount <= state.storageCapacity(balance) else {
                 storageFull = true
                 break
             }
             state.rng = rng
             state.inventory.add(species.productItemID, amount)
             collected[species.productItemID, default: 0] += amount
-            xp += species.xp
+            if giveXP { xp += species.xp }
             animal.production = nil  // hungry again
             penState.animals[index] = animal
         }
         guard !collected.isEmpty else { return fail(storageFull ? .storageFull : .nothingToCollect) }
         state.ranch[pen.id] = penState
-        let events = Progression.addXP(xp, to: &state, balance: balance)
+        let events = xp > 0 ? Progression.addXP(xp, to: &state, balance: balance) : []
         return RanchResult(outcome: .collected(items: collected, xp: xp), events: events)
     }
 

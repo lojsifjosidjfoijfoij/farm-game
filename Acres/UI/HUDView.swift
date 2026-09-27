@@ -81,6 +81,23 @@ struct HUDView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
+            if let kind = game.placingMachine, !game.isDriving {
+                HStack(spacing: 10) {
+                    ItemIcon(name: MachineCatalog.machine(kind)?.icon ?? "item_sprinkler", size: 30)
+                    Text("Tap grass in your fields to place the \(MachineCatalog.machine(kind)?.name.lowercased() ?? "machine").")
+                        .font(Theme.label(14, weight: .semibold))
+                        .foregroundStyle(Theme.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button("Cancel") { game.cancelPlacing() }
+                        .font(Theme.label(14, weight: .bold))
+                        .foregroundStyle(Theme.danger)
+                }
+                .hudPanel(cornerRadius: 18)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+
             if !game.isDriving {
                 ToolBelt(game: game)
                     .padding(.horizontal, 12)
@@ -105,6 +122,7 @@ struct HUDView: View {
         .animation(.spring(duration: 0.35), value: game.inspection)
         .animation(.spring(duration: 0.35), value: game.showsSeedPicker)
         .animation(.spring(duration: 0.25), value: game.tool)
+        .animation(.spring(duration: 0.3), value: game.placingMachine)
         .animation(.spring(duration: 0.35), value: game.nearbyShop)
         .animation(.spring(duration: 0.35), value: game.nearbyClient)
         .animation(.spring(duration: 0.35), value: game.nearbyStore)

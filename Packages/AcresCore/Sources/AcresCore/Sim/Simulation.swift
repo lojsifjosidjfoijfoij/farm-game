@@ -82,6 +82,7 @@ public struct Simulation: Sendable {
 
     /// Systems in the order they run each step.
     public static let defaultSystems: [any SimulationSystem] = [
+        SprinklerSystem(),
         CropSystem(),
         AnimalSystem(),
         TreeSystem(),
@@ -89,6 +90,7 @@ public struct Simulation: Sendable {
         ClockSystem(),
         BusinessSystem(),
         StoreSystem(),
+        WorkerSystem(),
     ]
 
     public init(

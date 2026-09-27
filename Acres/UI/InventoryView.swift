@@ -87,7 +87,7 @@ struct InventoryView: View {
     }
 
     private var truckSection: some View {
-        let capacity = game.balance.truckCargoCapacity
+        let capacity = game.truckCapacity
         return VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Image(systemName: "truck.pickup.side.fill")
@@ -194,7 +194,7 @@ struct InventoryView: View {
                         .font(Theme.label(11))
                         .foregroundStyle(Theme.inkSoft)
                 }
-                if game.truckAtFarm && game.cargoCount < game.balance.truckCargoCapacity {
+                if game.truckAtFarm && game.cargoCount < game.truckCapacity {
                     Button("Load") { game.load(item.id, count: count) }
                         .font(Theme.label(13, weight: .semibold))
                         .buttonStyle(.bordered)

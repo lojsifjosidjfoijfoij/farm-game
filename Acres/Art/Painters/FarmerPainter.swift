@@ -16,6 +16,8 @@ enum FarmerPainter {
             outfit = .farmer
         } else if parts[1].hasPrefix("villager"), let n = Int(parts[1].dropFirst("villager".count)), Outfit.villagers.indices.contains(n - 1) {
             outfit = Outfit.villagers[n - 1]
+        } else if parts[1].hasPrefix("worker"), let n = Int(parts[1].dropFirst("worker".count)), Outfit.workers.indices.contains(n - 1) {
+            outfit = Outfit.workers[n - 1]
         } else {
             return nil
         }
@@ -37,6 +39,7 @@ enum FarmerPainter {
         var overalls = false
         var checks = false
         var skirt = false
+        var beard = false
         var hat = Hat.none
 
         static let farmer = Outfit(skin: FarmerPainter.skin, hair: FarmerPainter.hair, shirt: FarmerPainter.shirt,
@@ -51,6 +54,16 @@ enum FarmerPainter {
                    trousers: UIColor(hex: 0x4A5A7A), boots: UIColor(hex: 0x3A3030), hat: .cap(UIColor(hex: 0xB8432F))),
             Outfit(skin: UIColor(hex: 0xF4D3B8), hair: UIColor(hex: 0xC8C2BA), shirt: UIColor(hex: 0x8A78B0),
                    trousers: UIColor(hex: 0x6A6A70), boots: UIColor(hex: 0x4A4048), skirt: true, hat: .bun),
+        ]
+
+        /// Farmhands (Phase 8). Must match `AssetManifest.workerLooks`.
+        static let workers: [Outfit] = [
+            Outfit(skin: UIColor(hex: 0xEAC09A), hair: UIColor(hex: 0x5A3A22), shirt: UIColor(hex: 0xC0463A),
+                   trousers: UIColor(hex: 0x7A5A3A), boots: UIColor(hex: 0x4A3428), overalls: true, hat: .cap(UIColor(hex: 0x4E7A3A))),
+            Outfit(skin: UIColor(hex: 0xF4D0B0), hair: UIColor(hex: 0xE2C06A), shirt: UIColor(hex: 0x4A7AB0),
+                   trousers: UIColor(hex: 0x5E7A3E), boots: UIColor(hex: 0x5A3C28), overalls: true, hat: .bun),
+            Outfit(skin: UIColor(hex: 0xD9A77E), hair: UIColor(hex: 0x3A2A1C), shirt: UIColor(hex: 0xECE6DA),
+                   trousers: UIColor(hex: 0x4F6FA3), boots: UIColor(hex: 0x5A3C28), overalls: true, beard: true, hat: .straw),
         ]
     }
 
@@ -287,6 +300,11 @@ enum FarmerPainter {
             Paint.dab(ctx, CGPoint(x: headCenter.x - headR * 0.45, y: headCenter.y), 2.3 * s, 3 * s, UIColor(hex: 0x2A1E16))
             Paint.dab(ctx, CGPoint(x: headCenter.x - headR * 0.3, y: headCenter.y + 7 * s), 3.4 * s, 2.2 * s,
                       UIColor(hex: 0xE58C7E).withAlpha(0.5))
+        }
+
+        if outfit.beard && facing != .up {
+            let chin = CGPoint(x: headCenter.x - (side ? headR * 0.35 : 0), y: headCenter.y + headR * 0.55)
+            Paint.dab(ctx, chin, headR * (side ? 0.5 : 0.72), headR * 0.42, hair)
         }
 
         // Hair on top, and the hat.

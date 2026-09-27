@@ -15,6 +15,9 @@ struct FarmerJob: Equatable {
         case tree(TileCoord)
         /// The axe: fell the tree or clear its stump (decided on arrival).
         case chopTree(TileCoord)
+        /// Setting up a machine from the pouch (a sprinkler).
+        case placeMachine(TileCoord, kind: String)
+        case pickUpSprinkler(TileCoord)
         case pen(String, repair: Bool)
         case enterTruck
         case sleep
@@ -29,7 +32,8 @@ struct FarmerJob: Equatable {
 
     var tile: TileCoord? {
         switch kind {
-        case .field(let tile, _), .plantCrop(let tile, _), .plantTree(let tile, _), .tree(let tile), .chopTree(let tile): tile
+        case .field(let tile, _), .plantCrop(let tile, _), .plantTree(let tile, _), .tree(let tile), .chopTree(let tile),
+             .placeMachine(let tile, _), .pickUpSprinkler(let tile): tile
         default: nil
         }
     }
@@ -75,6 +79,14 @@ extension GameController {
         let tile = TileCoord(containing: spot)
         guard map.isInside(tile) else { return }
 
+        if let kind = placingMachine {
+            queuePlaceJob(kind, at: tile)
+            return
+        }
+        if state.estate.sprinkler(at: tile) != nil {
+            inspect(.sprinkler(tile))
+            return
+        }
         // Soil first: a field tool on a field does only its own job.
         if let kind = tool.fieldAction, state.plots[tile] != nil {
             queueToolJob(kind, at: tile, reportProblems: true)
@@ -115,7 +127,7 @@ extension GameController {
         let obstacles = Obstacles(map: map, state: state)
         guard !obstacles.isBlocked(tile) else { return }
         cancelJobs()
-        enqueue(FarmerJob(kind: .walk, spot: spot, marker: spot))
+        enqueueJob(FarmerJob(kind: .walk, spot: spot, marker: spot))
     }
 
     /// Where a field tool counts as working the field: soil for most tools,
@@ -133,7 +145,7 @@ extension GameController {
         guard welcome == nil, sleep == nil, !isDriving else { return }
         cancelJobs()
         let truck = simulation.state.truck.position
-        enqueue(FarmerJob(kind: .enterTruck, spot: truck, marker: truck))
+        enqueueJob(FarmerJob(kind: .enterTruck, spot: truck, marker: truck))
     }
 
     /// The Drive button: same as tapping the truck.
@@ -159,13 +171,13 @@ extension GameController {
                 if reportProblems { showMessage(state.plots[tile] == nil ? "Plow it first: pick the hoe." : "Something's already growing here.") }
                 return false
             }
-            enqueue(FarmerJob(kind: .plantTree(tile, speciesID: species), spot: tile.center, marker: tile.center))
+            enqueueJob(FarmerJob(kind: .plantTree(tile, speciesID: species), spot: tile.center, marker: tile.center))
             return true
         }
         switch farming.toolAction(kind, at: tile, in: state, seed: cropSeedInHand, checkReach: false) {
         case .success(let action):
             let job: FarmerJob.Kind = if case .plant(let cropID) = action { .plantCrop(tile, cropID: cropID) } else { .field(tile, kind) }
-            enqueue(FarmerJob(kind: job, spot: tile.center, marker: tile.center))
+            enqueueJob(FarmerJob(kind: job, spot: tile.center, marker: tile.center))
             return true
         case .failure(let failure):
             if reportProblems { explain(failure, kind: kind, at: tile) }
@@ -219,7 +231,7 @@ extension GameController {
             inspect(.tree(tile))
             return
         }
-        enqueue(FarmerJob(kind: .tree(tile), spot: forestry.workSpot(for: tile, in: state), marker: forestry.position(of: tile)))
+        enqueueJob(FarmerJob(kind: .tree(tile), spot: forestry.workSpot(for: tile, in: state), marker: forestry.position(of: tile)))
     }
 
     /// The axe on a tree: chop it down, or clear its stump.
@@ -235,7 +247,7 @@ extension GameController {
             }
             return
         }
-        enqueue(FarmerJob(kind: .chopTree(tile), spot: forestry.workSpot(for: tile, in: state), marker: forestry.position(of: tile)))
+        enqueueJob(FarmerJob(kind: .chopTree(tile), spot: forestry.workSpot(for: tile, in: state), marker: forestry.position(of: tile)))
     }
 
     /// What the axe does to a tree: clear a stump or fell a grown tree.
@@ -256,7 +268,7 @@ extension GameController {
             return
         }
         let spot = Ranching.workSpot(pen)
-        enqueue(FarmerJob(kind: .pen(pen.id, repair: repair), spot: spot, marker: spot))
+        enqueueJob(FarmerJob(kind: .pen(pen.id, repair: repair), spot: spot, marker: spot))
     }
 
     /// Walks home and goes to bed.
@@ -265,11 +277,11 @@ extension GameController {
         if isDriving { park() }
         cancelJobs()
         dismissInspection()
-        enqueue(FarmerJob(kind: .sleep, spot: HomeValleyMap.farmhouseDoor, marker: HomeValleyMap.farmhouseDoor))
+        enqueueJob(FarmerJob(kind: .sleep, spot: HomeValleyMap.farmhouseDoor, marker: HomeValleyMap.farmhouseDoor))
         Haptics.tap()
     }
 
-    private func enqueue(_ job: FarmerJob) {
+    func enqueueJob(_ job: FarmerJob) {
         if let tile = job.tile, jobs.contains(where: { $0.tile == tile }) || currentJob?.tile == tile { return }
         guard jobs.count < Self.maxJobs else {
             showMessage("That's plenty of work lined up!")
@@ -367,7 +379,7 @@ extension GameController {
         } else if from.distance(to: job.spot) < 2.5 {
             farmerPath = [job.spot]
             farmerActivity = .walking
-        } else if var path = Pathfinder.path(on: map, woodland: simulation.state.woodland, from: from, to: job.spot) {
+        } else if var path = Pathfinder.path(on: map, woodland: simulation.state.woodland, built: builtTiles, from: from, to: job.spot) {
             if let last = path.indices.last { path[last] = job.spot }
             farmerPath = path
             farmerActivity = .walking
@@ -449,6 +461,7 @@ extension GameController {
         case .plantTree: 1.0
         case .chopTree: 1.6
         case .tree: 0.9
+        case .placeMachine, .pickUpSprinkler: 1.0
         case .pen: 1.1
         default: 0.3
         }
@@ -491,6 +504,10 @@ extension GameController {
             let action = repair ? .repair : ranching.suggestedAction(for: pen, in: state)
             guard let action else { return }
             if case .failed(.tooTired) = performPen(action, pen) { tooTired() }
+        case .placeMachine(let tile, let kind):
+            finishPlacing(kind, at: tile)
+        case .pickUpSprinkler(let tile):
+            finishPickingUp(at: tile)
         case .enterTruck, .sleep, .walk:
             break
         }

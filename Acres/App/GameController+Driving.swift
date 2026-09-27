@@ -15,10 +15,12 @@ struct Destination: Identifiable, Equatable {
 }
 
 extension GameController {
-    var physics: TruckPhysics { TruckPhysics(map: map, tuning: balance.driving, woodland: simulation.state.woodland) }
+    var physics: TruckPhysics {
+        TruckPhysics(map: map, tuning: balance.driving, woodland: simulation.state.woodland, built: builtTiles)
+    }
     var truckState: TruckState { simulation.state.truck }
     var truckSurface: Terrain { physics.surface(at: simulation.state.truck.position) }
-    var cargoFraction: Double { Double(cargoCount) / Double(max(1, balance.truckCargoCapacity)) }
+    var cargoFraction: Double { Double(cargoCount) / Double(max(1, truckCapacity)) }
 
     // MARK: Getting in and out
 
@@ -74,7 +76,7 @@ extension GameController {
     /// Plans a route to a spot and lets the autopilot take the wheel.
     func driveTo(_ target: Vec2) {
         guard isDriving else { return }
-        guard let path = Pathfinder.path(on: map, woodland: simulation.state.woodland,
+        guard let path = Pathfinder.path(on: map, woodland: simulation.state.woodland, built: builtTiles,
                                          from: simulation.state.truck.position, to: target) else {
             showMessage("Can't find a way there.")
             return

@@ -233,6 +233,7 @@ public enum AssetManifest {
         .sprite("prop_sign_sold", .prop, tiles: 0.9, 1.3, anchorY: 0.05, shadow: 0.5, phase: 6, "The same sign with a 'Sold' banner."),
         .sprite("prop_scarecrow", .prop, tiles: 1, 1.7, anchorY: 0.05, shadow: 0.6, phase: 2, "Friendly scarecrow with a straw hat."),
         .sprite("prop_sprinkler", .prop, tiles: 0.6, 0.6, anchorY: 0.2, phase: 5, "Brass field sprinkler head."),
+        .sprite("prop_sprinkler_pro", .prop, tiles: 0.8, 0.9, anchorY: 0.15, phase: 8, "Big rotating sprinkler on a green stand."),
         .sprite("prop_water_trough", .prop, tiles: 1.5, 0.8, anchorY: 0.15, shadow: 1.4, phase: 4, "Animal water trough, full of fresh water."),
         .sprite("prop_water_trough_empty", .prop, tiles: 1.5, 0.8, anchorY: 0.15, shadow: 1.4, phase: 4, "The same trough, empty and dry."),
         .sprite("prop_sign_repair", .prop, tiles: 0.9, 1.3, anchorY: 0.05, shadow: 0.5, phase: 4,
@@ -308,6 +309,16 @@ public enum AssetManifest {
                                       "The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, \(facingText[facing]!), \(poseText[pose]!)."))
             }
         }
+        // Farmhands (Phase 8): walking, watering and picking.
+        for (index, look) in workerLooks.enumerated() {
+            for facing in farmerFacings {
+                for pose in workerPoses {
+                    result.append(.sprite("character_worker\(index + 1)_\(facing)_\(pose)", .character, tiles: 0.9, 1.5, anchorY: 0.05,
+                                          shadow: 0.6, phase: 8, family: "character_worker\(index + 1)",
+                                          "Farmhand: \(look), \(facingText[facing]!), \(poseText[pose]!)."))
+                }
+            }
+        }
         // Villagers who shop at your store (Phase 7): walking only.
         for (index, look) in villagerLooks.enumerated() {
             for facing in farmerFacings {
@@ -322,6 +333,13 @@ public enum AssetManifest {
     }()
 
     public static let villagerPoses = ["idle", "walk1", "walk2"]
+    /// Farmhands walk, water and pick (Phase 8).
+    public static let workerPoses = ["idle", "walk1", "walk2", "can1", "can2", "hands1", "hands2"]
+    static let workerLooks = [
+        "farmhand in a green cap, red shirt and brown dungarees",
+        "farmhand with a blond ponytail, blue shirt and green dungarees",
+        "farmhand with a beard, straw hat, white shirt and denim dungarees",
+    ]
     static let villagerLooks = [
         "young woman with dark hair in a teal blouse and brown trousers",
         "man in a red cap, mustard shirt and blue jeans",
@@ -377,6 +395,7 @@ public enum AssetManifest {
             ("juice", 6, "Bottle of juice"), ("apple", 4, "Red apple"), ("cherry", 4, "Pair of cherries"),
             ("fertilizer", 7, "Bag of fertilizer"), ("animal_feed", 4, "Sack of animal feed"),
             ("fish_perch", 6, "Perch"), ("fish_trout", 6, "Trout"), ("fish_pike", 6, "Pike"),
+            ("sprinkler", 8, "Brass sprinkler head on a short stake"), ("sprinkler_pro", 8, "Big rotating sprinkler, green and brass"),
         ]
         for (name, phase, look) in goods {
             result.append(.ui("item_\(name)", .item, points: 44, 44, phase: phase, "\(look), inventory icon."))

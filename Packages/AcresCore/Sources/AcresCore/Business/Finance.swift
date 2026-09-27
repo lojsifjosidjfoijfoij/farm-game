@@ -32,6 +32,10 @@ public enum LedgerCategory {
     public static let propertyTax = "Property tax"
     public static let loanPayments = "Loan payments"
     public static let rent = "Shop rent"
+    public static let wages = "Wages"
+    public static let land = "Land"
+    public static let buildings = "Buildings"
+    public static let machines = "Machines"
 }
 
 /// A bank loan, paid back in equal weekly instalments.
@@ -102,6 +106,7 @@ public enum Bank {
     public static func weeklyBills(_ state: GameState, balance: Balance) -> [(category: String, amount: Int)] {
         var bills: [(String, Int)] = [(LedgerCategory.propertyTax, balance.propertyTaxPerWeek * state.ownedProperties.count)]
         if state.store.isRented { bills.append((LedgerCategory.rent, balance.storeRentPerWeek)) }
+        if !state.estate.workers.isEmpty { bills.append((LedgerCategory.wages, balance.workerWagePerWeek * state.estate.workers.count)) }
         if let loan = state.finance.loan { bills.append((LedgerCategory.loanPayments, min(loan.weeklyPayment, loan.balance))) }
         return bills.filter { $0.1 > 0 }
     }

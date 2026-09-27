@@ -43,14 +43,16 @@ public struct TruckPhysics: Sendable {
 
     /// Trees as the player changed them (chopped, cleared, planted).
     public let woodland: Woodland
+    public let built: Set<TileCoord>
 
-    public init(map: WorldMap, tuning: DrivingTuning, woodland: Woodland = Woodland()) {
+    public init(map: WorldMap, tuning: DrivingTuning, woodland: Woodland = Woodland(), built: Set<TileCoord> = []) {
+        self.built = built
         self.map = map
         self.woodland = woodland
         self.tuning = tuning
     }
 
-    var obstacles: Obstacles { Obstacles(map: map, woodland: woodland) }
+    var obstacles: Obstacles { Obstacles(map: map, woodland: woodland, built: built) }
 
     public func surface(at position: Vec2) -> Terrain {
         map.terrain(at: TileCoord(containing: position))

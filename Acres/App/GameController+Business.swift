@@ -5,6 +5,7 @@ import AcresCore
 enum BusinessTab: String, CaseIterable, Identifiable {
     case orders = "Orders"
     case shop = "Shop"
+    case farm = "Farm"
     case money = "Money"
     var id: String { rawValue }
 }
@@ -27,6 +28,8 @@ extension GameController {
         if contractBoard != state.contracts { contractBoard = state.contracts }
         if finance != state.finance { finance = state.finance }
         if storeState != state.store { storeState = state.store }
+        if estateState != state.estate { estateState = state.estate }
+        if ownedLand != state.ownedProperties { ownedLand = state.ownedProperties }
     }
 
     var today: Int { simulation.state.clock.dayIndex }

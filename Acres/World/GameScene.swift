@@ -26,6 +26,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     private var ranch: RanchRenderer?
     private var farmer: FarmerRenderer?
     private var store: StoreRenderer?
+    private var estate: EstateRenderer?
     private var shownJobRevision = -1
     private var truck: TruckRenderer?
     /// Pulsing ring on the tile the tutorial points at.
@@ -102,7 +103,10 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
             groundLayer: groundLayer, flatLayer: flatLayer, objectLayer: objectLayer)
         chunkManager.showsBorders = showsChunkBorders
         chunkManager.isTileCleared = { [weak self] tile in
-            self?.game.simulation.state.plots[tile] != nil
+            guard let state = self?.game.simulation.state else { return false }
+            // No weeds on fields, under the farm's buildings or at sprinklers.
+            return state.plots[tile] != nil || state.estate.sprinkler(at: tile) != nil
+                || (state.estate.storageLevel > 0 && EstateLayout.blockedTiles(state.estate).contains(tile))
         }
         chunkManager.isMapTreeHidden = { [weak self] tile in
             self?.game.simulation.state.woodland.hiddenMapTrees.contains(tile) ?? false
@@ -125,6 +129,8 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         truck = TruckRenderer(assets: assets, objectLayer: objectLayer, flatLayer: flatLayer, effectsLayer: effectsLayer)
         farmer = FarmerRenderer(assets: assets, objectLayer: objectLayer, flatLayer: flatLayer, effectsLayer: effectsLayer)
         store = StoreRenderer(assets: assets, objectLayer: objectLayer, flatLayer: flatLayer)
+        estate = EstateRenderer(assets: assets, objectLayer: objectLayer, flatLayer: flatLayer, effectsLayer: effectsLayer)
+        estate?.sync(game: game, force: true)
         setUpMarkers()
         game.onWorldReset = { [weak self] in self?.worldWasReset() }
         game.onFeedback = { [weak self] feedback in self?.play(feedback) }
@@ -176,6 +182,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         fields?.removeAll()
         trees?.removeAll()
         ranch?.removeAll()
+        estate?.sync(game: game, force: true)
         if let camera = cameraController {
             if game.presentation.cameraCenter == nil {
                 camera.focus(on: World.point(HomeValleyMap.farmCenter), animated: true)
@@ -225,6 +232,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         chunks?.update(visibleRect: camera.visibleRect)
         ranch?.update(dt: dt)
         store?.update(store: game.storeState, hour: game.hour, dt: dt)
+        estate?.update(game: game, dt: dt)
         updateLighting(force: false)
 
         // Crops change slowly: re-check a few times a second, or at once after an action.
@@ -254,6 +262,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
             chunks.isLoaded(WorldMap.chunk(containing: tile.center))
         }
         ranch?.sync(ranch: state.ranch, now: state.worldTime, inventory: state.inventory)
+        estate?.sync(game: game)
         updateMarkers()
     }
 
@@ -482,6 +491,9 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
             }
         case .refused(let tile):
             FieldEffects.refused(at: tile, in: flatLayer, assets: assets)
+        case .sprinkler(let tile):
+            estate?.sync(game: game, force: true)
+            estate?.spray(at: tile)
         case .tree(let outcome, let tile, let position):
             switch outcome {
             case .chopped(let speciesID, let logs, _):

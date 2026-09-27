@@ -141,7 +141,7 @@ public struct Balance: Sendable, Equatable {
         case .fruit: 1.2
         case .animalProduct: 1.0
         case .wood: 0.5
-        case .feed, .seed, .sapling: 0
+        case .feed, .seed, .sapling, .machine: 0
         }
     }
 
@@ -156,6 +156,28 @@ public struct Balance: Sendable, Equatable {
     /// first brings this many more customers, up to the maximum.
     public var storeTrafficPerItem: Double = 0.08
     public var storeTrafficMax: Double = 1.4
+
+    // MARK: - Growing the farm (Phase 8)
+
+    /// Farm storage by level (the storage shed, then silos), and what each
+    /// next level costs and needs. Level 0 is `storageCapacity` (the first
+    /// entry only documents it).
+    public var storageLevels: [Int] = [300, 450, 650, 900]
+    public var storageUpgradeCosts: [Int] = [1_500, 4_000, 9_000]
+    public var storageUpgradeLevels: [Int] = [2, 4, 6]
+
+    /// Truck bed size by level, and the upgrades.
+    public var truckBedLevels: [Int] = [60, 90, 130]
+    public var truckBedUpgradeCosts: [Int] = [2_000, 6_000]
+    public var truckBedUpgradeLevels: [Int] = [3, 6]
+
+    /// Farmhands: wage every Monday (the first one covers the days until
+    /// then), the farmer level each hire needs, and how fast they work.
+    public var workerWagePerWeek: Int = 350
+    public var workerUnlockLevels: [Int] = [4, 6, 8]
+    public var workerTasksPerHour: Double = 8
+    public var workStartHour: Int = 8
+    public var workEndHour: Int = 17
 
     // MARK: - Progression
 
