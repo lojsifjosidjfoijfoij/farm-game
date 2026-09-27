@@ -175,6 +175,7 @@ struct ShopView: View {
             Text("\(item.name) ×\(count)")
                 .font(Theme.label(16, weight: .semibold))
             PriceTag(price: price, range: item.value)
+            if game.isMarketSpecial(item.id) { SpecialBadge() }
         } actions: {
             PriceButton(title: "1", price: price, enabled: true) { game.sell(item.id, count: 1) }
             if count > 1 {
@@ -195,6 +196,7 @@ struct ShopView: View {
                     Text(item.name)
                         .font(Theme.label(15))
                         .foregroundStyle(Theme.ink)
+                    if game.isMarketSpecial(item.id) { SpecialBadge() }
                     Spacer()
                     PriceTag(price: game.price(of: item.id), range: item.value)
                 }
@@ -477,6 +479,18 @@ private struct PriceTag: View {
             }
         }
         .font(.system(size: 12, weight: .semibold))
+    }
+}
+
+/// "★ Special": today's market special pays extra.
+private struct SpecialBadge: View {
+    var body: some View {
+        Label("Special", systemImage: "star.fill")
+            .font(Theme.label(11, weight: .bold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Capsule().fill(Theme.gold))
     }
 }
 

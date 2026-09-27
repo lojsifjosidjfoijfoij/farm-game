@@ -10,6 +10,13 @@ struct GoalsView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
+                    if !game.todaysChores.isEmpty {
+                        chores
+                    }
+                    Text("Goals")
+                        .font(Theme.title(20))
+                        .foregroundStyle(Theme.ink)
+                        .padding(.top, 4)
                     Text("Finish a goal to earn its reward. New goals open as you go.")
                         .font(Theme.label(14))
                         .foregroundStyle(Theme.inkSoft)
@@ -38,6 +45,78 @@ struct GoalsView: View {
                 }
             }
         }
+    }
+
+    // MARK: Today's chores
+
+    private var chores: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Today's chores")
+                    .font(Theme.title(20))
+                Spacer()
+                if game.dailyState.streak > 0 {
+                    Label("\(game.dailyState.streak)-day streak", systemImage: "flame.fill")
+                        .font(Theme.label(13, weight: .bold))
+                        .foregroundStyle(Color(red: 0.9, green: 0.45, blue: 0.2))
+                }
+            }
+            .foregroundStyle(Theme.ink)
+            Text("New chores every morning. Do all three for a bonus, and keep the streak going for a bigger one.")
+                .font(Theme.label(13))
+                .foregroundStyle(Theme.inkSoft)
+                .fixedSize(horizontal: false, vertical: true)
+            ForEach(game.todaysChores) { chore in
+                choreRow(chore)
+            }
+            let allClaimed = game.todaysChores.allSatisfy { $0.chore.claimed }
+            HStack {
+                Image(systemName: game.dailyState.bonusClaimed ? "checkmark.seal.fill" : "gift.fill")
+                    .foregroundStyle(Theme.gold)
+                Text(game.dailyState.bonusClaimed ? "Bonus claimed. See you tomorrow!" : "All three: bonus \(game.dailyBonus) coins")
+                    .font(Theme.label(14, weight: .semibold))
+                    .foregroundStyle(Theme.ink)
+                Spacer()
+                if game.canClaimDailyBonus {
+                    ActionCapsule(title: "Claim", enabled: true, tint: Theme.gold) { game.claimDailyBonus() }
+                        .pulsing(true)
+                } else if !allClaimed {
+                    Text("\(game.todaysChores.filter(\.isDone).count)/\(game.todaysChores.count)")
+                        .font(Theme.number(13))
+                        .foregroundStyle(Theme.inkSoft)
+                }
+            }
+            .padding(12)
+            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Theme.gold.opacity(0.6), lineWidth: 1.5))
+        }
+    }
+
+    private func choreRow(_ chore: ChoreProgress) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: chore.chore.claimed ? "checkmark.circle.fill" : (chore.isDone ? "star.circle.fill" : "circle"))
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(chore.chore.claimed ? Theme.leaf : (chore.isDone ? Theme.gold : Theme.inkSoft))
+            VStack(alignment: .leading, spacing: 4) {
+                Text(chore.chore.title)
+                    .font(Theme.label(15, weight: .semibold))
+                    .foregroundStyle(Theme.ink)
+                    .strikethrough(chore.chore.claimed)
+                if !chore.isDone {
+                    ProgressView(value: chore.fraction)
+                        .tint(Theme.leaf)
+                }
+            }
+            Spacer()
+            if chore.isDone && !chore.chore.claimed {
+                ActionCapsule(title: "+\(chore.chore.coins)", enabled: true, tint: Theme.gold) { game.claimChore(chore.chore.counter) }
+            } else {
+                Text(chore.chore.claimed ? "+\(chore.chore.coins)" : "\(chore.current)/\(chore.chore.target)")
+                    .font(Theme.number(13))
+                    .foregroundStyle(Theme.inkSoft)
+            }
+        }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.parchmentDark.opacity(0.55)))
     }
 
     private func row(_ goal: GoalProgress) -> some View {

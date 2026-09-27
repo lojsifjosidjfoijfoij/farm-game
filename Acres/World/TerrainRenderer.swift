@@ -17,6 +17,9 @@ final class TerrainRenderer {
 
     private let shader: SKShader
     private var splatCache: [ChunkCoord: SKTexture] = [:]
+    private let grassTint = SKUniform(name: "u_grass_tint", vectorFloat3: SIMD3<Float>(1, 1, 1))
+    private let snow = SKUniform(name: "u_snow", float: 0)
+    private var shownSeason: (Season, Double)?
 
     init(assets: AssetCatalog) {
         shader = SKShader(source: Self.shaderSource)
@@ -28,7 +31,23 @@ final class TerrainRenderer {
             SKUniform(name: "u_variation", texture: assets.texture("terrain_variation")),
             // Must be a whole number so the pattern continues across chunk edges.
             SKUniform(name: "u_detail_repeat", float: Float(WorldMap.chunkSize / Self.detailTiles)),
+            grassTint,
+            snow,
         ]
+    }
+
+    /// The season's colors: fresh spring green, golden autumn, frosty
+    /// winter (and snow lying on snowy days).
+    func setSeason(_ season: Season, snowCover: Double) {
+        if let shown = shownSeason, shown.0 == season, shown.1 == snowCover { return }
+        shownSeason = (season, snowCover)
+        grassTint.vectorFloat3Value = switch season {
+        case .spring: SIMD3<Float>(1.02, 1.08, 0.94)
+        case .summer: SIMD3<Float>(1, 1, 1)
+        case .autumn: SIMD3<Float>(1.16, 0.98, 0.7)
+        case .winter: SIMD3<Float>(0.92, 0.96, 1.0)
+        }
+        snow.floatValue = Float(snowCover)
     }
 
     func makeGroundNode(for chunk: ChunkCoord, in map: WorldMap) -> SKSpriteNode {
@@ -83,7 +102,7 @@ final class TerrainRenderer {
         float medium = texture2D(u_variation, d1).g;
 
         // Two scales of each texture, mixed by large-scale noise, hide repetition.
-        vec3 grass = mix(texture2D(u_grass, d1).rgb, texture2D(u_grass, d2).rgb, large);
+        vec3 grass = mix(texture2D(u_grass, d1).rgb, texture2D(u_grass, d2).rgb, large) * u_grass_tint;
         vec3 dirt = mix(texture2D(u_dirt, d1).rgb, texture2D(u_dirt, d2).rgb, large);
         vec3 gravel = texture2D(u_gravel, d1).rgb;
         vec3 asphalt = texture2D(u_asphalt, d1).rgb;
@@ -100,6 +119,9 @@ final class TerrainRenderer {
         color = mix(color, asphalt, wAsphalt);
         // Gentle large-scale light variation, like cloud-dappled fields.
         color *= 0.93 + 0.14 * large;
+        // Snow settles on grass and soil first, patchy at the edges.
+        float snowy = clamp(u_snow * (0.7 + 0.6 * medium) - wAsphalt * 0.6 - wGravel * 0.3, 0.0, 1.0);
+        color = mix(color, vec3(0.93, 0.95, 0.99), snowy);
         gl_FragColor = vec4(color, 1.0);
     }
     """

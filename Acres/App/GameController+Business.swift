@@ -90,6 +90,7 @@ extension GameController {
                 Haptics.success()
                 let reward = delivery.completed.map(\.reward).reduce(0, +)
                 showBanner("Order complete! \(client.name) paid \(reward) coins. 🤝")
+                Sound.play(.coins)
             }
             if !delivery.events.isEmpty { handle(delivery.events) }
             refreshTruck()

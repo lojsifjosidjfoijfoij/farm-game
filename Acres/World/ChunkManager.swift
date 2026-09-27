@@ -35,8 +35,11 @@ final class ChunkManager {
     /// Asked while loading: wild trees the player chopped or cleared are skipped
     /// (the tree renderer draws what's there now).
     var isMapTreeHidden: ((TileCoord) -> Bool)?
-    /// Season used to pick object art. (Seasonal art arrives in Phase 7.)
-    private let season: Season = .summer
+    /// Season used to pick object art (trees change their leaves). Changing it
+    /// reloads the chunks.
+    var season: Season = .summer {
+        didSet { if season != oldValue { unloadAll() } }
+    }
 
     /// Chunks within this margin (in chunks) outside the screen are loaded early…
     private let loadMargin: CGFloat = 0.5

@@ -22,10 +22,17 @@ enum Haptics {
 
     static func success() { if isEnabled { notification.notificationOccurred(.success) } }
 
-    static func warning() { if isEnabled { notification.notificationOccurred(.warning) } }
+    /// Something couldn't be done (with a soft "nope" sound).
+    static func warning() {
+        Sound.play(.refuse, volume: 0.6)
+        if isEnabled { notification.notificationOccurred(.warning) }
+    }
 
     private static let medium = UIImpactFeedbackGenerator(style: .medium)
 
     /// The truck hit something; stronger at speed.
-    static func bump(intensity: Double) { if isEnabled { medium.impactOccurred(intensity: CGFloat(max(0.3, min(1, intensity)))) } }
+    static func bump(intensity: Double) {
+        Sound.play(.bump, volume: Float(max(0.3, min(1, intensity))))
+        if isEnabled { medium.impactOccurred(intensity: CGFloat(max(0.3, min(1, intensity)))) }
+    }
 }

@@ -35,6 +35,7 @@ extension GameController {
         showsSeedPicker = false
         dismissInspection()
         Haptics.tap()
+        Sound.play(.door, volume: 0.8)
         refreshFarmer()
     }
 
@@ -54,6 +55,7 @@ extension GameController {
         refreshFarmer()
         save()
         Haptics.tap()
+        Sound.play(.door, volume: 0.8)
     }
 
     /// A free spot next to the truck for the farmer to step out onto.

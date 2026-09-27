@@ -107,5 +107,6 @@ public enum AudioManifest {
         sfx("sfx_birds_flyoff", "Flutter of wings."),
         sfx("sfx_mill", loops: true, "Creaking windmill / millstone."),
         sfx("sfx_notification", "Soft bell for 'ready' notifications."),
+        sfx("sfx_refuse", "Soft low two-note 'nope' when something can't be done."),
     ]
 }

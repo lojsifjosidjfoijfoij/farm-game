@@ -33,6 +33,16 @@ struct RootView: View {
                 .transition(.scale(scale: 0.92).combined(with: .opacity))
             }
 
+            if let card = game.levelUpCard, game.welcome == nil, game.sleep == nil {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+                LevelUpCardView(card: card) {
+                    withAnimation(.easeOut(duration: 0.25)) { game.dismissLevelUp() }
+                }
+                .transition(.scale(scale: 0.85).combined(with: .opacity))
+            }
+
             if let summary = game.welcome {
                 Color.black.opacity(0.25)
                     .ignoresSafeArea()
@@ -45,6 +55,7 @@ struct RootView: View {
         }
         .animation(.easeOut(duration: 0.3), value: game.welcome != nil)
         .animation(.easeOut(duration: 0.3), value: game.weeklyReport)
+        .animation(.easeOut(duration: 0.3), value: game.levelUpCard)
         .statusBarHidden(true)
         .persistentSystemOverlays(.hidden)
         .onChange(of: scenePhase) { _, newPhase in
@@ -60,6 +71,10 @@ struct RootView: View {
         }
         .sheet(isPresented: $game.showsGoals) {
             GoalsView(game: game)
+                .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $game.showsRoadmap) {
+            LevelRoadmapView(game: game)
                 .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $game.showsBusiness) {

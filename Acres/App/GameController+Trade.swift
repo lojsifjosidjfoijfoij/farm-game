@@ -21,6 +21,9 @@ extension GameController {
         Haptics.tap()
     }
 
+    /// Today's market special (pays extra).
+    func isMarketSpecial(_ itemID: String) -> Bool { trading.isSpecial(itemID, in: simulation.state) }
+
     /// Today's market price for anything the market buys.
     func price(of itemID: String) -> Int {
         trading.price(of: itemID, in: simulation.state) ?? 0
@@ -74,6 +77,7 @@ extension GameController {
         finish(result) { earned in
             Haptics.success()
             showMessage("Sold for \(earned) coins!")
+            Sound.play(.coins)
             advanceTutorial(.sold)
         }
     }
@@ -83,6 +87,7 @@ extension GameController {
         finish(result) { earned in
             Haptics.success()
             showMessage("Sold everything for \(earned) coins!")
+            Sound.play(.coins)
             advanceTutorial(.sold)
         }
     }

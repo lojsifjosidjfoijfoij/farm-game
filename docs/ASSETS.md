@@ -46,7 +46,7 @@ procedurally in code.
 | Effects & particles | 33 | 4 |
 | User interface | 33 | 15 |
 | **Total** | **602** | **52** |
-| Audio files | 57 | 0 |
+| Audio files | 58 | 0 |
 
 ## Terrain (tileable ground textures)
 
@@ -683,4 +683,5 @@ procedurally in code.
 | `sfx_birds_flyoff` | no | < 2 s | 8 | Flutter of wings. |
 | `sfx_mill` | yes | 2–5 s loop | 8 | Creaking windmill / millstone. |
 | `sfx_notification` | no | < 2 s | 8 | Soft bell for 'ready' notifications. |
+| `sfx_refuse` | no | < 2 s | 8 | Soft low two-note 'nope' when something can't be done. |
 

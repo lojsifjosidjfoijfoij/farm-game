@@ -566,7 +566,7 @@ extension GameController {
             if phase.passedOut {
                 showBanner("You fell asleep on your feet! You wake up at home, only half rested.")
             } else {
-                showBanner("Good morning! It's \(date.weekday.name). ☀️")
+                showBanner("Good morning! It's \(date.weekday.name). \(weather == .rain ? "🌧" : "☀️") \(todayNews)")
             }
             if !morningNews.isEmpty {
                 showBanner(([banner ?? ""] + morningNews).joined(separator: "\n"))

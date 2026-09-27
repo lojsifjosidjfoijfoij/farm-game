@@ -69,6 +69,7 @@ extension GameController {
         if tool != newTool {
             tool = newTool
             Haptics.selection()
+            Sound.play(.tap, volume: 0.5)
         }
     }
 }

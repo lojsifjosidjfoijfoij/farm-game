@@ -28,6 +28,8 @@ final class TreeRenderer {
     private let flatLayer: SKNode
     private let objectLayer: SKNode
     private var nodes: [TileCoord: TreeNodes] = [:]
+    /// Mature trees wear the season's leaves.
+    var season: Season = .summer
 
     init(assets: AssetCatalog, flatLayer: SKNode, objectLayer: SKNode) {
         self.assets = assets
@@ -38,7 +40,7 @@ final class TreeRenderer {
     /// Brings sprites up to date. `isVisible` says whether a tile's chunk is loaded.
     func sync(woodland: Woodland, forestry: Forestry, isVisible: (TileCoord) -> Bool) {
         for (tile, tree) in woodland.trees where isVisible(tile) {
-            let shown = Shown(asset: Self.assetName(tree), hasFruit: tree.hasFruit)
+            let shown = Shown(asset: Self.assetName(tree, season: season), hasFruit: tree.hasFruit)
             if let existing = nodes[tile] {
                 if existing.shown != shown { update(existing, tree: tree, to: shown) }
             } else {
@@ -60,12 +62,12 @@ final class TreeRenderer {
         nodes.removeAll()
     }
 
-    static func assetName(_ tree: TreeState) -> String {
+    static func assetName(_ tree: TreeState, season: Season = .summer) -> String {
         switch tree.stage {
         case .stump: "tree_stump"
         case .sapling: "tree_\(tree.speciesID)_sapling"
         case .young: "tree_\(tree.speciesID)_young"
-        case .mature: "tree_\(tree.speciesID)_summer"
+        case .mature: AssetManifest.assetName(forObjectKind: "tree_\(tree.speciesID)", season: season) ?? "tree_\(tree.speciesID)_summer"
         }
     }
 

@@ -82,6 +82,7 @@ public struct Simulation: Sendable {
 
     /// Systems in the order they run each step.
     public static let defaultSystems: [any SimulationSystem] = [
+        WeatherSystem(),
         SprinklerSystem(),
         CropSystem(),
         AnimalSystem(),

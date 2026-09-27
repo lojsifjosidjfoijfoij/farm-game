@@ -69,6 +69,9 @@ public struct GameState: Codable, Equatable, Sendable {
     /// Upgrades, machines and farmhands. (v8)
     public var estate: EstateState
 
+    /// Today's chores, the streak and the market special. (v9)
+    public var daily: DailyState
+
     public init(
         worldTime: TimeInterval,
         clock: GameClock,
@@ -88,7 +91,8 @@ public struct GameState: Codable, Equatable, Sendable {
         contracts: ContractBoard = ContractBoard(),
         finance: Finance = Finance(),
         store: StoreState = StoreState(),
-        estate: EstateState = EstateState()
+        estate: EstateState = EstateState(),
+        daily: DailyState = DailyState()
     ) {
         self.worldTime = worldTime
         self.clock = clock
@@ -109,6 +113,7 @@ public struct GameState: Codable, Equatable, Sendable {
         self.finance = finance
         self.store = store
         self.estate = estate
+        self.daily = daily
     }
 
     /// Where the farmer is: in the truck, or on foot.
@@ -135,7 +140,8 @@ public struct GameState: Codable, Equatable, Sendable {
             contracts: ContractBoard(),
             finance: Finance(),
             store: StoreState(),
-            estate: EstateState()
+            estate: EstateState(),
+            daily: DailyState()
         )
     }
 }

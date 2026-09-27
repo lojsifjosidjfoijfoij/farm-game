@@ -219,6 +219,7 @@ struct SettingsView: View {
             Section {
                 Toggle("Harvest reminders", isOn: Binding(get: { game.remindersEnabled }, set: { game.setReminders($0) }))
                 Toggle("Haptics", isOn: Binding(get: { game.hapticsEnabled }, set: { game.setHaptics($0) }))
+                Toggle("Sound effects", isOn: Binding(get: { game.soundEnabled }, set: { game.setSound($0) }))
             } footer: {
                 Text("Harvest reminders send a notification when your fields are ready while the app is closed.")
             }

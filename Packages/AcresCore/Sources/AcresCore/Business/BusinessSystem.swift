@@ -15,6 +15,10 @@ public struct BusinessSystem: SimulationSystem {
             // A brand-new (or newly upgraded) farm: put the first orders up.
             Contracts(balance: context.balance).refreshOffers(&state)
         }
+        if state.daily.day < 0 {
+            // First chores and market special.
+            DailyRoutine(balance: context.balance).rollOver(&state, day: today)
+        }
         guard today > state.finance.lastProcessedDay else { return }
         for day in (state.finance.lastProcessedDay + 1)...today {
             context.events += Self.morning(of: day, &state, balance: context.balance)
@@ -33,6 +37,7 @@ public struct BusinessSystem: SimulationSystem {
             events += payWeeklyBills(&state, week: day / 7 + 1, balance: balance)
         }
         contracts.refreshOffers(&state)
+        DailyRoutine(balance: balance).rollOver(&state, day: day)
         state.clock = realClock
         return events
     }

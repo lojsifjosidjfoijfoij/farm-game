@@ -125,6 +125,9 @@ public struct Balance: Sendable, Equatable {
     /// Flat interest on bank loans.
     public var loanInterest: Double = 0.12
 
+    /// The market's special of the day pays this much more.
+    public var marketSpecialBonus: Double = 0.5
+
     // MARK: - Your shop (Phase 7)
 
     /// Rent for the corner shop, every Monday (the first payment covers the

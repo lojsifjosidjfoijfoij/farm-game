@@ -335,8 +335,53 @@ enum SaveFixtures {
     }
     """
 
+    static let v9 = """
+    {
+      "createdAt": 1800000000,
+      "deviceID": "fixture-device",
+      "presentation": { "cameraCenter": { "x": 28, "y": 33 }, "cameraZoom": 1.3, "selectedSeed": "wheat" },
+      "revision": 330,
+      "savedAt": 1800050000,
+      "state": {
+        "clock": { "totalMinutes": 44700 },
+        "contracts": { "active": [], "completed": 0, "failed": 0, "nextID": 22, "offers": [], "reputation": 10 },
+        "daily": {
+          "bestStreak": 5,
+          "bonusClaimed": false,
+          "chores": [
+            { "claimed": false, "coins": 88, "counter": "harvested", "startCount": 30, "target": 24,
+              "title": "Harvest 24 crops", "xp": 10 },
+            { "claimed": true, "coins": 88, "counter": "planted", "startCount": 30, "target": 18,
+              "title": "Plant 18 crops", "xp": 10 }
+          ],
+          "day": 31,
+          "specialItem": "carrot",
+          "streak": 3
+        },
+        "estate": { "nextWorkerID": 1, "sprinklers": [], "storageLevel": 0, "truckBedLevel": 0, "workers": [] },
+        "farmer": { "energy": 95, "inTruck": false, "position": { "x": 21, "y": 35.5 } },
+        "finance": { "lastProcessedDay": 31, "thisWeek": { "expenses": {}, "income": {}, "week": 5 } },
+        "goals": { "claimed": [], "counters": { "harvested": 40, "planted": 50 } },
+        "inventory": { "items": {} },
+        "money": 3100,
+        "ownedProperties": ["home_farm"],
+        "plots": [],
+        "progress": { "level": 4, "xp": 12 },
+        "ranch": { "nextAnimalID": 1, "pens": {} },
+        "rng": "31",
+        "stats": { "offlineSeconds": 11000, "playSeconds": 22000, "returns": 10 },
+        "store": { "isRented": false, "shelves": [], "today": { "coins": 0, "day": 31, "items": 0, "sales": {} }, "totalCoins": 0 },
+        "truck": { "cargo": { "items": {} }, "fuel": 70, "heading": 3.1, "position": { "x": 26.2, "y": 30.2 } },
+        "tutorial": { "progress": 0, "step": 11 },
+        "woodland": { "hiddenMapTrees": [], "trees": [] },
+        "worldTime": 60000
+      },
+      "version": 9
+    }
+    """
+
     /// All fixtures, oldest first.
-    static let all: [(version: Int, json: String)] = [(1, v1), (2, v2), (3, v3), (4, v4), (5, v5), (6, v6), (7, v7), (8, v8)]
+    static let all: [(version: Int, json: String)] = [(1, v1), (2, v2), (3, v3), (4, v4), (5, v5), (6, v6), (7, v7), (8, v8), (9, v9)]
     static var latest: (version: Int, json: String) { all.last! }
 
     /// What `v1` must decode to after migrating to the current version.
@@ -571,9 +616,9 @@ enum SaveFixtures {
         presentation: PresentationState(cameraCenter: Vec2(73, 26), cameraZoom: 1.2, selectedSeed: "carrot")
     )
 
-    /// What `v8` must decode to.
-    static let v8Expected = SaveFile(
-        version: 8,
+    /// What `v8` must decode to after migrating to the current version.
+    static let v8Migrated = SaveFile(
+        version: SaveFile.currentVersion,
         revision: 300,
         deviceID: "fixture-device",
         createdAt: Date(timeIntervalSince1970: 1_800_000_000),
@@ -608,8 +653,46 @@ enum SaveFixtures {
         presentation: PresentationState(cameraCenter: Vec2(28, 33), cameraZoom: 1.3, selectedSeed: "wheat")
     )
 
+    /// What `v9` must decode to.
+    static let v9Expected = SaveFile(
+        version: 9,
+        revision: 330,
+        deviceID: "fixture-device",
+        createdAt: Date(timeIntervalSince1970: 1_800_000_000),
+        savedAt: Date(timeIntervalSince1970: 1_800_050_000),
+        state: GameState(
+            worldTime: 60_000,
+            clock: GameClock(totalMinutes: 44_700),
+            money: 3_100,
+            progress: FarmerProgress(level: 4, xp: 12),
+            truck: TruckState(position: Vec2(26.2, 30.2), heading: 3.1, fuel: 70),
+            rng: SeededRandom(seed: 0x31),
+            stats: PlayStats(playSeconds: 22000, offlineSeconds: 11000, returns: 10),
+            plots: FarmPlots(),
+            inventory: Inventory(),
+            ownedProperties: ["home_farm"],
+            tutorial: .complete,
+            ranch: Ranch(),
+            woodland: Woodland(),
+            farmer: FarmerState(position: Vec2(21, 35.5), energy: 95, inTruck: false),
+            goals: GoalState(counters: ["harvested": 40, "planted": 50], claimed: []),
+            contracts: ContractBoard(nextID: 22),
+            finance: Finance(thisWeek: Ledger(week: 5), lastProcessedDay: 31),
+            store: StoreState(today: StoreDay(day: 31)),
+            estate: EstateState(),
+            daily: DailyState(
+                day: 31,
+                chores: [
+                    DailyChore(counter: "harvested", title: "Harvest 24 crops", target: 24, startCount: 30, coins: 88, xp: 10, claimed: false),
+                    DailyChore(counter: "planted", title: "Plant 18 crops", target: 18, startCount: 30, coins: 88, xp: 10, claimed: true),
+                ],
+                streak: 3, bestStreak: 5, bonusClaimed: false, specialItem: "carrot")
+        ),
+        presentation: PresentationState(cameraCenter: Vec2(28, 33), cameraZoom: 1.3, selectedSeed: "wheat")
+    )
+
     /// The value whose encoding must have the same shape as the latest fixture.
-    static var latestExpected: SaveFile { v8Expected }
+    static var latestExpected: SaveFile { v9Expected }
 }
 
 /// In-memory store for tests.
@@ -702,10 +785,16 @@ final class SaveTests: XCTestCase {
         XCTAssertEqual(file, SaveFixtures.v7Migrated)
     }
 
-    func testVersion8FixtureDecodesExactly() throws {
+    func testVersion8FixtureMigratesExactly() throws {
         let system = SaveSystem(store: MemorySaveStore(), deviceID: "test")
         let file = try system.decode(Data(SaveFixtures.v8.utf8)).get()
-        XCTAssertEqual(file, SaveFixtures.v8Expected)
+        XCTAssertEqual(file, SaveFixtures.v8Migrated)
+    }
+
+    func testVersion9FixtureDecodesExactly() throws {
+        let system = SaveSystem(store: MemorySaveStore(), deviceID: "test")
+        let file = try system.decode(Data(SaveFixtures.v9.utf8)).get()
+        XCTAssertEqual(file, SaveFixtures.v9Expected)
     }
 
     func testCurrentFormatMatchesLatestFixture() throws {

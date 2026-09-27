@@ -4,7 +4,7 @@ A cozy, top-down farming and business game for iPhone: a farmer's version of Big
 You start with a run-down farm, a beat-up pickup truck and one farmer, and grow it into an
 agricultural empire.
 
-**Status: Phase 8 (Workers, land and machines) is done.** Phase 9 (Polish) is next.
+**Status: all nine phases are done.** Next up is whatever playtesting says: balance, art, more content.
 
 | Phase | Scope | Status |
 |---|---|---|
@@ -16,7 +16,7 @@ agricultural empire.
 | 6 | Contracts and deliveries, weekly bills, a bank loan | ✅ |
 | 7 | Your own shop in town: rent, stock, prices, customers | ✅ |
 | 8 | Hired workers; buy land, buildings and machines | ✅ |
-| 9 | Polish: art pass, sound, weather, seasons visuals, balancing | ⏳ next |
+| 9 | Polish: daily chores and streaks, market specials, weather, seasons, sound, celebrations | ✅ |
 
 ## Running it
 
@@ -34,6 +34,32 @@ Tests: press **⌘U** in Xcode (runs the simulation tests in `AcresCore`), or fr
 cd Packages/AcresCore
 swift test
 ```
+
+## Phase 9: what to test
+
+Your save carries over (format v9: today's chores start with your next morning).
+
+1. **Today's chores:** three small jobs every morning (plant, water, harvest, sell, collect eggs,
+   finish an order, chop trees, shop sales … depending on what your farm does). The chip under the
+   goal tracker shows how many are done and glows when a reward is waiting; the goals sheet lists
+   them with **Claim** buttons. Finish all three for a bonus. Doing them every day builds a
+   **streak** 🔥 that makes the bonus bigger (up to a week); skipping a day resets it.
+2. **Market special:** each morning one thing you can make pays 50% more at the market today (a
+   gold *Special* badge in the market; the morning message says what it is).
+3. **Weather:** sunny, cloudy, rain and (in winter) snow, fixed per day. **Rain waters every field**
+   all day, and the soil stays wet a while after. The clock shows the weather; the sky dims and
+   rain or snow falls. The morning message warns when rain is forecast for tomorrow.
+4. **Seasons you can see:** trees change their leaves (spring blossom, autumn colors, bare winter
+   branches), the grass turns golden in autumn and frosty in winter, with snow lying on snowy days.
+5. **Sound:** placeholder sound effects for plowing, planting, watering, harvesting, chopping,
+   coins, level-ups, goals, the truck door and bumps, and a soft "nope". Real recordings named like
+   `docs/ASSETS.md` (e.g. `sfx_coin.m4a`) replace them. Basket → Settings → *Sound effects* turns
+   them off; the phone's mute switch silences them too.
+6. **Celebrations:** coins float up from the money counter (+/−) whenever it changes; leveling up
+   shows a card with confetti and everything it unlocks. **Tap the level pill** for *What's next*:
+   the coming levels and what each one brings.
+7. **Balance:** chores pay modestly (a little XP, some coins), so levels still come mainly from
+   farming.
 
 ## Phase 8: what to test
 
@@ -305,7 +331,7 @@ especially helpful, since that art is drawn entirely in code.
 ```
 Acres.xcodeproj
 Acres/                      iOS app (SwiftUI + SpriteKit): rendering, input, UI
-  App/                      AcresApp, GameController (+Farmer, +Tools, +Driving, +Trade, +Business, +Store, +Estate, +Tutorial, +Ranch), Haptics
+  App/                      AcresApp, GameController (+Farmer, +Tools, +Driving, +Trade, +Business, +Store, +Estate, +Daily, +Juice, +Tutorial, +Ranch), Haptics, Sound
   UI/                       HUD, shops, business phone, your shop, inventory, Welcome-back card, debug panel, theme
   World/                    GameScene, camera, chunk streaming, terrain shader, sprites, trees, pens, shop customers
   Art/                      AssetCatalog + procedural placeholder painters
@@ -319,7 +345,7 @@ Packages/AcresCore/         Pure Swift simulation (no UIKit/SpriteKit), plus uni
   Trade/                    Shops, market prices, buying, selling, fuel, loading
   Animals/                  Animal simulation, pen rules (repair, collect, water, feed)
   Trees/                    Tree growth, forestry rules (chop, clear, plant, pick)
-  Farmer/                   Energy, sleep, goals
+  Farmer/                   Energy, sleep, goals, daily chores, weather
   Business/                 Clients and contracts, the books (ledger), bills, loans, your shop, places
   Estate/                   Land, storage and truck upgrades, sprinklers, farmhands
   Save/                     Versioned save files, migrations, file store

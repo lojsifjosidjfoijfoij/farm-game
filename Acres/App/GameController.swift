@@ -94,6 +94,7 @@ final class GameController {
     var showsGoals = false
     private(set) var remindersEnabled: Bool
     private(set) var hapticsEnabled: Bool
+    private(set) var soundEnabled: Bool
 
     // MARK: Truck and trade state (observed)
 
@@ -132,6 +133,17 @@ final class GameController {
     var ownedLand: [String] = []
     /// A machine being placed: the next tap on your land puts it there.
     var placingMachine: String?
+    /// Today's chores (copied when they change).
+    var dailyState = DailyState()
+    var todaysChores: [ChoreProgress] = []
+    /// Today's weather (for the clock and the sky).
+    var weather: Weather = .sunny
+    /// "+120" / "−50" floating up from the coins.
+    var moneyFloats: [MoneyFloat] = []
+    /// The level-up celebration.
+    var levelUpCard: LevelUpCard?
+    /// What each coming level unlocks.
+    var showsRoadmap = false
 
     // MARK: The farmer and the clock (observed)
 
@@ -202,6 +214,8 @@ final class GameController {
     @ObservationIgnored var destination: Vec2?
     /// Things that happened overnight, told when the farmer wakes up.
     @ObservationIgnored var morningNews: [String] = []
+    @ObservationIgnored var moneyShown = false
+    @ObservationIgnored var moneyFloatTimers: [UUID: TimeInterval] = [:]
 
     var balance: Balance { simulation.balance }
     var farming: Farming { Farming(map: map, balance: simulation.balance) }
@@ -226,6 +240,9 @@ final class GameController {
         let haptics = Settings.bool(Settings.hapticsKey, default: true)
         hapticsEnabled = haptics
         Haptics.isEnabled = haptics
+        let sound = Settings.bool(Settings.soundKey, default: true)
+        soundEnabled = sound
+        Sound.isEnabled = sound
 
         var report: OfflineReport?
         var pendingAlert: GameAlert?
@@ -300,6 +317,7 @@ final class GameController {
             bannerTimeLeft -= dt
             if bannerTimeLeft <= 0 { banner = nil }
         }
+        if !moneyFloatTimers.isEmpty { tickMoneyFloats(dt) }
         if inspectionTimeLeft > 0 {
             inspectionTimeLeft -= dt
             inspectionRefresh += dt
@@ -578,6 +596,7 @@ final class GameController {
     func claimGoal(_ id: String) {
         guard let claim = simulation.claimGoal(id) else { return }
         Haptics.success()
+        Sound.play(.achievement)
         showBanner("Goal complete: \(claim.goal.title)! +\(claim.goal.coins) coins")
         handle(claim.events)
         refreshDisplay()
@@ -591,6 +610,13 @@ final class GameController {
         remindersEnabled = enabled
         Settings.set(enabled, for: Settings.remindersKey)
         if enabled { reminders.requestPermissionIfNeeded(enabled: true, force: true) } else { reminders.cancelAll() }
+    }
+
+    func setSound(_ enabled: Bool) {
+        soundEnabled = enabled
+        Sound.isEnabled = enabled
+        Settings.set(enabled, for: Settings.soundKey)
+        if enabled { Sound.play(.coin) }
     }
 
     func setHaptics(_ enabled: Bool) {
@@ -659,8 +685,8 @@ final class GameController {
             case .newDay:
                 break  // no clock to follow: days only drive lighting, prices and seasons
             case .levelUp(let newLevel):
-                let unlocks = Self.unlocks(at: newLevel)
-                showBanner(unlocks.isEmpty ? "Level \(newLevel)! 🎉" : "Level \(newLevel)! 🎉 New: \(unlocks.joined(separator: ", "))")
+                Sound.play(.levelUp)
+                levelUpCard = LevelUpCard(level: newLevel, unlocks: Self.unlocks(at: newLevel, balance: balance))
                 hasLevelUp = true
             case .cropReady, .animalProductReady, .treeGrown, .fruitReady:
                 break  // they show in the world (sparkles, bubbles, fruit); no need to interrupt
@@ -679,6 +705,7 @@ final class GameController {
                     showMessage("Your shop sold out of \(name). Bring more to restock.")
                 }
             case .weeklyBills(let week, let total):
+                Sound.play(.notification, volume: 0.7)
                 weeklyReport = WeeklyReport(week: week - 1, ledger: simulation.state.finance.lastWeek ?? Ledger(week: week - 1),
                                             billsPaid: total, moneyAfter: simulation.state.money)
             case .animalGrewUp(let penID, let id):
@@ -697,12 +724,23 @@ final class GameController {
     }
 
     /// What a new farmer level opens up, for the level-up banner.
-    static func unlocks(at level: Int) -> [String] {
+    static func unlocks(at level: Int, balance: Balance = .standard) -> [String] {
         var result: [String] = []
         result += PenCatalog.all.filter { $0.unlockLevel == level }.map { "fix up the \($0.name.lowercased())" }
         result += AnimalCatalog.all.filter { $0.unlockLevel == level }.map { $0.plural }
         result += CropCatalog.all.filter { $0.unlockLevel == level }.map { "\($0.name.lowercased()) seeds" }
         result += TreeCatalog.all.filter { $0.unlockLevel == level }.map { "\($0.name.lowercased()) saplings" }
+        result += PropertyCatalog.forSale.filter { $0.unlockLevel == level }.map { "\($0.name) for sale" }
+        result += MachineCatalog.all.filter { $0.unlockLevel == level }.map { $0.plural }
+        if balance.storeUnlockLevel == level { result.append("the corner shop") }
+        if let index = balance.workerUnlockLevels.firstIndex(of: level) {
+            result.append(index == 0 ? "a farmhand" : "farmhand no. \(index + 1)")
+        }
+        if let index = balance.storageUpgradeLevels.firstIndex(of: level) {
+            result.append(index == 0 ? "a storage shed" : "a bigger silo")
+        }
+        if balance.truckBedUpgradeLevels.contains(level) { result.append("a bigger truck bed") }
+        result += Bank.offers.filter { $0.unlockLevel == level && level > 1 }.map { "\($0.amount)-coin bank loans" }
         return result
     }
 
@@ -731,7 +769,12 @@ final class GameController {
     func refreshDisplay() {
         let state = simulation.state
         let date = state.clock.date(daysPerSeason: simulation.balance.daysPerSeason)
-        if money != state.money { money = state.money }
+        if money != state.money {
+            let delta = state.money - money
+            money = state.money
+            if moneyShown { addMoneyFloat(delta) }
+            moneyShown = true
+        }
         if level != state.progress.level { level = state.progress.level }
         let fraction = Progression.levelFraction(state.progress, balance: balance)
         if levelProgress != fraction { levelProgress = fraction }
@@ -752,6 +795,9 @@ final class GameController {
         if seasonTimeLeft != left { seasonTimeLeft = left }
         refreshGoals()
         refreshBusiness()
+        refreshDaily()
+        let today = state.weather(balance)
+        if weather != today { weather = today }
     }
 
     func refreshInventory() {
@@ -953,6 +999,7 @@ enum Format {
 enum Settings {
     static let remindersKey = "acres.harvestReminders"
     static let hapticsKey = "acres.haptics"
+    static let soundKey = "acres.sound"
 
     static func bool(_ key: String, default value: Bool) -> Bool {
         UserDefaults.standard.object(forKey: key) as? Bool ?? value

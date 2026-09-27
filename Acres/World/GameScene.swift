@@ -27,6 +27,9 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     private var farmer: FarmerRenderer?
     private var store: StoreRenderer?
     private var estate: EstateRenderer?
+    private var terrain: TerrainRenderer?
+    private var weather: WeatherRenderer?
+    private var lastWeather: Weather?
     private var shownJobRevision = -1
     private var truck: TruckRenderer?
     /// Pulsing ring on the tile the tutorial points at.
@@ -98,8 +101,10 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         assets.preload(["terrain_grass", "terrain_dirt", "terrain_gravel", "terrain_asphalt", "terrain_variation",
                         "fx_shadow_soft", "fx_smoke_puff", "fx_tile_highlight", "field_soil_plowed", "field_soil_watered"])
 
+        let terrainRenderer = TerrainRenderer(assets: assets)
+        terrain = terrainRenderer
         let chunkManager = ChunkManager(
-            map: map, terrain: TerrainRenderer(assets: assets), factory: WorldObjectFactory(assets: assets),
+            map: map, terrain: terrainRenderer, factory: WorldObjectFactory(assets: assets),
             groundLayer: groundLayer, flatLayer: flatLayer, objectLayer: objectLayer)
         chunkManager.showsBorders = showsChunkBorders
         chunkManager.isTileCleared = { [weak self] tile in
@@ -131,6 +136,8 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         store = StoreRenderer(assets: assets, objectLayer: objectLayer, flatLayer: flatLayer)
         estate = EstateRenderer(assets: assets, objectLayer: objectLayer, flatLayer: flatLayer, effectsLayer: effectsLayer)
         estate?.sync(game: game, force: true)
+        weather = WeatherRenderer(layer: effectsLayer, assets: assets)
+        updateSeason()
         setUpMarkers()
         game.onWorldReset = { [weak self] in self?.worldWasReset() }
         game.onFeedback = { [weak self] feedback in self?.play(feedback) }
@@ -233,6 +240,8 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         ranch?.update(dt: dt)
         store?.update(store: game.storeState, hour: game.hour, dt: dt)
         estate?.update(game: game, dt: dt)
+        updateSeason()
+        weather?.update(weather: game.weather, visible: camera.visibleRect, dt: dt)
         updateLighting(force: false)
 
         // Crops change slowly: re-check a few times a second, or at once after an action.
@@ -296,13 +305,38 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         }
     }
 
+    /// Seasons change the leaves and the grass; snow lies in winter.
+    private func updateSeason() {
+        let season = game.season
+        let snow = season == .winter ? (game.weather == .snow ? 0.7 : 0.3) : 0
+        terrain?.setSeason(season, snowCover: snow)
+        if chunks?.season != season {
+            chunks?.season = season
+            trees?.season = season
+            estate?.sync(game: game, force: true)
+            syncFields()
+        }
+        if lastWeather != game.weather {
+            lastWeather = game.weather
+            updateLighting(force: true)
+        }
+    }
+
     private func updateLighting(force: Bool) {
         let hour = game.simulation.state.clock.hourOfDay
         // ~40 in-game seconds between updates is plenty for a slow sky.
         guard force || abs(hour - lastLightingHour) > 0.01 else { return }
         lastLightingHour = hour
         let light = DayNightCurve.lighting(atHour: hour)
-        gradeOverlay.color = SKColor(red: CGFloat(light.tint.r), green: CGFloat(light.tint.g), blue: CGFloat(light.tint.b), alpha: 1)
+        // Grey skies dim and cool the light a little.
+        let sky: (r: Double, g: Double, b: Double) = switch game.weather {
+        case .sunny: (1, 1, 1)
+        case .cloudy: (0.9, 0.92, 0.95)
+        case .rain: (0.76, 0.8, 0.88)
+        case .snow: (0.93, 0.95, 1)
+        }
+        gradeOverlay.color = SKColor(red: CGFloat(light.tint.r * sky.r), green: CGFloat(light.tint.g * sky.g),
+                                     blue: CGFloat(light.tint.b * sky.b), alpha: 1)
         chunks?.setLightIntensity(CGFloat(light.nightLights))
         ranch?.nightLevel = CGFloat(light.nightLights)
     }
@@ -446,6 +480,13 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
 
     private func showFeedback(_ outcome: FarmOutcome, at tile: TileCoord, painting: Bool) {
         switch outcome {
+        case .plowed: Sound.play(.plow, volume: 0.8)
+        case .planted: Sound.play(.plant, volume: 0.7)
+        case .watered: Sound.play(.water, volume: 0.6)
+        case .harvested: Sound.play(.harvest)
+        case .failed: break
+        }
+        switch outcome {
         case .plowed:
             chunks?.clearDecor(at: tile)
             FieldEffects.plowed(at: tile, in: effectsLayer, assets: assets)
@@ -483,6 +524,13 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         case .pen(let outcome, let penID):
             syncFields()
             switch outcome {
+            case .collected: Sound.play(penID == "coop" ? .chicken : .harvest)
+            case .fed: Sound.play(.plant, volume: 0.6)
+            case .watered: Sound.play(.water, volume: 0.6)
+            case .repaired: Sound.play(.chop)
+            case .failed: break
+            }
+            switch outcome {
             case .collected(let items, _): ranch?.collected(in: penID, items: items)
             case .fed: ranch?.hearts(in: penID)
             case .watered: ranch?.watered(penID)
@@ -497,12 +545,15 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         case .tree(let outcome, let tile, let position):
             switch outcome {
             case .chopped(let speciesID, let logs, _):
+                Sound.play(.treeFall)
                 chunks?.hideMapTree(at: tile)
                 TreeEffects.chopped(at: position, speciesID: speciesID, logs: logs, in: effectsLayer, assets: assets)
             case .stumpCleared:
+                Sound.play(.chop)
                 chunks?.hideMapTree(at: tile)
                 TreeEffects.cleared(at: position, in: effectsLayer, assets: assets)
             case .picked(let itemID, let amount, _):
+                Sound.play(.harvest)
                 TreeEffects.picked(at: position, itemID: itemID, amount: amount, in: effectsLayer, assets: assets)
             case .planted:
                 FieldEffects.planted(at: tile, in: effectsLayer, assets: assets)

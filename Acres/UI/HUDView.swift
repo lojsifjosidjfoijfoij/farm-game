@@ -17,6 +17,7 @@ struct HUDView: View {
                     }
                     levelPill
                     if !game.tutorial.isActive, let goal = game.openGoals.first { goalTracker(goal) }
+                    if !game.tutorial.isActive, !game.todaysChores.isEmpty { choresChip }
                 }
                 Spacer(minLength: 12)
                 VStack(alignment: .trailing, spacing: 6) {
@@ -152,8 +153,45 @@ struct HUDView: View {
             }
         }
         .hudPanel()
+        .overlay(alignment: .bottomTrailing) {
+            ZStack {
+                ForEach(game.moneyFloats) { float in
+                    FloatingAmount(amount: float.amount)
+                }
+            }
+            .offset(x: 6, y: -6)
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(debt ? "In debt: \(-game.money) coins" : "\(game.money) coins")
+    }
+
+    /// Today's chores at a glance (tap for the list); glows when there's a reward.
+    private var choresChip: some View {
+        let done = game.todaysChores.filter(\.isDone).count
+        let claimable = game.choresClaimable
+        return Button {
+            game.showsGoals = true
+            Haptics.tap()
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: claimable ? "gift.fill" : "checklist")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(claimable ? Theme.gold : Theme.leafDark)
+                Text(claimable ? "Chore done! Claim" : "Today \(done)/\(game.todaysChores.count)")
+                    .font(Theme.label(13, weight: claimable ? .bold : .semibold))
+                    .foregroundStyle(Theme.ink)
+                if game.dailyState.streak > 0 {
+                    Label("\(game.dailyState.streak)", systemImage: "flame.fill")
+                        .font(Theme.label(12, weight: .bold))
+                        .foregroundStyle(Color(red: 0.9, green: 0.45, blue: 0.2))
+                }
+            }
+            .padding(.vertical, -2)
+            .hudPanel(cornerRadius: 12)
+        }
+        .buttonStyle(.plain)
+        .pulsing(claimable)
+        .accessibilityLabel(claimable ? "A chore is done. Claim the reward." : "Today's chores: \(done) of \(game.todaysChores.count) done")
     }
 
     /// The business phone: orders and money. The badge counts orders on.
@@ -162,6 +200,7 @@ struct HUDView: View {
         let urgent = active.contains { game.daysLeft($0) <= 0 }
         return Button {
             Haptics.tap()
+            Sound.play(.open, volume: 0.7)
             game.showsSeedPicker = false
             game.showsBusiness = true
         } label: {
@@ -193,6 +232,16 @@ struct HUDView: View {
     }
 
     private var levelPill: some View {
+        Button {
+            game.showsRoadmap = true
+            Haptics.tap()
+        } label: {
+            levelPillContent
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var levelPillContent: some View {
         HStack(spacing: 8) {
             GameIcon(asset: "ui_icon_level", fallbackSymbol: "star.fill", tint: Theme.gold, size: 16)
             Text("Lv \(game.level)")
@@ -244,9 +293,10 @@ struct HUDView: View {
     private var clockPill: some View {
         VStack(alignment: .trailing, spacing: 1) {
             HStack(spacing: 6) {
-                Image(systemName: Theme.clockSymbol(hour: game.hour))
+                Image(systemName: game.weather == .sunny ? Theme.clockSymbol(hour: game.hour)
+                      : GameController.symbol(for: game.weather, hour: game.hour))
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Theme.gold)
+                    .foregroundStyle(game.weather == .sunny ? Theme.gold : Color(red: 0.45, green: 0.55, blue: 0.7))
                 Text(game.clockText)
                     .font(Theme.number(18))
                     .foregroundStyle(Theme.ink)

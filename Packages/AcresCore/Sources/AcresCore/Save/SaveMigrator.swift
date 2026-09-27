@@ -99,6 +99,11 @@ public struct SaveMigrator: Sendable {
                                    "nextWorkerID": 1] as [String: Any]
                 json["state"] = state
             },
+            8: { json in
+                var state = json["state"] as? [String: Any] ?? [:]
+                state["daily"] = ["day": -1, "chores": [Any](), "streak": 0, "bestStreak": 0, "bonusClaimed": false] as [String: Any]
+                json["state"] = state
+            },
         ]
     )
 

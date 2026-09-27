@@ -119,7 +119,14 @@ public struct Trading: Sendable {
     /// Today's price for anything the market buys.
     public func price(of itemID: String, in state: GameState) -> Int? {
         guard let item = ItemCatalog.item(itemID), item.category.isSellable else { return nil }
-        return MarketPricing.price(of: item, day: today(state))
+        let price = MarketPricing.price(of: item, day: today(state))
+        guard isSpecial(itemID, in: state) else { return price }
+        return Int((Double(price) * (1 + balance.marketSpecialBonus)).rounded())
+    }
+
+    /// Today's market special pays extra.
+    public func isSpecial(_ itemID: String, in state: GameState) -> Bool {
+        state.daily.specialItem == itemID && state.daily.day == today(state)
     }
 
     /// The farmer must be at the shop while it's open; for the market and the
