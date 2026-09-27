@@ -116,6 +116,11 @@ final class GameController {
     var businessTab = BusinessTab.orders
     /// Monday morning's look back at the week that ended.
     var weeklyReport: WeeklyReport?
+    /// Your shop, copied from the state when it changes.
+    var storeState = StoreState()
+    /// The shop the truck (or the farmer) is at, if any.
+    var nearbyStore: StoreDefinition?
+    var showsStore = false
 
     // MARK: The farmer and the clock (observed)
 
@@ -650,6 +655,11 @@ final class GameController {
                     showBanner(text)
                     Haptics.warning()
                 }
+            case .shelfSoldOut(let itemID):
+                if !quiet && sleep == nil {
+                    let name = ItemCatalog.item(itemID)?.plural ?? itemID
+                    showMessage("Your shop sold out of \(name). Bring more to restock.")
+                }
             case .weeklyBills(let week, let total):
                 weeklyReport = WeeklyReport(week: week - 1, ledger: simulation.state.finance.lastWeek ?? Ledger(week: week - 1),
                                             billsPaid: total, moneyAfter: simulation.state.money)
@@ -777,6 +787,16 @@ final class GameController {
         farmRevision += 1
     }
 
+    /// A truck bed of mixed goods, for trying the shop and orders.
+    func debugLoadTruckWithGoods() {
+        simulation.modify { state in
+            for (item, count) in [("carrot", 20), ("potato", 15), ("egg", 10), ("apple", 10), ("log", 5)] {
+                state.truck.cargo.add(item, count)
+            }
+        }
+        refreshTruck()
+    }
+
     func debugAddMoney(_ amount: Int) {
         simulation.modify { $0.money += amount }
         refreshDisplay()
@@ -870,6 +890,7 @@ final class GameController {
         destination = nil
         openShop = nil
         showsBusiness = false
+        showsStore = false
         weeklyReport = nil
         morningNews = []
         sleep = nil

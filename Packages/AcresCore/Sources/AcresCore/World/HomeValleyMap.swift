@@ -41,6 +41,12 @@ public enum HomeValleyMap {
     public static let bakeryZone = TileRect(minX: 48, minY: 76.8, maxX: 55.2, maxY: 80)
     public static let lumberYardZone = TileRect(minX: 57.8, minY: 67.6, maxX: 68, maxY: 72)
 
+    // --- Your shop (Phase 7) -------------------------------------------------
+    /// The corner shop for rent, between the gas station and the seed shop.
+    public static let storeZone = TileRect(minX: 70.8, minY: 22.4, maxX: 76.2, maxY: 27.4)
+    /// Its door, where customers go in.
+    public static let storeDoor = Vec2(73.4, 27.7)
+
     /// The farmhouse door: where the farmer wakes up and goes to bed.
     public static let farmhouseDoor = Vec2(21, 35.5)
 
@@ -286,6 +292,11 @@ public enum HomeValleyMap {
         b.paintRect(.gravel, TileRect(minX: 116.6, minY: 25, maxX: 122, maxY: 27.6))
         b.place("building_restaurant", at: Vec2(119.4, 27.6), radius: 2.6)
         b.place("prop_lamp_post", at: Vec2(116.4, 28.2), radius: 0.3)
+
+        // The corner shop for rent, between the gas station and the seed shop.
+        clear(TileRect(minX: 70.6, minY: 25, maxX: 76.4, maxY: 31))
+        b.paintRect(.gravel, TileRect(minX: 71, minY: 25, maxX: 76, maxY: 27.8))
+        b.place("building_town_shop", at: Vec2(73.4, 27.8), radius: 2)
 
         // Up the county road: a lumber yard in the woods and a bakery.
         clear(TileRect(minX: 57.6, minY: 66, maxX: 70, maxY: 77.5))

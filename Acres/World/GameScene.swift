@@ -25,6 +25,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     private var trees: TreeRenderer?
     private var ranch: RanchRenderer?
     private var farmer: FarmerRenderer?
+    private var store: StoreRenderer?
     private var shownJobRevision = -1
     private var truck: TruckRenderer?
     /// Pulsing ring on the tile the tutorial points at.
@@ -123,6 +124,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
 
         truck = TruckRenderer(assets: assets, objectLayer: objectLayer, flatLayer: flatLayer, effectsLayer: effectsLayer)
         farmer = FarmerRenderer(assets: assets, objectLayer: objectLayer, flatLayer: flatLayer, effectsLayer: effectsLayer)
+        store = StoreRenderer(assets: assets, objectLayer: objectLayer, flatLayer: flatLayer)
         setUpMarkers()
         game.onWorldReset = { [weak self] in self?.worldWasReset() }
         game.onFeedback = { [weak self] feedback in self?.play(feedback) }
@@ -222,6 +224,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         camera.update(dt: dt)
         chunks?.update(visibleRect: camera.visibleRect)
         ranch?.update(dt: dt)
+        store?.update(store: game.storeState, hour: game.hour, dt: dt)
         updateLighting(force: false)
 
         // Crops change slowly: re-check a few times a second, or at once after an action.

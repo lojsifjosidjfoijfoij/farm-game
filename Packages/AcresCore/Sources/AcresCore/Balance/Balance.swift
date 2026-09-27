@@ -125,6 +125,38 @@ public struct Balance: Sendable, Equatable {
     /// Flat interest on bank loans.
     public var loanInterest: Double = 0.12
 
+    // MARK: - Your shop (Phase 7)
+
+    /// Rent for the corner shop, every Monday (the first payment covers the
+    /// days until then).
+    public var storeRentPerWeek: Int = 250
+    public var storeUnlockLevel: Int = 3
+    public var storeShelves: Int = 6
+    public var storeShelfCapacity: Int = 25
+
+    /// Customers per open hour for one shelf at the usual price, by kind of goods.
+    public func storeDemand(_ category: ItemCategory) -> Double {
+        switch category {
+        case .crop: 1.6
+        case .fruit: 1.2
+        case .animalProduct: 1.0
+        case .wood: 0.5
+        case .feed, .seed, .sapling: 0
+        }
+    }
+
+    /// How fast demand falls as the price goes up: `exp(-k × (factor - 1))`.
+    /// With k = 0.8 the takings per hour peak at 1.25 × the usual price.
+    public var storePriceSensitivity: Double = 0.8
+
+    /// Prices are set between these multiples of an item's usual value.
+    public var storePriceFactorRange: ClosedRange<Double> = 0.6...2.0
+
+    /// Variety draws a crowd: each different item on the shelves beyond the
+    /// first brings this many more customers, up to the maximum.
+    public var storeTrafficPerItem: Double = 0.08
+    public var storeTrafficMax: Double = 1.4
+
     // MARK: - Progression
 
     /// Experience needed to go from `level` to `level + 1`.

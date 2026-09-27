@@ -5,11 +5,13 @@ import Foundation
 public enum Place: Equatable, Sendable {
     case shop(ShopDefinition)
     case client(ClientDefinition)
+    case store(StoreDefinition)
 
     public var id: String {
         switch self {
         case .shop(let shop): shop.id
         case .client(let client): client.id
+        case .store(let store): store.id
         }
     }
 
@@ -17,6 +19,7 @@ public enum Place: Equatable, Sendable {
         switch self {
         case .shop(let shop): shop.name
         case .client(let client): client.name
+        case .store(let store): store.name
         }
     }
 
@@ -25,6 +28,7 @@ public enum Place: Equatable, Sendable {
         switch self {
         case .shop(let shop): shop.zone
         case .client(let client): client.zone
+        case .store(let store): store.zone
         }
     }
 
@@ -36,7 +40,13 @@ public enum Place: Equatable, Sendable {
         if case .client(let client) = self { client } else { nil }
     }
 
-    public static var all: [Place] { ShopCatalog.all.map(Place.shop) + ClientCatalog.all.map(Place.client) }
+    public var store: StoreDefinition? {
+        if case .store(let store) = self { store } else { nil }
+    }
+
+    public static var all: [Place] {
+        ShopCatalog.all.map(Place.shop) + ClientCatalog.all.map(Place.client) + [.store(.corner)]
+    }
 
     /// The place whose stopping zone is at (or within `margin` tiles of) a
     /// spot. Where margins overlap, the closest zone wins.

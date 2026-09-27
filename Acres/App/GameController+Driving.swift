@@ -91,6 +91,9 @@ extension GameController {
         for shop in ShopCatalog.all {
             result.append(Destination(id: shop.id, name: shop.name, symbol: Self.symbol(for: shop.kind), target: shop.zone.center))
         }
+        let store = StoreDefinition.corner
+        result.append(Destination(id: store.id, name: storeState.isRented ? "Your shop" : store.name, symbol: "storefront.fill",
+                                  target: store.zone.center, note: storeState.isRented ? nil : "for rent"))
         // Clients with orders on, then the rest.
         let busy = Set(contractBoard.active.map(\.clientID))
         for client in ClientCatalog.all.sorted(by: { busy.contains($0.id) && !busy.contains($1.id) }) {
@@ -165,6 +168,8 @@ extension GameController {
         }
         let client = place?.client
         if client != nearbyClient { nearbyClient = client }
+        let store = place?.store
+        if store != nearbyStore { nearbyStore = store }
         let atFarm = trading.truckIsAtFarm(simulation.state)
         if atFarm != truckAtFarm { truckAtFarm = atFarm }
     }

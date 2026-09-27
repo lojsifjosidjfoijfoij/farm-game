@@ -68,6 +68,10 @@ struct HUDView: View {
                 clientButton(client)
                     .padding(.bottom, 10)
                     .transition(.scale.combined(with: .opacity))
+            } else if game.nearbyStore != nil, !game.showsStore {
+                storeButton
+                    .padding(.bottom, 10)
+                    .transition(.scale.combined(with: .opacity))
             }
 
             if game.showsSeedPicker && !game.isDriving {
@@ -96,6 +100,7 @@ struct HUDView: View {
         .animation(.spring(duration: 0.35), value: game.showsSeedPicker)
         .animation(.spring(duration: 0.35), value: game.nearbyShop)
         .animation(.spring(duration: 0.35), value: game.nearbyClient)
+        .animation(.spring(duration: 0.35), value: game.nearbyStore)
         .animation(.spring(duration: 0.35), value: game.tutorialCard)
         .animation(.spring(duration: 0.35), value: game.isDriving)
         .animation(.spring(duration: 0.35), value: game.jobCount > 0)
@@ -326,6 +331,17 @@ struct HUDView: View {
         }
         .buttonStyle(.plain)
         .pulsing(open && hasOrder)
+    }
+
+    /// Parked at the corner shop: rent it, or run it.
+    private var storeButton: some View {
+        let rented = game.storeState.isRented
+        return Button {
+            game.openNearbyStore()
+        } label: {
+            placeLabel(rented ? "Open your shop" : "Corner Shop · for rent", symbol: "storefront.fill", active: true)
+        }
+        .buttonStyle(.plain)
     }
 
     private func placeLabel(_ title: String, symbol: String, active: Bool) -> some View {

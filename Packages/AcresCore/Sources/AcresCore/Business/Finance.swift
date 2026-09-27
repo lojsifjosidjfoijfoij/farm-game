@@ -101,6 +101,7 @@ public enum Bank {
     /// Money due every Monday morning.
     public static func weeklyBills(_ state: GameState, balance: Balance) -> [(category: String, amount: Int)] {
         var bills: [(String, Int)] = [(LedgerCategory.propertyTax, balance.propertyTaxPerWeek * state.ownedProperties.count)]
+        if state.store.isRented { bills.append((LedgerCategory.rent, balance.storeRentPerWeek)) }
         if let loan = state.finance.loan { bills.append((LedgerCategory.loanPayments, min(loan.weeklyPayment, loan.balance))) }
         return bills.filter { $0.1 > 0 }
     }

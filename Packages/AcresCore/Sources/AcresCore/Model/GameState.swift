@@ -63,6 +63,9 @@ public struct GameState: Codable, Equatable, Sendable {
     /// The books: weekly ledger and any bank loan. (v6)
     public var finance: Finance
 
+    /// The corner shop, once rented: shelves, prices and takings. (v7)
+    public var store: StoreState
+
     public init(
         worldTime: TimeInterval,
         clock: GameClock,
@@ -80,7 +83,8 @@ public struct GameState: Codable, Equatable, Sendable {
         farmer: FarmerState = FarmerState(),
         goals: GoalState = GoalState(),
         contracts: ContractBoard = ContractBoard(),
-        finance: Finance = Finance()
+        finance: Finance = Finance(),
+        store: StoreState = StoreState()
     ) {
         self.worldTime = worldTime
         self.clock = clock
@@ -99,6 +103,7 @@ public struct GameState: Codable, Equatable, Sendable {
         self.goals = goals
         self.contracts = contracts
         self.finance = finance
+        self.store = store
     }
 
     /// Where the farmer is: in the truck, or on foot.
@@ -123,7 +128,8 @@ public struct GameState: Codable, Equatable, Sendable {
             farmer: FarmerState(position: HomeValleyMap.farmhouseDoor, energy: balance.energyMax),
             goals: GoalState(),
             contracts: ContractBoard(),
-            finance: Finance()
+            finance: Finance(),
+            store: StoreState()
         )
     }
 }

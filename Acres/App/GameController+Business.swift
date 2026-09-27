@@ -4,6 +4,7 @@ import AcresCore
 /// The business phone's two tabs.
 enum BusinessTab: String, CaseIterable, Identifiable {
     case orders = "Orders"
+    case shop = "Shop"
     case money = "Money"
     var id: String { rawValue }
 }
@@ -25,6 +26,7 @@ extension GameController {
         let state = simulation.state
         if contractBoard != state.contracts { contractBoard = state.contracts }
         if finance != state.finance { finance = state.finance }
+        if storeState != state.store { storeState = state.store }
     }
 
     var today: Int { simulation.state.clock.dayIndex }

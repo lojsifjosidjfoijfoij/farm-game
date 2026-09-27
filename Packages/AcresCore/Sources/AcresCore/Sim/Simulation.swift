@@ -24,6 +24,8 @@ public enum SimEvent: Equatable, Sendable {
     case contractFailed(id: Int, clientID: String)
     /// Monday morning: the week's bills were paid.
     case weeklyBills(week: Int, total: Int)
+    /// A shelf in your shop sold its last item.
+    case shelfSoldOut(itemID: String)
 }
 
 /// How a stretch of time is being simulated.
@@ -86,6 +88,7 @@ public struct Simulation: Sendable {
         FarmerSystem(),
         ClockSystem(),
         BusinessSystem(),
+        StoreSystem(),
     ]
 
     public init(

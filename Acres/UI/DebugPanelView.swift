@@ -51,6 +51,7 @@ struct DebugPanelView: View {
 
                 Section("Truck & tutorial") {
                     Button("Fill the tank") { game.debugFillTank() }
+                    Button("Load the truck with goods") { game.debugLoadTruckWithGoods() }
                     Button("Skip the tutorial") { game.skipTutorial() }
                     Button("Restart the tutorial") { game.restartTutorial() }
                 }

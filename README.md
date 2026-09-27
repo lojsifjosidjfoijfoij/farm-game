@@ -4,7 +4,7 @@ A cozy, top-down farming and business game for iPhone: a farmer's version of Big
 You start with a run-down farm, a beat-up pickup truck and one farmer, and grow it into an
 agricultural empire.
 
-**Status: Phase 6 (Contracts and bills) is done.** Phase 7 (Your own shop) is next.
+**Status: Phase 7 (Your own shop) is done.** Phase 8 (Workers, land and machines) is next.
 
 | Phase | Scope | Status |
 |---|---|---|
@@ -14,8 +14,8 @@ agricultural empire.
 | 4 | Animals and trees: pens, livestock market, woodlot, saplings, fruit | ✅ |
 | 5 | The farmer's life: a farmer you walk around, clock and days, energy and sleep, tap-to-drive, goals, new HUD | ✅ |
 | 6 | Contracts and deliveries, weekly bills, a bank loan | ✅ |
-| 7 | Your own shop in town: rent, stock, prices, customers | ⏳ next |
-| 8 | Hired workers; buy land, buildings and machines | |
+| 7 | Your own shop in town: rent, stock, prices, customers | ✅ |
+| 8 | Hired workers; buy land, buildings and machines | ⏳ next |
 | 9 | Polish: art pass, sound, weather, seasons visuals, balancing | |
 
 ## Running it
@@ -34,6 +34,32 @@ Tests: press **⌘U** in Xcode (runs the simulation tests in `AcresCore`), or fr
 cd Packages/AcresCore
 swift test
 ```
+
+## Phase 7: what to test
+
+Your save carries over (format v7: the corner shop is waiting, for rent).
+
+1. **The corner shop** stands on the village street between the gas station and the seed shop,
+   with a *FOR RENT* sign. Drive there (map → *Corner Shop · for rent*) and tap **Corner Shop ·
+   for rent**. From **level 3** you can rent it: 250 coins a week, paid with Monday's bills (the
+   first payment only covers the days until Monday).
+2. **Stocking:** park the truck in front and tap **Open your shop**. *Stock everything from the
+   truck* puts all sellable goods on the six shelves (25 each; the most valuable first), or tap a
+   single item in the row below it. *Take back* returns a shelf to the truck.
+3. **Prices:** each shelf has − and + buttons (steps of 5%, from −40% to double the usual price).
+   The card shows the price, the markup and how many sell per day. Cheaper sells faster; dearer
+   earns more per sale. About +25% earns the most per hour. More different goods on the shelves
+   bring more customers.
+4. **Customers:** villagers walk in off the street while the shop is open (09:00–18:00, while you
+   play; the shop is shut while the game is closed). Every sale pays at once and shows in the
+   books as *Shop sales*. The *OPEN* chalkboard is out during opening hours. A banner tells you
+   when a shelf sells out.
+5. **The phone** has a new **Shop** tab: today's takings, this week's shop sales and every shelf's
+   stock, so you know when to restock. Prices are changed in the shop itself.
+6. **Giving it up:** with empty shelves, *Give up the shop…* at the bottom ends the lease (no more
+   rent from next Monday).
+7. **New goals:** *Open for business* and *Shopkeeper*.
+8. **Debug extras:** *Load the truck with goods* (carrots, potatoes, eggs, apples, logs).
 
 ## Phase 6: what to test
 
@@ -239,9 +265,9 @@ especially helpful, since that art is drawn entirely in code.
 ```
 Acres.xcodeproj
 Acres/                      iOS app (SwiftUI + SpriteKit): rendering, input, UI
-  App/                      AcresApp, GameController (+Farmer, +Driving, +Trade, +Business, +Tutorial, +Ranch), Haptics
-  UI/                       HUD, shops, business phone, inventory, Welcome-back card, debug panel, theme
-  World/                    GameScene, camera, chunk streaming, terrain shader, sprites, trees, pens
+  App/                      AcresApp, GameController (+Farmer, +Driving, +Trade, +Business, +Store, +Tutorial, +Ranch), Haptics
+  UI/                       HUD, shops, business phone, your shop, inventory, Welcome-back card, debug panel, theme
+  World/                    GameScene, camera, chunk streaming, terrain shader, sprites, trees, pens, shop customers
   Art/                      AssetCatalog + procedural placeholder painters
   Resources/Assets.xcassets Real art goes in Art/ (see docs/ASSETS.md)
 Packages/AcresCore/         Pure Swift simulation (no UIKit/SpriteKit), plus unit tests
@@ -254,7 +280,7 @@ Packages/AcresCore/         Pure Swift simulation (no UIKit/SpriteKit), plus uni
   Animals/                  Animal simulation, pen rules (repair, collect, water, feed)
   Trees/                    Tree growth, forestry rules (chop, clear, plant, pick)
   Farmer/                   Energy, sleep, goals
-  Business/                 Clients and contracts, the books (ledger), bills, loans, places
+  Business/                 Clients and contracts, the books (ledger), bills, loans, your shop, places
   Save/                     Versioned save files, migrations, file store
   World/                    Map data, the Home Valley map
   Content/                  Crops, items, properties, asset and audio manifests

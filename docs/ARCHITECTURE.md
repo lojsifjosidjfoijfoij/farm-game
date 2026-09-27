@@ -181,6 +181,23 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
 - **Loans** (`Bank.offers`): flat interest, equal weekly instalments, one at a time, repayable
   early at the bank.
 
+## Your shop (Phase 7)
+
+- **State** (`StoreState`): rented or not, six `Shelf`s (item, stock, price factor, demand
+  progress), today's takings. Rules live in `Storekeeping`: renting (level, first payment pro-rated
+  to Monday), stocking from the truck (shelves holding the item first, then empty ones), taking
+  back, prices in 5% steps within `Balance.storePriceFactorRange`, ending the lease.
+- **Customers** (`StoreSystem`): while the calendar runs and the shop is open, each shelf sells at
+  `demand(category) × exp(-k × (factor - 1)) × traffic` items per hour; traffic grows with the
+  number of different goods on the shelves. Demand accumulates in `Shelf.progress` and a sale
+  happens at each whole unit, so sales are deterministic and don't depend on the frame rate (the
+  system measures the exact open minutes covered by each step; a test compares 30 fps frames
+  with one-hour steps). Prices are the item's usual value (the middle of its range) × the factor,
+  so they don't follow the market's daily swings.
+- **In the world** (`StoreRenderer`, app side): the *for rent* / *open* sign, and a villager
+  walking in off the street for each sale (visual only, a few at a time).
+- Rent is one more line in `Bank.weeklyBills`.
+
 ## Saves
 
 - File: `Application Support/Saves/farm.json` plus `farm.backup.json` (the previous save).
@@ -202,7 +219,8 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   cargo, tutorial). A migrated save starts the tutorial too, because the loop it teaches (load,
   drive, sell) is new to existing players; it can be skipped in one tap. v4 (Phase 4: `ranch`,
   `woodland`). v5 (Phase 5: `farmer`, `goals`). v6 (Phase 6: `contracts`, `finance`; a migrated
-  save starts its books in the current week and gets fresh orders on the first step).
+  save starts its books in the current week and gets fresh orders on the first step). v7 (Phase 7:
+  `store`, not rented).
 
 ## Rendering
 
@@ -254,8 +272,8 @@ avatar and farmed wherever the truck was parked; Phase 5 replaced that with the 
   world currently always renders summer foliage.
 - Crop sprites use individual textures. Big fields may want a runtime texture atlas so SpriteKit
   can batch them (Phase 8 performance pass).
-- There is one market with one price per item per day. Contracts (Phase 6) are the second way to
-  sell; your own shop (Phase 7) will be the third.
+- There is one market with one price per item per day. Contracts (Phase 6) and your own shop
+  (Phase 7) are the other ways to sell; the shop only sells while the game is open.
 - Animals are delivered straight to their pen; carrying them home in the truck could come later.
 - Old wooden fences don't block the truck (they run along tile edges); pens, trees and
   buildings do.

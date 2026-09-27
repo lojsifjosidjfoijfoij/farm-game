@@ -243,6 +243,8 @@ public enum AssetManifest {
         .sprite("prop_lamp_post_lights", .prop, tiles: 0.5, 2.5, layer: .light, anchorY: 0.03, phase: 3, "Glow of the street lamp, aligned with prop_lamp_post."),
         .sprite("prop_bench", .prop, tiles: 1.5, 1, anchorY: 0.1, shadow: 1.3, phase: 3, "Wooden park bench (viewpoint)."),
         .sprite("prop_signpost", .prop, tiles: 0.8, 1.8, anchorY: 0.04, shadow: 0.5, phase: 3, "Wooden signpost with arrows."),
+        .sprite("prop_for_rent_sign", .prop, tiles: 1, 1.3, anchorY: 0.05, shadow: 0.6, phase: 7, "Little wooden \"FOR RENT\" board on a post (the corner shop, before it's rented)."),
+        .sprite("prop_open_sign", .prop, tiles: 0.9, 1.1, anchorY: 0.05, shadow: 0.6, phase: 7, "Chalkboard A-frame sign saying \"OPEN\" with a drawn carrot (your shop)."),
         .sprite("prop_gas_pump", .prop, tiles: 0.8, 1.6, anchorY: 0.05, shadow: 0.7, phase: 3, "Vintage gas pump."),
         .sprite("prop_market_goods", .prop, tiles: 1.5, 1, anchorY: 0.1, shadow: 1.3, phase: 3, "Baskets and crates of produce for the market square."),
         .sprite("prop_pier", .prop, tiles: 2, 6, layer: .flat, anchorY: 0.5, phase: 3, "Wooden fishing pier seen from above."),
@@ -306,8 +308,26 @@ public enum AssetManifest {
                                       "The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, \(facingText[facing]!), \(poseText[pose]!)."))
             }
         }
+        // Villagers who shop at your store (Phase 7): walking only.
+        for (index, look) in villagerLooks.enumerated() {
+            for facing in farmerFacings {
+                for pose in villagerPoses {
+                    result.append(.sprite("character_villager\(index + 1)_\(facing)_\(pose)", .character, tiles: 0.9, 1.5, anchorY: 0.05,
+                                          shadow: 0.6, phase: 7, family: "character_villager\(index + 1)",
+                                          "Villager: \(look), \(facingText[facing]!), \(poseText[pose]!)."))
+                }
+            }
+        }
         return result
     }()
+
+    public static let villagerPoses = ["idle", "walk1", "walk2"]
+    static let villagerLooks = [
+        "young woman with dark hair in a teal blouse and brown trousers",
+        "man in a red cap, mustard shirt and blue jeans",
+        "white-haired grandmother in a lavender cardigan and grey skirt",
+    ]
+    public static var villagerCount: Int { villagerLooks.count }
 
     // MARK: - Animals
 

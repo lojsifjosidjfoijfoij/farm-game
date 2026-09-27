@@ -38,14 +38,14 @@ procedurally in code.
 | Trees | 40 | 4 |
 | Nature props | 14 | 10 |
 | Buildings | 56 | 3 |
-| Props | 30 | 10 |
+| Props | 32 | 10 |
 | Vehicles | 116 | 1 |
-| Characters | 33 | 0 |
+| Characters | 60 | 0 |
 | Animals | 70 | 0 |
 | Item icons | 37 | 0 |
 | Effects & particles | 33 | 4 |
 | User interface | 30 | 15 |
-| **Total** | **504** | **52** |
+| **Total** | **533** | **52** |
 | Audio files | 57 | 0 |
 
 ## Terrain (tileable ground textures)
@@ -261,6 +261,8 @@ procedurally in code.
 | `prop_lamp_post_lights` | 64 × 320 | 0.5 × 2.5 | — | 3 | Glow of the street lamp, aligned with prop_lamp_post. *(additive light)* |
 | `prop_bench` | 192 × 128 | 1.5 × 1 | 0.1 | 3 | Wooden park bench (viewpoint). |
 | `prop_signpost` | 102 × 230 | 0.8 × 1.8 | 0.04 | 3 | Wooden signpost with arrows. |
+| `prop_for_rent_sign` | 128 × 166 | 1 × 1.3 | 0.05 | 7 | Little wooden "FOR RENT" board on a post (the corner shop, before it's rented). |
+| `prop_open_sign` | 115 × 141 | 0.9 × 1.1 | 0.05 | 7 | Chalkboard A-frame sign saying "OPEN" with a drawn carrot (your shop). |
 | `prop_gas_pump` | 102 × 205 | 0.8 × 1.6 | 0.05 | 3 | Vintage gas pump. |
 | `prop_market_goods` | 192 × 128 | 1.5 × 1 | 0.1 | 3 | Baskets and crates of produce for the market square. |
 | `prop_pier` | 256 × 768 | 2 × 6 | — | 3 | Wooden fishing pier seen from above. *(flat)* |
@@ -321,6 +323,33 @@ procedurally in code.
 | `character_farmer_side_hands2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), picking something up / sowing. |
 | `character_farmer_side_axe1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), raising an axe. |
 | `character_farmer_side_axe2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), swinging an axe. |
+| `character_villager1_down_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: young woman with dark hair in a teal blouse and brown trousers, facing the camera, standing relaxed. |
+| `character_villager1_down_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: young woman with dark hair in a teal blouse and brown trousers, facing the camera, walking, left foot forward. |
+| `character_villager1_down_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: young woman with dark hair in a teal blouse and brown trousers, facing the camera, walking, right foot forward. |
+| `character_villager1_up_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: young woman with dark hair in a teal blouse and brown trousers, seen from behind, standing relaxed. |
+| `character_villager1_up_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: young woman with dark hair in a teal blouse and brown trousers, seen from behind, walking, left foot forward. |
+| `character_villager1_up_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: young woman with dark hair in a teal blouse and brown trousers, seen from behind, walking, right foot forward. |
+| `character_villager1_side_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: young woman with dark hair in a teal blouse and brown trousers, facing left (mirrored for right), standing relaxed. |
+| `character_villager1_side_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: young woman with dark hair in a teal blouse and brown trousers, facing left (mirrored for right), walking, left foot forward. |
+| `character_villager1_side_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: young woman with dark hair in a teal blouse and brown trousers, facing left (mirrored for right), walking, right foot forward. |
+| `character_villager2_down_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: man in a red cap, mustard shirt and blue jeans, facing the camera, standing relaxed. |
+| `character_villager2_down_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: man in a red cap, mustard shirt and blue jeans, facing the camera, walking, left foot forward. |
+| `character_villager2_down_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: man in a red cap, mustard shirt and blue jeans, facing the camera, walking, right foot forward. |
+| `character_villager2_up_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: man in a red cap, mustard shirt and blue jeans, seen from behind, standing relaxed. |
+| `character_villager2_up_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: man in a red cap, mustard shirt and blue jeans, seen from behind, walking, left foot forward. |
+| `character_villager2_up_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: man in a red cap, mustard shirt and blue jeans, seen from behind, walking, right foot forward. |
+| `character_villager2_side_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: man in a red cap, mustard shirt and blue jeans, facing left (mirrored for right), standing relaxed. |
+| `character_villager2_side_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: man in a red cap, mustard shirt and blue jeans, facing left (mirrored for right), walking, left foot forward. |
+| `character_villager2_side_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: man in a red cap, mustard shirt and blue jeans, facing left (mirrored for right), walking, right foot forward. |
+| `character_villager3_down_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: white-haired grandmother in a lavender cardigan and grey skirt, facing the camera, standing relaxed. |
+| `character_villager3_down_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: white-haired grandmother in a lavender cardigan and grey skirt, facing the camera, walking, left foot forward. |
+| `character_villager3_down_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: white-haired grandmother in a lavender cardigan and grey skirt, facing the camera, walking, right foot forward. |
+| `character_villager3_up_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: white-haired grandmother in a lavender cardigan and grey skirt, seen from behind, standing relaxed. |
+| `character_villager3_up_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: white-haired grandmother in a lavender cardigan and grey skirt, seen from behind, walking, left foot forward. |
+| `character_villager3_up_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: white-haired grandmother in a lavender cardigan and grey skirt, seen from behind, walking, right foot forward. |
+| `character_villager3_side_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: white-haired grandmother in a lavender cardigan and grey skirt, facing left (mirrored for right), standing relaxed. |
+| `character_villager3_side_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: white-haired grandmother in a lavender cardigan and grey skirt, facing left (mirrored for right), walking, left foot forward. |
+| `character_villager3_side_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 7 | Villager: white-haired grandmother in a lavender cardigan and grey skirt, facing left (mirrored for right), walking, right foot forward. |
 
 ## Animals
 

@@ -83,6 +83,16 @@ public struct SaveMigrator: Sendable {
                                     "lastProcessedDay": day] as [String: Any]
                 json["state"] = state
             },
+            6: { json in
+                var state = json["state"] as? [String: Any] ?? [:]
+                let clock = state["clock"] as? [String: Any] ?? [:]
+                let minutes = (clock["totalMinutes"] as? Double) ?? Double(clock["totalMinutes"] as? Int ?? 0)
+                let day = Int((minutes / 1440).rounded(.down))
+                state["store"] = ["isRented": false, "shelves": [Any](),
+                                  "today": ["day": day, "coins": 0, "items": 0, "sales": [String: Int]()] as [String: Any],
+                                  "totalCoins": 0] as [String: Any]
+                json["state"] = state
+            },
         ]
     )
 

@@ -7,15 +7,51 @@ import AcresCore
 enum FarmerPainter {
 
     static func paint(_ spec: AssetSpec, rng: inout SeededRandom) -> UIImage? {
-        // character_farmer_<facing>_<pose>
+        // character_farmer_<facing>_<pose>, character_villager<N>_<facing>_<pose>
         let parts = spec.name.split(separator: "_").map(String.init)
-        guard parts.count == 4, parts[0] == "character", parts[1] == "farmer",
+        guard parts.count == 4, parts[0] == "character",
               let facing = Facing(rawValue: parts[2]), let pose = Pose(rawValue: parts[3]) else { return nil }
+        let outfit: Outfit
+        if parts[1] == "farmer" {
+            outfit = .farmer
+        } else if parts[1].hasPrefix("villager"), let n = Int(parts[1].dropFirst("villager".count)), Outfit.villagers.indices.contains(n - 1) {
+            outfit = Outfit.villagers[n - 1]
+        } else {
+            return nil
+        }
         let size = CGSize(width: spec.pixelWidth, height: spec.pixelHeight)
         let ground = size.height * (1 - CGFloat(spec.anchorY))
         return Canvas.image(size) { ctx in
-            draw(ctx, size: size, ground: ground, facing: facing, pose: pose)
+            draw(ctx, size: size, ground: ground, facing: facing, pose: pose, outfit: outfit)
         }
+    }
+
+    /// Clothes, hair and hat: the farmer, or one of the villagers.
+    struct Outfit {
+        enum Hat { case straw, none, bun, cap(UIColor) }
+        var skin: UIColor
+        var hair: UIColor
+        var shirt: UIColor
+        var trousers: UIColor
+        var boots: UIColor
+        var overalls = false
+        var checks = false
+        var skirt = false
+        var hat = Hat.none
+
+        static let farmer = Outfit(skin: FarmerPainter.skin, hair: FarmerPainter.hair, shirt: FarmerPainter.shirt,
+                                   trousers: FarmerPainter.overalls, boots: FarmerPainter.boots,
+                                   overalls: true, checks: true, hat: .straw)
+
+        /// Must match `AssetManifest.villagerLooks`.
+        static let villagers: [Outfit] = [
+            Outfit(skin: UIColor(hex: 0xE8B894), hair: UIColor(hex: 0x3A2A20), shirt: UIColor(hex: 0x3F8A8C),
+                   trousers: UIColor(hex: 0x6A5040), boots: UIColor(hex: 0x4A3428)),
+            Outfit(skin: UIColor(hex: 0xC68E68), hair: UIColor(hex: 0x2A1E16), shirt: UIColor(hex: 0xE0B64A),
+                   trousers: UIColor(hex: 0x4A5A7A), boots: UIColor(hex: 0x3A3030), hat: .cap(UIColor(hex: 0xB8432F))),
+            Outfit(skin: UIColor(hex: 0xF4D3B8), hair: UIColor(hex: 0xC8C2BA), shirt: UIColor(hex: 0x8A78B0),
+                   trousers: UIColor(hex: 0x6A6A70), boots: UIColor(hex: 0x4A4048), skirt: true, hat: .bun),
+        ]
     }
 
     enum Facing: String { case down, up, side }
@@ -114,7 +150,8 @@ enum FarmerPainter {
 
     // MARK: Drawing
 
-    static func draw(_ ctx: CGContext, size: CGSize, ground: CGFloat, facing: Facing, pose: Pose) {
+    static func draw(_ ctx: CGContext, size: CGSize, ground: CGFloat, facing: Facing, pose: Pose, outfit: Outfit = .farmer) {
+        let skin = outfit.skin, hair = outfit.hair, shirt = outfit.shirt, overalls = outfit.trousers, boots = outfit.boots
         let s = size.width / 100 * 1.1   // design unit → pixels
         let cx = size.width / 2
         let l = layout(pose, facing)
@@ -156,21 +193,25 @@ enum FarmerPainter {
         Paint.outline(ctx, torso, ink, width: 2 * s)
         Paint.fill(ctx, torso, top: shirt.shaded(0.05), bottom: shirt.shaded(-0.08))
         Paint.clipped(ctx, to: torso) {
-            // Checks.
-            ctx.setStrokeColor(UIColor(hex: 0xF3D9C8).withAlpha(0.45).cgColor)
-            ctx.setLineWidth(1.6 * s)
-            var x = cx - bodyHalf + 4 * s
-            while x < cx + bodyHalf {
-                ctx.move(to: CGPoint(x: x, y: shoulderY)); ctx.addLine(to: CGPoint(x: x, y: hip + 6 * s))
-                x += 7 * s
+            if outfit.checks {
+                ctx.setStrokeColor(UIColor(hex: 0xF3D9C8).withAlpha(0.45).cgColor)
+                ctx.setLineWidth(1.6 * s)
+                var x = cx - bodyHalf + 4 * s
+                while x < cx + bodyHalf {
+                    ctx.move(to: CGPoint(x: x, y: shoulderY)); ctx.addLine(to: CGPoint(x: x, y: hip + 6 * s))
+                    x += 7 * s
+                }
+                var y = shoulderY + 4 * s
+                while y < hip {
+                    ctx.move(to: CGPoint(x: cx - bodyHalf, y: y)); ctx.addLine(to: CGPoint(x: cx + bodyHalf, y: y))
+                    y += 7 * s
+                }
+                ctx.strokePath()
             }
-            var y = shoulderY + 4 * s
-            while y < hip {
-                ctx.move(to: CGPoint(x: cx - bodyHalf, y: y)); ctx.addLine(to: CGPoint(x: cx + bodyHalf, y: y))
-                y += 7 * s
-            }
-            ctx.strokePath()
-            // Overalls: bib and trousers top.
+            // Trousers top (a waistband), then for the farmer the overall bib.
+            ctx.setFillColor(overalls.cgColor)
+            ctx.fill(CGRect(x: cx - bodyHalf, y: hip - 6 * s, width: bodyHalf * 2, height: 14 * s))
+            guard outfit.overalls else { return }
             let bibTop = shoulderY + (facing == .up ? 10 : 14) * s
             let bib = CGRect(x: cx - bodyHalf * 0.72, y: bibTop, width: bodyHalf * 1.44, height: hip - bibTop + 8 * s)
             Paint.fill(ctx, Paint.roundedRect(bib, 4 * s), top: overalls.shaded(0.05), bottom: overalls.shaded(-0.06))
@@ -195,6 +236,15 @@ enum FarmerPainter {
                 Paint.fill(ctx, Paint.roundedRect(CGRect(x: cx - 7 * s, y: bibTop + 8 * s, width: 14 * s, height: 9 * s), 2 * s),
                            overalls.shaded(-0.1))
             }
+        }
+
+        if outfit.skirt {
+            let skirt = Paint.polygon([
+                CGPoint(x: cx - bodyHalf * 0.95, y: hip - 6 * s), CGPoint(x: cx + bodyHalf * 0.95, y: hip - 6 * s),
+                CGPoint(x: cx + bodyHalf * 1.2, y: ground - 16 * s), CGPoint(x: cx - bodyHalf * 1.2, y: ground - 16 * s),
+            ])
+            Paint.outline(ctx, skirt, ink, width: 2 * s)
+            Paint.fill(ctx, skirt, top: overalls.shaded(0.05), bottom: overalls.shaded(-0.1))
         }
 
         // Arms (near arm on top).
@@ -239,17 +289,39 @@ enum FarmerPainter {
                       UIColor(hex: 0xE58C7E).withAlpha(0.5))
         }
 
-        // Straw hat.
-        let brimY = headCenter.y - headR * 0.55
-        let brim = CGPath(ellipseIn: CGRect(x: headCenter.x - 32 * s + (side ? -4 * s : 0), y: brimY - 8 * s, width: 64 * s, height: 16 * s),
-                          transform: nil)
-        Paint.outline(ctx, brim, ink, width: 2 * s)
-        Paint.fill(ctx, brim, top: straw.shaded(0.08), bottom: straw.shaded(-0.1))
-        let crown = Paint.roundedRect(CGRect(x: headCenter.x - 17 * s, y: brimY - 22 * s, width: 34 * s, height: 20 * s), 9 * s)
-        Paint.outline(ctx, crown, ink, width: 2 * s)
-        Paint.fill(ctx, crown, top: straw.shaded(0.12), bottom: straw.shaded(-0.04))
-        ctx.setFillColor(band.cgColor)
-        ctx.fill(CGRect(x: headCenter.x - 17 * s, y: brimY - 9 * s, width: 34 * s, height: 5 * s))
+        // Hair on top, and the hat.
+        // A dome over the top of the head that stops just above the eyes.
+        let top = CGPoint(x: headCenter.x + (side ? headR * 0.12 : 0), y: headCenter.y - headR * 0.6)
+        switch outfit.hat {
+        case .straw:
+            let brimY = headCenter.y - headR * 0.55
+            let brim = CGPath(ellipseIn: CGRect(x: headCenter.x - 32 * s + (side ? -4 * s : 0), y: brimY - 8 * s, width: 64 * s, height: 16 * s),
+                              transform: nil)
+            Paint.outline(ctx, brim, ink, width: 2 * s)
+            Paint.fill(ctx, brim, top: straw.shaded(0.08), bottom: straw.shaded(-0.1))
+            let crown = Paint.roundedRect(CGRect(x: headCenter.x - 17 * s, y: brimY - 22 * s, width: 34 * s, height: 20 * s), 9 * s)
+            Paint.outline(ctx, crown, ink, width: 2 * s)
+            Paint.fill(ctx, crown, top: straw.shaded(0.12), bottom: straw.shaded(-0.04))
+            ctx.setFillColor(band.cgColor)
+            ctx.fill(CGRect(x: headCenter.x - 17 * s, y: brimY - 9 * s, width: 34 * s, height: 5 * s))
+        case .none, .bun:
+            if facing != .up { Paint.dab(ctx, top, headR * 1.03, headR * 0.5, hair) }
+            if case .bun = outfit.hat {
+                Paint.dab(ctx, CGPoint(x: headCenter.x + (side ? headR * 0.55 : 0), y: headCenter.y - headR * 1.02),
+                          headR * 0.42, headR * 0.36, hair.shaded(-0.06))
+            }
+        case .cap(let color):
+            Paint.dab(ctx, top, headR * 1.04, headR * 0.52, color)
+            switch facing {
+            case .down:
+                Paint.dab(ctx, CGPoint(x: headCenter.x, y: headCenter.y - headR * 0.22), headR * 0.78, headR * 0.11, color.shaded(-0.15))
+            case .side:
+                Paint.dab(ctx, CGPoint(x: headCenter.x - headR * 0.95, y: headCenter.y - headR * 0.3), headR * 0.62, headR * 0.15,
+                          color.shaded(-0.15))
+            case .up:
+                break
+            }
+        }
 
         // Near arm (side view) and the tool in front.
         if side {

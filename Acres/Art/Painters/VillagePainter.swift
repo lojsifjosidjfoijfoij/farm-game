@@ -21,6 +21,8 @@ enum VillagePainter {
         case "prop_lamp_post_lights": return lampLight(size)
         case "prop_bench": return bench(size, ground: ground)
         case "prop_signpost": return signpost(size, ground: ground)
+        case "prop_for_rent_sign": return forRentSign(size, ground: ground)
+        case "prop_open_sign": return openSign(size, ground: ground)
         default: return nil
         }
     }
@@ -60,6 +62,9 @@ enum VillagePainter {
                                         sign: "BAKERY", signColor: UIColor(hex: 0x8A4B2A), awning: UIColor(hex: 0xE0A25A)),
         "building_restaurant": CottageStyle(wall: UIColor(hex: 0xF0E0C0), roof: UIColor(hex: 0xB8432F), door: UIColor(hex: 0x3F5E7A),
                                             sign: "DINER", signColor: UIColor(hex: 0xB8432F), awning: UIColor(hex: 0xC8453A)),
+        // Phase 7: the corner shop the farmer can rent.
+        "building_town_shop": CottageStyle(wall: UIColor(hex: 0xF2E6CC), roof: UIColor(hex: 0x3F6B8A), door: UIColor(hex: 0x5E4030),
+                                           sign: "SHOP", signColor: UIColor(hex: 0x2F5A7A), awning: UIColor(hex: 0x4F86B0)),
         "building_lumber_yard": CottageStyle(wall: UIColor(hex: 0xB08A5E), roof: UIColor(hex: 0x5A4A3A), door: UIColor(hex: 0x4A3A2A),
                                              sign: "LUMBER", signColor: UIColor(hex: 0x5A3E22), timberYard: 0.36),
     ]
@@ -403,6 +408,52 @@ enum VillagePainter {
                 let slat = CGRect(x: w * 0.08, y: y, width: w * 0.84, height: h * 0.08)
                 Paint.fill(ctx, Paint.roundedRect(slat, 2), i < 2 ? wood.shaded(-0.05) : wood.shaded(0.06))
                 Paint.outline(ctx, Paint.roundedRect(slat, 2), UIColor(hex: 0x3A2A1C).withAlpha(0.4), width: 1.2)
+            }
+        }
+    }
+
+    /// A "FOR RENT" board on a post (the corner shop, before it's rented).
+    static func forRentSign(_ size: CGSize, ground: CGFloat) -> UIImage {
+        let w = size.width, h = size.height
+        let wood = UIColor(hex: 0x9A7A58)
+        return Canvas.image(size) { ctx in
+            Paint.fillHorizontal(ctx, Paint.roundedRect(CGRect(x: w / 2 - 4, y: h * 0.3, width: 8, height: ground - h * 0.3), 2),
+                                 left: wood, right: wood.shaded(-0.2))
+            let board = CGRect(x: w * 0.06, y: h * 0.12, width: w * 0.88, height: h * 0.34)
+            let path = Paint.roundedRect(board, 4)
+            Paint.fill(ctx, path, top: UIColor(hex: 0xFBF6EA), bottom: UIColor(hex: 0xE9DFC8))
+            Paint.outline(ctx, path, UIColor(hex: 0xB8432F), width: 3)
+            label("FOR", in: CGRect(x: board.minX, y: board.minY + board.height * 0.08, width: board.width, height: board.height * 0.42),
+                  color: UIColor(hex: 0xB8432F))
+            label("RENT", in: CGRect(x: board.minX, y: board.midY, width: board.width, height: board.height * 0.42),
+                  color: UIColor(hex: 0xB8432F))
+        }
+    }
+
+    /// A chalkboard A-frame saying "OPEN", with a drawn carrot (your shop).
+    static func openSign(_ size: CGSize, ground: CGFloat) -> UIImage {
+        let w = size.width, h = size.height
+        let wood = UIColor(hex: 0x8A6A48)
+        return Canvas.image(size) { ctx in
+            // Back leg peeking out, then the front frame and its board.
+            let back = Paint.polygon([CGPoint(x: w * 0.3, y: h * 0.12), CGPoint(x: w * 0.7, y: h * 0.12),
+                                      CGPoint(x: w * 0.86, y: ground), CGPoint(x: w * 0.74, y: ground)])
+            Paint.fill(ctx, back, wood.shaded(-0.25))
+            let frame = Paint.polygon([CGPoint(x: w * 0.28, y: h * 0.1), CGPoint(x: w * 0.72, y: h * 0.1),
+                                       CGPoint(x: w * 0.9, y: ground - 2), CGPoint(x: w * 0.1, y: ground - 2)])
+            Paint.fill(ctx, frame, top: wood.shaded(0.05), bottom: wood.shaded(-0.1))
+            Paint.outline(ctx, frame, UIColor(hex: 0x3E2A18).withAlpha(0.6), width: 2)
+            let board = Paint.polygon([CGPoint(x: w * 0.33, y: h * 0.17), CGPoint(x: w * 0.67, y: h * 0.17),
+                                       CGPoint(x: w * 0.8, y: ground - h * 0.1), CGPoint(x: w * 0.2, y: ground - h * 0.1)])
+            Paint.fill(ctx, board, top: UIColor(hex: 0x3A4A40), bottom: UIColor(hex: 0x2C3A32))
+            label("OPEN", in: CGRect(x: w * 0.2, y: h * 0.24, width: w * 0.6, height: h * 0.2), color: UIColor(hex: 0xF4F1E6))
+            // A chalk carrot.
+            let carrot = Paint.polygon([CGPoint(x: w * 0.42, y: h * 0.56), CGPoint(x: w * 0.58, y: h * 0.56),
+                                        CGPoint(x: w * 0.5, y: h * 0.8)])
+            Paint.fill(ctx, carrot, UIColor(hex: 0xF0924A))
+            for dx in [-0.05, 0, 0.05] as [CGFloat] {
+                Paint.stroke(ctx, from: CGPoint(x: w * 0.5, y: h * 0.56), to: CGPoint(x: w * (0.5 + dx * 1.6), y: h * 0.47),
+                             bend: 0, width: 2.5, color: UIColor(hex: 0x8CCB6A))
             }
         }
     }

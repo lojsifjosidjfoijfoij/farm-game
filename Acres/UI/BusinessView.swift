@@ -22,6 +22,7 @@ struct BusinessView: View {
                     VStack(alignment: .leading, spacing: 14) {
                         switch game.businessTab {
                         case .orders: orders
+                        case .shop: shop
                         case .money: money
                         }
                     }
@@ -92,6 +93,25 @@ struct BusinessView: View {
         }
         .foregroundStyle(Theme.ink)
         .card()
+    }
+
+    // MARK: Shop
+
+    @ViewBuilder
+    private var shop: some View {
+        let state = game.storeState
+        if state.isRented {
+            StoreTakings(game: game)
+            ForEach(Array(state.shelves.enumerated()), id: \.offset) { index, shelf in
+                ShelfCard(game: game, shelf: shelf, index: index, editable: false)
+            }
+            Text("Drive to your shop to restock the shelves or change prices.")
+                .font(Theme.label(12))
+                .foregroundStyle(Theme.inkSoft)
+        } else {
+            EmptyNote(symbol: "storefront",
+                      text: "The corner shop between the gas station and the seed shop is for rent (from level \(game.balance.storeUnlockLevel)). Sell your own goods at your own prices.")
+        }
     }
 
     // MARK: Money

@@ -104,7 +104,7 @@ final class FarmerTests: XCTestCase {
                             GoalCounter.seedsBought, GoalCounter.slept, GoalCounter.treesChopped,
                             GoalCounter.fruitTreesPlanted, GoalCounter.collected("egg"), GoalCounter.collected("wool"),
                             GoalCounter.collected("truffle"),
-                            GoalCounter.contractsCompleted])
+                            GoalCounter.contractsCompleted, GoalCounter.shopRented, GoalCounter.coinsFromShop])
         XCTAssertEqual(Set(GoalCatalog.all.map(\.id)).count, GoalCatalog.all.count, "unique ids")
         for goal in GoalCatalog.all {
             switch goal.requirement {
