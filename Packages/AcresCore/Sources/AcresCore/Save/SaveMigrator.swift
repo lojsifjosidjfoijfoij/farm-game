@@ -53,6 +53,14 @@ public struct SaveMigrator: Sendable {
                 state["tutorial"] = ["step": 0, "progress": 0]
                 json["state"] = state
             },
+            // v3 → v4 (Phase 4): no animals yet (pens start run-down) and every
+            // tree still standing.
+            3: { json in
+                var state = json["state"] as? [String: Any] ?? [:]
+                state["ranch"] = ["pens": [String: Any](), "nextAnimalID": 1] as [String: Any]
+                state["woodland"] = ["trees": [Any](), "hiddenMapTrees": [Any]()]
+                json["state"] = state
+            },
         ]
     )
 

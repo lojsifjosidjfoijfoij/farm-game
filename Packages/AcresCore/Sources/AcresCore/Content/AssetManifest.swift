@@ -179,6 +179,7 @@ public enum AssetManifest {
         result += building("building_barn", 5, 5.5, phase: 4, lights: true, "Restored red barn (cows, sheep, goats).")
         result += building("building_coop", 3, 3, phase: 4, "Chicken coop with a little ramp.")
         result += building("building_pigsty", 3, 2.5, phase: 4, "Pigsty: low shed with a muddy yard.")
+        result += building("building_sheep_shelter", 3, 2.5, phase: 4, "Open-fronted sheep shelter with a sloped roof and straw inside.")
         result += building("building_beehives", 2, 1.6, phase: 7, "Row of three painted beehives.")
         result += building("building_stable", 4, 4, phase: 7, "Horse stable with half doors.")
         result += building("building_storage_shed", 3, 3, phase: 2, "Wooden storage shed for harvested goods.")
@@ -195,7 +196,7 @@ public enum AssetManifest {
         result += building("building_house_village_a", 4, 4.5, phase: 3, lights: true, "Village house, cream walls, red roof.")
         result += building("building_house_village_b", 4, 4.5, phase: 3, lights: true, "Village house, blue shutters, grey roof.")
         result += building("building_house_village_c", 4, 4.5, phase: 3, lights: true, "Village cottage with climbing roses.")
-        result += building("building_livestock_market", 7, 5, phase: 5, "Livestock market: pens and an auction shed.")
+        result += building("building_livestock_market", 7, 5, phase: 4, "Livestock market: a big open barn with a sign, pens and an auction shed.")
         result += building("building_hardware_store", 5, 4.5, phase: 5, lights: true, "Hardware store with tools displayed outside.")
         result += building("building_farmers_market_stall", 2.5, 2.5, phase: 3, "Farmers' market stall with striped awning.")
         result += building("building_restaurant", 5, 4.5, phase: 5, lights: true, "Town restaurant (contract client) with terrace.")
@@ -230,7 +231,10 @@ public enum AssetManifest {
         .sprite("prop_sign_sold", .prop, tiles: 0.9, 1.3, anchorY: 0.05, shadow: 0.5, phase: 6, "The same sign with a 'Sold' banner."),
         .sprite("prop_scarecrow", .prop, tiles: 1, 1.7, anchorY: 0.05, shadow: 0.6, phase: 2, "Friendly scarecrow with a straw hat."),
         .sprite("prop_sprinkler", .prop, tiles: 0.6, 0.6, anchorY: 0.2, phase: 5, "Brass field sprinkler head."),
-        .sprite("prop_water_trough", .prop, tiles: 1.5, 0.8, anchorY: 0.15, shadow: 1.4, phase: 4, "Animal water trough."),
+        .sprite("prop_water_trough", .prop, tiles: 1.5, 0.8, anchorY: 0.15, shadow: 1.4, phase: 4, "Animal water trough, full of fresh water."),
+        .sprite("prop_water_trough_empty", .prop, tiles: 1.5, 0.8, anchorY: 0.15, shadow: 1.4, phase: 4, "The same trough, empty and dry."),
+        .sprite("prop_sign_repair", .prop, tiles: 0.9, 1.3, anchorY: 0.05, shadow: 0.5, phase: 4,
+                "Little wooden sign with a hammer on it: this pen can be repaired."),
         .sprite("prop_feeder", .prop, tiles: 1.2, 0.8, anchorY: 0.15, shadow: 1.1, phase: 4, "Wooden animal feeder with hay."),
         .sprite("prop_notice_board", .prop, tiles: 1.5, 1.8, anchorY: 0.05, shadow: 1.2, phase: 5, "Village notice board with pinned papers (contracts)."),
         .sprite("prop_lamp_post", .prop, tiles: 0.5, 2.5, anchorY: 0.03, shadow: 0.4, phase: 3, "Old iron street lamp."),
@@ -352,6 +356,8 @@ public enum AssetManifest {
         .sprite("fx_headlight_cone", .effect, tiles: 2, 3, layer: .light, anchorY: 0.0, phase: 3, "Soft headlight beam, pointing up, additive."),
         .sprite("fx_wood_chip", .effect, tiles: 0.15, 0.15, layer: .particle, anchorY: 0.5, phase: 4, "Wood chip flying off when chopping."),
         .sprite("fx_feather", .effect, tiles: 0.15, 0.15, layer: .particle, anchorY: 0.5, phase: 4, "Small feather."),
+        .sprite("fx_bubble", .effect, tiles: 0.7, 0.7, layer: .particle, anchorY: 0.5, phase: 4,
+                "Round white speech bubble with a small tail at the bottom: shows what an animal has or wants."),
         .sprite("fx_heart", .effect, tiles: 0.3, 0.3, layer: .particle, anchorY: 0.5, phase: 4, "Small heart over a happy animal."),
         .sprite("fx_zzz", .effect, tiles: 0.3, 0.3, layer: .particle, anchorY: 0.5, phase: 4, "'z' for sleeping animals."),
         .sprite("fx_bee", .effect, tiles: 0.12, 0.12, layer: .particle, anchorY: 0.5, phase: 7, "Tiny bee."),

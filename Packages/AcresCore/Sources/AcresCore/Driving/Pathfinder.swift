@@ -7,14 +7,15 @@ public enum Pathfinder {
     /// Waypoints (tile units) from `start` to `goal`, or nil if unreachable.
     /// The first waypoint is the first step away from `start`; the last is `goal`
     /// (or the nearest reachable spot next to it).
-    public static func path(on map: WorldMap, from start: Vec2, to goal: Vec2) -> [Vec2]? {
+    public static func path(on map: WorldMap, woodland: Woodland = Woodland(), from start: Vec2, to goal: Vec2) -> [Vec2]? {
         let width = map.width, height = map.height
+        let obstacles = Obstacles(map: map, woodland: woodland)
         func index(_ t: TileCoord) -> Int { t.y * width + t.x }
-        func passable(_ t: TileCoord) -> Bool { map.isInside(t) && !map.isBlocked(t) }
+        func passable(_ t: TileCoord) -> Bool { map.isInside(t) && !obstacles.isBlocked(t) }
 
         let startTile = TileCoord(containing: start)
         guard map.isInside(startTile) else { return nil }
-        guard let goalTile = nearestPassable(to: TileCoord(containing: goal), on: map) else { return nil }
+        guard let goalTile = nearestPassable(to: TileCoord(containing: goal), obstacles: obstacles) else { return nil }
         if startTile == goalTile { return [goal] }
 
         var cost = [Double](repeating: .infinity, count: width * height)
@@ -90,15 +91,16 @@ public enum Pathfinder {
         return max(dx, dy) + (2.0.squareRoot() - 1) * min(dx, dy)
     }
 
-    static func nearestPassable(to tile: TileCoord, on map: WorldMap) -> TileCoord? {
-        if map.isInside(tile) && !map.isBlocked(tile) { return tile }
+    static func nearestPassable(to tile: TileCoord, obstacles: Obstacles) -> TileCoord? {
+        let map = obstacles.map
+        if map.isInside(tile) && !obstacles.isBlocked(tile) { return tile }
         for radius in 1...4 {
             var best: TileCoord?
             var bestDistance = Int.max
             for dy in -radius...radius {
                 for dx in -radius...radius where max(abs(dx), abs(dy)) == radius {
                     let t = TileCoord(tile.x + dx, tile.y + dy)
-                    guard map.isInside(t), !map.isBlocked(t) else { continue }
+                    guard map.isInside(t), !obstacles.isBlocked(t) else { continue }
                     let d = dx * dx + dy * dy
                     if d < bestDistance { bestDistance = d; best = t }
                 }

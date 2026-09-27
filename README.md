@@ -3,15 +3,15 @@
 A cozy, top-down open-world farming and business game for iPhone. You start with a run-down
 farm and a beat-up pickup truck, then grow it into an agricultural empire.
 
-**Status: Phase 3 (Truck and world) is done.** Phase 4 (Animals and trees) is in progress.
+**Status: Phase 4 (Animals and trees) is done.** Phase 5 (Economy depth) starts when you say so.
 
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Foundation: architecture, save/load, time system, camera, placeholder art | ✅ |
 | 2 | Farm: fields, planting, watering, growth, harvest, inventory, offline growth | ✅ |
 | 3 | Truck and world: driving, village, first market, tutorial | ✅ |
-| 4 | Animals and trees | ⏳ next |
-| 5 | Economy depth: markets, prices, contracts | |
+| 4 | Animals and trees: pens, livestock market, woodlot, saplings, fruit | ✅ |
+| 5 | Economy depth: markets, prices, contracts | ⏳ next |
 | 6 | Properties, buildings, workers | |
 | 7 | Progression, collection book, seasons, day/night polish | |
 | 8 | Polish: audio, particles, weather, performance, balancing | |
@@ -33,6 +33,46 @@ cd Packages/AcresCore
 swift test
 ```
 
+## Phase 4: what to test
+
+Your save carries over (format v4: empty, run-down pens and every tree still standing). Your
+farm also grew: it now includes the **backyard** behind the field fence, with four old pens and
+a small woodlot. Storage grew from 100 to 150 slots.
+
+1. **Pens.** Pan north past the field fence: a chicken coop, a cow pasture, a sheepfold and a
+   pigsty, all run-down (broken fences, empty troughs, a hammer sign). Tap one: its card says
+   what it costs to fix up and from which level (coop: level 2, 150 coins). Tap **Repair**.
+   (🐞 → *Level up* and *+1,000 coins* help you test quickly.)
+2. **Buy animals.** Drive east through the village to the red **Valley Livestock** barn at the
+   end of the road (the corral with a cow and sheep). Stop in the yard and tap *Visit Valley
+   Livestock*: buy chicks (level 2), calves (4), lambs (5) or piglets (6), plus sacks of feed.
+   Each animal gets a name and appears in its pen at once.
+3. **Growing up.** Young animals wander around and grow up on their own (chicks in 90 s). A
+   banner says "Pip the chick is all grown up!".
+4. **One tap per pen.** Grown animals show a bubble with the food they want. Tap the pen: it
+   does the next sensible thing, in this order: collect what's ready → fill the trough (if dry)
+   → feed the hungry. Chickens eat wheat (or corn, or feed), cows corn or wheat, sheep carrots
+   or wheat, pigs potatoes, pumpkins or corn. Fed animals get hearts; a full trough doubles
+   production speed. Eggs take 2 min, milk 5, wool 8, truffles 12.
+5. **Happiness.** Animals fed with water in the trough get happier; hungry ones slowly get sad.
+   Happy animals often give two products instead of one. Long-press a pen (or tap it when there's
+   nothing to do) for its card: mood, what's ready, who's hungry, when the next product comes and
+   how long the water lasts.
+6. **Chop trees.** Tap a full-grown tree in your woodlot (north of the pens): it falls, logs pop
+   up, a stump stays behind. Tap the stump to clear it (the ground becomes farmable), or leave
+   it: it sprouts again after 8 minutes and grows back. Trees outside your land say so.
+7. **Plant trees.** Buy saplings at the seed shop (birch, pine, oak; apple and cherry trees
+   bear fruit). Pick a sapling in the seed picker, then tap plowed soil. Growing trees can't be
+   chopped; fruit trees are never chopped by a tap (their card has a *Chop down* button). Ripe
+   fruit shows on the tree: tap to pick.
+8. **Sell it all.** *Load all* now loads eggs, milk, wool, truffles, logs and fruit too (most
+   valuable first). The market buys everything, at daily prices. Feed, seeds and saplings aren't
+   for sale.
+9. **Offline.** Leave with fed animals and growing trees: the welcome card lists products
+   waiting, animals that grew up, hungry animals and ripe fruit.
+10. **Debug extras:** *Grow up animals, finish products*, *Grow all trees, ripen fruit*,
+    *Level up (+1)*.
+
 ## Phase 3: what to test
 
 Your save carries over (it migrates to save format v3: a full tank, an empty truck bed, and the
@@ -44,8 +84,8 @@ day/night lighting cycle. The top-right pill shows the season and how long until
    button pulses. *Skip* ends it; ⚙️ Settings → *Restart the tutorial* brings it back.
 2. **Drive.** Tap **Drive** (bottom left) or the truck itself. With the default *joystick*
    controls, put a thumb anywhere and drag: a stick appears under it. The camera follows the truck.
-   Asphalt is fastest, grass slowest; gravel and dirt slide a little in turns. Hitting a fence,
-   tree or building gives a bump. Tap **Park** to get out (the truck also parks itself when you
+   Asphalt is fastest, grass slowest; gravel and dirt slide a little in turns. Hitting a tree,
+   building or pen gives a bump (old fences are low enough to drive over). Tap **Park** to get out (the truck also parks itself when you
    leave the app).
 3. **Tap to drive.** ⚙️ Settings → Driving → *Tap to drive*. While driving, tap anywhere: the truck
    finds its own way there (a flag marks the goal). Touching the joystick in joystick mode or a
@@ -130,9 +170,9 @@ especially helpful, since that art is drawn entirely in code.
 ```
 Acres.xcodeproj
 Acres/                      iOS app (SwiftUI + SpriteKit): rendering, input, UI
-  App/                      AcresApp, GameController (+Driving, +Trade, +Tutorial), Haptics
+  App/                      AcresApp, GameController (+Driving, +Trade, +Tutorial, +Ranch), Haptics
   UI/                       HUD, shops, inventory, Welcome-back card, debug panel, theme
-  World/                    GameScene, camera, chunk streaming, terrain shader, sprites
+  World/                    GameScene, camera, chunk streaming, terrain shader, sprites, trees, pens
   Art/                      AssetCatalog + procedural placeholder painters
   Resources/Assets.xcassets Real art goes in Art/ (see docs/ASSETS.md)
 Packages/AcresCore/         Pure Swift simulation (no UIKit/SpriteKit), plus unit tests
@@ -142,6 +182,8 @@ Packages/AcresCore/         Pure Swift simulation (no UIKit/SpriteKit), plus uni
   Farm/                     Crop growth, farming rules and actions, forecasts, XP
   Driving/                  Truck physics, A* pathfinding, autopilot
   Trade/                    Shops, market prices, buying, selling, fuel, loading
+  Animals/                  Animal simulation, pen rules (repair, collect, water, feed)
+  Trees/                    Tree growth, forestry rules (chop, clear, plant, pick)
   Save/                     Versioned save files, migrations, file store
   World/                    Map data, the Home Valley map
   Content/                  Crops, items, properties, asset and audio manifests

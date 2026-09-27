@@ -32,7 +32,7 @@ struct HUDView: View {
                         .transition(.move(edge: .top).combined(with: .opacity))
                 }
                 if let inspection = game.inspection {
-                    InspectionCard(inspection: inspection) { game.dismissInspection() }
+                    InspectionCard(inspection: inspection, onAction: { game.performInspectionAction() }) { game.dismissInspection() }
                         .transition(.scale(scale: 0.9).combined(with: .opacity))
                 }
             }
@@ -139,11 +139,13 @@ struct HUDView: View {
         case .market: "Sell at \(shop.name)"
         case .seedShop: "Open the Seed Shop"
         case .gasStation: "Fill up the tank"
+        case .livestock: "Visit \(shop.name)"
         }
         let symbol: String = switch shop.kind {
         case .market: "basket.fill"
         case .seedShop: "leaf.fill"
         case .gasStation: "fuelpump.fill"
+        case .livestock: "hare.fill"
         }
         return Button {
             game.openNearbyShop()
@@ -202,8 +204,8 @@ struct HUDView: View {
         } label: {
             ZStack(alignment: .topTrailing) {
                 Group {
-                    if let seed = game.selectedSeed, let crop = CropCatalog.crop(seed) {
-                        ItemIcon(name: "item_seeds_\(crop.id)", size: 40)
+                    if let packet = game.selectedPacket {
+                        ItemIcon(name: packet.icon, size: 40)
                     } else {
                         Image(systemName: "leaf.fill")
                             .font(.system(size: 24, weight: .semibold))
@@ -214,8 +216,8 @@ struct HUDView: View {
                 .background(Circle().fill(Theme.parchment.opacity(0.95)).shadow(color: .black.opacity(0.2), radius: 6, y: 3))
                 .overlay(Circle().strokeBorder(game.showsSeedPicker ? Theme.leaf : Theme.border, lineWidth: game.showsSeedPicker ? 2.5 : 1))
 
-                if let seed = game.selectedSeed, let crop = CropCatalog.crop(seed) {
-                    CountBadge(count: game.inventoryItems[crop.seedItemID] ?? 0)
+                if let packet = game.selectedPacket {
+                    CountBadge(count: packet.count)
                 }
             }
         }
@@ -302,9 +304,32 @@ struct ItemIcon: View {
 /// What's on a tile (long-press, or a tap with nothing to do).
 struct InspectionCard: View {
     let inspection: TileInspection
+    let onAction: () -> Void
     let onDismiss: () -> Void
 
     var body: some View {
+        VStack(spacing: 8) {
+            info
+            if let title = inspection.actionTitle {
+                Button(action: onAction) {
+                    HStack(spacing: 6) {
+                        Text(title)
+                            .font(Theme.label(16, weight: .semibold))
+                        if case .repairPen = inspection.action {
+                            CoinIcon(size: 16)
+                        }
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 18)
+                    .frame(height: 40)
+                    .background(Capsule().fill(Theme.leafDark).shadow(color: .black.opacity(0.2), radius: 4, y: 2))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var info: some View {
         Button(action: onDismiss) {
             HStack(spacing: 12) {
                 if let icon = inspection.icon {
@@ -339,7 +364,7 @@ struct SeedPicker: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("Seeds")
+                Text("Seeds & saplings")
                     .font(Theme.title(18))
                     .foregroundStyle(Theme.ink)
                 Spacer()
@@ -374,16 +399,18 @@ struct SeedPicker: View {
     }
 
     private func packet(_ option: SeedOption) -> some View {
-        let selected = game.selectedSeed == option.crop.id
+        let selected = game.selectedSeed == option.id
         return Button {
-            game.select(seed: option.crop.id)
+            game.select(seed: option.id)
         } label: {
             VStack(spacing: 4) {
-                ItemIcon(name: "item_seeds_\(option.crop.id)", size: 46)
-                Text(option.crop.name)
+                ItemIcon(name: option.icon, size: 46)
+                Text(option.name)
                     .font(Theme.label(13, weight: .semibold))
                     .foregroundStyle(Theme.ink)
-                Text(option.inSeason ? "×\(option.count)" : option.crop.seasonList.map(\.name).joined(separator: ", "))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Text(option.inSeason ? "×\(option.count)" : option.seasons)
                     .font(Theme.label(11))
                     .foregroundStyle(Theme.inkSoft)
                     .lineLimit(1)
@@ -400,7 +427,7 @@ struct SeedPicker: View {
             .opacity(option.inSeason ? 1 : 0.45)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(option.crop.name) seeds, \(option.count)\(option.inSeason ? "" : ", out of season")")
+        .accessibilityLabel("\(option.name), \(option.count)\(option.inSeason ? "" : ", out of season")")
     }
 }
 

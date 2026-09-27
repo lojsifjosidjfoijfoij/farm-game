@@ -26,10 +26,15 @@ final class ChunkManager {
     private var loaded: [ChunkCoord: LoadedChunk] = [:]
     /// Weeds, flowers and pebbles by tile, so plowing can clear them.
     private var clearableDecor: [TileCoord: [SKNode]] = [:]
+    /// Wild trees and old stumps (sprite + shadow) by trunk tile, so chopping can hide them.
+    private var mapTrees: [TileCoord: [SKNode]] = [:]
     private var lightIntensity: CGFloat = 0
 
     /// Asked while loading: decoration on tiles that are already farmland is skipped.
     var isTileCleared: ((TileCoord) -> Bool)?
+    /// Asked while loading: wild trees the player chopped or cleared are skipped
+    /// (the tree renderer draws what's there now).
+    var isMapTreeHidden: ((TileCoord) -> Bool)?
     /// Season used to pick object art. (Seasonal art arrives in Phase 7.)
     private let season: Season = .summer
 
@@ -57,6 +62,12 @@ final class ChunkManager {
         for node in decor {
             node.run(.sequence([.group([.fadeOut(withDuration: 0.25), .scale(to: 0.3, duration: 0.25)]), .removeFromParent()]))
         }
+    }
+
+    /// Removes a wild tree's sprites once the player has chopped or cleared it.
+    func hideMapTree(at tile: TileCoord) {
+        guard let nodes = mapTrees.removeValue(forKey: tile) else { return }
+        for node in nodes { node.removeFromParent() }
     }
 
     init(map: WorldMap, terrain: TerrainRenderer, factory: WorldObjectFactory,
@@ -116,15 +127,19 @@ final class ChunkManager {
 
         for object in map.objects(in: coord) {
             let clearable = ObjectFootprint.isClearable(object.kind)
+            let isTree = TreeCatalog.isMapTree(object.kind)
             let tile = TileCoord(containing: object.position)
             if clearable, isTileCleared?(tile) == true { continue }
+            if isTree, isMapTreeHidden?(tile) == true { continue }
             guard let nodes = factory.makeNodes(for: object, season: season) else { continue }
             (nodes.isFlat ? flatLayer : objectLayer).addChild(nodes.main)
             chunk.nodes.append(nodes.main)
             if clearable { clearableDecor[tile, default: []].append(nodes.main) }
+            if isTree { mapTrees[tile, default: []].append(nodes.main) }
             if let shadow = nodes.shadow {
                 flatLayer.addChild(shadow)
                 chunk.nodes.append(shadow)
+                if isTree { mapTrees[tile, default: []].append(shadow) }
             }
             for light in nodes.lights { light.alpha = lightIntensity }
             chunk.lights += nodes.lights
@@ -140,6 +155,9 @@ final class ChunkManager {
         chunk.border?.removeFromParent()
         for tile in Array(clearableDecor.keys) where WorldMap.chunk(containing: tile.center) == coord {
             clearableDecor[tile] = nil
+        }
+        for tile in Array(mapTrees.keys) where WorldMap.chunk(containing: tile.center) == coord {
+            mapTrees[tile] = nil
         }
     }
 

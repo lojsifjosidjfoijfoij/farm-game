@@ -73,10 +73,19 @@ public struct WorldMap: Sendable {
     private let terrain: [Terrain]
     public let objects: [MapObject]
     private let objectIndicesByChunk: [ChunkCoord: [Int]]
-    /// Tiles covered by solid objects (buildings, trees, the pond, …): no farming there.
+    /// Tiles covered by solid objects (buildings, trees, the pond, …) and solid
+    /// areas (pens): no farming or driving there. Ignores the player's changes
+    /// to trees; `Obstacles` combines both.
     public let blockedTiles: Set<TileCoord>
+    /// Like `blockedTiles`, minus what wild trees and old stumps cover.
+    public let solidTiles: Set<TileCoord>
+    /// Wild trees and stumps by the tile their trunk stands on.
+    public let treesByFoot: [TileCoord: [MapObject]]
+    /// For each tile a wild tree covers, the trunk tiles of the trees covering it.
+    public let treeCover: [TileCoord: [TileCoord]]
 
-    public init(name: String, width: Int, height: Int, terrain: [Terrain], objects: [MapObject]) {
+    public init(name: String, width: Int, height: Int, terrain: [Terrain], objects: [MapObject],
+                solidAreas: [TileRect] = []) {
         precondition(width > 0 && height > 0 && terrain.count == width * height)
         self.name = name
         self.width = width
@@ -90,17 +99,36 @@ public struct WorldMap: Sendable {
         }
         self.objectIndicesByChunk = index
 
-        var blocked = Set<TileCoord>()
+        var solid = Set<TileCoord>()
+        var treesByFoot: [TileCoord: [MapObject]] = [:]
+        var treeCover: [TileCoord: [TileCoord]] = [:]
         for object in objects {
             guard let rect = ObjectFootprint.rect(for: object) else { continue }
-            let x0 = Int(rect.minX.rounded(.down)), x1 = Int((rect.maxX - 1e-9).rounded(.down))
-            let y0 = Int(rect.minY.rounded(.down)), y1 = Int((rect.maxY - 1e-9).rounded(.down))
-            guard x0 <= x1, y0 <= y1 else { continue }
-            for y in y0...y1 {
-                for x in x0...x1 { blocked.insert(TileCoord(x, y)) }
+            if TreeCatalog.isMapTree(object.kind) {
+                let foot = TileCoord(containing: object.position)
+                treesByFoot[foot, default: []].append(object)
+                for tile in Self.tiles(covering: rect) { treeCover[tile, default: []].append(foot) }
+            } else {
+                solid.formUnion(Self.tiles(covering: rect))
             }
         }
-        self.blockedTiles = blocked
+        for area in solidAreas { solid.formUnion(Self.tiles(covering: area)) }
+        self.solidTiles = solid
+        self.treesByFoot = treesByFoot
+        self.treeCover = treeCover
+        self.blockedTiles = solid.union(treeCover.keys)
+    }
+
+    /// Tiles a rectangle overlaps (by area, not just centers).
+    static func tiles(covering rect: TileRect) -> [TileCoord] {
+        let x0 = Int(rect.minX.rounded(.down)), x1 = Int((rect.maxX - 1e-9).rounded(.down))
+        let y0 = Int(rect.minY.rounded(.down)), y1 = Int((rect.maxY - 1e-9).rounded(.down))
+        guard x0 <= x1, y0 <= y1 else { return [] }
+        var result: [TileCoord] = []
+        for y in y0...y1 {
+            for x in x0...x1 { result.append(TileCoord(x, y)) }
+        }
+        return result
     }
 
     public func isBlocked(_ tile: TileCoord) -> Bool { blockedTiles.contains(tile) }

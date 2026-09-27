@@ -85,6 +85,22 @@ struct WelcomeBackView: View {
             case .thirstyCrops(let count):
                 return Line(symbol: "drop.fill", tint: Color(red: 0.35, green: 0.6, blue: 0.8),
                             text: "\(count) thirsty \(count == 1 ? "crop" : "crops"): water them to grow twice as fast.")
+            case .productsReady(let itemID, let count):
+                return Line(asset: "item_\(itemID)", text: "\(ItemCatalog.describe(count, itemID).capitalizedFirst) waiting in the pens.")
+            case .grewUp(let names):
+                let list = switch names.count {
+                case 1: names[0]
+                case 2, 3: names.dropLast().joined(separator: ", ") + " and " + names.last!
+                default: "\(names.count) young animals"
+                }
+                return Line(symbol: "heart.fill", tint: Color(red: 0.85, green: 0.35, blue: 0.4), text: "\(list) grew up!")
+            case .hungryAnimals(let count):
+                return Line(symbol: "fork.knife", tint: Theme.gold,
+                            text: "\(count) hungry \(count == 1 ? "animal is" : "animals are") waiting for a meal.")
+            case .fruitReady(let count):
+                return Line(asset: "item_apple", text: "\(count) fruit \(count == 1 ? "tree has" : "trees have") ripe fruit to pick.")
+            case .treesGrown(let count):
+                return Line(symbol: "tree.fill", tint: Theme.leaf, text: "\(count) \(count == 1 ? "tree has" : "trees have") grown tall.")
             case .storageFull(let used, let capacity):
                 return Line(symbol: "shippingbox.fill", tint: Color(red: 0.8, green: 0.3, blue: 0.25),
                             text: "Storage is full (\(used)/\(capacity)).")
@@ -98,6 +114,7 @@ struct WelcomeBackView: View {
     }
 
     /// "1 carrot", "4 carrots", "3 wheat".
+    /// (Crops only; other items use `ItemCatalog.describe`.)
     static func count(_ count: Int, _ cropID: String) -> String {
         guard let crop = CropCatalog.crop(cropID) else { return "\(count) \(cropID)" }
         return "\(count) \(count == 1 ? crop.name.lowercased() : crop.plural)"
@@ -110,4 +127,9 @@ struct WelcomeBackView: View {
         formatter.maximumUnitCount = 2
         return formatter.string(from: max(0, seconds)) ?? "a while"
     }
+}
+
+extension String {
+    /// "4 eggs" → "4 eggs"; "eggs" → "Eggs".
+    var capitalizedFirst: String { prefix(1).uppercased() + dropFirst() }
 }

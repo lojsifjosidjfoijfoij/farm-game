@@ -37,14 +37,14 @@ procedurally in code.
 | Crops | 30 | 0 |
 | Trees | 40 | 4 |
 | Nature props | 14 | 10 |
-| Buildings | 51 | 3 |
-| Props | 28 | 10 |
+| Buildings | 52 | 3 |
+| Props | 30 | 10 |
 | Vehicles | 116 | 1 |
 | Animals | 70 | 0 |
 | Item icons | 37 | 0 |
-| Effects & particles | 31 | 4 |
+| Effects & particles | 32 | 4 |
 | User interface | 26 | 15 |
-| **Total** | **458** | **52** |
+| **Total** | **462** | **52** |
 | Audio files | 57 | 0 |
 
 ## Terrain (tileable ground textures)
@@ -188,6 +188,7 @@ procedurally in code.
 | `building_barn_lights` | 640 × 704 | 5 × 5.5 | — | 4 | Night overlay for building_barn: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
 | `building_coop` | 384 × 384 | 3 × 3 | 0.06 | 4 | Chicken coop with a little ramp. |
 | `building_pigsty` | 384 × 320 | 3 × 2.5 | 0.06 | 4 | Pigsty: low shed with a muddy yard. |
+| `building_sheep_shelter` | 384 × 320 | 3 × 2.5 | 0.06 | 4 | Open-fronted sheep shelter with a sloped roof and straw inside. |
 | `building_beehives` | 256 × 205 | 2 × 1.6 | 0.06 | 7 | Row of three painted beehives. |
 | `building_stable` | 512 × 512 | 4 × 4 | 0.06 | 7 | Horse stable with half doors. |
 | `building_storage_shed` | 384 × 384 | 3 × 3 | 0.06 | 2 | Wooden storage shed for harvested goods. |
@@ -209,7 +210,7 @@ procedurally in code.
 | `building_house_village_b_lights` | 512 × 576 | 4 × 4.5 | — | 3 | Night overlay for building_house_village_b: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
 | `building_house_village_c` | 512 × 576 | 4 × 4.5 | 0.06 | 3 | Village cottage with climbing roses. |
 | `building_house_village_c_lights` | 512 × 576 | 4 × 4.5 | — | 3 | Night overlay for building_house_village_c: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
-| `building_livestock_market` | 896 × 640 | 7 × 5 | 0.06 | 5 | Livestock market: pens and an auction shed. |
+| `building_livestock_market` | 896 × 640 | 7 × 5 | 0.06 | 4 | Livestock market: a big open barn with a sign, pens and an auction shed. |
 | `building_hardware_store` | 640 × 576 | 5 × 4.5 | 0.06 | 5 | Hardware store with tools displayed outside. |
 | `building_hardware_store_lights` | 640 × 576 | 5 × 4.5 | — | 5 | Night overlay for building_hardware_store: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
 | `building_farmers_market_stall` | 320 × 320 | 2.5 × 2.5 | 0.06 | 3 | Farmers' market stall with striped awning. |
@@ -246,7 +247,9 @@ procedurally in code.
 | `prop_sign_sold` | 115 × 166 | 0.9 × 1.3 | 0.05 | 6 | The same sign with a 'Sold' banner. |
 | `prop_scarecrow` | 128 × 218 | 1 × 1.7 | 0.05 | 2 | Friendly scarecrow with a straw hat. |
 | `prop_sprinkler` | 77 × 77 | 0.6 × 0.6 | 0.2 | 5 | Brass field sprinkler head. |
-| `prop_water_trough` | 192 × 102 | 1.5 × 0.8 | 0.15 | 4 | Animal water trough. |
+| `prop_water_trough` | 192 × 102 | 1.5 × 0.8 | 0.15 | 4 | Animal water trough, full of fresh water. |
+| `prop_water_trough_empty` | 192 × 102 | 1.5 × 0.8 | 0.15 | 4 | The same trough, empty and dry. |
+| `prop_sign_repair` | 115 × 166 | 0.9 × 1.3 | 0.05 | 4 | Little wooden sign with a hammer on it: this pen can be repaired. |
 | `prop_feeder` | 154 × 102 | 1.2 × 0.8 | 0.15 | 4 | Wooden animal feeder with hay. |
 | `prop_notice_board` | 192 × 230 | 1.5 × 1.8 | 0.05 | 5 | Village notice board with pinned papers (contracts). |
 | `prop_lamp_post` | 64 × 320 | 0.5 × 2.5 | 0.03 | 3 | Old iron street lamp. |
@@ -410,6 +413,7 @@ procedurally in code.
 | `fx_headlight_cone` | 256 × 384 | 2 × 3 | — | 3 | Soft headlight beam, pointing up, additive. *(additive light)* |
 | `fx_wood_chip` | 19 × 19 | 0.15 × 0.15 | — | 4 | Wood chip flying off when chopping. |
 | `fx_feather` | 19 × 19 | 0.15 × 0.15 | — | 4 | Small feather. |
+| `fx_bubble` | 90 × 90 | 0.7 × 0.7 | — | 4 | Round white speech bubble with a small tail at the bottom: shows what an animal has or wants. |
 | `fx_heart` | 38 × 38 | 0.3 × 0.3 | — | 4 | Small heart over a happy animal. |
 | `fx_zzz` | 38 × 38 | 0.3 × 0.3 | — | 4 | 'z' for sleeping animals. |
 | `fx_bee` | 15 × 15 | 0.12 × 0.12 | — | 7 | Tiny bee. |

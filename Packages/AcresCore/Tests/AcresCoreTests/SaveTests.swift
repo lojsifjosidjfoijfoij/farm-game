@@ -87,8 +87,57 @@ enum SaveFixtures {
     }
     """
 
+    static let v4 = """
+    {
+      "createdAt": 1800000000,
+      "deviceID": "fixture-device",
+      "presentation": { "cameraCenter": { "x": 24, "y": 46 }, "cameraZoom": 1.2, "selectedSeed": "sapling_apple" },
+      "revision": 120,
+      "savedAt": 1800012000,
+      "state": {
+        "clock": { "totalMinutes": 9000 },
+        "inventory": { "items": { "egg": 4, "log": 6, "sapling_apple": 1, "wheat": 3 } },
+        "money": 3100,
+        "ownedProperties": ["home_farm"],
+        "plots": [],
+        "progress": { "level": 5, "xp": 40 },
+        "ranch": {
+          "nextAnimalID": 3,
+          "pens": {
+            "coop": {
+              "animals": [
+                { "age": 600, "happiness": 0.7, "id": 1, "name": "Pip", "production": 45, "speciesID": "chicken" },
+                { "age": 30, "happiness": 0.5, "id": 2, "name": "Dotty", "speciesID": "chicken" }
+              ],
+              "isRepaired": true,
+              "waterUntil": 20500
+            }
+          }
+        },
+        "rng": "2c",
+        "stats": { "offlineSeconds": 9000, "playSeconds": 8000, "returns": 5 },
+        "truck": {
+          "cargo": { "items": { "milk": 2 } },
+          "fuel": 80,
+          "heading": 1.5,
+          "position": { "x": 26, "y": 30 }
+        },
+        "tutorial": { "progress": 0, "step": 11 },
+        "woodland": {
+          "hiddenMapTrees": [ { "x": 30, "y": 52 } ],
+          "trees": [
+            { "fruit": 0, "growth": 960, "speciesID": "oak", "stumpAge": 120, "tile": { "x": 30, "y": 52 } },
+            { "fruit": 0, "growth": 200, "speciesID": "apple", "tile": { "x": 40, "y": 33 } }
+          ]
+        },
+        "worldTime": 20000
+      },
+      "version": 4
+    }
+    """
+
     /// All fixtures, oldest first.
-    static let all: [(version: Int, json: String)] = [(1, v1), (2, v2), (3, v3)]
+    static let all: [(version: Int, json: String)] = [(1, v1), (2, v2), (3, v3), (4, v4)]
     static var latest: (version: Int, json: String) { all.last! }
 
     /// What `v1` must decode to after migrating to the current version.
@@ -142,9 +191,9 @@ enum SaveFixtures {
         presentation: PresentationState(cameraCenter: Vec2(26, 32.5), cameraZoom: 1.5, selectedSeed: "carrot")
     )
 
-    /// What `v3` must decode to.
-    static let v3Expected = SaveFile(
-        version: 3,
+    /// What `v3` must decode to after migrating to the current version.
+    static let v3Migrated = SaveFile(
+        version: SaveFile.currentVersion,
         revision: 77,
         deviceID: "fixture-device",
         createdAt: Date(timeIntervalSince1970: 1_800_000_000),
@@ -160,13 +209,48 @@ enum SaveFixtures {
             plots: FarmPlots([Plot(tile: TileCoord(21, 31))]),
             inventory: Inventory(items: ["seeds_carrot": 5]),
             ownedProperties: ["home_farm"],
-            tutorial: TutorialState(step: .sell)
+            tutorial: TutorialState(step: .sell),
+            ranch: Ranch(),        // added by v3 → v4
+            woodland: Woodland()   // added by v3 → v4
         ),
         presentation: PresentationState(cameraCenter: Vec2(70, 24), cameraZoom: 1.5, selectedSeed: "wheat")
     )
 
+    /// What `v4` must decode to.
+    static let v4Expected = SaveFile(
+        version: 4,
+        revision: 120,
+        deviceID: "fixture-device",
+        createdAt: Date(timeIntervalSince1970: 1_800_000_000),
+        savedAt: Date(timeIntervalSince1970: 1_800_012_000),
+        state: GameState(
+            worldTime: 20_000,
+            clock: GameClock(totalMinutes: 9000),
+            money: 3100,
+            progress: FarmerProgress(level: 5, xp: 40),
+            truck: TruckState(position: Vec2(26, 30), heading: 1.5, fuel: 80, cargo: Inventory(items: ["milk": 2])),
+            rng: SeededRandom(seed: 0x2C),
+            stats: PlayStats(playSeconds: 8000, offlineSeconds: 9000, returns: 5),
+            plots: FarmPlots(),
+            inventory: Inventory(items: ["egg": 4, "log": 6, "sapling_apple": 1, "wheat": 3]),
+            ownedProperties: ["home_farm"],
+            tutorial: .complete,
+            ranch: Ranch(pens: [
+                "coop": PenState(isRepaired: true, waterUntil: 20_500, animals: [
+                    AnimalState(id: 1, speciesID: "chicken", name: "Pip", age: 600, production: 45, happiness: 0.7),
+                    AnimalState(id: 2, speciesID: "chicken", name: "Dotty", age: 30, production: nil, happiness: 0.5),
+                ]),
+            ], nextAnimalID: 3),
+            woodland: Woodland(trees: [
+                TreeState(tile: TileCoord(30, 52), speciesID: "oak", growth: 960, stumpAge: 120),
+                TreeState(tile: TileCoord(40, 33), speciesID: "apple", growth: 200),
+            ], hiddenMapTrees: [TileCoord(30, 52)])
+        ),
+        presentation: PresentationState(cameraCenter: Vec2(24, 46), cameraZoom: 1.2, selectedSeed: "sapling_apple")
+    )
+
     /// The value whose encoding must have the same shape as the latest fixture.
-    static var latestExpected: SaveFile { v3Expected }
+    static var latestExpected: SaveFile { v4Expected }
 }
 
 /// In-memory store for tests.
@@ -229,10 +313,16 @@ final class SaveTests: XCTestCase {
         XCTAssertEqual(file, SaveFixtures.v2Migrated)
     }
 
-    func testVersion3FixtureDecodesExactly() throws {
+    func testVersion3FixtureMigratesExactly() throws {
         let system = SaveSystem(store: MemorySaveStore(), deviceID: "test")
         let file = try system.decode(Data(SaveFixtures.v3.utf8)).get()
-        XCTAssertEqual(file, SaveFixtures.v3Expected)
+        XCTAssertEqual(file, SaveFixtures.v3Migrated)
+    }
+
+    func testVersion4FixtureDecodesExactly() throws {
+        let system = SaveSystem(store: MemorySaveStore(), deviceID: "test")
+        let file = try system.decode(Data(SaveFixtures.v4.utf8)).get()
+        XCTAssertEqual(file, SaveFixtures.v4Expected)
     }
 
     func testCurrentFormatMatchesLatestFixture() throws {

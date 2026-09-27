@@ -34,7 +34,7 @@ extension GameController {
     /// How far the knob can travel from where the thumb went down.
     static let joystickRadius: CGFloat = 60
 
-    var physics: TruckPhysics { TruckPhysics(map: map, tuning: balance.driving) }
+    var physics: TruckPhysics { TruckPhysics(map: map, tuning: balance.driving, woodland: simulation.state.woodland) }
     var truckState: TruckState { simulation.state.truck }
     var truckSurface: Terrain { physics.surface(at: simulation.state.truck.position) }
     var cargoFraction: Double { Double(cargoCount) / Double(max(1, balance.truckCargoCapacity)) }
@@ -97,7 +97,8 @@ extension GameController {
     /// Tap-to-drive: plans a route and lets the autopilot take the wheel.
     func driveTo(_ target: Vec2) {
         guard isDriving else { return }
-        guard let path = Pathfinder.path(on: map, from: simulation.state.truck.position, to: target) else {
+        guard let path = Pathfinder.path(on: map, woodland: simulation.state.woodland,
+                                         from: simulation.state.truck.position, to: target) else {
             showMessage("Can't find a way there.")
             return
         }

@@ -22,6 +22,8 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     private var cameraController: CameraController?
     private var chunks: ChunkManager?
     private var fields: FieldRenderer?
+    private var trees: TreeRenderer?
+    private var ranch: RanchRenderer?
     private var truck: TruckRenderer?
     /// Pulsing ring on the tile the tutorial points at.
     private let tutorialRing = SKSpriteNode(texture: nil)
@@ -99,8 +101,13 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         chunkManager.isTileCleared = { [weak self] tile in
             self?.game.simulation.state.plots[tile] != nil
         }
+        chunkManager.isMapTreeHidden = { [weak self] tile in
+            self?.game.simulation.state.woodland.hiddenMapTrees.contains(tile) ?? false
+        }
         chunks = chunkManager
         fields = FieldRenderer(assets: assets, flatLayer: flatLayer, objectLayer: objectLayer)
+        trees = TreeRenderer(assets: assets, flatLayer: flatLayer, objectLayer: objectLayer)
+        ranch = RanchRenderer(assets: assets, flatLayer: flatLayer, objectLayer: objectLayer, effectsLayer: effectsLayer)
 
         let bounds = World.rect(map.bounds)
         let camera = CameraController(camera: cameraNode, worldBounds: bounds, center: World.point(HomeValleyMap.farmCenter))
@@ -115,6 +122,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         truck = TruckRenderer(assets: assets, objectLayer: objectLayer, flatLayer: flatLayer, effectsLayer: effectsLayer)
         setUpMarkers()
         game.onWorldReset = { [weak self] in self?.worldWasReset() }
+        game.onFeedback = { [weak self] feedback in self?.play(feedback) }
         chunkManager.update(visibleRect: camera.visibleRect)
         syncFields()
         updateTruck()
@@ -161,6 +169,8 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         // Weeds may need to come back (after a reset), so reload the chunks.
         chunks?.unloadAll()
         fields?.removeAll()
+        trees?.removeAll()
+        ranch?.removeAll()
         if let camera = cameraController {
             if game.presentation.cameraCenter == nil {
                 camera.focus(on: World.point(HomeValleyMap.farmCenter), animated: true)
@@ -203,6 +213,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         }
         camera.update(dt: dt)
         chunks?.update(visibleRect: camera.visibleRect)
+        ranch?.update(dt: dt)
         updateLighting(force: false)
 
         // Crops change slowly: re-check a few times a second, or at once after an action.
@@ -228,6 +239,10 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         fields?.sync(plots: state.plots, now: state.worldTime) { tile in
             chunks.isLoaded(WorldMap.chunk(containing: tile.center))
         }
+        trees?.sync(woodland: state.woodland, forestry: game.forestry) { tile in
+            chunks.isLoaded(WorldMap.chunk(containing: tile.center))
+        }
+        ranch?.sync(ranch: state.ranch, now: state.worldTime, inventory: state.inventory)
         updateMarkers()
     }
 
@@ -269,6 +284,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         let light = DayNightCurve.lighting(atHour: hour)
         gradeOverlay.color = SKColor(red: CGFloat(light.tint.r), green: CGFloat(light.tint.g), blue: CGFloat(light.tint.b), alpha: 1)
         chunks?.setLightIntensity(CGFloat(light.nightLights))
+        ranch?.nightLevel = CGFloat(light.nightLights)
     }
 
     // MARK: Input
@@ -388,8 +404,20 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
             game.startDriving()
             return
         }
-        let tile = TileCoord(containing: World.tiles(point))
+        let spot = World.tiles(point)
+        let tile = TileCoord(containing: spot)
         guard game.map.isInside(tile) else { return }
+        // Fields first (they're what you tap most), then trees, then pens.
+        if game.simulation.state.plots[tile] == nil {
+            if let treeTile = game.treeTile(at: spot) {
+                game.tapTree(treeTile)
+                return
+            }
+            if let pen = PenCatalog.pen(tappedAt: spot) {
+                game.tapPen(pen)
+                return
+            }
+        }
         switch game.tap(tile) {
         case .performed(let outcome):
             showFeedback(outcome, at: tile, painting: false)
@@ -399,9 +427,21 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     }
 
     @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
-        guard gesture.state == .began, let view = gesture.view, let tile = tile(atScreen: gesture.location(in: view)),
-              game.map.isInside(tile) else { return }
-        game.inspect(tile)
+        guard gesture.state == .began, let view = gesture.view, let camera = cameraController else { return }
+        let spot = World.tiles(camera.worldPoint(fromScreen: gesture.location(in: view)))
+        let tile = TileCoord(containing: spot)
+        guard game.map.isInside(tile) else { return }
+        if game.simulation.state.plots[tile] == nil {
+            if let treeTile = game.treeTile(at: spot) {
+                game.inspect(.tree(treeTile))
+                return
+            }
+            if let pen = PenCatalog.pen(tappedAt: spot) {
+                game.inspect(.pen(pen.id))
+                return
+            }
+        }
+        game.inspect(.tile(tile))
         showTileHighlight(tile)
     }
 
@@ -424,6 +464,37 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
             }
         }
         if outcome.succeeded { syncFields() }
+    }
+
+    /// Animations for pen and tree actions.
+    private func play(_ feedback: WorldFeedback) {
+        switch feedback {
+        case .pen(let outcome, let penID):
+            syncFields()
+            switch outcome {
+            case .collected(let items, _): ranch?.collected(in: penID, items: items)
+            case .fed: ranch?.hearts(in: penID)
+            case .watered: ranch?.watered(penID)
+            case .repaired: ranch?.repaired(penID)
+            case .failed: break
+            }
+        case .tree(let outcome, let tile, let position):
+            switch outcome {
+            case .chopped(let speciesID, let logs, _):
+                chunks?.hideMapTree(at: tile)
+                TreeEffects.chopped(at: position, speciesID: speciesID, logs: logs, in: effectsLayer, assets: assets)
+            case .stumpCleared:
+                chunks?.hideMapTree(at: tile)
+                TreeEffects.cleared(at: position, in: effectsLayer, assets: assets)
+            case .picked(let itemID, let amount, _):
+                TreeEffects.picked(at: position, itemID: itemID, amount: amount, in: effectsLayer, assets: assets)
+            case .planted:
+                FieldEffects.planted(at: tile, in: effectsLayer, assets: assets)
+            case .failed:
+                FieldEffects.refused(at: tile, in: flatLayer, assets: assets)
+            }
+            syncFields()
+        }
     }
 
     private func showTileHighlight(_ tile: TileCoord) {

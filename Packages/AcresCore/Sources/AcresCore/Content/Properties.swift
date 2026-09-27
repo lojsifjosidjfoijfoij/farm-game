@@ -16,10 +16,11 @@ public struct PropertyDefinition: Sendable, Hashable, Identifiable {
 }
 
 public enum PropertyCatalog {
-    /// The run-down starting farm: the fenced land around the farmhouse.
+    /// The run-down starting farm: the fenced fields around the farmhouse,
+    /// plus (since Phase 4) the backyard pens and the woodlot behind them.
     public static let homeFarm = PropertyDefinition(
         id: "home_farm", name: "Your farm",
-        area: TileRect(minX: 16, minY: 29, maxX: 46, maxY: 41),
+        area: TileRect(minX: 16, minY: 29, maxX: 46, maxY: 57),
         price: nil)
 
     public static let all: [PropertyDefinition] = [homeFarm]

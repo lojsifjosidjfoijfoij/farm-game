@@ -12,6 +12,14 @@ public enum SimEvent: Equatable, Sendable {
     case cropReady(TileCoord, cropID: String)
     /// The farmer reached a new level.
     case levelUp(Int)
+    /// A young animal grew up (and is now hungry).
+    case animalGrewUp(penID: String, animalID: Int)
+    /// An animal's product (egg, milk, …) is ready to collect.
+    case animalProductReady(penID: String, animalID: Int)
+    /// A planted or regrowing tree reached full size.
+    case treeGrown(TileCoord)
+    /// A fruit tree has fruit to pick.
+    case fruitReady(TileCoord)
 }
 
 /// How a stretch of time is being simulated.
@@ -69,6 +77,8 @@ public struct Simulation: Sendable {
     /// Systems in the order they run each step.
     public static let defaultSystems: [any SimulationSystem] = [
         CropSystem(),
+        AnimalSystem(),
+        TreeSystem(),
         ClockSystem(),
     ]
 
@@ -125,6 +135,16 @@ public struct Simulation: Sendable {
     /// Performs a farming action (plow, plant, water, harvest) on a tile.
     public mutating func perform(_ action: FarmAction, at tile: TileCoord, on map: WorldMap) -> FarmResult {
         Farming(map: map, balance: balance).perform(action, at: tile, in: &state)
+    }
+
+    /// Looks after a pen (repair, collect, water, feed).
+    public mutating func perform(_ action: PenAction, on pen: PenDefinition) -> RanchResult {
+        Ranching(balance: balance).perform(action, on: pen, in: &state)
+    }
+
+    /// Works a tree (chop, clear a stump, pick fruit, plant a sapling).
+    public mutating func perform(_ action: TreeAction, at tile: TileCoord, on map: WorldMap) -> TreeResult {
+        Forestry(map: map, balance: balance).perform(action, at: tile, in: &state)
     }
 
     /// Runs a trade (buy, sell, refuel, load) against the state; failures leave it unchanged.

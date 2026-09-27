@@ -48,11 +48,40 @@ public struct Balance: Sendable, Equatable {
     /// How long soil stays wet after watering (real seconds).
     public var soilWetDuration: TimeInterval = 10 * 60
 
-    /// Items the farm can store (seeds don't count). Harvesting stops when full.
-    public var storageCapacity: Int = 100
+    /// Items the farm can store (seeds and saplings don't count). Harvesting,
+    /// collecting and chopping stop when full.
+    public var storageCapacity: Int = 150
 
     /// What's in the seed pouch at the start of a new game.
     public var startingItems: [String: Int] = ["seeds_wheat": 12, "seeds_carrot": 8, "seeds_potato": 4]
+
+    // MARK: - Animals (Phase 4)
+
+    /// How long a filled water trough lasts (real seconds).
+    public var troughWaterDuration: TimeInterval = 15 * 60
+
+    /// Production speed of animals with an empty trough, relative to a full one.
+    public var dryProductionRate: Double = 0.5
+
+    /// Happiness gained per feeding with water in the trough (half when dry).
+    public var happinessPerFeeding: Double = 0.2
+
+    /// Happiness lost per hour while an adult animal waits to be fed.
+    public var happinessDecayPerHour: Double = 0.25
+
+    /// Happiness of a newly bought young animal.
+    public var newAnimalHappiness: Double = 0.5
+
+    /// Price of one sack of animal feed at the livestock market.
+    public var feedPrice: Int = 6
+
+    // MARK: - Trees (Phase 4)
+
+    /// Seconds before a stump sprouts again into a sapling of the same kind.
+    public var stumpRegrowSeconds: TimeInterval = 8 * 60
+
+    /// Experience for clearing away a stump.
+    public var stumpRemovalXP: Int = 1
 
     // MARK: - Progression
 

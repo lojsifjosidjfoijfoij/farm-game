@@ -17,9 +17,9 @@ extension GameController {
         Haptics.tap()
     }
 
-    /// Today's market price for a crop.
-    func price(of cropID: String) -> Int {
-        trading.price(of: cropID, in: simulation.state) ?? 0
+    /// Today's market price for anything the market buys.
+    func price(of itemID: String) -> Int {
+        trading.price(of: itemID, in: simulation.state) ?? 0
     }
 
     var fullTankCost: Int { trading.fullTankCost(simulation.state) }
@@ -33,6 +33,33 @@ extension GameController {
             let name = CropCatalog.crop(cropID)?.name.lowercased() ?? cropID
             showMessage("Bought \(count) \(name) seeds for \(cost) coins.")
             advanceTutorial(.boughtSeeds)
+        }
+    }
+
+    func buySaplings(_ treeID: String, count: Int) {
+        let result = simulation.trade { try $0.buySaplings(treeID, count: count, state: &$1) }
+        finish(result) { cost in
+            Haptics.success()
+            let name = TreeCatalog.species(treeID)?.name.lowercased() ?? treeID
+            showMessage("Bought \(count) \(name) \(count == 1 ? "sapling" : "saplings") for \(cost) coins. Plant them on plowed soil.")
+        }
+    }
+
+    func buyAnimal(_ speciesID: String) {
+        let result = simulation.trade { try $0.buyAnimal(speciesID, state: &$1) }
+        finish(result) { animal in
+            Haptics.success()
+            let young = animal.species?.youngName.lowercased() ?? "animal"
+            showMessage("Say hello to \(animal.name) the \(young)! They're waiting at your farm.")
+            farmRevision += 1
+        }
+    }
+
+    func buyFeed(count: Int) {
+        let result = simulation.trade { try $0.buyFeed(count: count, state: &$1) }
+        finish(result) { cost in
+            Haptics.success()
+            showMessage("Bought \(count) sacks of feed for \(cost) coins.")
         }
     }
 
@@ -106,6 +133,9 @@ extension GameController {
         case .notAtShop(.seedShop): "Drive to the seed shop to buy seeds."
         case .notAtShop(.market): "Drive to the market to sell."
         case .notAtShop(.gasStation): "Drive to the gas station to fill up."
+        case .notAtShop(.livestock): "Drive to the livestock market."
+        case .penNotRepaired(let penID): "Fix up the \(PenCatalog.pen(penID)?.name.lowercased() ?? "pen") at your farm first."
+        case .penFull(let penID): "The \(PenCatalog.pen(penID)?.name.lowercased() ?? "pen") is full."
         case .notAtFarm: "Park the truck at your farm to load it."
         case .notEnoughMoney: "Not enough coins."
         case .locked(let level): "Unlocks at level \(level)."

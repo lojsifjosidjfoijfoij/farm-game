@@ -40,6 +40,12 @@ struct DebugPanelView: View {
                     Button("Empty storage") { game.debugEmptyStorage() }
                 }
 
+                Section("Animals & trees") {
+                    Button("Grow up animals, finish products") { game.debugGrowAnimals() }
+                    Button("Grow all trees, ripen fruit") { game.debugGrowTrees() }
+                    Button("Level up (+1)") { game.debugLevelUp() }
+                }
+
                 Section("Truck & tutorial") {
                     Button("Fill the tank") { game.debugFillTank() }
                     Button("Skip the tutorial") { game.skipTutorial() }

@@ -12,21 +12,41 @@ struct GameAlert: Identifiable, Equatable {
 
 /// What the info card shows after a long-press (or a tap with nothing to do).
 struct TileInspection: Equatable {
-    let tile: TileCoord
+    let target: InspectionTarget
     let title: String
     let detail: String
     /// Asset name of an item icon, if the tile has a crop.
     let icon: String?
     /// SF Symbol shown when there is no icon.
     let symbol: String
+    /// A button on the card for things a tap won't do (repairs cost coins,
+    /// fruit trees are only chopped on purpose).
+    var action: InspectionAction? = nil
+    var actionTitle: String? = nil
 }
 
-/// A seed choice for the seed picker.
+/// What an info card is about.
+enum InspectionTarget: Equatable {
+    case tile(TileCoord)
+    case pen(String)
+    case tree(TileCoord)
+}
+
+enum InspectionAction: Equatable {
+    case repairPen(String)
+    case chopTree(TileCoord)
+}
+
+/// A packet in the seed picker: crop seeds or a sapling.
 struct SeedOption: Identifiable, Equatable {
-    let crop: CropDefinition
+    /// The crop ID, or the sapling item ID (`sapling_oak`).
+    let id: String
+    let name: String
+    let icon: String
     let count: Int
     let inSeason: Bool
-    var id: String { crop.id }
+    /// When it can be planted, for out-of-season packets.
+    let seasons: String
 }
 
 /// What a tap did, so the scene can give the right feedback.
@@ -113,6 +133,8 @@ final class GameController {
     @ObservationIgnored var onWorldReset: (@MainActor () -> Void)?
     /// Bumped whenever farmland changes through an action, so the scene redraws at once.
     @ObservationIgnored var farmRevision = 0
+    /// Lets the scene animate pen and tree actions (from taps or card buttons).
+    @ObservationIgnored var onFeedback: (@MainActor (WorldFeedback) -> Void)?
     private let saveSystem: SaveSystem?
     private let reminders = HarvestReminders()
     @ObservationIgnored private(set) var lastSave: SaveFile?
@@ -121,7 +143,7 @@ final class GameController {
     @ObservationIgnored private var suspendedAt: Date?
     @ObservationIgnored private var bannerTimeLeft: TimeInterval = 0
     @ObservationIgnored private var inspectionTimeLeft: TimeInterval = 0
-    @ObservationIgnored private var inspectedTile: TileCoord?
+    @ObservationIgnored private var inspectedTarget: InspectionTarget?
     @ObservationIgnored private var inspectionRefresh: TimeInterval = 0
     @ObservationIgnored private var paintKind: FarmAction.Kind?
     @ObservationIgnored private var paintSeed: String?
@@ -225,12 +247,10 @@ final class GameController {
             inspectionRefresh += dt
             if inspectionTimeLeft <= 0 {
                 inspection = nil
-                inspectedTile = nil
-            } else if inspectionRefresh >= 0.5, let tile = inspectedTile {
+                inspectedTarget = nil
+            } else if inspectionRefresh >= 0.5 {
                 // Countdowns tick live while the card is up.
-                inspectionRefresh = 0
-                let fresh = makeInspection(tile)
-                if fresh != inspection { inspection = fresh }
+                refreshInspection()
             }
         }
         // The world politely waits while the welcome-back card is open.
@@ -288,9 +308,15 @@ final class GameController {
             return .inspected
         }
 
-        guard let action = farming.suggestedAction(at: tile, in: state, seed: resolvedSeed()) else {
+        // A sapling picked in the seed pouch goes into empty plowed soil.
+        if let species = resolvedSapling, let plot = state.plots[tile], plot.crop == nil {
+            performTree(.plant(speciesID: species), at: tile)
+            return .inspected
+        }
+
+        guard let action = farming.suggestedAction(at: tile, in: state, seed: resolvedCropSeed) else {
             if state.plots[tile] != nil || PropertyCatalog.property(containing: tile) != nil {
-                inspect(tile)
+                inspect(.tile(tile))
                 return .inspected
             }
             return .nothing
@@ -302,7 +328,7 @@ final class GameController {
     /// there (the drag then moves the camera), otherwise the first outcome.
     func beginPaint(at tile: TileCoord) -> FarmOutcome? {
         guard welcome == nil,
-              let action = farming.suggestedAction(at: tile, in: simulation.state, seed: resolvedSeed()) else { return nil }
+              let action = farming.suggestedAction(at: tile, in: simulation.state, seed: resolvedCropSeed) else { return nil }
         paintKind = action.kind
         if case .plant(let cropID) = action { paintSeed = cropID } else { paintSeed = nil }
         return perform(action, at: tile, painting: true)
@@ -323,34 +349,67 @@ final class GameController {
 
     var isPainting: Bool { paintKind != nil }
 
-    func select(seed cropID: String) {
-        selectedSeed = cropID
-        presentation.selectedSeed = cropID
+    /// Picks the packet that tapping empty soil plants: a crop ID or a sapling item ID.
+    func select(seed id: String) {
+        selectedSeed = id
+        presentation.selectedSeed = id
         showsSeedPicker = false
         Haptics.selection()
     }
 
-    /// Seeds in the pouch, in catalog order (out-of-season ones included, dimmed).
+    /// Seeds and saplings in the pouch, in catalog order (out-of-season seeds included, dimmed).
     var seedOptions: [SeedOption] {
-        CropCatalog.all.compactMap { crop in
+        let seeds: [SeedOption] = CropCatalog.all.compactMap { crop in
             let count = inventoryItems[crop.seedItemID] ?? 0
             guard count > 0 else { return nil }
-            return SeedOption(crop: crop, count: count, inSeason: crop.canBePlanted(in: season))
+            return SeedOption(id: crop.id, name: crop.name, icon: "item_seeds_\(crop.id)", count: count,
+                              inSeason: crop.canBePlanted(in: season), seasons: crop.seasonList.map(\.name).joined(separator: ", "))
         }
+        let saplings: [SeedOption] = TreeCatalog.all.compactMap { tree in
+            let count = inventoryItems[tree.saplingItemID] ?? 0
+            guard count > 0 else { return nil }
+            return SeedOption(id: tree.saplingItemID, name: tree.name, icon: "item_sapling_\(tree.id)", count: count,
+                              inSeason: true, seasons: "")
+        }
+        return seeds + saplings
     }
 
-    /// Long-press (or tap with nothing to do): show what's on the tile.
-    func inspect(_ tile: TileCoord) {
-        inspection = makeInspection(tile)
-        inspectedTile = tile
-        inspectionTimeLeft = 5
+    /// Icon and count for the seed button.
+    var selectedPacket: (icon: String, count: Int)? {
+        guard let id = selectedSeed else { return nil }
+        if let crop = CropCatalog.crop(id) { return ("item_seeds_\(crop.id)", inventoryItems[crop.seedItemID] ?? 0) }
+        if let item = ItemCatalog.item(id), item.category == .sapling { return (item.icon, inventoryItems[id] ?? 0) }
+        return nil
+    }
+
+    /// Long-press (or tap with nothing to do): show what's there.
+    func inspect(_ target: InspectionTarget) {
+        inspection = makeInspection(target)
+        inspectedTarget = target
+        inspectionTimeLeft = inspection?.action == nil ? 5 : 8
         inspectionRefresh = 0
         Haptics.selection()
     }
 
     func dismissInspection() {
         inspection = nil
-        inspectedTile = nil
+        inspectedTarget = nil
+    }
+
+    /// Re-reads the card after something changed (or a second passed).
+    func refreshInspection() {
+        inspectionRefresh = 0
+        guard let target = inspectedTarget else { return }
+        let fresh = makeInspection(target)
+        if fresh != inspection { inspection = fresh }
+    }
+
+    func makeInspection(_ target: InspectionTarget) -> TileInspection {
+        switch target {
+        case .tile(let tile): makeInspection(tile)
+        case .pen(let id): penInspection(id)
+        case .tree(let tile): treeInspection(tile)
+        }
     }
 
     private func perform(_ action: FarmAction, at tile: TileCoord, painting: Bool) -> FarmOutcome {
@@ -381,8 +440,22 @@ final class GameController {
         return result.outcome
     }
 
-    /// The seed to plant: the selected one if possible, else the first plantable.
+    /// Crop seeds to plant, unless a sapling is picked.
+    var resolvedCropSeed: String? {
+        let seed = resolvedSeed()
+        return seed.flatMap { CropCatalog.crop($0) } != nil ? seed : nil
+    }
+
+    /// The tree species to plant, if a sapling is picked (and in the pouch).
+    var resolvedSapling: String? {
+        guard let seed = resolvedSeed(), seed.hasPrefix("sapling_") else { return nil }
+        return String(seed.dropFirst("sapling_".count))
+    }
+
+    /// The packet to plant: the selected one if possible, else the first
+    /// plantable crop. (Saplings are never picked automatically.)
     private func resolvedSeed() -> String? {
+        if let selected = selectedSeed, selected.hasPrefix("sapling_"), (inventoryItems[selected] ?? 0) > 0 { return selected }
         let plantable = farming.plantableSeeds(in: simulation.state)
         if let selected = selectedSeed, plantable.contains(where: { $0.id == selected }) { return selected }
         guard let first = plantable.first else { return nil }
@@ -419,22 +492,27 @@ final class GameController {
                     let water = plot.isWet(at: state.worldTime) ? "Watered" : "Thirsty: water it to grow twice as fast"
                     detail = "Ready in \(Format.duration(eta)) · \(water)"
                 }
-                return TileInspection(tile: tile, title: def.name, detail: detail, icon: "item_\(def.id)", symbol: "leaf.fill")
+                return TileInspection(target: .tile(tile), title: def.name, detail: detail, icon: "item_\(def.id)", symbol: "leaf.fill")
             }
-            let seedName = resolvedSeed().flatMap { CropCatalog.crop($0)?.name.lowercased() }
-            return TileInspection(tile: tile, title: "Plowed soil",
+            let seedName = resolvedSapling.flatMap { TreeCatalog.species($0).map { "a \($0.name.lowercased()) sapling" } }
+                ?? resolvedCropSeed.flatMap { CropCatalog.crop($0)?.name.lowercased() }
+            return TileInspection(target: .tile(tile), title: "Plowed soil",
                                   detail: seedName.map { "Tap to plant \($0)." } ?? "No seeds to plant this season.",
                                   icon: nil, symbol: "square.grid.3x3.fill")
         }
         switch farming.plowProblem(at: tile, in: state) {
         case nil:
-            return TileInspection(tile: tile, title: "Your land", detail: "Tap to plow. Drag to plow a whole row.", icon: nil, symbol: "square.dashed")
+            return TileInspection(target: .tile(tile), title: "Your land", detail: "Tap to plow. Drag to plow a whole row.",
+                                  icon: nil, symbol: "square.dashed")
         case .notYourLand?:
-            return TileInspection(tile: tile, title: "Not your land", detail: "Land can be bought later on.", icon: nil, symbol: "signpost.right.fill")
+            return TileInspection(target: .tile(tile), title: "Not your land", detail: "Land can be bought later on.",
+                                  icon: nil, symbol: "signpost.right.fill")
         case .truckNotHere?:
-            return TileInspection(tile: tile, title: "Your land", detail: "Park your truck here to work it.", icon: nil, symbol: "truck.pickup.side.fill")
+            return TileInspection(target: .tile(tile), title: "Your land", detail: "Park your truck here to work it.",
+                                  icon: nil, symbol: "truck.pickup.side.fill")
         default:
-            return TileInspection(tile: tile, title: "Your land", detail: "Something's in the way.", icon: nil, symbol: "xmark.circle")
+            return TileInspection(target: .tile(tile), title: "Your land", detail: "Something's in the way.",
+                                  icon: nil, symbol: "xmark.circle")
         }
     }
 
@@ -512,10 +590,16 @@ final class GameController {
             case .newDay:
                 break  // no clock to follow: days only drive lighting, prices and seasons
             case .levelUp(let newLevel):
-                showBanner("Level \(newLevel)! 🎉")
+                let unlocks = Self.unlocks(at: newLevel)
+                showBanner(unlocks.isEmpty ? "Level \(newLevel)! 🎉" : "Level \(newLevel)! 🎉 New: \(unlocks.joined(separator: ", "))")
                 hasLevelUp = true
-            case .cropReady:
-                break  // ripe crops twinkle in the field; no need to interrupt
+            case .cropReady, .animalProductReady, .treeGrown, .fruitReady:
+                break  // they show in the world (sparkles, bubbles, fruit); no need to interrupt
+            case .animalGrewUp(let penID, let id):
+                if !quiet, let animal = simulation.state.ranch[penID].animals.first(where: { $0.id == id }),
+                   let species = animal.species {
+                    showBanner("\(animal.name) the \(species.youngName.lowercased()) is all grown up!")
+                }
             }
         }
         guard !quiet else { return }
@@ -524,6 +608,16 @@ final class GameController {
         } else if events.contains(where: Self.isSeasonChange) {
             Haptics.thump()
         }
+    }
+
+    /// What a new farmer level opens up, for the level-up banner.
+    static func unlocks(at level: Int) -> [String] {
+        var result: [String] = []
+        result += PenCatalog.all.filter { $0.unlockLevel == level }.map { "fix up the \($0.name.lowercased())" }
+        result += AnimalCatalog.all.filter { $0.unlockLevel == level }.map { $0.plural }
+        result += CropCatalog.all.filter { $0.unlockLevel == level }.map { "\($0.name.lowercased()) seeds" }
+        result += TreeCatalog.all.filter { $0.unlockLevel == level }.map { "\($0.name.lowercased()) saplings" }
+        return result
     }
 
     private static func isSeasonChange(_ event: SimEvent) -> Bool {
@@ -629,6 +723,37 @@ final class GameController {
         let capacity = balance.driving.fuelCapacity
         simulation.modify { $0.truck.fuel = capacity }
         refreshTruck()
+    }
+
+    func debugGrowAnimals() {
+        simulation.modify { state in
+            for (id, var pen) in state.ranch.pens {
+                for index in pen.animals.indices {
+                    guard let species = pen.animals[index].species else { continue }
+                    pen.animals[index].age = max(pen.animals[index].age, species.growUpSeconds)
+                    if pen.animals[index].production != nil { pen.animals[index].production = species.produceSeconds }
+                }
+                state.ranch.pens[id] = pen
+            }
+        }
+        farmRevision += 1
+    }
+
+    func debugGrowTrees() {
+        simulation.modify { state in
+            state.woodland.updateEach { tree in
+                guard let species = tree.species else { return }
+                tree.stumpAge = nil
+                tree.growth = species.growSeconds
+                tree.fruit = species.fruitSeconds
+            }
+        }
+        farmRevision += 1
+    }
+
+    func debugLevelUp() {
+        simulation.modify { $0.progress.level += 1 }
+        refreshDisplay()
     }
 
     func debugEmptyStorage() {

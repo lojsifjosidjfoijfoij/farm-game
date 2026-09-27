@@ -13,8 +13,13 @@ struct InventoryView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     truckSection
                     storageBar
-                    section(.crop, empty: "Nothing harvested yet. Ripe crops sparkle in the field: tap them to pick.")
-                    section(.seed, empty: "No seeds. The village seed shop sells them.")
+                    ForEach(ItemCategory.allCases, id: \.self) { category in
+                        if let empty = emptyText(category) {
+                            section(category, empty: empty)
+                        } else if hasItems(category) {
+                            section(category, empty: "")
+                        }
+                    }
                 }
                 .padding(16)
             }
@@ -60,12 +65,25 @@ struct InventoryView: View {
 
     // MARK: Truck
 
-    private var cargoCrops: [CropDefinition] {
-        CropCatalog.all.filter { (game.cargoItems[$0.produceItemID] ?? 0) > 0 }
+    /// Categories always listed (with a hint when empty); the rest appear once you have some.
+    private func emptyText(_ category: ItemCategory) -> String? {
+        switch category {
+        case .crop: "Nothing harvested yet. Ripe crops sparkle in the field: tap them to pick."
+        case .seed: "No seeds. The village seed shop sells them."
+        default: nil
+        }
     }
 
-    private var hasHarvest: Bool {
-        CropCatalog.all.contains { (game.inventoryItems[$0.produceItemID] ?? 0) > 0 }
+    private func hasItems(_ category: ItemCategory) -> Bool {
+        ItemCatalog.all.contains { $0.category == category && (game.inventoryItems[$0.id] ?? 0) > 0 }
+    }
+
+    private var cargo: [ItemDefinition] {
+        ItemCatalog.all.filter { (game.cargoItems[$0.id] ?? 0) > 0 }
+    }
+
+    private var hasSellables: Bool {
+        ItemCatalog.all.contains { $0.category.isSellable && (game.inventoryItems[$0.id] ?? 0) > 0 }
     }
 
     private var truckSection: some View {
@@ -83,18 +101,18 @@ struct InventoryView: View {
             ProgressView(value: min(1, Double(game.cargoCount) / Double(max(1, capacity))))
                 .tint(Theme.gold)
 
-            if !cargoCrops.isEmpty {
+            if !cargo.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
-                        ForEach(cargoCrops) { crop in
-                            cargoChip(crop, count: game.cargoItems[crop.produceItemID] ?? 0)
+                        ForEach(cargo) { item in
+                            cargoChip(item, count: game.cargoItems[item.id] ?? 0)
                         }
                     }
                 }
             }
 
             if game.truckAtFarm {
-                if hasHarvest && game.cargoCount < capacity {
+                if hasSellables && game.cargoCount < capacity {
                     Button { game.loadAll() } label: {
                         Label("Load all", systemImage: "arrow.up.bin.fill")
                             .font(Theme.label(17, weight: .semibold))
@@ -114,20 +132,20 @@ struct InventoryView: View {
         }
     }
 
-    private func cargoChip(_ crop: CropDefinition, count: Int) -> some View {
+    private func cargoChip(_ item: ItemDefinition, count: Int) -> some View {
         HStack(spacing: 6) {
-            ItemIcon(name: "item_\(crop.id)", size: 26)
+            ItemIcon(name: item.icon, size: 26)
             Text("×\(count)")
                 .font(Theme.number(14))
                 .foregroundStyle(Theme.ink)
             if game.truckAtFarm {
-                Button { game.unload(crop.produceItemID, count: count) } label: {
+                Button { game.unload(item.id, count: count) } label: {
                     Image(systemName: "arrow.down.circle.fill")
                         .font(.system(size: 18))
                         .foregroundStyle(Theme.inkSoft)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Unload \(crop.plural)")
+                .accessibilityLabel("Unload \(item.plural)")
             }
         }
         .padding(.horizontal, 10)
@@ -169,7 +187,7 @@ struct InventoryView: View {
             Text("×\(count)")
                 .font(Theme.number(15))
                 .foregroundStyle(Theme.ink)
-            if item.category == .crop {
+            if item.category.isSellable {
                 HStack(spacing: 3) {
                     CoinIcon(size: 11)
                     Text("\(item.value.lowerBound)–\(item.value.upperBound)")
@@ -223,7 +241,7 @@ struct SettingsView: View {
                 }
             }
             Section("About") {
-                LabeledContent("Version", value: "Acres 0.3 · Phase 3")
+                LabeledContent("Version", value: "Acres 0.4 · Phase 4")
             }
         }
         .navigationTitle("Settings")

@@ -45,6 +45,12 @@ public struct GameState: Codable, Equatable, Sendable {
     /// How far the new-player tutorial has come. (v3)
     public var tutorial: TutorialState
 
+    /// Pens and the animals living in them. (v4)
+    public var ranch: Ranch
+
+    /// Trees the player planted, chopped or cleared. (v4)
+    public var woodland: Woodland
+
     public init(
         worldTime: TimeInterval,
         clock: GameClock,
@@ -56,7 +62,9 @@ public struct GameState: Codable, Equatable, Sendable {
         plots: FarmPlots = FarmPlots(),
         inventory: Inventory = Inventory(),
         ownedProperties: [String] = [PropertyCatalog.homeFarm.id],
-        tutorial: TutorialState = .new
+        tutorial: TutorialState = .new,
+        ranch: Ranch = Ranch(),
+        woodland: Woodland = Woodland()
     ) {
         self.worldTime = worldTime
         self.clock = clock
@@ -69,6 +77,8 @@ public struct GameState: Codable, Equatable, Sendable {
         self.inventory = inventory
         self.ownedProperties = ownedProperties
         self.tutorial = tutorial
+        self.ranch = ranch
+        self.woodland = woodland
     }
 
     /// A brand-new game: Year 1, Spring 1, 06:00, a little money, a few seeds and an old truck.
@@ -84,7 +94,9 @@ public struct GameState: Codable, Equatable, Sendable {
             plots: FarmPlots(),
             inventory: Inventory(items: balance.startingItems),
             ownedProperties: [PropertyCatalog.homeFarm.id],
-            tutorial: .new
+            tutorial: .new,
+            ranch: Ranch(),
+            woodland: Woodland()
         )
     }
 }

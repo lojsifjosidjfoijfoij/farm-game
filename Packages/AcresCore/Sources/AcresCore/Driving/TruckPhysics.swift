@@ -41,10 +41,16 @@ public struct TruckPhysics: Sendable {
     public let map: WorldMap
     public let tuning: DrivingTuning
 
-    public init(map: WorldMap, tuning: DrivingTuning) {
+    /// Trees as the player changed them (chopped, cleared, planted).
+    public let woodland: Woodland
+
+    public init(map: WorldMap, tuning: DrivingTuning, woodland: Woodland = Woodland()) {
         self.map = map
+        self.woodland = woodland
         self.tuning = tuning
     }
+
+    var obstacles: Obstacles { Obstacles(map: map, woodland: woodland) }
 
     public func surface(at position: Vec2) -> Terrain {
         map.terrain(at: TileCoord(containing: position))
@@ -124,7 +130,7 @@ public struct TruckPhysics: Sendable {
         let x0 = Int((p.x - r).rounded(.down)), x1 = Int((p.x + r).rounded(.down))
         let y0 = Int((p.y - r).rounded(.down)), y1 = Int((p.y + r).rounded(.down))
         for ty in y0...y1 {
-            for tx in x0...x1 where map.isBlocked(TileCoord(tx, ty)) {
+            for tx in x0...x1 where obstacles.isBlocked(TileCoord(tx, ty)) {
                 let cx = min(max(p.x, Double(tx)), Double(tx + 1))
                 let cy = min(max(p.y, Double(ty)), Double(ty + 1))
                 let dx = p.x - cx, dy = p.y - cy

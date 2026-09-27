@@ -12,6 +12,7 @@ enum TreePainter {
         guard parts.count >= 2, parts[0] == "tree" else { return nil }
 
         if spec.name == "tree_stump" { return stump(size, ground: ground, rng: &rng) }
+        if spec.name == "tree_felled" { return felled(size, ground: ground, rng: &rng) }
         guard parts.count == 3 else { return nil }
         let species = parts[1]
         let look = parts[2]
@@ -19,7 +20,7 @@ enum TreePainter {
         switch look {
         case "sapling": return sapling(species, size, ground: ground, rng: &rng)
         case "young": return deciduousOrPine(species, .summer, size, ground: ground, rng: &rng)
-        case "fruit": return nil  // overlays arrive with Phase 4
+        case "fruit": return fruit(species, size, rng: &rng)
         default:
             guard let season else { return nil }
             return deciduousOrPine(species, season, size, ground: ground, rng: &rng)
@@ -214,6 +215,47 @@ enum TreePainter {
                 let p = CGPoint(x: w / 2 + rng.cg(-w * 0.22...w * 0.22), y: rng.cg(h * 0.15...h * 0.45))
                 Paint.dab(ctx, p, w * 0.12, w * 0.07, rng.vary(leaves, 0.1), rotation: rng.cg(0...3))
             }
+        }
+    }
+
+    /// Ripe fruit on transparent background, aligned with `deciduous` (same canvas size).
+    static func fruit(_ species: String, _ size: CGSize, rng: inout SeededRandom) -> UIImage? {
+        let color: UIColor
+        switch species {
+        case "apple": color = UIColor(hex: 0xD9403A)
+        case "cherry": color = UIColor(hex: 0xA8203A)
+        default: return nil
+        }
+        let w = size.width, h = size.height
+        let center = CGPoint(x: w / 2, y: h * 0.4)
+        let rx = w * 0.44 * 0.82, ry = h * 0.32 * 0.8
+        let radius = w * (species == "cherry" ? 0.035 : 0.05)
+        return Canvas.image(size) { ctx in
+            for _ in 0..<(species == "cherry" ? 18 : 12) {
+                // Uniform-ish spread inside the crown, a bit denser low and to the front.
+                let angle = rng.cg(0...(2 * .pi))
+                let distance = rng.cg(0.15...1).squareRoot()
+                let p = CGPoint(x: center.x + cos(angle) * rx * distance, y: center.y + sin(angle) * ry * distance * 0.9 + ry * 0.1)
+                Paint.dab(ctx, CGPoint(x: p.x + 1.5, y: p.y + 2), radius, radius, UIColor.black.withAlpha(0.25))
+                Paint.dab(ctx, p, radius, radius, color)
+                Paint.dab(ctx, CGPoint(x: p.x - radius * 0.35, y: p.y - radius * 0.35), radius * 0.3, radius * 0.3, UIColor.white.withAlpha(0.55))
+            }
+        }
+    }
+
+    /// A tree lying on the ground right after chopping (crown to the right).
+    static func felled(_ size: CGSize, ground: CGFloat, rng: inout SeededRandom) -> UIImage {
+        let w = size.width, h = size.height
+        return Canvas.image(size) { ctx in
+            let trunk = Paint.roundedRect(CGRect(x: w * 0.05, y: ground - h * 0.42, width: w * 0.62, height: h * 0.3), h * 0.1)
+            Paint.outline(ctx, trunk, UIColor(hex: 0x2E3A22).withAlpha(0.45), width: 3)
+            Paint.fill(ctx, trunk, top: UIColor(hex: 0x8C6446), bottom: UIColor(hex: 0x5A3E2C))
+            let end = CGPath(ellipseIn: CGRect(x: w * 0.02, y: ground - h * 0.42, width: w * 0.08, height: h * 0.3), transform: nil)
+            Paint.fill(ctx, end, UIColor(hex: 0xE3C28E))
+            let crown = Paint.blobPath(CGPoint(x: w * 0.76, y: ground - h * 0.42), rx: w * 0.22, ry: h * 0.36, lumps: 10, lumpiness: 0.18, rng: &rng)
+            Paint.outline(ctx, crown, UIColor(hex: 0x2E3A22).withAlpha(0.45), width: 3)
+            Paint.fill(ctx, crown, top: UIColor(hex: 0x6E9A48), bottom: UIColor(hex: 0x4E7434))
+            Paint.leafDabs(ctx, in: crown, base: UIColor(hex: 0x5E8A3F), count: 50, size: (w * 0.02)...(w * 0.04), rng: &rng)
         }
     }
 

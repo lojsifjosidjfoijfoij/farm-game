@@ -30,6 +30,8 @@ public enum HomeValleyMap {
     public static let gasStationZone = TileRect(minX: 61.5, minY: 22.4, maxX: 70.5, maxY: 28.4)
     public static let seedShopZone = TileRect(minX: 76.5, minY: 22.4, maxX: 83.5, maxY: 27.2)
     public static let marketZone = TileRect(minX: 88, minY: 22.4, maxX: 106, maxY: 27.2)
+    /// The livestock market at the east end of the village (Phase 4).
+    public static let livestockZone = TileRect(minX: 123, minY: 22.4, maxX: 134, maxY: 28.8)
 
     /// Where the truck waits on a new game (tile units).
     public static let truckParkingSpot = Vec2(26.2, 30.2)
@@ -37,7 +39,8 @@ public enum HomeValleyMap {
     /// A pleasant spot to point the camera at when there is nothing better.
     public static let farmCenter = Vec2(26, 32.5)
 
-    /// The fenced home farm (the land the player owns at the start).
+    /// The fenced fields of the home farm. (Since Phase 4 the farm also owns
+    /// the backyard with the pens and the woodlot behind it; see `PropertyCatalog`.)
     public static let homeFarmArea = TileRect(minX: 15, minY: 28, maxX: 46, maxY: 41)
 
     /// The map is deterministic, so it is built once and shared.
@@ -115,6 +118,8 @@ public enum HomeValleyMap {
 
         // Everything below was added in Phase 3. Append only: never insert above.
         buildVillageAndBeyond(&b)
+        // Phase 4.
+        buildBackyardAndLivestock(&b)
 
         return b.build(name: "Home Valley")
     }
@@ -195,6 +200,55 @@ public enum HomeValleyMap {
                   in: TileRect(minX: 64, minY: 0, maxX: 144, maxY: 42), radius: 0.25, spacing: 0.6)
         b.scatter(["nature_grass_tuft_a", "nature_grass_tuft_b"], count: 420, in: TileRect(minX: 0, minY: 0, maxX: 144, maxY: 96),
                   radius: 0.22, spacing: 0.5, density: { p in homeArea.contains(p) ? 0 : 1 })
+    }
+
+    /// The pens behind the farmhouse and the livestock market (Phase 4).
+    private static func buildBackyardAndLivestock(_ b: inout MapBuilder) {
+        // --- Pens -------------------------------------------------------------
+        // Their fences, troughs and huts are drawn from game state (run-down
+        // until repaired); the map keeps the ground clear and solid.
+        for pen in PenCatalog.all {
+            let clear = pen.footprint.insetBy(-0.9)
+            b.removeObjects { object, _ in
+                (object.kind.hasPrefix("tree_") || object.kind.hasPrefix("nature_")) && clear.contains(object.position)
+            }
+            b.addSolidArea(pen.footprint)
+        }
+        // Scratched-bare chicken yard and a muddy pigsty.
+        if let coop = PenCatalog.pen("coop") { b.paintRect(.dirt, coop.area.insetBy(0.4)) }
+        if let sty = PenCatalog.pen("pigsty") { b.paintRect(.dirt, sty.area.insetBy(0.2)) }
+        // A worn path from the field gate up between the pens to the woodlot.
+        b.paintPath(.dirt, through: [Vec2(22, 41.2), Vec2(24, 43), Vec2(24, 49.8), Vec2(27, 51)], width: 1.2, roughness: 0.3)
+        b.removeObjects { object, terrain in
+            object.kind.hasPrefix("tree_") && terrain == .dirt && TileRect(minX: 21, minY: 41, maxX: 28, maxY: 52).contains(object.position)
+        }
+
+        // --- Livestock market -----------------------------------------------------
+        let yard = TileRect(minX: 122.5, minY: 24.4, maxX: 134.5, maxY: 29.2)
+        let grounds = TileRect(minX: 121, minY: 23, maxX: 142, maxY: 35)
+        b.removeObjects { object, _ in
+            (object.kind.hasPrefix("tree_") || object.kind.hasPrefix("nature_bush") || object.kind.hasPrefix("nature_rock"))
+                && grounds.contains(object.position)
+        }
+        b.reserve(grounds)
+        b.paintRect(.gravel, yard)
+        b.place("building_livestock_market", at: Vec2(128.5, 30), radius: 3.4)
+        b.place("prop_hay_bale", at: Vec2(124, 29.9), variant: 2, radius: 0.6)
+        b.place("prop_feeder", at: Vec2(133.4, 29.8), radius: 0.6)
+        b.place("prop_lamp_post", at: Vec2(122.8, 29.6), radius: 0.3)
+        // A small corral with a few animals for sale.
+        for x in stride(from: 135.5, through: 139.5, by: 1) {
+            b.place("prop_fence_wood_h", at: Vec2(x, 25), radius: 0.2)
+            b.place("prop_fence_wood_h", at: Vec2(x, 30), radius: 0.2)
+        }
+        for y in stride(from: 25.0, through: 29, by: 1) {
+            b.place("prop_fence_wood_v", at: Vec2(135, y), radius: 0.2)
+            b.place("prop_fence_wood_v", at: Vec2(140, y), radius: 0.2)
+        }
+        b.place("animal_sheep_idle", at: Vec2(136.8, 28.2), radius: 0.5)
+        b.place("animal_lamb_eat", at: Vec2(138.4, 27.4), radius: 0.4)
+        b.place("animal_cow_idle", at: Vec2(137.6, 25.9), variant: 1, radius: 0.8)
+        b.place("animal_piglet_idle", at: Vec2(139, 26.6), radius: 0.3)
     }
 
     /// An old wooden fence around the home farm, with gaps and broken rails.

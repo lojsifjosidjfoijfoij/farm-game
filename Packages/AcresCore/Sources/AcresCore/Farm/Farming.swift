@@ -84,7 +84,7 @@ public struct Farming: Sendable {
     public func plowProblem(at tile: TileCoord, in state: GameState) -> FarmFailure? {
         if let problem = accessProblem(at: tile, in: state) { return problem }
         if state.plots[tile] != nil { return .alreadyPlowed }
-        if map.isBlocked(tile) { return .cannotPlowHere }
+        if Obstacles(map: map, state: state).isBlocked(tile) { return .cannotPlowHere }
         switch map.terrain(at: tile) {
         case .grass, .dirt: break
         case .gravel, .asphalt: return .cannotPlowHere

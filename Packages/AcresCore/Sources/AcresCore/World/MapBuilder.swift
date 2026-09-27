@@ -48,6 +48,8 @@ public struct MapBuilder {
     private var radii: [Double] = []
     /// Areas where scatter must not place anything (buildings, yards).
     private var reserved: [TileRect] = []
+    /// Areas that block farming and driving without an object (pens).
+    private var solidAreas: [TileRect] = []
     /// Spatial hash (tile index → object indices) for fast spacing checks.
     private var buckets: [Int: [Int]] = [:]
     private var rng: SeededRandom
@@ -114,6 +116,12 @@ public struct MapBuilder {
     /// Keeps scatter out of an area (e.g. a building's footprint or a yard).
     public mutating func reserve(_ rect: TileRect) {
         reserved.append(rect)
+    }
+
+    /// Makes an area solid (no plowing, no driving), e.g. a fenced pen whose
+    /// fences are drawn from game state.
+    public mutating func addSolidArea(_ rect: TileRect) {
+        solidAreas.append(rect)
     }
 
     /// Places an object at an exact spot. `radius` is its footprint for spacing checks.
@@ -186,7 +194,7 @@ public struct MapBuilder {
     }
 
     public func build(name: String) -> WorldMap {
-        WorldMap(name: name, width: width, height: height, terrain: terrain, objects: objects)
+        WorldMap(name: name, width: width, height: height, terrain: terrain, objects: objects, solidAreas: solidAreas)
     }
 
     // MARK: Helpers

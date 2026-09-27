@@ -19,6 +19,7 @@
 │  SaveFile / SaveMigrator / SaveStore   WorldMap / MapBuilder             │
 │  AssetManifest / AudioManifest   DayNightCurve   Tutorial                │
 │  TruckPhysics / Pathfinder   Trading / ShopCatalog / MarketPricing       │
+│  AnimalSystem / Ranching   TreeSystem / Forestry   Obstacles             │
 │  Foundation only: builds and tests on macOS and Linux                    │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
@@ -114,6 +115,38 @@ All rules live in `OfflineCatchUp.swift` and are covered by `OfflineCatchUpTests
   from Settings. The scene highlights a target tile, the HUD pulses the right button and a guide
   arrow points the way while driving.
 
+## Animals and trees (Phase 4)
+
+- **Content:** `AnimalCatalog` (product, timings, food preferences, price, level, names),
+  `PenCatalog` (the four pens behind the farmhouse: yard, shelter, trough, capacity, repair
+  cost), `TreeCatalog` (growth, logs, sapling price, fruit). Items gained categories (fruit,
+  animal products, wood, feed, saplings) with `isSellable` and `usesStorage`.
+- **State:** `GameState.ranch` (pens: repaired, `waterUntil`, animals with `age`,
+  `production`, `happiness`) and `GameState.woodland` (tree records by trunk tile, plus
+  `hiddenMapTrees`). Wild map trees are *content*; the player's changes are an overlay, like
+  plots: chopping a wild tree hides it and a record (a stump) takes its place. A record is
+  self-contained, so even if the map changes later it still draws and behaves correctly.
+- **Simulation:** `AnimalSystem` and `TreeSystem` are exact for any step size (they opt into
+  `handlesAnyStepSize`): the watered part of a step comes from `waterUntil`, growing up and
+  sprouting split the step at the exact moment, happiness changes linearly. Tests compare one
+  big advance with thousands of small ones.
+- **Rules:** `Ranching` (one tap per pen: collect → water → feed; repairs are a deliberate
+  button on the pen's card because they cost coins) and `Forestry` (chop full-grown wood trees,
+  clear stumps, pick fruit, plant saplings on plowed soil; fruit trees are only chopped from
+  their card). Both follow "you work where your truck is parked". Products and logs are rolled
+  on a copy of the RNG, so a refusal (full storage) never changes luck.
+- **Obstacles:** `WorldMap` now separates solid tiles (buildings, rocks, *pens*) from what wild
+  trees cover. `Obstacles` combines them with the woodland for plowing, truck collisions and
+  route planning, so a cleared stump really frees the ground.
+- **Rendering:** `TreeRenderer` draws records (sapling, young, full-grown, stump, fruit
+  overlay); the chunk manager skips hidden wild trees. `RanchRenderer` draws pens from state
+  (broken fences and a repair sign until fixed, the trough full or dry) and the animals, which
+  wander, graze and sleep at night on their own (presentation only, never saved). Bubbles show
+  a waiting product or the food a hungry animal wants.
+- **Map:** the home farm now includes the backyard (pens and a woodlot, y 41–57). The Phase 4
+  additions are appended after the Phase 3 ones and only remove objects inside the new pens, so
+  existing fields never end up under something new.
+
 ## Saves
 
 - File: `Application Support/Saves/farm.json` plus `farm.backup.json` (the previous save).
@@ -133,7 +166,8 @@ All rules live in `OfflineCatchUp.swift` and are covered by `OfflineCatchUpTests
 - Autosave every 30 s and when the app goes to the background.
 - History: v1 (Phase 1), v2 (Phase 2: plots, inventory, properties), v3 (Phase 3: truck fuel and
   cargo, tutorial). A migrated save starts the tutorial too, because the loop it teaches (load,
-  drive, sell) is new to existing players; it can be skipped in one tap.
+  drive, sell) is new to existing players; it can be skipped in one tap. v4 (Phase 4: `ranch`,
+  `woodland`).
 
 ## Rendering
 
@@ -186,5 +220,8 @@ pans (or steers, while driving with the joystick); two fingers always pan and zo
   world currently always renders summer foliage.
 - Crop sprites use individual textures. Big fields may want a runtime texture atlas so SpriteKit
   can batch them (Phase 8 performance pass).
-- There is one market with one price per crop per day. Several markets, supply and demand and
+- There is one market with one price per item per day. Several markets, supply and demand and
   contracts come in Phase 5.
+- Animals are delivered straight to their pen; carrying them home in the truck could come later.
+- Old wooden fences don't block the truck (they run along tile edges); pens, trees and
+  buildings do.
