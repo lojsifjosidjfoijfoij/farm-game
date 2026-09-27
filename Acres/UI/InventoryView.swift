@@ -1,7 +1,7 @@
 import SwiftUI
 import AcresCore
 
-/// Farm storage and the seed pouch.
+/// Farm storage, the seed pouch and the truck bed.
 struct InventoryView: View {
     let game: GameController
 
@@ -11,6 +11,7 @@ struct InventoryView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
+                    truckSection
                     storageBar
                     section(.crop, empty: "Nothing harvested yet. Ripe crops sparkle in the field: tap them to pick.")
                     section(.seed, empty: "No seeds. The village seed shop sells them.")
@@ -57,6 +58,85 @@ struct InventoryView: View {
         }
     }
 
+    // MARK: Truck
+
+    private var cargoCrops: [CropDefinition] {
+        CropCatalog.all.filter { (game.cargoItems[$0.produceItemID] ?? 0) > 0 }
+    }
+
+    private var hasHarvest: Bool {
+        CropCatalog.all.contains { (game.inventoryItems[$0.produceItemID] ?? 0) > 0 }
+    }
+
+    private var truckSection: some View {
+        let capacity = game.balance.truckCargoCapacity
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Image(systemName: "truck.pickup.side.fill")
+                Text("Truck bed")
+                    .font(Theme.title(18))
+                Spacer()
+                Text("\(game.cargoCount) / \(capacity)")
+                    .font(Theme.number(16))
+            }
+            .foregroundStyle(Theme.ink)
+            ProgressView(value: min(1, Double(game.cargoCount) / Double(max(1, capacity))))
+                .tint(Theme.gold)
+
+            if !cargoCrops.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(cargoCrops) { crop in
+                            cargoChip(crop, count: game.cargoItems[crop.produceItemID] ?? 0)
+                        }
+                    }
+                }
+            }
+
+            if game.truckAtFarm {
+                if hasHarvest && game.cargoCount < capacity {
+                    Button { game.loadAll() } label: {
+                        Label("Load all", systemImage: "arrow.up.bin.fill")
+                            .font(Theme.label(17, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.leaf))
+                    }
+                    .buttonStyle(.plain)
+                    .pulsing(game.tutorial.step == .load)
+                }
+            } else {
+                Text("Loading and unloading happens at the farm.")
+                    .font(Theme.label(13))
+                    .foregroundStyle(Theme.inkSoft)
+            }
+        }
+    }
+
+    private func cargoChip(_ crop: CropDefinition, count: Int) -> some View {
+        HStack(spacing: 6) {
+            ItemIcon(name: "item_\(crop.id)", size: 26)
+            Text("×\(count)")
+                .font(Theme.number(14))
+                .foregroundStyle(Theme.ink)
+            if game.truckAtFarm {
+                Button { game.unload(crop.produceItemID, count: count) } label: {
+                    Image(systemName: "arrow.down.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(Theme.inkSoft)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Unload \(crop.plural)")
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Capsule().fill(Theme.parchmentDark.opacity(0.55)))
+    }
+
+    // MARK: Storage
+
     private func section(_ category: ItemCategory, empty: String) -> some View {
         let items = ItemCatalog.all.filter { $0.category == category && (game.inventoryItems[$0.id] ?? 0) > 0 }
         return VStack(alignment: .leading, spacing: 10) {
@@ -96,6 +176,13 @@ struct InventoryView: View {
                         .font(Theme.label(11))
                         .foregroundStyle(Theme.inkSoft)
                 }
+                if game.truckAtFarm && game.cargoCount < game.balance.truckCargoCapacity {
+                    Button("Load") { game.load(item.id, count: count) }
+                        .font(Theme.label(13, weight: .semibold))
+                        .buttonStyle(.bordered)
+                        .tint(Theme.leaf)
+                        .controlSize(.small)
+                }
             }
         }
         .padding(.vertical, 10)
@@ -117,8 +204,26 @@ struct SettingsView: View {
             } footer: {
                 Text("Harvest reminders send a notification when your fields are ready while the app is closed.")
             }
+            Section {
+                Picker("Driving", selection: Binding(get: { game.driveControls }, set: { game.setDriveControls($0) })) {
+                    ForEach(DriveControls.allCases) { controls in
+                        Text(controls.title).tag(controls)
+                    }
+                }
+                .pickerStyle(.segmented)
+            } header: {
+                Text("Driving")
+            } footer: {
+                Text(game.driveControls.hint)
+            }
+            Section {
+                Button("Restart the tutorial") {
+                    game.restartTutorial()
+                    game.showsInventory = false
+                }
+            }
             Section("About") {
-                LabeledContent("Version", value: "Acres 0.2 · Phase 2")
+                LabeledContent("Version", value: "Acres 0.3 · Phase 3")
             }
         }
         .navigationTitle("Settings")

@@ -27,6 +27,15 @@ public enum ObjectFootprint {
             return TileRect(minX: p.x - 0.7, minY: p.y - 0.3, maxX: p.x + 0.7, maxY: p.y + 0.8)
         case "prop_log_pile":
             return TileRect(minX: p.x - 0.8, minY: p.y - 0.2, maxX: p.x + 0.8, maxY: p.y + 0.6)
+        case let k where k.hasPrefix("building_"):
+            // Other buildings: most of the sprite's width, about half its height in depth.
+            guard let spec = AssetManifest.spec(named: k) else { break }
+            let halfWidth = spec.tilesWide * 0.45
+            return TileRect(minX: p.x - halfWidth, minY: p.y - 0.2, maxX: p.x + halfWidth, maxY: p.y + spec.tilesHigh * 0.55)
+        default:
+            break
+        }
+        switch kind {
         default:
             // Trees, bushes, rocks, crates, signs: the ground right at their foot.
             return TileRect(minX: p.x - 0.3, minY: p.y - 0.2, maxX: p.x + 0.3, maxY: p.y + 0.3)

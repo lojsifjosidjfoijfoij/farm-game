@@ -77,9 +77,6 @@ struct WelcomeBackView: View {
                             text: "Your device's clock seems to have changed, so no time passed on the farm.")
             case .newSeason(let season):
                 return Line(symbol: Theme.seasonSymbol(season), tint: Theme.seasonColor(season), text: "\(season.name) has arrived!")
-            case .newDay(let date):
-                return Line(symbol: "sunrise.fill", tint: Theme.gold,
-                            text: "A new day begins: \(date.season.name) \(date.dayOfSeason), Year \(date.year).")
             case .cropsReady(let cropID, let count):
                 return Line(asset: "item_\(cropID)", text: "\(Self.count(count, cropID)) ready to harvest.")
             case .cropsGrowing(let cropID, let count, let secondsLeft):

@@ -67,7 +67,7 @@ final class OfflineCatchUpTests: XCTestCase {
     }
 
     func testNewMorningCanStartANewSeason() {
-        var sim = simulation(dayIndex: 6, hour: 20)  // Spring 7, evening
+        var sim = simulation(dayIndex: Balance.standard.daysPerSeason - 1, hour: 20)  // last evening of spring
         let report = OfflineCatchUp.run(&sim, lastSeen: lastSeen, now: lastSeen + 8 * 3600)
         XCTAssertEqual(report.dateAfter.season, .summer)
         XCTAssertEqual(report.dateAfter.dayOfSeason, 1)

@@ -161,6 +161,25 @@ public struct MapBuilder {
         }
     }
 
+    /// Removes placed objects matching a condition (given the object and the
+    /// terrain under it), e.g. trees left standing where a new road was painted.
+    public mutating func removeObjects(where shouldRemove: (MapObject, Terrain) -> Bool) {
+        var keptObjects: [MapObject] = []
+        var keptRadii: [Double] = []
+        for (object, radius) in zip(objects, radii) {
+            let terrain = terrain(at: TileCoord(containing: object.position)) ?? .grass
+            if shouldRemove(object, terrain) { continue }
+            keptObjects.append(object)
+            keptRadii.append(radius)
+        }
+        objects = keptObjects
+        radii = keptRadii
+        buckets = [:]
+        for (index, object) in objects.enumerated() {
+            buckets[bucketKey(for: object.position), default: []].append(index)
+        }
+    }
+
     /// Smooth noise shared with terrain painting, for density functions.
     public func noiseValue(at p: Vec2, scale: Double) -> Double {
         noise.value(at: p, scale: scale)

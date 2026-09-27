@@ -17,7 +17,8 @@
 ┌────────────────────── AcresCore (Swift package) ─────────────────────────┐
 │  GameState (Codable)  Simulation + systems  OfflineCatchUp  Balance      │
 │  SaveFile / SaveMigrator / SaveStore   WorldMap / MapBuilder             │
-│  AssetManifest / AudioManifest   DayNightCurve                           │
+│  AssetManifest / AudioManifest   DayNightCurve   Tutorial                │
+│  TruckPhysics / Pathfinder   Trading / ShopCatalog / MarketPricing       │
 │  Foundation only: builds and tests on macOS and Linux                    │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
@@ -26,24 +27,26 @@
 calls on the simulation. That keeps the rules unit-testable and lets the simulation
 fast-forward days in milliseconds.
 
-## Time: two clocks
+## Time: timers, not a clock
 
-Decided in Phase 1 planning. A 20-minute day means one night's sleep would be ~24 in-game days if
-the calendar ran while the app is closed. So there are two clocks:
+Phase 1 shipped a visible 24-hour clock. After playing it, the decision (Phase 3) was
+**"no clock, just timers"**, Hay Day style: there is no time of day to watch, crops show short
+countdowns, and day/night is only a gentle lighting cycle. Internally there are still two clocks:
 
 | | Growth clock (`GameState.worldTime`) | Calendar (`GameState.clock`) |
 |---|---|---|
-| Measures | Real seconds the world has been simulated | In-game minutes since Year 1, Spring 1, 06:00 |
-| While playing | Runs | Runs (1 day = 20 min, `Balance.realSecondsPerGameDay`) |
-| While closed | Runs for the whole absence, capped at 3 days | Frozen; absences ≥ 1 h wake you at 06:00 next morning |
-| Drives | Crops, animal products, trees, machines, workers | Time of day, lighting, seasons, prices, deadlines |
+| Measures | Real seconds the world has been simulated | In-game minutes since Year 1, Spring 1 |
+| While playing | Runs | Runs (1 lighting day = 16 min, `Balance.realSecondsPerGameDay`) |
+| While closed | Runs for the whole absence, capped at 3 days | Frozen; absences ≥ 1 h start a fresh morning |
+| Drives | Crops (animals, trees, machines, workers later) | Lighting, seasons, daily market prices |
+| Player sees | Countdowns ("Ready in 1m 20s") | Season + time until the next one ("Spring · 42m") |
 
 Consequences:
-- Growth durations are **real time** (e.g. wheat: minutes, pumpkins: hours), so coming back is
-  always rewarding.
-- Seasons pass through **play** (≈ 2h 20m per season), never by the wall clock, and at most one
-  day is skipped per absence, so day-based contracts stay fair.
-- A crop planted in season always finishes, even if the season changes (Phase 2).
+- Growth durations are **real time** and short (wheat 30 s, carrots 1 min … pumpkins 12 min when
+  watered), so there is always something to come back to.
+- Seasons pass through **play** (4 lighting days ≈ 64 minutes per season), never by the wall
+  clock, so a night's sleep can't skip a season.
+- A crop planted in season always finishes, even if the season changes.
 - Changing the device clock can't hurt: going backwards simulates nothing, going forwards is
   bounded by the 3-day cap.
 
@@ -85,6 +88,32 @@ All rules live in `OfflineCatchUp.swift` and are covered by `OfflineCatchUpTests
 - **XP** (`Progression`): harvests give XP; `Balance.xpToNextLevel` is the curve. Unlocks come in
   Phase 7.
 
+## Truck, village and trade (Phase 3)
+
+- **Driving** (`TruckPhysics`, core, tested): arcade physics in tile units. The truck turns toward
+  the stick direction at `turnRate`, accelerates to a surface-dependent top speed (asphalt >
+  gravel > dirt > grass), and its velocity bends toward its heading at a surface-dependent grip,
+  so gravel and dirt drift a little. Collisions are a circle against blocked tiles
+  (`WorldMap.blockedTiles`): the truck slides along walls and reports a bump (haptic). Fuel drains
+  per tile; an empty tank limps along at 35 % speed, so the player is never stranded.
+- **Controls** (device setting): *joystick* (drag anywhere, the stick appears under the thumb) or
+  *tap to drive* (A* over drivable tiles, `Pathfinder`, followed by an `Autopilot` that produces
+  the same `DriveInput` as the stick). The camera follows the truck with a little look-ahead.
+- **A driving truck is never saved.** Physics state (`TruckMotion`) lives in the app; the save
+  holds the truck's position, heading, fuel and cargo. Backgrounding the app parks the truck.
+- **The village** (east of the farm, `HomeValleyMap.buildVillageAndBeyond`): gas station, seed
+  shop, market square, cottages, lamps. The map grew to 144 × 96 tiles; the original farm is
+  unchanged (same seed, same objects).
+- **Shops** (`ShopCatalog`, `Trading`): each shop is a stop zone. When the truck is stopped
+  inside one, a button opens the shop sheet. Buying seeds needs the level; selling happens from
+  the **truck bed** (30 items), so harvest has to be loaded at the farm and driven to market.
+  Prices drift daily inside each crop's range (`MarketPricing`, deterministic per day). Every
+  trade is a typed `TradeFailure` or success, applied atomically through `Simulation.trade`.
+- **Tutorial** (`TutorialState`, saved): plow → plow a row → plant → water → harvest → load →
+  drive → sell → buy seeds. Steps advance from game events, can be skipped, and can be restarted
+  from Settings. The scene highlights a target tile, the HUD pulses the right button and a guide
+  arrow points the way while driving.
+
 ## Saves
 
 - File: `Application Support/Saves/farm.json` plus `farm.backup.json` (the previous save).
@@ -102,6 +131,9 @@ All rules live in `OfflineCatchUp.swift` and are covered by `OfflineCatchUpTests
   never overwritten (saving pauses, the player is asked to update). Damaged files are moved
   aside, never deleted.
 - Autosave every 30 s and when the app goes to the background.
+- History: v1 (Phase 1), v2 (Phase 2: plots, inventory, properties), v3 (Phase 3: truck fuel and
+  cargo, tutorial). A migrated save starts the tutorial too, because the loop it teaches (load,
+  drive, sell) is new to existing players; it can be skipped in one tap.
 
 ## Rendering
 
@@ -133,9 +165,9 @@ All rules live in `OfflineCatchUp.swift` and are covered by `OfflineCatchUpTests
 
 No walking avatar. The player touches their land directly (1–2 taps per action), but only on the
 property where the **truck is parked**. That gives driving a purpose and makes workers valuable on
-far-away properties. Camera: free pan/zoom when parked; follows the truck when driving (Phase 3).
-Planned for Phase 2: a one-finger drag that *starts on a field* paints actions across tiles; a
-drag anywhere else pans; two fingers always pan and zoom.
+far-away properties. Camera: free pan/zoom when parked; follows the truck when driving.
+A one-finger drag that *starts on a field* paints actions across tiles; a drag anywhere else
+pans (or steers, while driving with the joystick); two fingers always pan and zoom.
 
 ## Adding content
 
@@ -154,5 +186,5 @@ drag anywhere else pans; two fingers always pan and zoom.
   world currently always renders summer foliage.
 - Crop sprites use individual textures. Big fields may want a runtime texture atlas so SpriteKit
   can batch them (Phase 8 performance pass).
-- Seeds can't be bought yet (the seed shop comes with the village in Phase 3); the debug panel
-  can add them.
+- There is one market with one price per crop per day. Several markets, supply and demand and
+  contracts come in Phase 5.

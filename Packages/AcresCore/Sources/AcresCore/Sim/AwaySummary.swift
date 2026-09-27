@@ -7,7 +7,6 @@ public struct AwaySummary: Equatable, Sendable {
         /// The device clock went backwards; nothing was simulated.
         case clockChanged
         case newSeason(Season)
-        case newDay(CalendarDate)
         case cropsReady(cropID: String, count: Int)
         case cropsGrowing(cropID: String, count: Int, secondsLeft: TimeInterval)
         case thirstyCrops(count: Int)
@@ -26,7 +25,6 @@ public struct AwaySummary: Equatable, Sendable {
         for event in report.events {
             if case .newSeason(let season, _) = event { lines.append(.newSeason(season)) }
         }
-        if report.startedNewDay { lines.append(.newDay(report.dateAfter)) }
 
         let status = FarmForecast.status(state, balance: balance)
         for crop in status where crop.ready > 0 {

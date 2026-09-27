@@ -42,6 +42,17 @@ public struct SaveMigrator: Sendable {
                 state["ownedProperties"] = ["home_farm"]
                 json["state"] = state
             },
+            // v2 → v3 (Phase 3): a full tank, an empty truck bed and the tutorial.
+            // Existing farmers get the tutorial too; it can be skipped.
+            2: { json in
+                var state = json["state"] as? [String: Any] ?? [:]
+                var truck = state["truck"] as? [String: Any] ?? [:]
+                truck["fuel"] = 100
+                truck["cargo"] = ["items": [String: Int]()]
+                state["truck"] = truck
+                state["tutorial"] = ["step": 0, "progress": 0]
+                json["state"] = state
+            },
         ]
     )
 

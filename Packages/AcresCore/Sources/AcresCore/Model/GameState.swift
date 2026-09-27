@@ -42,6 +42,9 @@ public struct GameState: Codable, Equatable, Sendable {
     /// IDs from `PropertyCatalog` the player owns, sorted. (v2)
     public var ownedProperties: [String]
 
+    /// How far the new-player tutorial has come. (v3)
+    public var tutorial: TutorialState
+
     public init(
         worldTime: TimeInterval,
         clock: GameClock,
@@ -52,7 +55,8 @@ public struct GameState: Codable, Equatable, Sendable {
         stats: PlayStats,
         plots: FarmPlots = FarmPlots(),
         inventory: Inventory = Inventory(),
-        ownedProperties: [String] = [PropertyCatalog.homeFarm.id]
+        ownedProperties: [String] = [PropertyCatalog.homeFarm.id],
+        tutorial: TutorialState = .new
     ) {
         self.worldTime = worldTime
         self.clock = clock
@@ -64,6 +68,7 @@ public struct GameState: Codable, Equatable, Sendable {
         self.plots = plots
         self.inventory = inventory
         self.ownedProperties = ownedProperties
+        self.tutorial = tutorial
     }
 
     /// A brand-new game: Year 1, Spring 1, 06:00, a little money, a few seeds and an old truck.
@@ -73,12 +78,13 @@ public struct GameState: Codable, Equatable, Sendable {
             clock: GameClock(totalMinutes: 0),
             money: balance.startingMoney,
             progress: FarmerProgress(level: 1, xp: 0),
-            truck: TruckState(position: HomeValleyMap.truckParkingSpot, heading: .pi),
+            truck: TruckState(position: HomeValleyMap.truckParkingSpot, heading: .pi, fuel: balance.driving.fuelCapacity),
             rng: SeededRandom(seed: seed),
             stats: PlayStats(),
             plots: FarmPlots(),
             inventory: Inventory(items: balance.startingItems),
-            ownedProperties: [PropertyCatalog.homeFarm.id]
+            ownedProperties: [PropertyCatalog.homeFarm.id],
+            tutorial: .new
         )
     }
 }
@@ -94,17 +100,26 @@ public struct FarmerProgress: Codable, Equatable, Sendable {
     }
 }
 
-/// Where the truck is and which way it faces.
+/// The player's truck: where it is, which way it faces, fuel and cargo.
 public struct TruckState: Codable, Equatable, Sendable {
     /// Position in tile units.
     public var position: Vec2
     /// Heading in radians, 0 = east, counter-clockwise (π = west).
     public var heading: Double
+    /// Fuel units left. (v3)
+    public var fuel: Double
+    /// Goods loaded in the bed, to sell at markets. (v3)
+    public var cargo: Inventory
 
-    public init(position: Vec2, heading: Double) {
+    public init(position: Vec2, heading: Double, fuel: Double = 100, cargo: Inventory = Inventory()) {
         self.position = position
         self.heading = heading
+        self.fuel = fuel
+        self.cargo = cargo
     }
+
+    /// Items in the bed.
+    public var cargoCount: Int { cargo.items.values.reduce(0, +) }
 }
 
 /// Lifetime statistics, handy for achievements and for debugging saves.

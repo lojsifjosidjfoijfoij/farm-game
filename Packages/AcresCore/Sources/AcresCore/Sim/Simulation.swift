@@ -127,6 +127,21 @@ public struct Simulation: Sendable {
         Farming(map: map, balance: balance).perform(action, at: tile, in: &state)
     }
 
+    /// Runs a trade (buy, sell, refuel, load) against the state; failures leave it unchanged.
+    /// (Plain `throws` on purpose: closures don't infer typed throws.)
+    public mutating func trade<T>(_ body: (Trading, inout GameState) throws -> T) -> Result<T, TradeFailure> {
+        var copy = state
+        do {
+            let value = try body(Trading(balance: balance), &copy)
+            state = copy
+            return .success(value)
+        } catch let failure as TradeFailure {
+            return .failure(failure)
+        } catch {
+            preconditionFailure("Trading only throws TradeFailure: \(error)")
+        }
+    }
+
     /// Direct state access for player actions and debug tools. Keep uses
     /// narrow; gameplay rules belong in systems or dedicated action methods.
     public mutating func modify<T>(_ body: (inout GameState) throws -> T) rethrows -> T {

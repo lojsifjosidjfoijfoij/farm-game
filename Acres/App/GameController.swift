@@ -54,8 +54,8 @@ final class GameController {
     private(set) var season: Season = .spring
     private(set) var dayOfSeason = 1
     private(set) var year = 1
-    private(set) var timeText = ""
-    private(set) var dayPhase: DayPhase = .morning
+    /// Real seconds of play until the next season (shown rounded to minutes).
+    private(set) var seasonTimeLeft: TimeInterval = 0
     /// A short message that fades after a few seconds ("Summer has arrived").
     private(set) var banner: String?
     /// Non-nil while the "While you were away" card is showing. The world waits.
@@ -73,6 +73,28 @@ final class GameController {
     private(set) var remindersEnabled: Bool
     private(set) var hapticsEnabled: Bool
 
+    // MARK: Truck and trade state (observed)
+
+    /// True while the player is behind the wheel (drag = steer, camera follows).
+    var isDriving = false
+    /// 0…1 for the fuel gauge.
+    var fuelFraction = 1.0
+    var cargoItems: [String: Int] = [:]
+    var cargoCount = 0
+    /// The shop the truck is stopped at, if any (shows the shop button).
+    var nearbyShop: ShopDefinition?
+    /// True when the parked truck is on the home farm (enables loading).
+    var truckAtFarm = true
+    /// The shop sheet that's open.
+    var openShop: ShopDefinition?
+    /// Where the on-screen joystick is (screen points), while steering.
+    var joystick: JoystickVisual?
+    var driveControls: DriveControls
+
+    // MARK: Tutorial (observed)
+
+    var tutorial: TutorialState = .complete
+
     // MARK: Debug (observed)
 
     var timeScale = 1.0
@@ -82,14 +104,15 @@ final class GameController {
 
     // MARK: Model (not observed)
 
-    @ObservationIgnored private(set) var simulation: Simulation
+    /// The running world. Mutate only through the controller's methods.
+    @ObservationIgnored var simulation: Simulation
     let map: WorldMap = HomeValleyMap.map
     /// Camera position etc., written by the scene, stored in the save.
     @ObservationIgnored var presentation: PresentationState
     /// Lets the scene rebuild state-dependent visuals after resets and big time jumps.
     @ObservationIgnored var onWorldReset: (@MainActor () -> Void)?
     /// Bumped whenever farmland changes through an action, so the scene redraws at once.
-    @ObservationIgnored private(set) var farmRevision = 0
+    @ObservationIgnored var farmRevision = 0
     private let saveSystem: SaveSystem?
     private let reminders = HarvestReminders()
     @ObservationIgnored private(set) var lastSave: SaveFile?
@@ -98,14 +121,16 @@ final class GameController {
     @ObservationIgnored private var suspendedAt: Date?
     @ObservationIgnored private var bannerTimeLeft: TimeInterval = 0
     @ObservationIgnored private var inspectionTimeLeft: TimeInterval = 0
-    @ObservationIgnored private var lastTimeBucket = -1
+    @ObservationIgnored private var inspectedTile: TileCoord?
+    @ObservationIgnored private var inspectionRefresh: TimeInterval = 0
     @ObservationIgnored private var paintKind: FarmAction.Kind?
     @ObservationIgnored private var paintSeed: String?
-    private let timeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.setLocalizedDateFormatFromTemplate("jmm")  // 12 h or 24 h per the user's locale
-        return formatter
-    }()
+    // Driving (not saved: a saved truck is always parked).
+    @ObservationIgnored var motion = TruckMotion()
+    @ObservationIgnored var autopilot: Autopilot?
+    @ObservationIgnored var joystickInput: DriveInput?
+    /// Tap-to-drive destination, for the scene's marker.
+    @ObservationIgnored var destination: Vec2?
 
     var balance: Balance { simulation.balance }
     var farming: Farming { Farming(map: map, balance: simulation.balance) }
@@ -127,6 +152,7 @@ final class GameController {
         let haptics = Settings.bool(Settings.hapticsKey, default: true)
         hapticsEnabled = haptics
         Haptics.isEnabled = haptics
+        driveControls = DriveControls(rawValue: UserDefaults.standard.string(forKey: Settings.controlsKey) ?? "") ?? .joystick
 
         var report: OfflineReport?
         var pendingAlert: GameAlert?
@@ -175,8 +201,10 @@ final class GameController {
         savingEnabled = canSave
         alert = pendingAlert
         selectedSeed = presentation.selectedSeed
+        tutorial = simulation.state.tutorial
         refreshDisplay()
         refreshInventory()
+        refreshTruck()
         _ = resolvedSeed()  // so the seed button shows a packet from the start
         if let report {
             showWelcomeIfWorthIt(report)
@@ -194,13 +222,23 @@ final class GameController {
         }
         if inspectionTimeLeft > 0 {
             inspectionTimeLeft -= dt
-            if inspectionTimeLeft <= 0 { inspection = nil }
+            inspectionRefresh += dt
+            if inspectionTimeLeft <= 0 {
+                inspection = nil
+                inspectedTile = nil
+            } else if inspectionRefresh >= 0.5, let tile = inspectedTile {
+                // Countdowns tick live while the card is up.
+                inspectionRefresh = 0
+                let fresh = makeInspection(tile)
+                if fresh != inspection { inspection = fresh }
+            }
         }
         // The world politely waits while the welcome-back card is open.
         guard welcome == nil else { return }
 
         let events = simulation.advance(by: dt * timeScale, mode: .live)
         if !events.isEmpty { handle(events) }
+        updateDriving(dt: dt)
         refreshDisplay()
 
         autosaveTimer += dt
@@ -216,6 +254,7 @@ final class GameController {
             guard suspendedAt == nil else { return }
             suspendedAt = Date()
             endPaint()
+            if isDriving { park() }
             save()
             scheduleHarvestReminder()
         case .active:
@@ -303,12 +342,15 @@ final class GameController {
     /// Long-press (or tap with nothing to do): show what's on the tile.
     func inspect(_ tile: TileCoord) {
         inspection = makeInspection(tile)
-        inspectionTimeLeft = 4
+        inspectedTile = tile
+        inspectionTimeLeft = 5
+        inspectionRefresh = 0
         Haptics.selection()
     }
 
     func dismissInspection() {
         inspection = nil
+        inspectedTile = nil
     }
 
     private func perform(_ action: FarmAction, at tile: TileCoord, painting: Bool) -> FarmOutcome {
@@ -321,10 +363,17 @@ final class GameController {
             }
         case .planted:
             reminders.requestPermissionIfNeeded(enabled: remindersEnabled)
+            advanceTutorial(.planted)
             fallthrough
         default:
             farmRevision += 1
             if painting { Haptics.selection() } else { Haptics.tap() }
+        }
+        switch result.outcome {
+        case .plowed: advanceTutorial(.plowed)
+        case .watered: advanceTutorial(.watered)
+        case .harvested: advanceTutorial(.harvested)
+        default: break
         }
         if !result.events.isEmpty { handle(result.events) }
         refreshInventory()
@@ -345,7 +394,7 @@ final class GameController {
     private func message(for failure: FarmFailure) -> String? {
         switch failure {
         case .notYourLand: return "This land isn't yours (yet)."
-        case .truckNotHere: return "Park your truck here to work this land."
+        case .truckNotHere: return isDriving ? "Park the truck first." : "Park your truck here to work this land."
         case .cannotPlowHere: return "Can't plow here."
         case .noSeeds(let crop): return "No \(CropCatalog.crop(crop)?.name.lowercased() ?? crop) seeds left."
         case .outOfSeason(let crop, let season):
@@ -357,7 +406,7 @@ final class GameController {
         }
     }
 
-    private func makeInspection(_ tile: TileCoord) -> TileInspection {
+    func makeInspection(_ tile: TileCoord) -> TileInspection {
         let state = simulation.state
         let farming = self.farming
         if let plot = state.plots[tile] {
@@ -454,17 +503,14 @@ final class GameController {
         welcome = AwaySummary.make(report: report, state: simulation.state, balance: balance)
     }
 
-    private func handle(_ events: [SimEvent], quiet: Bool = false) {
+    func handle(_ events: [SimEvent], quiet: Bool = false) {
         var hasLevelUp = false
         for event in events {
             switch event {
             case .newSeason(let newSeason, _):
                 showBanner("\(newSeason.name) has arrived")
-            case .newDay(let date):
-                // A season change gets the (more exciting) season banner instead.
-                if !events.contains(where: Self.isSeasonChange) {
-                    showBanner("Good morning! \(date.season.name) \(date.dayOfSeason)")
-                }
+            case .newDay:
+                break  // no clock to follow: days only drive lighting, prices and seasons
             case .levelUp(let newLevel):
                 showBanner("Level \(newLevel)! 🎉")
                 hasLevelUp = true
@@ -475,7 +521,7 @@ final class GameController {
         guard !quiet else { return }
         if hasLevelUp {
             Haptics.success()
-        } else if events.contains(where: { if case .newDay = $0 { true } else { false } }) {
+        } else if events.contains(where: Self.isSeasonChange) {
             Haptics.thump()
         }
     }
@@ -485,13 +531,13 @@ final class GameController {
         return false
     }
 
-    private func showBanner(_ text: String) {
+    func showBanner(_ text: String) {
         banner = text
         bannerTimeLeft = 4
     }
 
     /// Short feedback message (reuses the banner, but doesn't repeat itself).
-    private func showMessage(_ text: String) {
+    func showMessage(_ text: String) {
         if banner == text {
             bannerTimeLeft = max(bannerTimeLeft, 2.5)
             return
@@ -502,7 +548,7 @@ final class GameController {
 
     // MARK: Display
 
-    private func refreshDisplay() {
+    func refreshDisplay() {
         let state = simulation.state
         let date = state.clock.date(daysPerSeason: simulation.balance.daysPerSeason)
         if money != state.money { money = state.money }
@@ -512,28 +558,15 @@ final class GameController {
         if season != date.season { season = date.season }
         if dayOfSeason != date.dayOfSeason { dayOfSeason = date.dayOfSeason }
         if year != date.year { year = date.year }
-        if dayPhase != state.clock.phase { dayPhase = state.clock.phase }
 
-        // The HUD clock ticks in 10-minute steps, like a farmer's watch.
-        let bucket = Int(state.clock.totalMinutes / 10)
-        if bucket != lastTimeBucket {
-            lastTimeBucket = bucket
-            let minute = state.clock.minute / 10 * 10
-            var components = DateComponents()
-            components.year = 2001
-            components.month = 1
-            components.day = 1
-            components.hour = state.clock.hour
-            components.minute = minute
-            if let dateValue = Calendar.current.date(from: components) {
-                timeText = timeFormatter.string(from: dateValue)
-            } else {
-                timeText = String(format: "%02d:%02d", state.clock.hour, minute)
-            }
-        }
+        // Time until the next season, in whole minutes of play (no clock to watch).
+        let minutesPerSeason = Double(balance.daysPerSeason) * GameClock.minutesPerDay
+        let into = state.clock.totalMinutes.truncatingRemainder(dividingBy: minutesPerSeason)
+        let left = ((minutesPerSeason - into) / balance.gameMinutesPerRealSecond / 60).rounded(.up) * 60
+        if seasonTimeLeft != left { seasonTimeLeft = left }
     }
 
-    private func refreshInventory() {
+    func refreshInventory() {
         let items = simulation.state.inventory.items
         if inventoryItems != items { inventoryItems = items }
         let used = simulation.state.inventory.storageUsed
@@ -592,6 +625,12 @@ final class GameController {
         farmRevision += 1
     }
 
+    func debugFillTank() {
+        let capacity = balance.driving.fuelCapacity
+        simulation.modify { $0.truck.fuel = capacity }
+        refreshTruck()
+    }
+
     func debugEmptyStorage() {
         simulation.modify { state in
             for (id, count) in state.inventory.items where ItemCatalog.item(id)?.category.usesStorage ?? true {
@@ -609,10 +648,18 @@ final class GameController {
         lastSave = nil
         welcome = nil
         timeScale = 1
-        lastTimeBucket = -1
+        isDriving = false
+        motion = TruckMotion()
+        autopilot = nil
+        joystickInput = nil
+        joystick = nil
+        destination = nil
+        openShop = nil
+        tutorial = simulation.state.tutorial
         endPaint()
         refreshDisplay()
         refreshInventory()
+        refreshTruck()
         farmRevision += 1
         onWorldReset?()
         save()
@@ -635,6 +682,7 @@ enum Format {
 enum Settings {
     static let remindersKey = "acres.harvestReminders"
     static let hapticsKey = "acres.haptics"
+    static let controlsKey = "acres.driveControls"
 
     static func bool(_ key: String, default value: Bool) -> Bool {
         UserDefaults.standard.object(forKey: key) as? Bool ?? value

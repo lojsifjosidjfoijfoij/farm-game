@@ -90,19 +90,19 @@ final class FarmingTests: XCTestCase {
 
     // MARK: Growth
 
-    func testWateredWheatRipensInThreeMinutesDryInSix() {
+    func testWateredWheatRipensInThirtySecondsDryInSixty() {
         var sim = newSim()
         let tiles = plowableTiles(2, in: sim)
         plowAndPlant("wheat", at: tiles[0], in: &sim)
         plowAndPlant("wheat", at: tiles[1], in: &sim)
         XCTAssertEqual(sim.perform(.water, at: tiles[0], on: map).outcome, .watered)
 
-        let events = sim.advance(by: 181, mode: .live)
+        let events = sim.advance(by: 31, mode: .live)
         XCTAssertTrue(sim.state.plots[tiles[0]]!.crop!.isReady)
         XCTAssertFalse(sim.state.plots[tiles[1]]!.crop!.isReady)
         XCTAssertTrue(events.contains(.cropReady(tiles[0], cropID: "wheat")))
 
-        sim.advance(by: 180, mode: .live)
+        sim.advance(by: 30, mode: .live)
         XCTAssertTrue(sim.state.plots[tiles[1]]!.crop!.isReady)
     }
 
@@ -111,13 +111,13 @@ final class FarmingTests: XCTestCase {
         balance.soilWetDuration = 60
         var sim = newSim(balance: balance)
         let tile = plowableTiles(1, in: sim)[0]
-        plowAndPlant("carrot", at: tile, in: &sim)  // 360 s when watered
+        plowAndPlant("potato", at: tile, in: &sim)  // 120 s when watered
         _ = sim.perform(.water, at: tile, on: map)
 
-        // 60 s wet (60 growth) + 300 remaining at half speed = 600 s → ripe at 660 s.
+        // 60 s wet (60 growth) + 60 remaining at half speed = 120 s → ripe at 180 s.
         XCTAssertEqual(FarmForecast.secondsUntilReady(sim.state.plots[tile]!, now: sim.state.worldTime, balance: balance)!,
-                       660, accuracy: 1e-6)
-        sim.advance(by: 650, mode: .live)
+                       180, accuracy: 1e-6)
+        sim.advance(by: 170, mode: .live)
         XCTAssertFalse(sim.state.plots[tile]!.crop!.isReady)
         sim.advance(by: 11, mode: .live)
         XCTAssertTrue(sim.state.plots[tile]!.crop!.isReady)
@@ -132,7 +132,7 @@ final class FarmingTests: XCTestCase {
         var stages: [Int] = []
         for _ in 0..<13 {
             stages.append(sim.state.plots[tile]!.crop!.stage)
-            sim.advance(by: 60, mode: .live)
+            sim.advance(by: 10, mode: .live)
         }
         XCTAssertEqual(stages.first, 0)
         XCTAssertEqual(stages.last, 4)
@@ -165,7 +165,7 @@ final class FarmingTests: XCTestCase {
         let report = OfflineCatchUp.run(&sim, lastSeen: seen, now: seen + 3 * 24 * 3600)
         let crop = sim.state.plots[tile]!.crop!
         XCTAssertTrue(crop.isReady)
-        XCTAssertEqual(crop.growth, 180, "growth is capped at ripe")
+        XCTAssertEqual(crop.growth, 30, "growth is capped at ripe")
         XCTAssertEqual(report.events.filter { if case .cropReady = $0 { true } else { false } }.count, 1)
     }
 
@@ -207,7 +207,7 @@ final class FarmingTests: XCTestCase {
         let tile = plowableTiles(1, in: sim)[0]
         plowAndPlant("strawberry", at: tile, in: &sim)
         _ = sim.perform(.water, at: tile, on: map)
-        sim.advance(by: 15 * 60 + 1, mode: .live)
+        sim.advance(by: 3 * 60 + 1, mode: .live)
         XCTAssertTrue(sim.perform(.harvest, at: tile, on: map).outcome.succeeded)
 
         let crop = sim.state.plots[tile]!.crop!
@@ -216,7 +216,7 @@ final class FarmingTests: XCTestCase {
         XCTAssertFalse(crop.isReady)
         // The soil is still wet from the first watering for part of the regrow time.
         let eta = FarmForecast.secondsUntilReady(sim.state.plots[tile]!, now: sim.state.worldTime, balance: sim.balance)!
-        XCTAssertGreaterThanOrEqual(eta, 8 * 60)
+        XCTAssertGreaterThanOrEqual(eta, 90)
         sim.advance(by: eta + 1, mode: .live)
         XCTAssertTrue(sim.state.plots[tile]!.crop!.isReady)
     }
@@ -289,7 +289,8 @@ final class FarmingTests: XCTestCase {
         plowAndPlant("wheat", at: tiles[1], in: &sim)
         plowAndPlant("potato", at: tiles[2], in: &sim)
         let seen = Date(timeIntervalSince1970: 1_900_000_000)
-        let report = OfflineCatchUp.run(&sim, lastSeen: seen, now: seen + 10 * 60)
+        // Dry soil: wheat needs 60 s, potatoes 240 s.
+        let report = OfflineCatchUp.run(&sim, lastSeen: seen, now: seen + 90)
         let summary = AwaySummary.make(report: report, state: sim.state, balance: sim.balance)
         XCTAssertTrue(summary.lines.contains(.cropsReady(cropID: "wheat", count: 2)))
         XCTAssertTrue(summary.lines.contains { if case .cropsGrowing("potato", 1, _) = $0 { true } else { false } })

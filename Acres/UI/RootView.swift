@@ -10,6 +10,9 @@ struct RootView: View {
             GameView(game: game, showsStats: game.showsPerformanceStats, showsChunkBorders: game.showsChunkBorders)
                 .ignoresSafeArea()
 
+            JoystickOverlay(game: game)
+                .ignoresSafeArea()
+
             HUDView(game: game)
 
             if let summary = game.welcome {
@@ -34,6 +37,10 @@ struct RootView: View {
         }
         .sheet(isPresented: $game.showsInventory) {
             InventoryView(game: game)
+                .presentationDetents([.medium, .large])
+        }
+        .sheet(item: $game.openShop) { shop in
+            ShopView(game: game, shop: shop)
                 .presentationDetents([.medium, .large])
         }
         .alert(

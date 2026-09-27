@@ -23,4 +23,9 @@ enum Haptics {
     static func success() { if isEnabled { notification.notificationOccurred(.success) } }
 
     static func warning() { if isEnabled { notification.notificationOccurred(.warning) } }
+
+    private static let medium = UIImpactFeedbackGenerator(style: .medium)
+
+    /// The truck hit something; stronger at speed.
+    static func bump(intensity: Double) { if isEnabled { medium.impactOccurred(intensity: CGFloat(max(0.3, min(1, intensity)))) } }
 }

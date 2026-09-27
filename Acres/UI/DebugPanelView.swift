@@ -40,6 +40,12 @@ struct DebugPanelView: View {
                     Button("Empty storage") { game.debugEmptyStorage() }
                 }
 
+                Section("Truck & tutorial") {
+                    Button("Fill the tank") { game.debugFillTank() }
+                    Button("Skip the tutorial") { game.skipTutorial() }
+                    Button("Restart the tutorial") { game.restartTutorial() }
+                }
+
                 Section("World") {
                     Toggle("Chunk borders", isOn: $game.showsChunkBorders)
                     Toggle("FPS / nodes / draw calls", isOn: $game.showsPerformanceStats)

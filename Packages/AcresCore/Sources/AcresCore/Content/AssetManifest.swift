@@ -197,7 +197,7 @@ public enum AssetManifest {
         result += building("building_house_village_c", 4, 4.5, phase: 3, lights: true, "Village cottage with climbing roses.")
         result += building("building_livestock_market", 7, 5, phase: 5, "Livestock market: pens and an auction shed.")
         result += building("building_hardware_store", 5, 4.5, phase: 5, lights: true, "Hardware store with tools displayed outside.")
-        result += building("building_farmers_market_stall", 2.5, 2.5, phase: 5, "Farmers' market stall with striped awning.")
+        result += building("building_farmers_market_stall", 2.5, 2.5, phase: 3, "Farmers' market stall with striped awning.")
         result += building("building_restaurant", 5, 4.5, phase: 5, lights: true, "Town restaurant (contract client) with terrace.")
         result += building("building_wholesale_depot", 8, 6, phase: 5, lights: true, "Harbor wholesale depot: big warehouse with loading doors.")
         result += building("building_harbor_warehouse", 7, 5, phase: 5, "Old brick harbor warehouse.")
@@ -238,7 +238,7 @@ public enum AssetManifest {
         .sprite("prop_bench", .prop, tiles: 1.5, 1, anchorY: 0.1, shadow: 1.3, phase: 3, "Wooden park bench (viewpoint)."),
         .sprite("prop_signpost", .prop, tiles: 0.8, 1.8, anchorY: 0.04, shadow: 0.5, phase: 3, "Wooden signpost with arrows."),
         .sprite("prop_gas_pump", .prop, tiles: 0.8, 1.6, anchorY: 0.05, shadow: 0.7, phase: 3, "Vintage gas pump."),
-        .sprite("prop_market_goods", .prop, tiles: 1.5, 1, anchorY: 0.1, phase: 5, "Baskets of produce for market stalls."),
+        .sprite("prop_market_goods", .prop, tiles: 1.5, 1, anchorY: 0.1, shadow: 1.3, phase: 3, "Baskets and crates of produce for the market square."),
         .sprite("prop_pier", .prop, tiles: 2, 6, layer: .flat, anchorY: 0.5, phase: 3, "Wooden fishing pier seen from above."),
         .sprite("prop_rowboat", .prop, tiles: 2, 1, layer: .flat, anchorY: 0.5, phase: 3, "Small wooden rowboat on water."),
         .sprite("prop_bridge_wood", .prop, tiles: 3, 4, layer: .flat, anchorY: 0.5, phase: 3, "Wooden road bridge over a stream, seen from above."),
@@ -259,6 +259,10 @@ public enum AssetManifest {
             }
         }
         directional("vehicle_truck_old", 2.5, phase: 3, "The player's beat-up pickup truck: faded teal paint, rust spots, open cargo bed, 3/4 view.")
+        directional("vehicle_truck_old_load1", 2.5, phase: 3,
+                    "Overlay: a few crates and sacks in the truck bed only (transparent elsewhere), aligned with vehicle_truck_old.")
+        directional("vehicle_truck_old_load2", 2.5, phase: 3,
+                    "Overlay: a fully loaded truck bed, crates stacked high, aligned with vehicle_truck_old.")
         directional("vehicle_trailer", 2.2, phase: 6, "Small flatbed trailer that hitches to the truck.")
         directional("vehicle_truck_big", 3.2, phase: 7, "Bigger farm truck with a large bed, upgrade.")
         directional("vehicle_car_npc_a", 2.3, phase: 8, "Villager's small hatchback, red.")
@@ -343,6 +347,8 @@ public enum AssetManifest {
         .sprite("fx_harvest_pop", .effect, tiles: 0.6, 0.6, layer: .particle, anchorY: 0.5, phase: 2, "Burst of leaves and soil when harvesting."),
         .sprite("fx_water_drops", .effect, tiles: 0.6, 0.6, layer: .particle, anchorY: 0.5, phase: 2, "Water droplets when watering."),
         .sprite("fx_dust_puff", .effect, tiles: 0.5, 0.5, layer: .particle, anchorY: 0.5, phase: 2, "Beige dust puff: plowing, and behind the truck on dirt roads."),
+        .sprite("fx_guide_arrow", .effect, tiles: 0.8, 0.8, layer: .particle, anchorY: 0.5, phase: 3,
+                "Chunky friendly arrow pointing right (rotated in code): points the way to the next goal."),
         .sprite("fx_headlight_cone", .effect, tiles: 2, 3, layer: .light, anchorY: 0.0, phase: 3, "Soft headlight beam, pointing up, additive."),
         .sprite("fx_wood_chip", .effect, tiles: 0.15, 0.15, layer: .particle, anchorY: 0.5, phase: 4, "Wood chip flying off when chopping."),
         .sprite("fx_feather", .effect, tiles: 0.15, 0.15, layer: .particle, anchorY: 0.5, phase: 4, "Small feather."),

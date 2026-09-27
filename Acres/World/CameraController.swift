@@ -35,6 +35,8 @@ final class CameraController {
     private var isDragging = false
     private var focusTarget: CGPoint?
     private var focusVelocity = CGVector.zero
+    /// While set (driving), the camera trails this point every frame.
+    private var followTarget: CGPoint?
     /// Friction for inertia (per second). Higher = stops sooner.
     private let friction: CGFloat = 4.5
 
@@ -58,6 +60,7 @@ final class CameraController {
     // MARK: Input
 
     func beginDrag() {
+        guard followTarget == nil else { return }
         isDragging = true
         velocity = .zero
         focusTarget = nil
@@ -65,6 +68,7 @@ final class CameraController {
 
     /// `delta` is the finger movement in screen points (UIKit: y down).
     func drag(byScreenDelta delta: CGPoint) {
+        guard followTarget == nil else { return }
         center.x -= delta.x * zoom
         center.y += delta.y * zoom
         clampCenter()
@@ -119,12 +123,29 @@ final class CameraController {
                 y: center.y - (p.y - viewSize.height / 2) * zoom)
     }
 
+    /// Keeps the camera on a moving point (the truck); nil stops following.
+    func follow(_ point: CGPoint?) {
+        followTarget = point
+        if point != nil {
+            focusTarget = nil
+            velocity = .zero
+            isDragging = false
+        }
+    }
+
+    var isFollowing: Bool { followTarget != nil }
+
     // MARK: Per frame
 
     func update(dt: TimeInterval) {
         let t = CGFloat(dt)
         guard t > 0 else { return }
-        if let target = focusTarget {
+        if let target = followTarget {
+            center.x = Self.smoothDamp(center.x, target.x, &focusVelocity.dx, smoothTime: 0.22, dt: t)
+            center.y = Self.smoothDamp(center.y, target.y, &focusVelocity.dy, smoothTime: 0.22, dt: t)
+            clampCenter()
+            apply()
+        } else if let target = focusTarget {
             center.x = Self.smoothDamp(center.x, target.x, &focusVelocity.dx, smoothTime: 0.35, dt: t)
             center.y = Self.smoothDamp(center.y, target.y, &focusVelocity.dy, smoothTime: 0.35, dt: t)
             if hypot(center.x - target.x, center.y - target.y) < 0.5 {

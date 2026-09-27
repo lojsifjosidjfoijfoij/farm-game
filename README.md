@@ -3,14 +3,14 @@
 A cozy, top-down open-world farming and business game for iPhone. You start with a run-down
 farm and a beat-up pickup truck, then grow it into an agricultural empire.
 
-**Status: Phase 2 (Farm) is done.** Phase 3 (Truck and world) starts when you say so.
+**Status: Phase 3 (Truck and world) is done.** Phase 4 (Animals and trees) is in progress.
 
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Foundation: architecture, save/load, time system, camera, placeholder art | ✅ |
 | 2 | Farm: fields, planting, watering, growth, harvest, inventory, offline growth | ✅ |
-| 3 | Truck and world: driving, village, first market | ⏳ next |
-| 4 | Animals and trees | |
+| 3 | Truck and world: driving, village, first market, tutorial | ✅ |
+| 4 | Animals and trees | ⏳ next |
 | 5 | Economy depth: markets, prices, contracts | |
 | 6 | Properties, buildings, workers | |
 | 7 | Progression, collection book, seasons, day/night polish | |
@@ -33,6 +33,38 @@ cd Packages/AcresCore
 swift test
 ```
 
+## Phase 3: what to test
+
+Your save carries over (it migrates to save format v3: a full tank, an empty truck bed, and the
+tutorial). **Time changed:** there is no clock any more, just crop countdowns and a gentle
+day/night lighting cycle. The top-right pill shows the season and how long until the next one.
+
+1. **Tutorial.** A card at the bottom walks you through plow → plow a row → plant → water →
+   harvest → load → drive → sell → buy seeds. The spot to tap glows in the field and the right
+   button pulses. *Skip* ends it; ⚙️ Settings → *Restart the tutorial* brings it back.
+2. **Drive.** Tap **Drive** (bottom left) or the truck itself. With the default *joystick*
+   controls, put a thumb anywhere and drag: a stick appears under it. The camera follows the truck.
+   Asphalt is fastest, grass slowest; gravel and dirt slide a little in turns. Hitting a fence,
+   tree or building gives a bump. Tap **Park** to get out (the truck also parks itself when you
+   leave the app).
+3. **Tap to drive.** ⚙️ Settings → Driving → *Tap to drive*. While driving, tap anywhere: the truck
+   finds its own way there (a flag marks the goal). Touching the joystick in joystick mode or a
+   bump cancels the route.
+4. **Load.** At the farm, open the basket: the **Truck bed** section (30 slots) has *Load all*
+   and a *Load* button per crop; the arrows on the chips unload again. Loading only works with
+   the truck parked at the farm.
+5. **The village** is east along the road: a gas station, a seed shop, a market square with
+   stalls, cottages and street lamps that glow at night.
+6. **Sell.** Stop inside the market square: a gold **Sell at Village Market** button appears.
+   Sell one, all of a crop, or *Sell everything*. Prices change daily inside each crop's range
+   (↑ = good day to sell). With an empty truck the market shows today's prices instead.
+7. **Buy seeds.** Stop at the seed shop: buy 1 or 10 of any unlocked seed (pumpkins and others
+   show the level they unlock at).
+8. **Fuel.** The fuel gauge appears under the season pill while driving. Stop at the gas station
+   to fill up (you pay for what you fill). Run dry and the truck limps along at a third of its
+   speed, so you can always get to the pumps.
+9. **Debug extras:** *Fill the tank*, *Skip / Restart the tutorial*.
+
 ## Phase 2: what to test
 
 Your Phase 1 save carries over (it migrates to save format v2 and gets the starting seeds).
@@ -43,9 +75,10 @@ Your Phase 1 save carries over (it migrates to save format v2 and gets the start
    next to the basket). Tap the seed button to pick another packet; out-of-season seeds are dimmed.
    You start with 12 wheat, 8 carrot and 4 potato seeds.
 3. **Water.** Tap a freshly planted crop: it gets watered (the soil darkens). Wet soil lasts
-   ~20 minutes; watered crops grow twice as fast as dry ones.
-4. **Grow and harvest.** Crops grow through 5 visible stages. Wheat takes 3 min watered, carrots
-   6, potatoes 12. Ripe crops twinkle; tap to harvest ("+3" floats up, XP fills the level bar).
+   ~10 minutes; watered crops grow twice as fast as dry ones.
+4. **Grow and harvest.** Crops grow through 5 visible stages. Since Phase 3, wheat takes 30 s
+   watered, carrots 1 min, potatoes 2. Ripe crops twinkle; tap to harvest ("+3" floats up, XP
+   fills the level bar).
 5. **Drag-to-paint.** Put one finger on a tile you can act on and drag: it plows / plants /
    waters / harvests every tile you pass. Starting a drag anywhere else moves the camera; two
    fingers always move and zoom.
@@ -59,6 +92,9 @@ Your Phase 1 save carries over (it migrates to save format v2 and gets the start
 10. **Debug extras:** +10 of every seed, water all, ripen all, empty storage.
 
 ## Phase 1: what to test
+
+(The clock and "Good morning!" banner described here were replaced in Phase 3 by timers and a
+lighting-only day/night cycle.)
 
 1. **Launch.** You see the run-down farm: an old farmhouse with chimney smoke, a faded red barn,
    a broken fence, an overgrown field, a pond, the teal pickup parked in the yard, forest to
@@ -85,18 +121,17 @@ Please report anything that doesn't build or look right; screenshots of the plac
 especially helpful, since that art is drawn entirely in code.
 
 > **A note on how this was built:** development happens in a Linux cloud container without Xcode.
-> The simulation core is compiled and unit-tested there (82 tests). The iOS app code is
-> type-checked against stand-ins for UIKit/SpriteKit/SwiftUI, but it has **not** been compiled
-> by Xcode or run in the Simulator yet. Your first build is that check; if Xcode reports any
-> error, paste it and I'll fix it right away.
+> The simulation core is compiled and unit-tested there (100+ tests). The iOS app code is
+> type-checked against stand-ins for UIKit/SpriteKit/SwiftUI; each phase's new screens are first
+> compiled by Xcode on your Mac. If Xcode reports any error, paste it and I'll fix it right away.
 
 ## Project layout
 
 ```
 Acres.xcodeproj
 Acres/                      iOS app (SwiftUI + SpriteKit): rendering, input, UI
-  App/                      AcresApp, GameController (owns the simulation), Haptics
-  UI/                       HUD, Welcome-back card, debug panel, theme
+  App/                      AcresApp, GameController (+Driving, +Trade, +Tutorial), Haptics
+  UI/                       HUD, shops, inventory, Welcome-back card, debug panel, theme
   World/                    GameScene, camera, chunk streaming, terrain shader, sprites
   Art/                      AssetCatalog + procedural placeholder painters
   Resources/Assets.xcassets Real art goes in Art/ (see docs/ASSETS.md)
@@ -105,6 +140,8 @@ Packages/AcresCore/         Pure Swift simulation (no UIKit/SpriteKit), plus uni
   Time/                     Game clock and calendar
   Sim/                      Simulation stepping, offline catch-up, away summary
   Farm/                     Crop growth, farming rules and actions, forecasts, XP
+  Driving/                  Truck physics, A* pathfinding, autopilot
+  Trade/                    Shops, market prices, buying, selling, fuel, loading
   Save/                     Versioned save files, migrations, file store
   World/                    Map data, the Home Valley map
   Content/                  Crops, items, properties, asset and audio manifests

@@ -58,8 +58,37 @@ enum SaveFixtures {
     }
     """
 
+    static let v3 = """
+    {
+      "createdAt": 1800000000,
+      "deviceID": "fixture-device",
+      "presentation": { "cameraCenter": { "x": 70, "y": 24 }, "cameraZoom": 1.5, "selectedSeed": "wheat" },
+      "revision": 77,
+      "savedAt": 1800009000,
+      "state": {
+        "clock": { "totalMinutes": 4380 },
+        "inventory": { "items": { "seeds_carrot": 5 } },
+        "money": 2345,
+        "ownedProperties": ["home_farm"],
+        "plots": [ { "tile": { "x": 21, "y": 31 }, "wetUntil": 0 } ],
+        "progress": { "level": 3, "xp": 12 },
+        "rng": "2b",
+        "stats": { "offlineSeconds": 7200, "playSeconds": 5000, "returns": 3 },
+        "truck": {
+          "cargo": { "items": { "wheat": 9 } },
+          "fuel": 62.5,
+          "heading": 0,
+          "position": { "x": 95, "y": 24 }
+        },
+        "tutorial": { "progress": 0, "step": 8 },
+        "worldTime": 12000
+      },
+      "version": 3
+    }
+    """
+
     /// All fixtures, oldest first.
-    static let all: [(version: Int, json: String)] = [(1, v1), (2, v2)]
+    static let all: [(version: Int, json: String)] = [(1, v1), (2, v2), (3, v3)]
     static var latest: (version: Int, json: String) { all.last! }
 
     /// What `v1` must decode to after migrating to the current version.
@@ -80,14 +109,15 @@ enum SaveFixtures {
             // Added by the v1 → v2 migration: empty farmland, the starting seeds, the home farm.
             plots: FarmPlots(),
             inventory: Inventory(items: ["seeds_wheat": 12, "seeds_carrot": 8, "seeds_potato": 4]),
-            ownedProperties: ["home_farm"]
+            ownedProperties: ["home_farm"],
+            tutorial: .new  // added by v2 → v3
         ),
         presentation: PresentationState(cameraCenter: Vec2(26, 32.5), cameraZoom: 1.5)
     )
 
-    /// What `v2` must decode to.
-    static let v2Expected = SaveFile(
-        version: 2,
+    /// What `v2` must decode to after migrating to the current version.
+    static let v2Migrated = SaveFile(
+        version: SaveFile.currentVersion,
         revision: 40,
         deviceID: "fixture-device",
         createdAt: Date(timeIntervalSince1970: 1_800_000_000),
@@ -106,13 +136,37 @@ enum SaveFixtures {
                 Plot(tile: TileCoord(21, 31)),
             ]),
             inventory: Inventory(items: ["seeds_carrot": 5, "wheat": 7]),
-            ownedProperties: ["home_farm"]
+            ownedProperties: ["home_farm"],
+            tutorial: .new
         ),
         presentation: PresentationState(cameraCenter: Vec2(26, 32.5), cameraZoom: 1.5, selectedSeed: "carrot")
     )
 
+    /// What `v3` must decode to.
+    static let v3Expected = SaveFile(
+        version: 3,
+        revision: 77,
+        deviceID: "fixture-device",
+        createdAt: Date(timeIntervalSince1970: 1_800_000_000),
+        savedAt: Date(timeIntervalSince1970: 1_800_009_000),
+        state: GameState(
+            worldTime: 12_000,
+            clock: GameClock(totalMinutes: 4380),
+            money: 2345,
+            progress: FarmerProgress(level: 3, xp: 12),
+            truck: TruckState(position: Vec2(95, 24), heading: 0, fuel: 62.5, cargo: Inventory(items: ["wheat": 9])),
+            rng: SeededRandom(seed: 0x2B),
+            stats: PlayStats(playSeconds: 5000, offlineSeconds: 7200, returns: 3),
+            plots: FarmPlots([Plot(tile: TileCoord(21, 31))]),
+            inventory: Inventory(items: ["seeds_carrot": 5]),
+            ownedProperties: ["home_farm"],
+            tutorial: TutorialState(step: .sell)
+        ),
+        presentation: PresentationState(cameraCenter: Vec2(70, 24), cameraZoom: 1.5, selectedSeed: "wheat")
+    )
+
     /// The value whose encoding must have the same shape as the latest fixture.
-    static var latestExpected: SaveFile { v2Expected }
+    static var latestExpected: SaveFile { v3Expected }
 }
 
 /// In-memory store for tests.
@@ -169,10 +223,16 @@ final class SaveTests: XCTestCase {
         XCTAssertEqual(file, SaveFixtures.v1Migrated)
     }
 
-    func testVersion2FixtureDecodesExactly() throws {
+    func testVersion2FixtureMigratesExactly() throws {
         let system = SaveSystem(store: MemorySaveStore(), deviceID: "test")
         let file = try system.decode(Data(SaveFixtures.v2.utf8)).get()
-        XCTAssertEqual(file, SaveFixtures.v2Expected)
+        XCTAssertEqual(file, SaveFixtures.v2Migrated)
+    }
+
+    func testVersion3FixtureDecodesExactly() throws {
+        let system = SaveSystem(store: MemorySaveStore(), deviceID: "test")
+        let file = try system.decode(Data(SaveFixtures.v3.utf8)).get()
+        XCTAssertEqual(file, SaveFixtures.v3Expected)
     }
 
     func testCurrentFormatMatchesLatestFixture() throws {

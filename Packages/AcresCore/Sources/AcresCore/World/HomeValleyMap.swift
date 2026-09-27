@@ -5,22 +5,31 @@ import Foundation
 /// Phase 1 contains only the home farm and its surroundings (64 × 64 tiles,
 /// 4 × 4 chunks). Phase 3 grows this into the full hand-designed world.
 ///
-/// Layout (x → east, y → north):
+/// Layout (x → east, y → north; 144 × 96 tiles, 9 × 6 chunks):
 /// ```
-///  y 64 ┌───────────────── forest ─────────────────┬─┐
-///       │                                           │a│
-///  y 41 │ ┌─ fence ───────────────────────────────┐ │s│
-///       │ │ house  barn                           │ │p│
-///       │ │  well  (yard, dirt)   (old field)     │ │h│  For Sale plot →
-///  y 28 │ └────── driveway ───────────────────────┘ │a│
-///       │ pond        └── gravel road ──────────────┤l│
-///       │                meadow                     │t│
-///  y  0 └───────────────────────────────────────────┴─┘
-///       x 0                                     x 57
+///  y 96 ┌──────────────────────────── forest ────────────────────────────┐
+///       │                              │ county road                     │
+///  y 41 │ ┌─ fence ────────────┐       │                                 │
+///       │ │ house  barn  field │ sale  │         ┌ houses ┐              │
+///  y 28 │ └──── driveway ──────┘       │ gas  seeds  market square        │
+///       │ pond   └─ gravel road ───────┼─────── village street ──────────►│
+///       │               meadow         │         houses                   │
+///  y  0 └──────────────────────────────┴──────────────────────────────────┘
+///       x 0                           x 57                             x 144
 /// ```
 public enum HomeValleyMap {
-    public static let width = 64
-    public static let height = 64
+    public static let width = 144
+    public static let height = 96
+
+    /// The original Phase 1 area. Its layout is frozen so saved fields never
+    /// end up under a new tree: new content is only ever added after it.
+    static let homeArea = TileRect(minX: 0, minY: 0, maxX: 64, maxY: 64)
+
+    // --- The village (Phase 3) ---------------------------------------------
+    /// Where the truck must stop to use each shop (tile units).
+    public static let gasStationZone = TileRect(minX: 61.5, minY: 22.4, maxX: 70.5, maxY: 28.4)
+    public static let seedShopZone = TileRect(minX: 76.5, minY: 22.4, maxX: 83.5, maxY: 27.2)
+    public static let marketZone = TileRect(minX: 88, minY: 22.4, maxX: 106, maxY: 27.2)
 
     /// Where the truck waits on a new game (tile units).
     public static let truckParkingSpot = Vec2(26.2, 30.2)
@@ -92,19 +101,100 @@ public enum HomeValleyMap {
                   radius: 1.0, spacing: 4)
 
         b.scatter(["tree_stump"], count: 8, in: TileRect(minX: 2, minY: 41, maxX: 56, maxY: 50), radius: 0.5, spacing: 3)
-        b.scatter(["nature_bush_a", "nature_bush_b"], count: 55, in: b.bounds, radius: 0.6, spacing: 1.5)
-        b.scatter(["nature_rock_small"], count: 26, in: b.bounds, radius: 0.35, spacing: 2)
-        b.scatter(["nature_rock_large"], count: 7, in: b.bounds, radius: 0.8, spacing: 6)
+        b.scatter(["nature_bush_a", "nature_bush_b"], count: 55, in: homeArea, radius: 0.6, spacing: 1.5)
+        b.scatter(["nature_rock_small"], count: 26, in: homeArea, radius: 0.35, spacing: 2)
+        b.scatter(["nature_rock_large"], count: 7, in: homeArea, radius: 0.8, spacing: 6)
         b.scatter(["nature_flowers_yellow", "nature_flowers_white", "nature_flowers_purple"], count: 90,
                   in: TileRect(minX: 8, minY: 1, maxX: 55, maxY: 27), radius: 0.25, spacing: 0.6)
-        b.scatter(["nature_grass_tuft_a", "nature_grass_tuft_b"], count: 220, in: b.bounds, radius: 0.22, spacing: 0.5)
+        b.scatter(["nature_grass_tuft_a", "nature_grass_tuft_b"], count: 220, in: homeArea, radius: 0.22, spacing: 0.5)
         // The old field is overgrown with weeds and stones.
         b.scatter(["nature_grass_tuft_a", "nature_grass_tuft_b"], count: 26,
                   in: TileRect(minX: 34, minY: 30, maxX: 46, maxY: 39), radius: 0.3, spacing: 0.8, on: [.dirt])
         b.scatter(["nature_rock_small"], count: 6, in: TileRect(minX: 34, minY: 30, maxX: 46, maxY: 39),
                   radius: 0.4, spacing: 2, on: [.dirt])
 
+        // Everything below was added in Phase 3. Append only: never insert above.
+        buildVillageAndBeyond(&b)
+
         return b.build(name: "Home Valley")
+    }
+
+    /// The road east, the village with its shops, and the wider countryside.
+    private static func buildVillageAndBeyond(_ b: inout MapBuilder) {
+        // --- Roads -----------------------------------------------------------
+        b.paintPath(.asphalt, through: [Vec2(56.6, 63), Vec2(56.0, 80), Vec2(57, 98)], width: 2.8)
+        b.paintPath(.asphalt, through: [Vec2(57.2, 22.3), Vec2(66, 23.2), Vec2(78, 24), Vec2(106, 24),
+                                        Vec2(120, 23.4), Vec2(146, 22.6)], width: 2.6)
+        // Gas station forecourt, seed shop apron and the market square.
+        b.paintRect(.gravel, TileRect(minX: 61.5, minY: 25, maxX: 70.5, maxY: 29))
+        b.paintRect(.gravel, TileRect(minX: 77, minY: 25, maxX: 83, maxY: 27.6))
+        b.paintRect(.gravel, TileRect(minX: 88, minY: 25, maxX: 106, maxY: 30.6))
+        // Garden paths from the houses to the street.
+        for x in [72.0, 84, 95, 107, 118] {
+            b.paintPath(.dirt, through: [Vec2(x, 18.3), Vec2(x, 22.8)], width: 1.3, roughness: 0.2)
+        }
+        b.paintPath(.dirt, through: [Vec2(86, 30.6), Vec2(86, 34)], width: 1.3, roughness: 0.2)
+        b.paintPath(.dirt, through: [Vec2(106, 29.5), Vec2(112, 29.8)], width: 1.3, roughness: 0.2)
+
+        // Trees and plants that used to stand where the new roads run are cleared.
+        b.removeObjects { object, terrain in
+            let isNature = object.kind.hasPrefix("tree_") || object.kind.hasPrefix("nature_")
+            return isNature && (terrain == .asphalt || terrain == .gravel)
+        }
+
+        // --- The village -----------------------------------------------------
+        let village = TileRect(minX: 59, minY: 15, maxX: 124, maxY: 36.5)
+        b.reserve(village)
+
+        b.place("building_gas_station", at: Vec2(66, 29.2), radius: 3)
+        b.place("prop_gas_pump", at: Vec2(64.2, 26.7), radius: 0.4)
+        b.place("prop_gas_pump", at: Vec2(67.8, 26.7), variant: 1, radius: 0.4)
+        b.place("building_seed_shop", at: Vec2(80, 27.9), radius: 2.5)
+        b.place("building_farmers_market_stall", at: Vec2(91.5, 28.4), radius: 1.3)
+        b.place("building_farmers_market_stall", at: Vec2(96, 28.6), variant: 1, radius: 1.3)
+        b.place("building_farmers_market_stall", at: Vec2(100.5, 28.4), variant: 2, radius: 1.3)
+        b.place("prop_market_goods", at: Vec2(103.8, 28), radius: 0.8)
+
+        b.place("building_house_village_a", at: Vec2(72, 18), radius: 2)
+        b.place("building_house_village_b", at: Vec2(84, 17.6), radius: 2)
+        b.place("building_house_village_c", at: Vec2(95, 18.2), radius: 2)
+        b.place("building_house_village_a", at: Vec2(107, 17.8), variant: 1, radius: 2)
+        b.place("building_house_village_b", at: Vec2(86, 34.2), variant: 1, radius: 2)
+        b.place("building_house_village_c", at: Vec2(114, 29.2), variant: 1, radius: 2)
+        b.place("building_house_village_a", at: Vec2(118, 18), variant: 2, radius: 2)
+
+        for x in [74.5, 88.5, 101.5, 113.5] {
+            b.place("prop_lamp_post", at: Vec2(x, 21.6), radius: 0.3)
+        }
+        b.place("prop_lamp_post", at: Vec2(88.6, 30.2), radius: 0.3)
+        b.place("prop_lamp_post", at: Vec2(105.4, 30.2), radius: 0.3)
+        b.place("prop_bench", at: Vec2(94, 30.2), radius: 0.7)
+        b.place("prop_bench", at: Vec2(98.5, 30.2), variant: 1, radius: 0.7)
+        b.place("prop_signpost", at: Vec2(59.6, 26.2), radius: 0.4)
+
+        // A little green around the houses.
+        b.scatter(["nature_bush_a", "nature_bush_b"], count: 14, in: TileRect(minX: 66, minY: 14, maxX: 122, maxY: 20.5),
+                  radius: 0.6, spacing: 2.5)
+        b.scatter(["nature_flowers_yellow", "nature_flowers_white", "nature_flowers_purple"], count: 40,
+                  in: TileRect(minX: 66, minY: 14, maxX: 122, maxY: 21.5), radius: 0.25, spacing: 0.8)
+
+        // --- Countryside -----------------------------------------------------
+        let trees = ["tree_oak", "tree_pine", "tree_birch"]
+        b.scatter(["tree_pine", "tree_pine", "tree_oak", "tree_birch"], count: 300,
+                  in: TileRect(minX: 0, minY: 64, maxX: 144, maxY: 96), radius: 0.9, spacing: 1.8,
+                  density: { p in p.x > 53 && p.x < 60 ? 0 : 0.85 })
+        b.scatter(trees, count: 90, in: TileRect(minX: 64, minY: 42, maxX: 144, maxY: 64), radius: 0.9, spacing: 2.2)
+        b.scatter(["tree_oak", "tree_birch", "tree_oak"], count: 40, in: TileRect(minX: 64, minY: 0, maxX: 144, maxY: 42),
+                  radius: 1.0, spacing: 4.5)
+        b.scatter(["tree_stump"], count: 10, in: TileRect(minX: 64, minY: 36, maxX: 144, maxY: 70), radius: 0.5, spacing: 3)
+        b.scatter(["nature_bush_a", "nature_bush_b"], count: 90, in: TileRect(minX: 0, minY: 0, maxX: 144, maxY: 96),
+                  radius: 0.6, spacing: 1.5, density: { p in homeArea.contains(p) ? 0 : 1 })
+        b.scatter(["nature_rock_small"], count: 40, in: TileRect(minX: 64, minY: 0, maxX: 144, maxY: 96), radius: 0.35, spacing: 2)
+        b.scatter(["nature_rock_large"], count: 10, in: TileRect(minX: 64, minY: 0, maxX: 144, maxY: 96), radius: 0.8, spacing: 6)
+        b.scatter(["nature_flowers_yellow", "nature_flowers_white", "nature_flowers_purple"], count: 160,
+                  in: TileRect(minX: 64, minY: 0, maxX: 144, maxY: 42), radius: 0.25, spacing: 0.6)
+        b.scatter(["nature_grass_tuft_a", "nature_grass_tuft_b"], count: 420, in: TileRect(minX: 0, minY: 0, maxX: 144, maxY: 96),
+                  radius: 0.22, spacing: 0.5, density: { p in homeArea.contains(p) ? 0 : 1 })
     }
 
     /// An old wooden fence around the home farm, with gaps and broken rails.

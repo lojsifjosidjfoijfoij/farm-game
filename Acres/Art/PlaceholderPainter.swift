@@ -12,8 +12,8 @@ enum PlaceholderPainter {
         switch spec.category {
         case .terrain: return TerrainPainter.paint(name, size: size, rng: &rng)
         case .tree: return TreePainter.paint(spec, rng: &rng)
-        case .nature, .prop: return PropPainter.paint(spec, rng: &rng)
-        case .building: return BuildingPainter.paint(spec, rng: &rng)
+        case .nature, .prop: return PropPainter.paint(spec, rng: &rng) ?? VillagePainter.paint(spec, rng: &rng)
+        case .building: return BuildingPainter.paint(spec, rng: &rng) ?? VillagePainter.paint(spec, rng: &rng)
         case .vehicle: return VehiclePainter.paint(spec, rng: &rng)
         case .effect: return EffectPainter.paint(spec, rng: &rng)
         case .field: return CropPainter.paintSoil(spec, rng: &rng)

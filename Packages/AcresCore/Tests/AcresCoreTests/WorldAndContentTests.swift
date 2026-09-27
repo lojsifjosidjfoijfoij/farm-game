@@ -6,10 +6,10 @@ final class WorldMapTests: XCTestCase {
     let map = HomeValleyMap.map
 
     func testHomeValleyDimensions() {
-        XCTAssertEqual(map.width, 64)
-        XCTAssertEqual(map.height, 64)
-        XCTAssertEqual(map.chunkColumns, 4)
-        XCTAssertEqual(map.chunkRows, 4)
+        XCTAssertEqual(map.width, 144)
+        XCTAssertEqual(map.height, 96)
+        XCTAssertEqual(map.chunkColumns, 9)
+        XCTAssertEqual(map.chunkRows, 6)
         XCTAssertGreaterThan(map.objects.count, 300)
     }
 
@@ -44,7 +44,7 @@ final class WorldMapTests: XCTestCase {
     func testChunksOverlappingClipsToTheMap() {
         XCTAssertEqual(map.chunks(overlapping: TileRect(minX: -40, minY: -40, maxX: -1, maxY: -1)), [])
         XCTAssertEqual(map.chunks(overlapping: TileRect(minX: 1, minY: 1, maxX: 2, maxY: 2)), [ChunkCoord(0, 0)])
-        XCTAssertEqual(map.chunks(overlapping: TileRect(minX: -10, minY: -10, maxX: 200, maxY: 200)).count, 16)
+        XCTAssertEqual(map.chunks(overlapping: TileRect(minX: -10, minY: -10, maxX: 200, maxY: 200)).count, 54)
         XCTAssertEqual(Set(map.chunks(overlapping: TileRect(minX: 15, minY: 15, maxX: 17, maxY: 17))),
                        [ChunkCoord(0, 0), ChunkCoord(1, 0), ChunkCoord(0, 1), ChunkCoord(1, 1)])
     }

@@ -12,11 +12,13 @@ public struct Balance: Sendable, Equatable {
 
     // MARK: - Time
 
-    /// Real seconds for one full in-game day (06:00 → 06:00) while playing.
-    public var realSecondsPerGameDay: Double = 20 * 60
+    /// Real seconds for one full day/night lighting cycle while playing.
+    /// There is no clock to follow: days only drive the lighting, daily
+    /// market prices and seasons.
+    public var realSecondsPerGameDay: Double = 16 * 60
 
-    /// In-game days per season. Four seasons make a year.
-    public var daysPerSeason: Int = 7
+    /// Days per season (4 × 16 min ≈ one hour of play per season).
+    public var daysPerSeason: Int = 4
 
     // MARK: - Offline progress
 
@@ -43,9 +45,8 @@ public struct Balance: Sendable, Equatable {
     /// stop growing (the world keeps living), but watering doubles the pace.
     public var dryGrowthRate: Double = 0.5
 
-    /// How long soil stays wet after watering (real seconds; 20 min = one
-    /// in-game day of play).
-    public var soilWetDuration: TimeInterval = 20 * 60
+    /// How long soil stays wet after watering (real seconds).
+    public var soilWetDuration: TimeInterval = 10 * 60
 
     /// Items the farm can store (seeds don't count). Harvesting stops when full.
     public var storageCapacity: Int = 100
@@ -66,6 +67,16 @@ public struct Balance: Sendable, Equatable {
     /// Coins in the pocket at the start of a new game.
     public var startingMoney: Int = 500
 
+    /// Items the truck bed holds.
+    public var truckCargoCapacity: Int = 30
+
+    /// Coins per unit of fuel (a full tank of 100 costs 50).
+    public var fuelPrice: Double = 0.5
+
+    // MARK: - Driving
+
+    public var driving = DrivingTuning()
+
     // MARK: - Saving
 
     /// Seconds between autosaves while playing. The game also saves whenever
@@ -83,4 +94,50 @@ public struct Balance: Sendable, Equatable {
 
     /// The shipping balance.
     public static let standard = Balance()
+}
+
+/// Feel of the truck. Speeds are in tiles per second.
+public struct DrivingTuning: Sendable, Equatable {
+    public var maxSpeedAsphalt: Double = 7.5
+    public var maxSpeedGravel: Double = 6.2
+    public var maxSpeedDirt: Double = 5.2
+    public var maxSpeedGrass: Double = 4.2
+    public var acceleration: Double = 6
+    public var braking: Double = 10
+    /// Deceleration when the stick is released.
+    public var coastDrag: Double = 7
+    /// Radians per second at speed (a bit slower when nearly stopped).
+    public var turnRate: Double = 3.6
+    /// How quickly the velocity follows the nose: lower = more drift.
+    public var gripAsphalt: Double = 14
+    public var gripGravel: Double = 5.5
+    public var gripDirt: Double = 5
+    public var gripGrass: Double = 7
+    public var fuelCapacity: Double = 100
+    /// Fuel used per tile driven (a full tank lasts ~1,000 tiles).
+    public var fuelPerTile: Double = 0.1
+    /// Out of fuel the truck limps along instead of stopping. Never punishing.
+    public var outOfFuelSpeedFactor: Double = 0.35
+    /// Radius of the truck's collision circle, in tiles.
+    public var collisionRadius: Double = 0.45
+
+    public init() {}
+
+    public func maxSpeed(on terrain: Terrain) -> Double {
+        switch terrain {
+        case .asphalt: maxSpeedAsphalt
+        case .gravel: maxSpeedGravel
+        case .dirt: maxSpeedDirt
+        case .grass: maxSpeedGrass
+        }
+    }
+
+    public func grip(on terrain: Terrain) -> Double {
+        switch terrain {
+        case .asphalt: gripAsphalt
+        case .gravel: gripGravel
+        case .dirt: gripDirt
+        case .grass: gripGrass
+        }
+    }
 }

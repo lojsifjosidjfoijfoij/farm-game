@@ -39,12 +39,12 @@ procedurally in code.
 | Nature props | 14 | 10 |
 | Buildings | 51 | 3 |
 | Props | 28 | 10 |
-| Vehicles | 84 | 1 |
+| Vehicles | 116 | 1 |
 | Animals | 70 | 0 |
 | Item icons | 37 | 0 |
-| Effects & particles | 30 | 4 |
+| Effects & particles | 31 | 4 |
 | User interface | 26 | 15 |
-| **Total** | **425** | **52** |
+| **Total** | **458** | **52** |
 | Audio files | 57 | 0 |
 
 ## Terrain (tileable ground textures)
@@ -212,7 +212,7 @@ procedurally in code.
 | `building_livestock_market` | 896 × 640 | 7 × 5 | 0.06 | 5 | Livestock market: pens and an auction shed. |
 | `building_hardware_store` | 640 × 576 | 5 × 4.5 | 0.06 | 5 | Hardware store with tools displayed outside. |
 | `building_hardware_store_lights` | 640 × 576 | 5 × 4.5 | — | 5 | Night overlay for building_hardware_store: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
-| `building_farmers_market_stall` | 320 × 320 | 2.5 × 2.5 | 0.06 | 5 | Farmers' market stall with striped awning. |
+| `building_farmers_market_stall` | 320 × 320 | 2.5 × 2.5 | 0.06 | 3 | Farmers' market stall with striped awning. |
 | `building_restaurant` | 640 × 576 | 5 × 4.5 | 0.06 | 5 | Town restaurant (contract client) with terrace. |
 | `building_restaurant_lights` | 640 × 576 | 5 × 4.5 | — | 5 | Night overlay for building_restaurant: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
 | `building_wholesale_depot` | 1024 × 768 | 8 × 6 | 0.06 | 5 | Harbor wholesale depot: big warehouse with loading doors. |
@@ -254,7 +254,7 @@ procedurally in code.
 | `prop_bench` | 192 × 128 | 1.5 × 1 | 0.1 | 3 | Wooden park bench (viewpoint). |
 | `prop_signpost` | 102 × 230 | 0.8 × 1.8 | 0.04 | 3 | Wooden signpost with arrows. |
 | `prop_gas_pump` | 102 × 205 | 0.8 × 1.6 | 0.05 | 3 | Vintage gas pump. |
-| `prop_market_goods` | 192 × 128 | 1.5 × 1 | 0.1 | 5 | Baskets of produce for market stalls. |
+| `prop_market_goods` | 192 × 128 | 1.5 × 1 | 0.1 | 3 | Baskets and crates of produce for the market square. |
 | `prop_pier` | 256 × 768 | 2 × 6 | — | 3 | Wooden fishing pier seen from above. *(flat)* |
 | `prop_rowboat` | 256 × 128 | 2 × 1 | — | 3 | Small wooden rowboat on water. *(flat)* |
 | `prop_bridge_wood` | 384 × 512 | 3 × 4 | — | 3 | Wooden road bridge over a stream, seen from above. *(flat)* |
@@ -265,6 +265,8 @@ procedurally in code.
 | Name | Pixels | World size (tiles) | Anchor | Phase | Description |
 |---|---|---|---|---:|---|
 | `vehicle_truck_old_dir00` … `vehicle_truck_old_dir15` (16 frames) | 320 × 320 | 2.5 × 2.5 | 0.4 | 1–3 | The player's beat-up pickup truck: faded teal paint, rust spots, open cargo bed, 3/4 view. 16 directions, 22.5° apart; frame 00 faces east, counter-clockwise (04 = away from camera, 08 = west, 12 = toward camera). |
+| `vehicle_truck_old_load1_dir00` … `vehicle_truck_old_load1_dir15` (16 frames) | 320 × 320 | 2.5 × 2.5 | 0.4 | 3 | Overlay: a few crates and sacks in the truck bed only (transparent elsewhere), aligned with vehicle_truck_old. 16 directions, 22.5° apart; frame 00 faces east, counter-clockwise (04 = away from camera, 08 = west, 12 = toward camera). |
+| `vehicle_truck_old_load2_dir00` … `vehicle_truck_old_load2_dir15` (16 frames) | 320 × 320 | 2.5 × 2.5 | 0.4 | 3 | Overlay: a fully loaded truck bed, crates stacked high, aligned with vehicle_truck_old. 16 directions, 22.5° apart; frame 00 faces east, counter-clockwise (04 = away from camera, 08 = west, 12 = toward camera). |
 | `vehicle_trailer_dir00` … `vehicle_trailer_dir15` (16 frames) | 282 × 282 | 2.2 × 2.2 | 0.4 | 6 | Small flatbed trailer that hitches to the truck. 16 directions, 22.5° apart; frame 00 faces east, counter-clockwise (04 = away from camera, 08 = west, 12 = toward camera). |
 | `vehicle_truck_big_dir00` … `vehicle_truck_big_dir15` (16 frames) | 410 × 410 | 3.2 × 3.2 | 0.4 | 7 | Bigger farm truck with a large bed, upgrade. 16 directions, 22.5° apart; frame 00 faces east, counter-clockwise (04 = away from camera, 08 = west, 12 = toward camera). |
 | `vehicle_car_npc_a_dir00` … `vehicle_car_npc_a_dir15` (16 frames) | 294 × 294 | 2.3 × 2.3 | 0.4 | 8 | Villager's small hatchback, red. 16 directions, 22.5° apart; frame 00 faces east, counter-clockwise (04 = away from camera, 08 = west, 12 = toward camera). |
@@ -404,6 +406,7 @@ procedurally in code.
 | `fx_harvest_pop` | 77 × 77 | 0.6 × 0.6 | — | 2 | Burst of leaves and soil when harvesting. |
 | `fx_water_drops` | 77 × 77 | 0.6 × 0.6 | — | 2 | Water droplets when watering. |
 | `fx_dust_puff` | 64 × 64 | 0.5 × 0.5 | — | 2 | Beige dust puff: plowing, and behind the truck on dirt roads. |
+| `fx_guide_arrow` | 102 × 102 | 0.8 × 0.8 | — | 3 | Chunky friendly arrow pointing right (rotated in code): points the way to the next goal. |
 | `fx_headlight_cone` | 256 × 384 | 2 × 3 | — | 3 | Soft headlight beam, pointing up, additive. *(additive light)* |
 | `fx_wood_chip` | 19 × 19 | 0.15 × 0.15 | — | 4 | Wood chip flying off when chopping. |
 | `fx_feather` | 19 × 19 | 0.15 × 0.15 | — | 4 | Small feather. |

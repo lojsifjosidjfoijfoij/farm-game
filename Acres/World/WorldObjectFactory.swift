@@ -82,27 +82,6 @@ struct WorldObjectFactory {
         return ObjectNodes(main: sprite, isFlat: isFlat, shadow: shadow, lights: lights)
     }
 
-    /// The truck parked at its saved position (driving arrives in Phase 3).
-    func makeTruck(_ truck: TruckState) -> ObjectNodes {
-        // Phase 1 has one parked sprite (facing west); Phase 3 picks one of 16 by heading.
-        let name = "vehicle_truck_old_dir08"
-        let sprite = SKSpriteNode(texture: assets.texture(name))
-        if let spec = AssetManifest.spec(named: name) {
-            sprite.size = CGSize(width: CGFloat(spec.tilesWide) * World.tileSize, height: CGFloat(spec.tilesHigh) * World.tileSize)
-            sprite.anchorPoint = CGPoint(x: 0.5, y: CGFloat(spec.anchorY))
-        }
-        sprite.position = World.point(truck.position)
-        sprite.zPosition = World.depth(forY: sprite.position.y)
-        sprite.name = "truck"
-
-        let shadow = SKSpriteNode(texture: assets.texture("fx_shadow_soft"))
-        shadow.size = CGSize(width: World.tileSize * 2.4, height: World.tileSize * 1.1)
-        shadow.position = CGPoint(x: sprite.position.x + 4, y: sprite.position.y - 2)
-        shadow.alpha = 0.35
-        shadow.zPosition = 1
-        return ObjectNodes(main: sprite, isFlat: false, shadow: shadow, lights: [])
-    }
-
     // MARK: Decorations
 
     /// Chimney tops in unit sprite coordinates (origin bottom-left).

@@ -33,12 +33,13 @@ final class SimulationTests: XCTestCase {
 
     func testLivePlayRunsTheCalendar() {
         var sim = Simulation(state: makeState())
-        let events = sim.advance(by: 20 * 60, mode: .live)  // one game day
+        let day = Balance.standard.realSecondsPerGameDay
+        let events = sim.advance(by: day, mode: .live)  // one game day
         XCTAssertEqual(sim.state.clock.dayIndex, 1)
         XCTAssertEqual(sim.state.clock.hour, 6)
-        XCTAssertEqual(sim.state.worldTime, 20 * 60, accuracy: 1e-6)
-        XCTAssertEqual(sim.state.stats.playSeconds, 20 * 60, accuracy: 1e-6)
-        XCTAssertEqual(events, [.newDay(CalendarDate(dayIndex: 1, daysPerSeason: 7))])
+        XCTAssertEqual(sim.state.worldTime, day, accuracy: 1e-6)
+        XCTAssertEqual(sim.state.stats.playSeconds, day, accuracy: 1e-6)
+        XCTAssertEqual(events, [.newDay(CalendarDate(dayIndex: 1, daysPerSeason: Balance.standard.daysPerSeason))])
     }
 
     func testOfflineModeFreezesTheCalendarButNotTheWorld() {
@@ -49,12 +50,13 @@ final class SimulationTests: XCTestCase {
         XCTAssertEqual(sim.state.stats.offlineSeconds, 5 * 3600, accuracy: 1e-6)
     }
 
-    func testSeasonChangesAfterSevenDaysOfPlay() {
+    func testSeasonChangesAfterASeasonOfPlay() {
         var sim = Simulation(state: makeState())
-        let events = sim.advance(by: 7 * 20 * 60, mode: .live)
+        let balance = Balance.standard
+        let events = sim.advance(by: Double(balance.daysPerSeason) * balance.realSecondsPerGameDay, mode: .live)
         XCTAssertTrue(events.contains(.newSeason(.summer, year: 1)))
-        XCTAssertEqual(events.filter { if case .newDay = $0 { true } else { false } }.count, 7)
-        XCTAssertEqual(sim.state.clock.date(daysPerSeason: 7).season, .summer)
+        XCTAssertEqual(events.filter { if case .newDay = $0 { true } else { false } }.count, balance.daysPerSeason)
+        XCTAssertEqual(sim.state.clock.date(daysPerSeason: balance.daysPerSeason).season, .summer)
     }
 
     func testOneBigAdvanceEqualsManySmallOnes() {

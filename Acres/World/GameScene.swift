@@ -22,8 +22,13 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     private var cameraController: CameraController?
     private var chunks: ChunkManager?
     private var fields: FieldRenderer?
-    private var truckNode: SKNode?
-    private var truckShadow: SKNode?
+    private var truck: TruckRenderer?
+    /// Pulsing ring on the tile the tutorial points at.
+    private let tutorialRing = SKSpriteNode(texture: nil)
+    /// Bouncing arrow above the current goal (e.g. the market).
+    private let goalMarker = SKSpriteNode(texture: nil)
+    /// Where tap-to-drive is heading.
+    private let destinationMarker = SKSpriteNode(texture: nil)
     private var gestures: [UIGestureRecognizer] = []
     private var lastUpdateTime: TimeInterval?
     private var lastLightingHour: Double = -1
@@ -32,7 +37,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     private var syncedFarmRevision = -1
 
     /// What a one-finger drag is doing: moving the camera or painting actions.
-    private enum DragMode { case none, camera, paint }
+    private enum DragMode { case none, camera, paint, joystick }
     private var dragMode = DragMode.none
     private var lastPaintTile: TileCoord?
 
@@ -107,28 +112,51 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         camera.focus(on: World.point(start), animated: false)
         cameraController = camera
 
-        placeTruck()
+        truck = TruckRenderer(assets: assets, objectLayer: objectLayer, flatLayer: flatLayer, effectsLayer: effectsLayer)
+        setUpMarkers()
         game.onWorldReset = { [weak self] in self?.worldWasReset() }
         chunkManager.update(visibleRect: camera.visibleRect)
         syncFields()
+        updateTruck()
         updateLighting(force: true)
     }
 
-    private func placeTruck() {
-        truckNode?.removeFromParent()
-        truckShadow?.removeFromParent()
-        let nodes = WorldObjectFactory(assets: assets).makeTruck(game.simulation.state.truck)
-        objectLayer.addChild(nodes.main)
-        truckNode = nodes.main
-        if let shadow = nodes.shadow {
-            flatLayer.addChild(shadow)
-            truckShadow = shadow
-        }
+    private func setUpMarkers() {
+        tutorialRing.texture = assets.texture("fx_tile_highlight")
+        tutorialRing.size = CGSize(width: World.tileSize, height: World.tileSize)
+        tutorialRing.color = SKColor(red: 1, green: 0.85, blue: 0.35, alpha: 1)
+        tutorialRing.colorBlendFactor = 0.7
+        tutorialRing.zPosition = 6
+        tutorialRing.isHidden = true
+        flatLayer.addChild(tutorialRing)
+        tutorialRing.run(.repeatForever(.sequence([
+            .group([.scale(to: 1.15, duration: 0.5), .fadeAlpha(to: 0.6, duration: 0.5)]),
+            .group([.scale(to: 1, duration: 0.5), .fadeAlpha(to: 1, duration: 0.5)]),
+        ])))
+
+        goalMarker.texture = assets.texture("fx_guide_arrow")
+        goalMarker.size = CGSize(width: World.tileSize * 1.2, height: World.tileSize * 1.2)
+        goalMarker.zRotation = -.pi / 2  // point down at the goal
+        goalMarker.zPosition = 20
+        goalMarker.isHidden = true
+        effectsLayer.addChild(goalMarker)
+        goalMarker.run(.repeatForever(.sequence([
+            .moveBy(x: 0, y: 18, duration: 0.45),
+            .moveBy(x: 0, y: -18, duration: 0.45),
+        ])))
+
+        destinationMarker.texture = assets.texture("fx_tile_highlight")
+        destinationMarker.size = CGSize(width: World.tileSize * 1.3, height: World.tileSize * 1.3)
+        destinationMarker.color = SKColor(red: 0.45, green: 0.75, blue: 1, alpha: 1)
+        destinationMarker.colorBlendFactor = 0.7
+        destinationMarker.zPosition = 6
+        destinationMarker.isHidden = true
+        flatLayer.addChild(destinationMarker)
     }
 
     /// Called after a reset or a big time jump: rebuild what depends on state.
     private func worldWasReset() {
-        placeTruck()
+        updateTruck()
         dragMode = .none
         // Weeds may need to come back (after a reset), so reload the chunks.
         chunks?.unloadAll()
@@ -164,6 +192,15 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
 
         game.update(dt: dt)
         guard let camera = cameraController else { return }
+        updateTruck()
+        if game.isDriving {
+            // Trail the truck, looking a little ahead of where it's going.
+            let velocity = game.motion.velocity
+            let lookAhead = Vec2(game.truckState.position.x + velocity.x * 0.35, game.truckState.position.y + velocity.y * 0.35)
+            camera.follow(World.point(lookAhead))
+        } else if camera.isFollowing {
+            camera.follow(nil)
+        }
         camera.update(dt: dt)
         chunks?.update(visibleRect: camera.visibleRect)
         updateLighting(force: false)
@@ -190,6 +227,37 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         let state = game.simulation.state
         fields?.sync(plots: state.plots, now: state.worldTime) { tile in
             chunks.isLoaded(WorldMap.chunk(containing: tile.center))
+        }
+        updateMarkers()
+    }
+
+    private func updateTruck() {
+        truck?.update(truck: game.truckState, speed: game.motion.speed, surface: game.truckSurface,
+                      cargoFraction: game.cargoFraction, guideTarget: game.isDriving ? game.guideTarget : nil)
+        if let destination = game.destination {
+            destinationMarker.position = World.point(destination)
+            destinationMarker.isHidden = false
+        } else {
+            destinationMarker.isHidden = true
+        }
+    }
+
+    /// Tutorial highlights (refreshed with the fields, a few times a second).
+    private func updateMarkers() {
+        if let tile = game.tutorialTargetTile, !game.isDriving {
+            tutorialRing.position = World.point(tile.center)
+            tutorialRing.isHidden = false
+        } else {
+            tutorialRing.isHidden = true
+        }
+        if let goal = game.guideTarget {
+            let point = World.point(goal)
+            if goalMarker.isHidden || abs(goalMarker.position.x - point.x) > 1 {
+                goalMarker.position = CGPoint(x: point.x, y: point.y + World.tileSize * 1.6)
+            }
+            goalMarker.isHidden = false
+        } else {
+            goalMarker.isHidden = true
         }
     }
 
@@ -237,10 +305,21 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         guard let view = gesture.view, let camera = cameraController else { return }
         switch gesture.state {
         case .began:
-            // One finger starting on farmland paints; anything else moves the camera.
             let location = gesture.location(in: view)
             let moved = gesture.translation(in: view)
             let start = CGPoint(x: location.x - moved.x, y: location.y - moved.y)
+            if game.isDriving {
+                // Driving: one finger is the joystick (in joystick mode); the camera follows the truck.
+                if game.driveControls == .joystick && gesture.numberOfTouches == 1 {
+                    dragMode = .joystick
+                    game.joystickBegan(at: start)
+                    game.joystickMoved(to: location)
+                } else {
+                    dragMode = .none
+                }
+                return
+            }
+            // One finger starting on farmland paints; anything else moves the camera.
             if gesture.numberOfTouches == 1, let startTile = tile(atScreen: start),
                let outcome = game.beginPaint(at: startTile) {
                 dragMode = .paint
@@ -258,14 +337,17 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
             case .camera:
                 camera.drag(byScreenDelta: gesture.translation(in: view))
                 gesture.setTranslation(.zero, in: view)
+            case .joystick:
+                game.joystickMoved(to: gesture.location(in: view))
             case .none:
                 break
             }
         case .ended, .cancelled, .failed:
-            if dragMode == .paint {
-                game.endPaint()
-            } else if dragMode == .camera {
-                camera.endDrag(screenVelocity: gesture.velocity(in: view))
+            switch dragMode {
+            case .paint: game.endPaint()
+            case .camera: camera.endDrag(screenVelocity: gesture.velocity(in: view))
+            case .joystick: game.joystickEnded()
+            case .none: break
             }
             dragMode = .none
             lastPaintTile = nil
@@ -297,10 +379,13 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         guard let view = gesture.view, let camera = cameraController else { return }
         let point = camera.worldPoint(fromScreen: gesture.location(in: view))
 
-        // Tap the truck: the camera glides to it.
-        if let truck = truckNode, truck.calculateAccumulatedFrame().contains(point) {
-            camera.focus(on: truck.position, animated: true)
-            Haptics.tap()
+        if game.isDriving {
+            if game.driveControls == .tapToDrive { game.driveTo(World.tiles(point)) }
+            return
+        }
+        // Tap the truck to get in and drive.
+        if let body = truck?.body, body.calculateAccumulatedFrame().contains(point) {
+            game.startDriving()
             return
         }
         let tile = TileCoord(containing: World.tiles(point))
