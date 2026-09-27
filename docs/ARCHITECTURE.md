@@ -216,6 +216,22 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   farmer (`byWorker`: no reach, energy or XP). The app's `EstateRenderer` walks their sprite to
   the last task's spot. Wages are a line in `Bank.weeklyBills`.
 
+## The daily loop and weather (Phase 9)
+
+- **Daily chores** (`DailyRoutine`, `DailyState`): each morning (`BusinessSystem.morning`) three
+  chores are drawn for the day from what the farm can do, counted as goal-counter progress since
+  the morning. Rewards are claimed one by one, then an all-done bonus that grows with the streak.
+  The streak is counted at the next morning. Chores and the **market special** (one obtainable
+  item paying `Balance.marketSpecialBonus` extra) come from a hash of the day, not the game's RNG.
+- **Weather** (`Weather.on(day:)`): fixed per day from a hash, weighted by season. `WeatherSystem`
+  runs first over each span (like sprinklers): on rainy days it tops up every plot's `wetUntil`
+  to the day's end plus half a day. Snow is visual.
+- **App side:** seasons switch chunk and tree art and tint the terrain shader (plus snow cover);
+  `WeatherRenderer` recycles rain/snow particles over the visible rect; `Sound` plays bundle
+  recordings named like the audio manifest, else synthesized placeholders.
+
+## Saves
+
 - File: `Application Support/Saves/farm.json` plus `farm.backup.json` (the previous save).
   Writes are atomic; a crash can never lose both.
 - Envelope (`SaveFile`): `version`, `revision` (increments every save), `deviceID`, `createdAt`,
@@ -236,7 +252,8 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   drive, sell) is new to existing players; it can be skipped in one tap. v4 (Phase 4: `ranch`,
   `woodland`). v5 (Phase 5: `farmer`, `goals`). v6 (Phase 6: `contracts`, `finance`; a migrated
   save starts its books in the current week and gets fresh orders on the first step). v7 (Phase 7:
-  `store`, not rented). v8 (Phase 8: `estate`: upgrades, sprinklers, farmhands).
+  `store`, not rented). v8 (Phase 8: `estate`: upgrades, sprinklers, farmhands). v9 (Phase 9:
+  `daily`: chores, streak, market special).
 
 ## Rendering
 
@@ -285,12 +302,13 @@ fingers move the camera. Plant jobs carry the packet that was in hand when they 
 
 ## Known limitations
 
-- The iOS app code has not been compiled by Xcode yet (see the README); the core is compiled and
-  tested on Linux.
+- The core is compiled and tested on Linux; the app code is type-checked there against stand-in
+  modules, so each change's first real build happens in Xcode.
+- Sound effects are synthesized placeholders until recordings are added; there is no music yet.
+- The shop and the farmhands only work while the game is open (like the calendar); crops,
+  animals and sprinklers keep going while it's closed.
 - Placeholder art is drawn procedurally at startup (well under a second). If that grows, it can
   be cached to disk or moved off the main thread.
-- Seasonal visuals (trees, grass, snow) are listed in the manifest but arrive in Phase 7; the
-  world currently always renders summer foliage.
 - Crop sprites use individual textures. Big fields may want a runtime texture atlas so SpriteKit
   can batch them (Phase 8 performance pass).
 - There is one market with one price per item per day. Contracts (Phase 6) and your own shop
