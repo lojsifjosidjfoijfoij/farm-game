@@ -9,7 +9,8 @@ public enum TreeAction: Equatable, Sendable {
 
 public enum TreeFailure: Equatable, Sendable {
     case notYourLand
-    case truckNotHere
+    case tooFar
+    case tooTired
     case noTree
     case notGrown
     case noFruit
@@ -117,18 +118,27 @@ public struct Forestry: Sendable {
 
     // MARK: Rules
 
-    public func accessProblem(at tile: TileCoord, in state: GameState) -> TreeFailure? {
+    public func accessProblem(at tile: TileCoord, in state: GameState, checkReach: Bool = true) -> TreeFailure? {
         guard let property = PropertyCatalog.property(containing: tile),
               state.ownedProperties.contains(property.id) else { return .notYourLand }
-        guard property.area.insetBy(-3).contains(state.truck.position) else { return .truckNotHere }
+        if checkReach {
+            guard !state.farmer.inTruck,
+                  state.farmer.position.distance(to: position(of: tile)) <= balance.workReach + 0.3 else { return .tooFar }
+        }
         return nil
+    }
+
+    /// Where the farmer stands to work a tree: just in front of the trunk.
+    public func workSpot(for tile: TileCoord, in state: GameState) -> Vec2 {
+        let trunk = position(of: tile)
+        return Vec2(trunk.x, trunk.y - 0.9)
     }
 
     /// What a tap on a tree does: chop full-grown wood trees, clear stumps,
     /// pick ripe fruit. Fruit trees are never chopped by a tap (the info card
     /// offers it), and growing trees are left alone.
-    public func suggestedAction(at tile: TileCoord, in state: GameState) -> TreeAction? {
-        guard accessProblem(at: tile, in: state) == nil, let info = tree(at: tile, in: state) else { return nil }
+    public func suggestedAction(at tile: TileCoord, in state: GameState, checkReach: Bool = true) -> TreeAction? {
+        guard accessProblem(at: tile, in: state, checkReach: checkReach) == nil, let info = tree(at: tile, in: state) else { return nil }
         switch info.stage {
         case .stump: return .clearStump
         case .sapling, .young: return nil
@@ -142,13 +152,39 @@ public struct Forestry: Sendable {
     // MARK: Actions
 
     public func perform(_ action: TreeAction, at tile: TileCoord, in state: inout GameState) -> TreeResult {
-        if let problem = accessProblem(at: tile, in: state) { return fail(problem) }
-        switch action {
-        case .chop: return chop(tile, &state)
-        case .clearStump: return clearStump(tile, &state)
-        case .pickFruit: return pickFruit(tile, &state)
-        case .plant(let speciesID): return plant(speciesID, tile, &state)
+        // Planting happens on plowed soil, reached like any field tile.
+        if case .plant = action {
+            guard PropertyCatalog.property(containing: tile).map({ state.ownedProperties.contains($0.id) }) == true else {
+                return fail(.notYourLand)
+            }
+            guard !state.farmer.inTruck, state.farmer.position.distance(to: tile.center) <= balance.workReach else { return fail(.tooFar) }
+        } else if let problem = accessProblem(at: tile, in: state) {
+            return fail(problem)
         }
+        let cost: Double = switch action {
+        case .chop: balance.energyCost.chop
+        case .clearStump: balance.energyCost.clearStump
+        case .pickFruit: balance.energyCost.pickFruit
+        case .plant: balance.energyCost.plantTree
+        }
+        guard state.farmer.energy >= cost else { return fail(.tooTired) }
+        let result: TreeResult
+        switch action {
+        case .chop: result = chop(tile, &state)
+        case .clearStump: result = clearStump(tile, &state)
+        case .pickFruit: result = pickFruit(tile, &state)
+        case .plant(let speciesID): result = plant(speciesID, tile, &state)
+        }
+        if result.outcome.succeeded {
+            state.farmer.energy = max(0, state.farmer.energy - cost)
+            switch result.outcome {
+            case .chopped: state.goals.add(GoalCounter.treesChopped)
+            case .picked(let item, let amount, _): state.goals.add(GoalCounter.collected(item), amount)
+            case .planted(let id) where TreeCatalog.species(id)?.isFruitTree == true: state.goals.add(GoalCounter.fruitTreesPlanted)
+            default: break
+            }
+        }
+        return result
     }
 
     private func fail(_ failure: TreeFailure) -> TreeResult {

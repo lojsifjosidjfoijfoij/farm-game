@@ -79,6 +79,7 @@ public struct Simulation: Sendable {
         CropSystem(),
         AnimalSystem(),
         TreeSystem(),
+        FarmerSystem(),
         ClockSystem(),
     ]
 

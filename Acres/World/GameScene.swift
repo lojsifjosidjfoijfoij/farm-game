@@ -24,6 +24,8 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     private var fields: FieldRenderer?
     private var trees: TreeRenderer?
     private var ranch: RanchRenderer?
+    private var farmer: FarmerRenderer?
+    private var shownJobRevision = -1
     private var truck: TruckRenderer?
     /// Pulsing ring on the tile the tutorial points at.
     private let tutorialRing = SKSpriteNode(texture: nil)
@@ -39,7 +41,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     private var syncedFarmRevision = -1
 
     /// What a one-finger drag is doing: moving the camera or painting actions.
-    private enum DragMode { case none, camera, paint, joystick }
+    private enum DragMode { case none, camera, paint }
     private var dragMode = DragMode.none
     private var lastPaintTile: TileCoord?
 
@@ -120,6 +122,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         cameraController = camera
 
         truck = TruckRenderer(assets: assets, objectLayer: objectLayer, flatLayer: flatLayer, effectsLayer: effectsLayer)
+        farmer = FarmerRenderer(assets: assets, objectLayer: objectLayer, flatLayer: flatLayer, effectsLayer: effectsLayer)
         setUpMarkers()
         game.onWorldReset = { [weak self] in self?.worldWasReset() }
         game.onFeedback = { [weak self] feedback in self?.play(feedback) }
@@ -203,7 +206,12 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         game.update(dt: dt)
         guard let camera = cameraController else { return }
         updateTruck()
-        if game.isDriving {
+        farmer?.update(game.farmerVisual, dt: dt)
+        if game.jobRevision != shownJobRevision {
+            shownJobRevision = game.jobRevision
+            farmer?.showMarkers(game.jobMarkers)
+        }
+        if game.isDriving && !game.cameraFollowPaused {
             // Trail the truck, looking a little ahead of where it's going.
             let velocity = game.motion.velocity
             let lookAhead = Vec2(game.truckState.position.x + velocity.x * 0.35, game.truckState.position.y + velocity.y * 0.35)
@@ -325,22 +333,18 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
             let moved = gesture.translation(in: view)
             let start = CGPoint(x: location.x - moved.x, y: location.y - moved.y)
             if game.isDriving {
-                // Driving: one finger is the joystick (in joystick mode); the camera follows the truck.
-                if game.driveControls == .joystick && gesture.numberOfTouches == 1 {
-                    dragMode = .joystick
-                    game.joystickBegan(at: start)
-                    game.joystickMoved(to: location)
-                } else {
-                    dragMode = .none
-                }
+                // Driving: a drag looks around (the camera stops following
+                // until the next tap-to-drive).
+                game.cameraFollowPaused = true
+                camera.follow(nil)
+                dragMode = .camera
+                camera.beginDrag()
                 return
             }
-            // One finger starting on farmland paints; anything else moves the camera.
-            if gesture.numberOfTouches == 1, let startTile = tile(atScreen: start),
-               let outcome = game.beginPaint(at: startTile) {
+            // One finger starting on farmland lines up a row of jobs; anything else moves the camera.
+            if gesture.numberOfTouches == 1, let startTile = tile(atScreen: start), game.beginPaint(at: startTile) {
                 dragMode = .paint
                 lastPaintTile = startTile
-                showFeedback(outcome, at: startTile, painting: true)
                 paint(to: location)
             } else {
                 dragMode = .camera
@@ -353,8 +357,6 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
             case .camera:
                 camera.drag(byScreenDelta: gesture.translation(in: view))
                 gesture.setTranslation(.zero, in: view)
-            case .joystick:
-                game.joystickMoved(to: gesture.location(in: view))
             case .none:
                 break
             }
@@ -362,7 +364,6 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
             switch dragMode {
             case .paint: game.endPaint()
             case .camera: camera.endDrag(screenVelocity: gesture.velocity(in: view))
-            case .joystick: game.joystickEnded()
             case .none: break
             }
             dragMode = .none
@@ -376,9 +377,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     private func paint(to screenPoint: CGPoint) {
         guard let target = tile(atScreen: screenPoint), let last = lastPaintTile, target != last else { return }
         for tile in Self.tiles(from: last, to: target) {
-            if let outcome = game.paint(tile) {
-                showFeedback(outcome, at: tile, painting: true)
-            }
+            game.paint(tile)
         }
         lastPaintTile = target
     }
@@ -396,34 +395,20 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         let point = camera.worldPoint(fromScreen: gesture.location(in: view))
 
         if game.isDriving {
-            if game.driveControls == .tapToDrive { game.driveTo(World.tiles(point)) }
+            // Tap to drive there.
+            game.driveTo(World.tiles(point))
+            showTapRipple(at: point, color: SKColor(red: 0.45, green: 0.75, blue: 1, alpha: 1))
             return
         }
-        // Tap the truck to get in and drive.
+        // Tap the truck to walk over and hop in.
         if let body = truck?.body, body.calculateAccumulatedFrame().contains(point) {
-            game.startDriving()
+            game.tapTruck()
             return
         }
         let spot = World.tiles(point)
-        let tile = TileCoord(containing: spot)
-        guard game.map.isInside(tile) else { return }
-        // Fields first (they're what you tap most), then trees, then pens.
-        if game.simulation.state.plots[tile] == nil {
-            if let treeTile = game.treeTile(at: spot) {
-                game.tapTree(treeTile)
-                return
-            }
-            if let pen = PenCatalog.pen(tappedAt: spot) {
-                game.tapPen(pen)
-                return
-            }
-        }
-        switch game.tap(tile) {
-        case .performed(let outcome):
-            showFeedback(outcome, at: tile, painting: false)
-        case .inspected, .nothing:
-            showTileHighlight(tile)
-        }
+        guard game.map.isInside(TileCoord(containing: spot)) else { return }
+        game.handleTap(at: spot)
+        showTapRipple(at: point, color: .white)
     }
 
     @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
@@ -466,9 +451,23 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         if outcome.succeeded { syncFields() }
     }
 
-    /// Animations for pen and tree actions.
+    /// A soft ring where the finger landed.
+    private func showTapRipple(at point: CGPoint, color: SKColor) {
+        let ring = SKSpriteNode(texture: assets.texture("fx_tile_highlight"))
+        ring.size = CGSize(width: World.tileSize * 0.7, height: World.tileSize * 0.7)
+        ring.position = point
+        ring.color = color
+        ring.colorBlendFactor = 0.5
+        ring.zPosition = 5
+        flatLayer.addChild(ring)
+        ring.run(.sequence([.group([.scale(to: 1.5, duration: 0.35), .fadeOut(withDuration: 0.35)]), .removeFromParent()]))
+    }
+
+    /// Animations for pen, tree and field work.
     private func play(_ feedback: WorldFeedback) {
         switch feedback {
+        case .field(let outcome, let tile):
+            showFeedback(outcome, at: tile, painting: true)
         case .pen(let outcome, let penID):
             syncFields()
             switch outcome {

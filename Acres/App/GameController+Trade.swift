@@ -7,11 +7,15 @@ extension GameController {
     /// Opens the shop the truck is stopped at.
     func openNearbyShop() {
         guard let shop = nearbyShop else { return }
+        guard shop.isOpen(atHour: simulation.state.clock.hour) else {
+            showMessage("\(shop.name) is closed. It opens at \(String(format: "%02d:00", shop.opens)).")
+            Haptics.warning()
+            return
+        }
         if isDriving {
             motion = TruckMotion()
             autopilot = nil
-            joystickInput = nil
-            joystick = nil
+            destination = nil
         }
         openShop = shop
         Haptics.tap()
@@ -136,6 +140,9 @@ extension GameController {
         case .notAtShop(.livestock): "Drive to the livestock market."
         case .penNotRepaired(let penID): "Fix up the \(PenCatalog.pen(penID)?.name.lowercased() ?? "pen") at your farm first."
         case .penFull(let penID): "The \(PenCatalog.pen(penID)?.name.lowercased() ?? "pen") is full."
+        case .closed(let opens): "Closed for the night. Opens at \(String(format: "%02d:00", opens))."
+        case .truckNotHere(.market): "Bring the truck: your goods are in the truck bed."
+        case .truckNotHere: "Bring the truck to fill it up."
         case .notAtFarm: "Park the truck at your farm to load it."
         case .notEnoughMoney: "Not enough coins."
         case .locked(let level): "Unlocks at level \(level)."

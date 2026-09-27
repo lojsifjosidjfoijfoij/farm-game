@@ -2,38 +2,15 @@ import CoreGraphics
 import Foundation
 import AcresCore
 
-/// How the player steers (Settings).
-enum DriveControls: String, CaseIterable, Identifiable {
-    case joystick
-    case tapToDrive
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .joystick: "Joystick"
-        case .tapToDrive: "Tap to drive"
-        }
-    }
-
-    var hint: String {
-        switch self {
-        case .joystick: "Drag anywhere to steer."
-        case .tapToDrive: "Tap where you want to go."
-        }
-    }
-}
-
-/// The on-screen joystick, in screen points.
-struct JoystickVisual: Equatable {
-    var origin: CGPoint
-    var knob: CGPoint
+/// A place to drive to from the map menu (like a GPS).
+struct Destination: Identifiable, Equatable {
+    let id: String
+    let name: String
+    let symbol: String
+    let target: Vec2
 }
 
 extension GameController {
-    /// How far the knob can travel from where the thumb went down.
-    static let joystickRadius: CGFloat = 60
-
     var physics: TruckPhysics { TruckPhysics(map: map, tuning: balance.driving, woodland: simulation.state.woodland) }
     var truckState: TruckState { simulation.state.truck }
     var truckSurface: Terrain { physics.surface(at: simulation.state.truck.position) }
@@ -41,60 +18,56 @@ extension GameController {
 
     // MARK: Getting in and out
 
-    func startDriving() {
+    /// The farmer climbs in (they must be standing by the truck).
+    func enterTruck() {
         guard !isDriving, welcome == nil else { return }
         endPaint()
+        simulation.modify { $0.farmer.inTruck = true }
         isDriving = true
         motion = TruckMotion()
+        cameraFollowPaused = false
         showsSeedPicker = false
         dismissInspection()
         Haptics.tap()
+        refreshFarmer()
     }
 
+    /// Stops the truck and the farmer steps out beside it.
     func park() {
         guard isDriving else { return }
         isDriving = false
         motion = TruckMotion()
         autopilot = nil
-        joystickInput = nil
-        joystick = nil
         destination = nil
+        let spot = exitSpot()
+        simulation.modify { state in
+            state.farmer.inTruck = false
+            state.farmer.position = spot
+        }
         refreshTruck()
+        refreshFarmer()
         save()
         Haptics.tap()
     }
 
-    // MARK: Steering
-
-    func joystickBegan(at point: CGPoint) {
-        guard isDriving else { return }
-        joystick = JoystickVisual(origin: point, knob: point)
-        joystickInput = .idle
-        autopilot = nil
-        destination = nil
+    /// A free spot next to the truck for the farmer to step out onto.
+    private func exitSpot() -> Vec2 {
+        let truck = simulation.state.truck
+        let obstacles = Obstacles(map: map, state: simulation.state)
+        // Driver's side first, then the other side, then behind and in front.
+        let side = truck.heading + .pi / 2
+        let candidates = [side, side + .pi, truck.heading + .pi, truck.heading].map { angle in
+            Vec2(truck.position.x + cos(angle) * 1.1, truck.position.y + sin(angle) * 1.1)
+        }
+        return candidates.first { spot in
+            let tile = TileCoord(containing: spot)
+            return map.isInside(tile) && !obstacles.isBlocked(tile)
+        } ?? truck.position
     }
 
-    func joystickMoved(to point: CGPoint) {
-        guard var visual = joystick else { return }
-        let dx = point.x - visual.origin.x, dy = point.y - visual.origin.y
-        let length = hypot(dx, dy)
-        let radius = Self.joystickRadius
-        visual.knob = length > radius
-            ? CGPoint(x: visual.origin.x + dx / length * radius, y: visual.origin.y + dy / length * radius)
-            : point
-        joystick = visual
-        // Screen y points down; the map's y points up.
-        joystickInput = length < 6
-            ? .idle
-            : DriveInput(direction: Vec2(Double(dx), Double(-dy)), throttle: Double(min(1, length / radius)))
-    }
+    // MARK: Driving by tapping
 
-    func joystickEnded() {
-        joystick = nil
-        joystickInput = nil
-    }
-
-    /// Tap-to-drive: plans a route and lets the autopilot take the wheel.
+    /// Plans a route to a spot and lets the autopilot take the wheel.
     func driveTo(_ target: Vec2) {
         guard isDriving else { return }
         guard let path = Pathfinder.path(on: map, woodland: simulation.state.woodland,
@@ -104,14 +77,35 @@ extension GameController {
         }
         autopilot = Autopilot(path: path)
         destination = path.last
+        cameraFollowPaused = false
         Haptics.selection()
+    }
+
+    /// Places the map menu offers (the GPS).
+    var destinations: [Destination] {
+        var result = [Destination(id: "home", name: "Home farm", symbol: "house.fill", target: HomeValleyMap.truckParkingSpot)]
+        for shop in ShopCatalog.all {
+            let symbol = switch shop.kind {
+            case .market: "basket.fill"
+            case .seedShop: "leaf.fill"
+            case .gasStation: "fuelpump.fill"
+            case .livestock: "hare.fill"
+            }
+            result.append(Destination(id: shop.id, name: shop.name, symbol: symbol, target: shop.zone.center))
+        }
+        return result
+    }
+
+    func drive(to destination: Destination) {
+        driveTo(destination.target)
+        showMessage("Driving to \(destination.name).")
     }
 
     // MARK: Per frame
 
     func updateDriving(dt: TimeInterval) {
         guard isDriving else { return }
-        var input = joystickInput ?? .idle
+        var input = DriveInput.idle
         if var pilot = autopilot {
             if let next = pilot.input(for: simulation.state.truck) {
                 input = next
@@ -148,21 +142,13 @@ extension GameController {
             cargoCount = truck.cargoCount
         }
         let stopped = !isDriving || motion.isStopped
-        let shop = stopped ? ShopCatalog.shop(at: truck.position) : nil
+        let here = simulation.state.farmerPosition
+        let shop = stopped ? ShopCatalog.all.first { $0.zone.insetBy(-1).contains(here) } : nil
         if shop != nearbyShop {
             nearbyShop = shop
             if shop?.kind == .market { advanceTutorial(.arrivedAtMarket) }
         }
         let atFarm = trading.truckIsAtFarm(simulation.state)
         if atFarm != truckAtFarm { truckAtFarm = atFarm }
-    }
-
-    func setDriveControls(_ controls: DriveControls) {
-        driveControls = controls
-        UserDefaults.standard.set(controls.rawValue, forKey: Settings.controlsKey)
-        autopilot = nil
-        destination = nil
-        joystick = nil
-        joystickInput = nil
     }
 }

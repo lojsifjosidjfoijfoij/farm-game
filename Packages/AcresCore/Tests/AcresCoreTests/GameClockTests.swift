@@ -58,7 +58,8 @@ final class GameClockTests: XCTestCase {
         XCTAssertEqual(DayPhase.at(hour: 3), .night)
     }
 
-    func testALightingDayLastsSixteenRealMinutesByDefault() {
-        XCTAssertEqual(Balance.standard.gameMinutesPerRealSecond * 16 * 60, GameClock.minutesPerDay, accuracy: 1e-9)
+    func testAGameDayLastsTwentyFourRealMinutesByDefault() {
+        XCTAssertEqual(Balance.standard.gameMinutesPerRealSecond, 1, accuracy: 1e-9, "one game minute per real second")
+        XCTAssertEqual(Balance.standard.gameMinutesPerRealSecond * 24 * 60, GameClock.minutesPerDay, accuracy: 1e-9)
     }
 }

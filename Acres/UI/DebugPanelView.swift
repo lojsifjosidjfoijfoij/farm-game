@@ -18,6 +18,8 @@ struct DebugPanelView: View {
                     }
                     .pickerStyle(.segmented)
                     Button("Skip to next morning") { game.debugSkipToNextMorning() }
+                    Button("Jump to 20:00 (evening)") { game.debugJump(toHour: 20) }
+                    Button("Refill the farmer's energy") { game.debugRefillEnergy() }
                 }
 
                 Section {

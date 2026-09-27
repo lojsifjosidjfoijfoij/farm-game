@@ -9,7 +9,7 @@ import Foundation
 /// placeholder art = dropping in a PNG with the right name. No code changes.
 public struct AssetSpec: Hashable, Sendable {
     public enum Category: String, CaseIterable, Sendable {
-        case terrain, field, crop, tree, nature, building, prop, vehicle, animal, item, effect, ui
+        case terrain, field, crop, tree, nature, building, prop, vehicle, character, animal, item, effect, ui
 
         public var title: String {
             switch self {
@@ -21,6 +21,7 @@ public struct AssetSpec: Hashable, Sendable {
             case .building: "Buildings"
             case .prop: "Props"
             case .vehicle: "Vehicles"
+            case .character: "Characters"
             case .animal: "Animals"
             case .item: "Item icons"
             case .effect: "Effects & particles"

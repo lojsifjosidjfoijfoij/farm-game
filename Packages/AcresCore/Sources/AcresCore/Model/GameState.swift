@@ -51,6 +51,12 @@ public struct GameState: Codable, Equatable, Sendable {
     /// Trees the player planted, chopped or cleared. (v4)
     public var woodland: Woodland
 
+    /// The farmer: where they are, how rested, whether they're driving. (v5)
+    public var farmer: FarmerState
+
+    /// Progress toward goals, and which rewards were claimed. (v5)
+    public var goals: GoalState
+
     public init(
         worldTime: TimeInterval,
         clock: GameClock,
@@ -64,7 +70,9 @@ public struct GameState: Codable, Equatable, Sendable {
         ownedProperties: [String] = [PropertyCatalog.homeFarm.id],
         tutorial: TutorialState = .new,
         ranch: Ranch = Ranch(),
-        woodland: Woodland = Woodland()
+        woodland: Woodland = Woodland(),
+        farmer: FarmerState = FarmerState(),
+        goals: GoalState = GoalState()
     ) {
         self.worldTime = worldTime
         self.clock = clock
@@ -79,7 +87,12 @@ public struct GameState: Codable, Equatable, Sendable {
         self.tutorial = tutorial
         self.ranch = ranch
         self.woodland = woodland
+        self.farmer = farmer
+        self.goals = goals
     }
+
+    /// Where the farmer is: in the truck, or on foot.
+    public var farmerPosition: Vec2 { farmer.inTruck ? truck.position : farmer.position }
 
     /// A brand-new game: Year 1, Spring 1, 06:00, a little money, a few seeds and an old truck.
     public static func newGame(seed: UInt64, balance: Balance = .standard) -> GameState {
@@ -96,7 +109,9 @@ public struct GameState: Codable, Equatable, Sendable {
             ownedProperties: [PropertyCatalog.homeFarm.id],
             tutorial: .new,
             ranch: Ranch(),
-            woodland: Woodland()
+            woodland: Woodland(),
+            farmer: FarmerState(position: HomeValleyMap.farmhouseDoor, energy: balance.energyMax),
+            goals: GoalState()
         )
     }
 }
@@ -132,6 +147,21 @@ public struct TruckState: Codable, Equatable, Sendable {
 
     /// Items in the bed.
     public var cargoCount: Int { cargo.items.values.reduce(0, +) }
+}
+
+/// The farmer. On foot they walk to jobs; in the truck they drive.
+public struct FarmerState: Codable, Equatable, Sendable {
+    /// Where they stand (tile units). Ignored while in the truck.
+    public var position: Vec2
+    /// 0…`Balance.energyMax`. Work and hours awake use it up; sleep refills it.
+    public var energy: Double
+    public var inTruck: Bool
+
+    public init(position: Vec2 = HomeValleyMap.farmhouseDoor, energy: Double = 100, inTruck: Bool = false) {
+        self.position = position
+        self.energy = energy
+        self.inTruck = inTruck
+    }
 }
 
 /// Lifetime statistics, handy for achievements and for debugging saves.

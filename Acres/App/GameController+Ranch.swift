@@ -3,6 +3,7 @@ import AcresCore
 
 /// What the scene should animate after a pen or tree action.
 enum WorldFeedback {
+    case field(FarmOutcome, tile: TileCoord)
     case pen(RanchOutcome, penID: String)
     case tree(TreeOutcome, tile: TileCoord, position: Vec2)
 }
@@ -12,18 +13,6 @@ extension GameController {
     var forestry: Forestry { Forestry(map: map, balance: balance) }
 
     // MARK: Pens
-
-    /// One tap on a pen: collect, water or feed, whichever comes first. A
-    /// run-down pen shows its card instead (repairs cost coins, so they're a
-    /// deliberate button press).
-    func tapPen(_ pen: PenDefinition) {
-        guard welcome == nil else { return }
-        guard let action = ranching.suggestedAction(for: pen, in: simulation.state), action != .repair else {
-            inspect(.pen(pen.id))
-            return
-        }
-        performPen(action, pen)
-    }
 
     @discardableResult
     func performPen(_ action: PenAction, _ pen: PenDefinition) -> RanchOutcome {
@@ -52,7 +41,8 @@ extension GameController {
         let plural = pen.species?.plural ?? "animals"
         switch failure {
         case .notYourLand: return "This isn't your land."
-        case .truckNotHere: return "Park your truck at the farm to look after the animals."
+        case .tooFar: return "Walk over to the \(pen.name.lowercased()) first."
+        case .tooTired: return "Your farmer is exhausted. Time for bed!"
         case .locked(let level): return "The \(pen.name.lowercased()) can be fixed up at level \(level)."
         case .notEnoughMoney: return "Repairs cost \(pen.repairCost) coins."
         case .notRepaired: return "Fix up the \(pen.name.lowercased()) first."
@@ -122,16 +112,6 @@ extension GameController {
         forestry.treeTile(at: point, in: simulation.state)
     }
 
-    /// One tap on a tree: chop, clear the stump or pick fruit; otherwise its card.
-    func tapTree(_ tile: TileCoord) {
-        guard welcome == nil else { return }
-        guard let action = forestry.suggestedAction(at: tile, in: simulation.state) else {
-            inspect(.tree(tile))
-            return
-        }
-        performTree(action, at: tile)
-    }
-
     @discardableResult
     func performTree(_ action: TreeAction, at tile: TileCoord) -> TreeOutcome {
         let position = forestry.position(of: tile)
@@ -157,7 +137,8 @@ extension GameController {
     private func message(for failure: TreeFailure) -> String? {
         switch failure {
         case .notYourLand: return "This tree isn't on your land."
-        case .truckNotHere: return "Park your truck at the farm to work here."
+        case .tooFar: return nil
+        case .tooTired: return "Your farmer is exhausted. Time for bed!"
         case .storageFull: return "Storage is full (\(storageUsed)/\(storageCapacity)). Sell or make room first."
         case .noSaplings: return "No saplings of that kind left."
         case .notGrown: return "Let it grow first."
@@ -170,7 +151,7 @@ extension GameController {
         guard let info = forestry.tree(at: tile, in: state) else {
             return TileInspection(target: .tree(tile), title: "Cleared", detail: "Nothing grows here now.", icon: nil, symbol: "leaf")
         }
-        let owned = forestry.accessProblem(at: tile, in: state) != .notYourLand
+        let owned = forestry.accessProblem(at: tile, in: state, checkReach: false) != .notYourLand
         let species = info.species
         let title = species?.name ?? "Old stump"
         let sapling = species.map { "item_sapling_\($0.id)" }
@@ -212,9 +193,14 @@ extension GameController {
         guard let action = inspection?.action else { return }
         switch action {
         case .repairPen(let id):
-            if let pen = PenCatalog.pen(id) { performPen(.repair, pen) }
+            // The farmer walks to the gate and fixes it up (coins are paid then).
+            if let pen = PenCatalog.pen(id) { queuePenJob(pen, repair: true) }
+            dismissInspection()
         case .chopTree(let tile):
-            performTree(.chop, at: tile)
+            queueTreeJob(tile, chop: true)
+            dismissInspection()
+        case .goToBed:
+            goToBed()
         }
     }
 

@@ -1,8 +1,9 @@
 import SwiftUI
 import AcresCore
 
-/// Minimal heads-up display: money, level, date/time, messages, the seed
-/// button and the inventory. Big touch targets, one thumb.
+/// The heads-up display: money and level, the clock and the farmer's
+/// energy, the current goal, messages, and the buttons along the bottom.
+/// Big touch targets, one thumb.
 struct HUDView: View {
     @Bindable var game: GameController
 
@@ -12,10 +13,12 @@ struct HUDView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     moneyPill
                     levelPill
+                    if !game.tutorial.isActive, let goal = game.openGoals.first { goalTracker(goal) }
                 }
                 Spacer(minLength: 12)
                 VStack(alignment: .trailing, spacing: 6) {
-                    seasonPill
+                    clockPill
+                    energyPill
                     if game.isDriving || game.fuelFraction < 0.999 { fuelPill }
                 }
             }
@@ -48,6 +51,12 @@ struct HUDView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
+            if game.jobCount > 0 && !game.isDriving {
+                jobChip
+                    .padding(.bottom, 10)
+                    .transition(.scale.combined(with: .opacity))
+            }
+
             if let shop = game.nearbyShop, game.openShop == nil {
                 shopButton(shop)
                     .padding(.bottom, 10)
@@ -66,7 +75,9 @@ struct HUDView: View {
                 debugButton
                 #endif
                 driveButton
+                if game.isDriving { mapMenu }
                 Spacer()
+                if !game.isDriving && (game.isBedtime || game.tutorialFocus == .bedButton) { bedButton }
                 if !game.isDriving { seedButton }
                 inventoryButton
             }
@@ -79,91 +90,10 @@ struct HUDView: View {
         .animation(.spring(duration: 0.35), value: game.nearbyShop)
         .animation(.spring(duration: 0.35), value: game.tutorialCard)
         .animation(.spring(duration: 0.35), value: game.isDriving)
+        .animation(.spring(duration: 0.35), value: game.jobCount > 0)
     }
 
-    private var seasonPill: some View {
-        HStack(spacing: 6) {
-            GameIcon(asset: "ui_icon_season_\(game.season.name.lowercased())",
-                     fallbackSymbol: Theme.seasonSymbol(game.season), tint: Theme.seasonColor(game.season), size: 18)
-            Text(game.season.name)
-                .font(Theme.label(16, weight: .semibold))
-                .foregroundStyle(Theme.ink)
-            Text("· \(Format.duration(game.seasonTimeLeft))")
-                .font(Theme.number(14))
-                .foregroundStyle(Theme.inkSoft)
-        }
-        .hudPanel()
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(game.season.name), next season in \(Format.duration(game.seasonTimeLeft))")
-    }
-
-    private var fuelPill: some View {
-        HStack(spacing: 6) {
-            GameIcon(asset: "ui_icon_fuel", fallbackSymbol: "fuelpump.fill",
-                     tint: game.fuelFraction < 0.15 ? Color(red: 0.8, green: 0.3, blue: 0.25) : Theme.inkSoft, size: 16)
-            ProgressView(value: game.fuelFraction)
-                .tint(game.fuelFraction < 0.15 ? Color(red: 0.8, green: 0.3, blue: 0.25) : Theme.leaf)
-                .frame(width: 56)
-        }
-        .padding(.vertical, -2)
-        .hudPanel(cornerRadius: 12)
-        .accessibilityLabel("Fuel \(Int(game.fuelFraction * 100)) percent")
-    }
-
-    /// Get in the truck / park it.
-    private var driveButton: some View {
-        Button {
-            if game.isDriving { game.park() } else { game.startDriving() }
-        } label: {
-            HStack(spacing: 8) {
-                GameIcon(asset: "ui_icon_truck", fallbackSymbol: game.isDriving ? "parkingsign.circle.fill" : "truck.pickup.side.fill",
-                         tint: .white, size: 24)
-                Text(game.isDriving ? "Park" : "Drive")
-                    .font(Theme.label(17, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
-            .padding(.horizontal, 16)
-            .frame(height: 52)
-            .background(
-                Capsule().fill(game.isDriving ? Color(red: 0.55, green: 0.42, blue: 0.28) : Theme.leafDark)
-                    .shadow(color: .black.opacity(0.25), radius: 6, y: 3)
-            )
-        }
-        .buttonStyle(.plain)
-        .pulsing(game.tutorialFocus == .driveButton)
-        .accessibilityLabel(game.isDriving ? "Park the truck" : "Drive the truck")
-    }
-
-    private func shopButton(_ shop: ShopDefinition) -> some View {
-        let title: String = switch shop.kind {
-        case .market: "Sell at \(shop.name)"
-        case .seedShop: "Open the Seed Shop"
-        case .gasStation: "Fill up the tank"
-        case .livestock: "Visit \(shop.name)"
-        }
-        let symbol: String = switch shop.kind {
-        case .market: "basket.fill"
-        case .seedShop: "leaf.fill"
-        case .gasStation: "fuelpump.fill"
-        case .livestock: "hare.fill"
-        }
-        return Button {
-            game.openNearbyShop()
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: symbol)
-                    .font(.system(size: 20, weight: .semibold))
-                Text(title)
-                    .font(Theme.label(18, weight: .semibold))
-            }
-            .foregroundStyle(.white)
-            .padding(.horizontal, 22)
-            .frame(height: 54)
-            .background(Capsule().fill(Theme.gold).shadow(color: .black.opacity(0.25), radius: 6, y: 3))
-        }
-        .buttonStyle(.plain)
-        .pulsing(game.tutorialFocus == .shopButton)
-    }
+    // MARK: Top
 
     private var moneyPill: some View {
         HStack(spacing: 8) {
@@ -196,7 +126,208 @@ struct HUDView: View {
         .accessibilityLabel("Farmer level \(game.level)")
     }
 
-    /// Shows the packet that tapping empty soil will plant.
+    /// The first open goal; tap for all goals.
+    private func goalTracker(_ goal: GoalProgress) -> some View {
+        let claimable = game.openGoals.contains(where: \.isComplete)
+        return Button {
+            game.showsGoals = true
+            Haptics.tap()
+        } label: {
+            HStack(spacing: 6) {
+                GameIcon(asset: "ui_icon_goals", fallbackSymbol: claimable ? "gift.fill" : "flag.checkered",
+                         tint: claimable ? Theme.gold : Theme.leafDark, size: 16)
+                if claimable {
+                    Text("Goal done! Claim")
+                        .font(Theme.label(13, weight: .bold))
+                        .foregroundStyle(Theme.ink)
+                } else {
+                    Text(goal.goal.title)
+                        .font(Theme.label(13, weight: .semibold))
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(1)
+                    Text("\(goal.current)/\(goal.target)")
+                        .font(Theme.number(12))
+                        .foregroundStyle(Theme.inkSoft)
+                }
+            }
+            .padding(.vertical, -2)
+            .hudPanel(cornerRadius: 12)
+        }
+        .buttonStyle(.plain)
+        .pulsing(claimable)
+        .accessibilityLabel(claimable ? "A goal is complete. Claim the reward." : "Goal: \(goal.goal.title), \(goal.current) of \(goal.target)")
+    }
+
+    private var clockPill: some View {
+        VStack(alignment: .trailing, spacing: 1) {
+            HStack(spacing: 6) {
+                Image(systemName: Theme.clockSymbol(hour: game.hour))
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Theme.gold)
+                Text(game.clockText)
+                    .font(Theme.number(18))
+                    .foregroundStyle(Theme.ink)
+            }
+            HStack(spacing: 4) {
+                Image(systemName: Theme.seasonSymbol(game.season))
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Theme.seasonColor(game.season))
+                Text("\(game.season.name) · \(game.weekText)")
+                    .font(Theme.label(11, weight: .semibold))
+                    .foregroundStyle(Theme.inkSoft)
+            }
+        }
+        .hudPanel()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(game.clockText), \(game.season.name), \(game.weekText)")
+    }
+
+    private var energyPill: some View {
+        let low = game.energyFraction < 0.2
+        return HStack(spacing: 6) {
+            GameIcon(asset: "ui_icon_energy", fallbackSymbol: "bolt.fill",
+                     tint: low ? Color(red: 0.8, green: 0.3, blue: 0.25) : Theme.gold, size: 15)
+            ProgressView(value: game.energyFraction)
+                .tint(low ? Color(red: 0.8, green: 0.3, blue: 0.25) : Color(red: 0.95, green: 0.72, blue: 0.2))
+                .frame(width: 58)
+        }
+        .padding(.vertical, -2)
+        .hudPanel(cornerRadius: 12)
+        .accessibilityLabel("Energy \(Int(game.energyFraction * 100)) percent")
+    }
+
+    private var fuelPill: some View {
+        HStack(spacing: 6) {
+            GameIcon(asset: "ui_icon_fuel", fallbackSymbol: "fuelpump.fill",
+                     tint: game.fuelFraction < 0.15 ? Color(red: 0.8, green: 0.3, blue: 0.25) : Theme.inkSoft, size: 15)
+            ProgressView(value: game.fuelFraction)
+                .tint(game.fuelFraction < 0.15 ? Color(red: 0.8, green: 0.3, blue: 0.25) : Theme.leaf)
+                .frame(width: 58)
+        }
+        .padding(.vertical, -2)
+        .hudPanel(cornerRadius: 12)
+        .accessibilityLabel("Fuel \(Int(game.fuelFraction * 100)) percent")
+    }
+
+    // MARK: Middle
+
+    /// "5 jobs lined up · Stop".
+    private var jobChip: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "hammer.fill")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Theme.leafDark)
+            Text(game.jobCount == 1 ? "1 job lined up" : "\(game.jobCount) jobs lined up")
+                .font(Theme.label(15, weight: .semibold))
+                .foregroundStyle(Theme.ink)
+            Button("Stop") {
+                game.cancelJobs()
+                Haptics.tap()
+            }
+            .font(Theme.label(14, weight: .bold))
+            .foregroundStyle(Color(red: 0.75, green: 0.3, blue: 0.22))
+        }
+        .hudPanel(cornerRadius: 18)
+    }
+
+    private func shopButton(_ shop: ShopDefinition) -> some View {
+        let open = shop.isOpen(atHour: game.hour)
+        let title: String = if !open {
+            "\(shop.name) · opens \(String(format: "%02d:00", shop.opens))"
+        } else {
+            switch shop.kind {
+            case .market: "Sell at \(shop.name)"
+            case .seedShop: "Open the Seed Shop"
+            case .gasStation: "Fill up the tank"
+            case .livestock: "Visit \(shop.name)"
+            }
+        }
+        let symbol: String = switch shop.kind {
+        case .market: "basket.fill"
+        case .seedShop: "leaf.fill"
+        case .gasStation: "fuelpump.fill"
+        case .livestock: "hare.fill"
+        }
+        return Button {
+            game.openNearbyShop()
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: open ? symbol : "moon.zzz.fill")
+                    .font(.system(size: 20, weight: .semibold))
+                Text(title)
+                    .font(Theme.label(18, weight: .semibold))
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 22)
+            .frame(height: 54)
+            .background(Capsule().fill(open ? Theme.gold : Color(red: 0.5, green: 0.5, blue: 0.55))
+                .shadow(color: .black.opacity(0.25), radius: 6, y: 3))
+        }
+        .buttonStyle(.plain)
+        .pulsing(open && game.tutorialFocus == .shopButton)
+    }
+
+    // MARK: Bottom
+
+    /// Hop in (the farmer walks to the truck) / get out.
+    private var driveButton: some View {
+        Button {
+            if game.isDriving { game.park() } else { game.startDriving() }
+        } label: {
+            HStack(spacing: 8) {
+                GameIcon(asset: "ui_icon_truck", fallbackSymbol: game.isDriving ? "figure.walk" : "truck.pickup.side.fill",
+                         tint: .white, size: 24)
+                Text(game.isDriving ? "Get out" : "Drive")
+                    .font(Theme.label(17, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+            .padding(.horizontal, 16)
+            .frame(height: 52)
+            .background(
+                Capsule().fill(game.isDriving ? Color(red: 0.55, green: 0.42, blue: 0.28) : Theme.leafDark)
+                    .shadow(color: .black.opacity(0.25), radius: 6, y: 3)
+            )
+        }
+        .buttonStyle(.plain)
+        .pulsing(game.tutorialFocus == .driveButton)
+        .accessibilityLabel(game.isDriving ? "Get out of the truck" : "Drive the truck")
+    }
+
+    /// The GPS: pick a place and the truck drives there.
+    private var mapMenu: some View {
+        Menu {
+            ForEach(game.destinations) { destination in
+                Button {
+                    game.drive(to: destination)
+                } label: {
+                    Label(destination.name, systemImage: destination.symbol)
+                }
+            }
+        } label: {
+            GameIcon(asset: "ui_icon_map", fallbackSymbol: "map.fill", tint: Theme.ink, size: 26)
+                .frame(width: 52, height: 52)
+                .background(Circle().fill(Theme.parchment.opacity(0.95)).shadow(color: .black.opacity(0.2), radius: 6, y: 3))
+                .overlay(Circle().strokeBorder(Theme.border, lineWidth: 1))
+        }
+        .pulsing(game.tutorial.step == .drive)
+        .accessibilityLabel("Map: drive somewhere")
+    }
+
+    private var bedButton: some View {
+        Button {
+            game.goToBed()
+        } label: {
+            GameIcon(asset: "ui_icon_bed", fallbackSymbol: "bed.double.fill", tint: Color(red: 0.35, green: 0.4, blue: 0.7), size: 26)
+                .frame(width: 60, height: 60)
+                .background(Circle().fill(Theme.parchment.opacity(0.95)).shadow(color: .black.opacity(0.2), radius: 6, y: 3))
+                .overlay(Circle().strokeBorder(Theme.border, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .pulsing(game.tutorialFocus == .bedButton)
+        .accessibilityLabel("Go to bed")
+    }
+
+    /// Shows the packet that tapping empty soil plants.
     private var seedButton: some View {
         Button {
             Haptics.tap()
@@ -477,29 +608,6 @@ struct TutorialCardView: View {
     }
 }
 
-/// The steering joystick, drawn where the thumb went down (visual only).
-struct JoystickOverlay: View {
-    let game: GameController
-
-    var body: some View {
-        ZStack {
-            if let stick = game.joystick {
-                Circle()
-                    .fill(Color.white.opacity(0.18))
-                    .overlay(Circle().strokeBorder(Color.white.opacity(0.6), lineWidth: 2))
-                    .frame(width: GameController.joystickRadius * 2, height: GameController.joystickRadius * 2)
-                    .position(stick.origin)
-                Circle()
-                    .fill(Color.white.opacity(0.85))
-                    .shadow(color: .black.opacity(0.25), radius: 4, y: 2)
-                    .frame(width: 56, height: 56)
-                    .position(stick.knob)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .allowsHitTesting(false)
-    }
-}
 
 /// A gentle pulsing glow that says "tap me" (tutorial).
 struct Pulsing: ViewModifier {

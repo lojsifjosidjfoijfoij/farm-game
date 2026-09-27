@@ -55,6 +55,12 @@ public enum OfflineCatchUp {
         let startsNewDay = away >= balance.offlineNewDayThreshold
         if startsNewDay {
             events += simulation.startNextMorning()
+            // Time away is time asleep: the farmer wakes rested, at home.
+            let energy = balance.energyMax
+            simulation.modify { state in
+                state.farmer.energy = energy
+                if !state.farmer.inTruck { state.farmer.position = HomeValleyMap.farmhouseDoor }
+            }
         }
         if away >= balance.welcomeBackMinimumAway {
             simulation.modify { $0.stats.returns += 1 }

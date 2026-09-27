@@ -114,9 +114,14 @@ final class DrivingTests: XCTestCase {
 
 final class TradingTests: XCTestCase {
 
+    /// A new game; with a position, the farmer has driven there by day.
     private func sim(at position: Vec2? = nil) -> Simulation {
         var state = GameState.newGame(seed: 5)
-        if let position { state.truck.position = position }
+        state.clock = GameClock(dayIndex: 0, hour: 10)
+        if let position {
+            state.truck.position = position
+            state.farmer.inTruck = true
+        }
         return Simulation(state: state)
     }
 
@@ -157,9 +162,10 @@ final class TradingTests: XCTestCase {
 
     func testLoadingAndUnloadingAtTheFarm() {
         var farm = sim()
-        farm.modify { $0.inventory.add("wheat", 20); $0.inventory.add("potato", 15) }
+        let bed = farm.balance.truckCargoCapacity
+        farm.modify { $0.inventory.add("wheat", bed); $0.inventory.add("potato", 15) }
         guard case .success(let moved) = farm.trade({ try $0.loadAll(state: &$1) }) else { return XCTFail() }
-        XCTAssertEqual(moved, 30, "the bed holds 30")
+        XCTAssertEqual(moved, bed, "the bed holds \(bed)")
         XCTAssertEqual(farm.state.truck.cargo.count("potato"), 15, "most valuable first")
         XCTAssertEqual(farm.trade { try $0.load("wheat", count: 1, state: &$1) }, .failure(.cargoFull))
         XCTAssertEqual(farm.trade { try $0.unload("potato", count: 5, state: &$1) }, .success(5))

@@ -28,30 +28,28 @@
 calls on the simulation. That keeps the rules unit-testable and lets the simulation
 fast-forward days in milliseconds.
 
-## Time: timers, not a clock
+## Time: a clock and days (Phase 5)
 
-Phase 1 shipped a visible 24-hour clock. After playing it, the decision (Phase 3) was
-**"no clock, just timers"**, Hay Day style: there is no time of day to watch, crops show short
-countdowns, and day/night is only a gentle lighting cycle. Internally there are still two clocks:
+The game is a farmer's version of Big Ambitions, so it runs on a visible clock again (Phase 3
+had tried "no clock, just timers"; the direction changed in Phase 5). One game day is 24 real
+minutes: one game minute per real second. There are still two clocks:
 
 | | Growth clock (`GameState.worldTime`) | Calendar (`GameState.clock`) |
 |---|---|---|
-| Measures | Real seconds the world has been simulated | In-game minutes since Year 1, Spring 1 |
-| While playing | Runs | Runs (1 lighting day = 16 min, `Balance.realSecondsPerGameDay`) |
+| Measures | Real seconds the world has been simulated | In-game minutes since Monday, Week 1, 06:00 |
+| While playing | Runs | Runs (1 game minute per real second) |
+| While sleeping | Runs through the night (`Simulation.sleep`) | Jumps to 06:00 |
 | While closed | Runs for the whole absence, capped at 3 days | Frozen; absences ≥ 1 h start a fresh morning |
-| Drives | Crops (animals, trees, machines, workers later) | Lighting, seasons, daily market prices |
-| Player sees | Countdowns ("Ready in 1m 20s") | Season + time until the next one ("Spring · 42m") |
+| Drives | Crops, animals, trees | Clock, weekdays, opening hours, lighting, seasons, energy |
 
 Consequences:
-- Growth durations are **real time** and short (wheat 30 s, carrots 1 min … pumpkins 12 min when
-  watered), so there is always something to come back to.
-- Seasons pass through **play** (4 lighting days ≈ 64 minutes per season), never by the wall
-  clock, so a night's sleep can't skip a season.
-- A crop planted in season always finishes, even if the season changes.
-- Changing the device clock can't hurt: going backwards simulates nothing, going forwards is
-  bounded by the 3-day cap.
+- Content durations are game days (`GameTime.days(n)`): wheat 1 day, pumpkins 6, eggs daily,
+  trees 3–9 days. Watering and troughs last a day.
+- A season is one week (7 days ≈ 2 h 50 min of play). Weekly bills arrive in Phase 6.
+- Absences are sleep: the farmer wakes rested at 06:00, and weekly deadlines can't be missed
+  by closing the app.
 
-All rules live in `OfflineCatchUp.swift` and are covered by `OfflineCatchUpTests`.
+All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
 
 ## The simulation
 
@@ -97,9 +95,9 @@ All rules live in `OfflineCatchUp.swift` and are covered by `OfflineCatchUpTests
   so gravel and dirt drift a little. Collisions are a circle against blocked tiles
   (`WorldMap.blockedTiles`): the truck slides along walls and reports a bump (haptic). Fuel drains
   per tile; an empty tank limps along at 35 % speed, so the player is never stranded.
-- **Controls** (device setting): *joystick* (drag anywhere, the stick appears under the thumb) or
-  *tap to drive* (A* over drivable tiles, `Pathfinder`, followed by an `Autopilot` that produces
-  the same `DriveInput` as the stick). The camera follows the truck with a little look-ahead.
+- **Controls:** tap to drive (A* over drivable tiles, `Pathfinder`, followed by an `Autopilot`
+  that produces `DriveInput`s). Phase 3 also had a joystick; Phase 5 removed it. The camera follows
+  the truck with a little look-ahead.
 - **A driving truck is never saved.** Physics state (`TruckMotion`) lives in the app; the save
   holds the truck's position, heading, fuel and cargo. Backgrounding the app parks the truck.
 - **The village** (east of the farm, `HomeValleyMap.buildVillageAndBeyond`): gas station, seed
@@ -147,6 +145,23 @@ All rules live in `OfflineCatchUp.swift` and are covered by `OfflineCatchUpTests
   additions are appended after the Phase 3 ones and only remove objects inside the new pens, so
   existing fields never end up under something new.
 
+## The farmer (Phase 5)
+
+- **State:** `GameState.farmer` (position, energy, in the truck). Where the farmer is decides what
+  can be worked: every farming, pen and tree rule checks reach (`Balance.workReach`) and energy;
+  planning a job skips the reach check (`checkReach: false`), because the farmer walks over first.
+- **Jobs** (app side, not saved): a tap lines up a job (`FarmerJob`), a drag lines up a row. The
+  controller walks the farmer along an A* path, plays a work animation for the job's duration,
+  then performs the core action (re-checked on arrival, since the tile may have changed).
+- **Energy:** drains per game hour awake (`FarmerSystem`, play only) and per job
+  (`Balance.energyCost`). Sleep (`Simulation.sleep`) runs the world to 06:00 and refills energy per
+  hour slept; past 02:00 the farmer passes out.
+- **Driving:** tap-only. Tap the truck (the farmer walks over and gets in), tap a spot or pick a
+  place from the map menu; the autopilot drives. Shops are used where the farmer is; the market
+  and the gas station also need the truck. Shops keep opening hours.
+- **Goals** (`GoalCatalog`, `GoalState`): a ladder of goals, three open at a time. Actions count
+  toward them in the core (`GoalCounter`); rewards are claimed from the goals sheet.
+
 ## Saves
 
 - File: `Application Support/Saves/farm.json` plus `farm.backup.json` (the previous save).
@@ -167,7 +182,7 @@ All rules live in `OfflineCatchUp.swift` and are covered by `OfflineCatchUpTests
 - History: v1 (Phase 1), v2 (Phase 2: plots, inventory, properties), v3 (Phase 3: truck fuel and
   cargo, tutorial). A migrated save starts the tutorial too, because the loop it teaches (load,
   drive, sell) is new to existing players; it can be skipped in one tap. v4 (Phase 4: `ranch`,
-  `woodland`).
+  `woodland`). v5 (Phase 5: `farmer`, `goals`).
 
 ## Rendering
 
@@ -195,13 +210,12 @@ All rules live in `OfflineCatchUp.swift` and are covered by `OfflineCatchUpTests
    placeholder (`PlaceholderPainter`), then shows a magenta checkerboard.
 3. Sprites are sized from the manifest, not from the image, so art at any resolution drops in.
 
-## Input model (decided in Phase 1 planning)
+## Input model (Phase 5)
 
-No walking avatar. The player touches their land directly (1–2 taps per action), but only on the
-property where the **truck is parked**. That gives driving a purpose and makes workers valuable on
-far-away properties. Camera: free pan/zoom when parked; follows the truck when driving.
-A one-finger drag that *starts on a field* paints actions across tiles; a drag anywhere else
-pans (or steers, while driving with the joystick); two fingers always pan and zoom.
+Tap to walk and work: the farmer walks to what you tap and does the job there. A one-finger drag
+that *starts on a field* lines up a row of jobs; a drag anywhere else pans; two fingers always pan
+and zoom. While driving, taps set the destination and drags look around. (Phases 1–4 had no
+avatar and farmed wherever the truck was parked; Phase 5 replaced that with the farmer.)
 
 ## Adding content
 

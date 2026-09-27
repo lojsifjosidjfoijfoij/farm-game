@@ -14,49 +14,58 @@ final class AnimalTests: XCTestCase {
         return Simulation(state: state, balance: balance)
     }
 
+    /// Tops up the coop's trough for a day.
+    private func fillTrough(_ sim: inout Simulation) {
+        sim.modify { $0.ranch["coop"].waterUntil = $0.worldTime + GameTime.day * 2 }
+    }
+
     /// A repaired coop with `count` chicks bought at the livestock market.
     private func farmWithChicks(_ count: Int, balance: Balance = .standard) -> Simulation {
         var sim = farm(balance: balance)
-        XCTAssertEqual(sim.perform(.repair, on: coop).outcome, .repaired(penID: "coop"))
-        sim.modify { $0.truck.position = HomeValleyMap.livestockZone.center }
+        XCTAssertEqual(sim.work(.repair, on: coop).outcome, .repaired(penID: "coop"))
+        sim.visit(HomeValleyMap.livestockZone)
         for _ in 0..<count {
             _ = sim.trade { try $0.buyAnimal("chicken", state: &$1) }
         }
-        sim.modify { $0.truck.position = HomeValleyMap.truckParkingSpot }
+        sim.goHome()
         return sim
     }
 
     func testRepairingAPenNeedsLevelAndCoins() {
         var low = farm(level: 1)
-        XCTAssertEqual(low.perform(.repair, on: coop).outcome, .failed(.locked(level: 2)))
+        XCTAssertEqual(low.work(.repair, on: coop).outcome, .failed(.locked(level: 2)))
         var poor = farm(money: 10)
-        XCTAssertEqual(poor.perform(.repair, on: coop).outcome, .failed(.notEnoughMoney))
+        XCTAssertEqual(poor.work(.repair, on: coop).outcome, .failed(.notEnoughMoney))
 
         var sim = farm()
         XCTAssertEqual(Ranching(balance: sim.balance).suggestedAction(for: coop, in: sim.state), .repair)
-        XCTAssertEqual(sim.perform(.repair, on: coop).outcome, .repaired(penID: "coop"))
+        XCTAssertEqual(sim.work(.repair, on: coop).outcome, .repaired(penID: "coop"))
         XCTAssertEqual(sim.state.money, 10_000 - coop.repairCost)
         XCTAssertTrue(sim.state.ranch["coop"].isRepaired)
         XCTAssertTrue(sim.state.ranch["coop"].hasWater(at: sim.state.worldTime), "repairs come with fresh water")
-        XCTAssertEqual(sim.perform(.repair, on: coop).outcome, .failed(.alreadyRepaired))
+        XCTAssertEqual(sim.work(.repair, on: coop).outcome, .failed(.alreadyRepaired))
     }
 
-    func testPensAreWorkedFromTheFarmOnly() {
+    func testPensAreWorkedFromTheGate() {
         var sim = farm()
-        sim.modify { $0.truck.position = HomeValleyMap.marketZone.center }
-        XCTAssertEqual(sim.perform(.repair, on: coop).outcome, .failed(.truckNotHere))
+        sim.visit(HomeValleyMap.marketZone)
+        XCTAssertEqual(sim.perform(.repair, on: coop).outcome, .failed(.tooFar))
+        sim.stand(at: HomeValleyMap.farmhouseDoor)
+        XCTAssertEqual(sim.perform(.repair, on: coop).outcome, .failed(.tooFar), "the door is too far from the coop")
+        sim.stand(at: Ranching.workSpot(coop))
+        XCTAssertEqual(sim.perform(.repair, on: coop).outcome, .repaired(penID: "coop"))
     }
 
     func testBuyingAnimals() {
         var sim = farm()
-        sim.modify { $0.truck.position = HomeValleyMap.livestockZone.center }
+        sim.visit(HomeValleyMap.livestockZone)
         XCTAssertEqual(sim.trade { try $0.buyAnimal("chicken", state: &$1) }.map(\.name), .failure(.penNotRepaired(penID: "coop")))
 
         var away = farmWithChicks(0)
         XCTAssertEqual(away.trade { try $0.buyAnimal("chicken", state: &$1) }.map(\.name), .failure(.notAtShop(.livestock)))
 
         var shop = farmWithChicks(0)
-        shop.modify { $0.truck.position = HomeValleyMap.livestockZone.center }
+        shop.visit(HomeValleyMap.livestockZone)
         let money = shop.state.money
         for _ in 0..<coop.capacity {
             guard case .success = shop.trade({ try $0.buyAnimal("chicken", state: &$1) }) else { return XCTFail("buy failed") }
@@ -70,7 +79,7 @@ final class AnimalTests: XCTestCase {
         XCTAssertTrue(animals.allSatisfy { !$0.isAdult && !$0.isHungry })
 
         var pigs = farm(level: 5)
-        pigs.modify { $0.truck.position = HomeValleyMap.livestockZone.center }
+        pigs.visit(HomeValleyMap.livestockZone)
         XCTAssertEqual(pigs.trade { try $0.buyAnimal("pig", state: &$1) }.map(\.name), .failure(.locked(level: 6)))
     }
 
@@ -85,31 +94,33 @@ final class AnimalTests: XCTestCase {
     func testTheOneTapOrderIsCollectWaterFeed() {
         var sim = farmWithChicks(2)
         sim.advance(by: chicken.growUpSeconds, mode: .live)
+        fillTrough(&sim)
         let ranching = Ranching(balance: sim.balance)
         XCTAssertEqual(ranching.suggestedAction(for: coop, in: sim.state), .feed)
         sim.modify { $0.ranch["coop"].waterUntil = 0 }
         XCTAssertEqual(ranching.suggestedAction(for: coop, in: sim.state), .water)
-        XCTAssertEqual(sim.perform(.water, on: coop).outcome, .watered)
+        XCTAssertEqual(sim.work(.water, on: coop).outcome, .watered)
         XCTAssertEqual(ranching.suggestedAction(for: coop, in: sim.state), .feed)
     }
 
     func testFeedingUsesTheFavouriteFoodAndCanRunOut() {
         var sim = farmWithChicks(3)
         sim.advance(by: chicken.growUpSeconds, mode: .live)
+        fillTrough(&sim)
         sim.modify { $0.inventory.add("wheat", 1); $0.inventory.add("animal_feed", 1) }
         let before = sim.state.ranch["coop"].animals[0].happiness
-        XCTAssertEqual(sim.perform(.feed, on: coop).outcome, .fed(animals: 2, eaten: ["wheat": 1, "animal_feed": 1]))
+        XCTAssertEqual(sim.work(.feed, on: coop).outcome, .fed(animals: 2, eaten: ["wheat": 1, "animal_feed": 1]))
         let animals = sim.state.ranch["coop"].animals
         XCTAssertEqual(animals.filter(\.isHungry).count, 1)
         XCTAssertEqual(animals[0].happiness, before + sim.balance.happinessPerFeeding, accuracy: 1e-9)
-        XCTAssertEqual(sim.perform(.feed, on: coop).outcome, .failed(.noFeed(speciesID: "chicken")))
+        XCTAssertEqual(sim.work(.feed, on: coop).outcome, .failed(.noFeed(speciesID: "chicken")))
     }
 
     func testProductionIsTwiceAsFastWithWater() {
         var sim = farmWithChicks(1)
         sim.advance(by: chicken.growUpSeconds, mode: .live)
         sim.modify { $0.inventory.add("wheat", 5) }
-        _ = sim.perform(.feed, on: coop)
+        _ = sim.work(.feed, on: coop)
         // The trough runs dry half-way through the product.
         let half = chicken.produceSeconds / 2
         sim.modify { $0.ranch["coop"].waterUntil = $0.worldTime + half }
@@ -125,12 +136,13 @@ final class AnimalTests: XCTestCase {
     func testCollectingGivesProductsAndXPThenTheyAreHungryAgain() {
         var sim = farmWithChicks(2)
         sim.advance(by: chicken.growUpSeconds, mode: .live)
+        fillTrough(&sim)
         sim.modify { $0.inventory.add("wheat", 5) }
-        _ = sim.perform(.feed, on: coop)
+        _ = sim.work(.feed, on: coop)
         sim.advance(by: chicken.produceSeconds, mode: .live)
         XCTAssertEqual(Ranching(balance: sim.balance).suggestedAction(for: coop, in: sim.state), .collect)
         let xp = sim.state.progress.xp
-        guard case .collected(let items, let gained) = sim.perform(.collect, on: coop).outcome else { return XCTFail() }
+        guard case .collected(let items, let gained) = sim.work(.collect, on: coop).outcome else { return XCTFail() }
         XCTAssertEqual(gained, 2 * chicken.xp)
         XCTAssertTrue((2...4).contains(items["egg"] ?? 0))
         XCTAssertEqual(sim.state.inventory.count("egg"), items["egg"])
@@ -143,21 +155,22 @@ final class AnimalTests: XCTestCase {
         balance.storageCapacity = 7
         var sim = farmWithChicks(1, balance: balance)
         sim.advance(by: chicken.growUpSeconds, mode: .live)
+        fillTrough(&sim)
         sim.modify { $0.inventory.add("wheat", 1) }
-        _ = sim.perform(.feed, on: coop)
+        _ = sim.work(.feed, on: coop)
         sim.advance(by: chicken.produceSeconds, mode: .live)
         sim.modify { $0.inventory.add("log", 7) }
         let rng = sim.state.rng
-        XCTAssertEqual(sim.perform(.collect, on: coop).outcome, .failed(.storageFull))
+        XCTAssertEqual(sim.work(.collect, on: coop).outcome, .failed(.storageFull))
         XCTAssertTrue(sim.state.ranch["coop"].animals[0].hasProduct)
         XCTAssertEqual(sim.state.rng, rng, "a refused collect doesn't use up luck")
     }
 
     func testHungryAnimalsGrowSadAndHappyOnesGiveBonuses() {
         var sim = farmWithChicks(1)
-        sim.advance(by: chicken.growUpSeconds + 3600, mode: .offline)
+        sim.advance(by: chicken.growUpSeconds + sim.balance.realSecondsPerGameDay, mode: .offline)
         XCTAssertEqual(sim.state.ranch["coop"].animals[0].happiness,
-                       sim.balance.newAnimalHappiness - sim.balance.happinessDecayPerHour, accuracy: 1e-6)
+                       sim.balance.newAnimalHappiness - sim.balance.happinessDecayPerDay, accuracy: 1e-6)
         sim.advance(by: 24 * 3600, mode: .offline)
         XCTAssertEqual(sim.state.ranch["coop"].animals[0].happiness, 0, "never below zero")
         XCTAssertEqual(Ranching.bonusChance(happiness: 0.2), 0)
@@ -168,7 +181,7 @@ final class AnimalTests: XCTestCase {
         var a = farmWithChicks(3)
         a.modify { $0.inventory.add("wheat", 10) }
         a.advance(by: chicken.growUpSeconds, mode: .live)
-        _ = a.perform(.feed, on: coop)
+        _ = a.work(.feed, on: coop)
         a.modify { $0.ranch["coop"].waterUntil = $0.worldTime + 70 }
         var b = a
         a.advance(by: 3 * 3600, mode: .offline)
@@ -185,7 +198,7 @@ final class AnimalTests: XCTestCase {
         var sim = farmWithChicks(2)
         sim.modify { $0.inventory.add("wheat", 1) }
         sim.advance(by: chicken.growUpSeconds, mode: .live)
-        _ = sim.perform(.feed, on: coop)
+        _ = sim.work(.feed, on: coop)
         let report = OfflineCatchUp.run(&sim, lastSeen: Date(timeIntervalSince1970: 0), now: Date(timeIntervalSince1970: 3600))
         let summary = AwaySummary.make(report: report, state: sim.state, balance: sim.balance)
         XCTAssertTrue(summary.lines.contains(.productsReady(itemID: "egg", count: 1)))
@@ -224,74 +237,74 @@ final class TreeTests: XCTestCase {
         var sim = farm()
         let (tile, species) = wildTreeOnTheFarm()
         let forestry = Forestry(map: map, balance: sim.balance)
-        XCTAssertEqual(forestry.suggestedAction(at: tile, in: sim.state), .chop)
+        XCTAssertEqual(forestry.suggestedAction(at: tile, in: sim.state, checkReach: false), .chop)
         XCTAssertTrue(Obstacles(map: map, state: sim.state).isBlocked(tile))
 
-        guard case .chopped(let id, let logs, let xp) = sim.perform(.chop, at: tile, on: map).outcome else { return XCTFail() }
+        guard case .chopped(let id, let logs, let xp) = sim.work(.chop, at: tile, on: map).outcome else { return XCTFail() }
         XCTAssertEqual(id, species.id)
         XCTAssertTrue(species.logs.contains(logs))
         XCTAssertEqual(xp, species.chopXP)
         XCTAssertEqual(sim.state.inventory.count("log"), logs)
         XCTAssertTrue(sim.state.woodland.hiddenMapTrees.contains(tile))
         XCTAssertEqual(forestry.tree(at: tile, in: sim.state)?.stage, .stump)
-        XCTAssertEqual(forestry.suggestedAction(at: tile, in: sim.state), .clearStump)
+        XCTAssertEqual(forestry.suggestedAction(at: tile, in: sim.state, checkReach: false), .clearStump)
 
         sim.advance(by: sim.balance.stumpRegrowSeconds + 1, mode: .live)
         XCTAssertEqual(forestry.tree(at: tile, in: sim.state)?.stage, .sapling)
         let events = sim.advance(by: species.growSeconds, mode: .offline)
         XCTAssertEqual(forestry.tree(at: tile, in: sim.state)?.stage, .mature)
         XCTAssertTrue(events.contains(.treeGrown(tile)))
-        XCTAssertEqual(forestry.suggestedAction(at: tile, in: sim.state), .chop)
+        XCTAssertEqual(forestry.suggestedAction(at: tile, in: sim.state, checkReach: false), .chop)
     }
 
     func testClearingAStumpFreesTheGround() {
         var sim = farm()
         let (tile, _) = wildTreeOnTheFarm()
-        _ = sim.perform(.chop, at: tile, on: map)
-        XCTAssertEqual(sim.perform(.clearStump, at: tile, on: map).outcome, .stumpCleared(xp: sim.balance.stumpRemovalXP))
+        _ = sim.work(.chop, at: tile, on: map)
+        XCTAssertEqual(sim.work(.clearStump, at: tile, on: map).outcome, .stumpCleared(xp: sim.balance.stumpRemovalXP))
         XCTAssertNil(Forestry(map: map, balance: sim.balance).tree(at: tile, in: sim.state))
         XCTAssertFalse(Obstacles(map: map, state: sim.state).isBlocked(tile))
-        XCTAssertEqual(sim.perform(.plow, at: tile, on: map).outcome, .plowed, "cleared land can be farmed")
+        XCTAssertEqual(sim.work(.plow, at: tile, on: map).outcome, .plowed, "cleared land can be farmed")
     }
 
     func testCannotChopOutsideYourLand() {
         var sim = farm()
         let outside = map.treesByFoot.keys.first { PropertyCatalog.property(containing: $0) == nil }!
-        XCTAssertEqual(sim.perform(.chop, at: outside, on: map).outcome, .failed(.notYourLand))
+        XCTAssertEqual(sim.work(.chop, at: outside, on: map).outcome, .failed(.notYourLand))
         XCTAssertNil(Forestry(map: map, balance: sim.balance).suggestedAction(at: outside, in: sim.state))
     }
 
     func testPlantingAFruitTreeAndPickingFruit() {
         var sim = farm()
         let apple = TreeCatalog.species("apple")!
-        sim.modify { $0.truck.position = HomeValleyMap.seedShopZone.center }
+        sim.visit(HomeValleyMap.seedShopZone)
         XCTAssertEqual(sim.trade { try $0.buySaplings("apple", count: 1, state: &$1) }, .success(apple.saplingCost))
-        sim.modify { $0.truck.position = HomeValleyMap.truckParkingSpot }
+        sim.goHome()
 
         let tile = TileCoord(40, 33)
-        XCTAssertEqual(sim.perform(.plant(speciesID: "apple"), at: tile, on: map).outcome, .failed(.notPlowed))
-        XCTAssertEqual(sim.perform(.plow, at: tile, on: map).outcome, .plowed)
-        XCTAssertEqual(sim.perform(.plant(speciesID: "apple"), at: tile, on: map).outcome, .planted(speciesID: "apple"))
+        XCTAssertEqual(sim.work(.plant(speciesID: "apple"), at: tile, on: map).outcome, .failed(.notPlowed))
+        XCTAssertEqual(sim.work(.plow, at: tile, on: map).outcome, .plowed)
+        XCTAssertEqual(sim.work(.plant(speciesID: "apple"), at: tile, on: map).outcome, .planted(speciesID: "apple"))
         XCTAssertNil(sim.state.plots[tile], "the tree takes the plot's place")
         XCTAssertEqual(sim.state.inventory.count("sapling_apple"), 0)
         XCTAssertTrue(Obstacles(map: map, state: sim.state).isBlocked(tile))
 
         let forestry = Forestry(map: map, balance: sim.balance)
-        XCTAssertNil(forestry.suggestedAction(at: tile, in: sim.state), "young trees are left alone")
+        XCTAssertNil(forestry.suggestedAction(at: tile, in: sim.state, checkReach: false), "young trees are left alone")
         sim.advance(by: apple.growSeconds + apple.fruitSeconds, mode: .offline)
         XCTAssertTrue(sim.state.woodland[tile]!.hasFruit)
-        XCTAssertEqual(forestry.suggestedAction(at: tile, in: sim.state), .pickFruit)
-        guard case .picked("apple", let amount, _) = sim.perform(.pickFruit, at: tile, on: map).outcome else { return XCTFail() }
+        XCTAssertEqual(forestry.suggestedAction(at: tile, in: sim.state, checkReach: false), .pickFruit)
+        guard case .picked("apple", let amount, _) = sim.work(.pickFruit, at: tile, on: map).outcome else { return XCTFail() }
         XCTAssertTrue(apple.fruitYield.contains(amount))
-        XCTAssertNil(forestry.suggestedAction(at: tile, in: sim.state), "a tap never chops a fruit tree")
-        XCTAssertEqual(sim.perform(.chop, at: tile, on: map).outcome, .chopped(speciesID: "apple", logs: 2, xp: apple.chopXP),
+        XCTAssertNil(forestry.suggestedAction(at: tile, in: sim.state, checkReach: false), "a tap never chops a fruit tree")
+        XCTAssertEqual(sim.work(.chop, at: tile, on: map).outcome, .chopped(speciesID: "apple", logs: 2, xp: apple.chopXP),
                        "but it can be chopped on purpose")
     }
 
     func testTreeGrowthIsExactForAnyStepSize() {
         var a = farm()
         let (tile, _) = wildTreeOnTheFarm()
-        _ = a.perform(.chop, at: tile, on: map)
+        _ = a.work(.chop, at: tile, on: map)
         a.modify { $0.woodland[TileCoord(40, 33)] = TreeState(tile: TileCoord(40, 33), speciesID: "cherry") }
         var b = a
         a.advance(by: 2 * 3600, mode: .offline)
@@ -361,7 +374,7 @@ final class Phase4WorldTests: XCTestCase {
         XCTAssertEqual(sim.state.truck.cargo.items, ["egg": 3, "log": 4])
         XCTAssertEqual(sim.state.inventory.count("animal_feed"), 5, "feed isn't for sale")
 
-        sim.modify { $0.truck.position = HomeValleyMap.marketZone.center }
+        sim.visit(HomeValleyMap.marketZone)
         let trading = Trading(balance: sim.balance)
         let expected = 3 * trading.price(of: "egg", in: sim.state)! + 4 * trading.price(of: "log", in: sim.state)!
         XCTAssertEqual(sim.trade { try $0.sellAll(state: &$1) }, .success(expected))
@@ -371,7 +384,7 @@ final class Phase4WorldTests: XCTestCase {
 
     func testBuyingFeed() {
         var sim = Simulation(state: .newGame(seed: 3))
-        sim.modify { $0.truck.position = HomeValleyMap.livestockZone.center }
+        sim.visit(HomeValleyMap.livestockZone)
         XCTAssertEqual(sim.trade { try $0.buyFeed(count: 10, state: &$1) }, .success(10 * sim.balance.feedPrice))
         XCTAssertEqual(sim.state.inventory.count("animal_feed"), 10)
     }

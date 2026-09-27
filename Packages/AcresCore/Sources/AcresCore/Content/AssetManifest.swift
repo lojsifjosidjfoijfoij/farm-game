@@ -10,7 +10,7 @@ import Foundation
 public enum AssetManifest {
 
     public static let all: [AssetSpec] =
-        terrain + fields + crops + trees + nature + buildings + props + vehicles + animals + items + effects + ui
+        terrain + fields + crops + trees + nature + buildings + props + vehicles + characters + animals + items + effects + ui
 
     private static let index: [String: AssetSpec] = {
         var result: [String: AssetSpec] = [:]
@@ -280,6 +280,33 @@ public enum AssetManifest {
         return result
     }()
 
+    // MARK: - Characters
+
+    /// The farmer: three facings (side faces left; mirrored in code), walking,
+    /// and working with a tool.
+    public static let farmerFacings = ["down", "up", "side"]
+    public static let farmerPoses = ["idle", "walk1", "walk2", "hoe1", "hoe2", "can1", "can2", "hands1", "hands2", "axe1", "axe2"]
+
+    static let characters: [AssetSpec] = {
+        var result: [AssetSpec] = []
+        let facingText = ["down": "facing the camera", "up": "seen from behind", "side": "facing left (mirrored for right)"]
+        let poseText = [
+            "idle": "standing relaxed", "walk1": "walking, left foot forward", "walk2": "walking, right foot forward",
+            "hoe1": "raising a hoe", "hoe2": "striking the ground with a hoe",
+            "can1": "tilting a watering can", "can2": "pouring from a watering can",
+            "hands1": "bending down to the ground", "hands2": "picking something up / sowing",
+            "axe1": "raising an axe", "axe2": "swinging an axe",
+        ]
+        for facing in farmerFacings {
+            for pose in farmerPoses {
+                result.append(.sprite("character_farmer_\(facing)_\(pose)", .character, tiles: 0.9, 1.5, anchorY: 0.05,
+                                      shadow: 0.6, phase: 5, family: "character_farmer",
+                                      "The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, \(facingText[facing]!), \(poseText[pose]!)."))
+            }
+        }
+        return result
+    }()
+
     // MARK: - Animals
 
     static let animals: [AssetSpec] = {
@@ -356,6 +383,8 @@ public enum AssetManifest {
         .sprite("fx_headlight_cone", .effect, tiles: 2, 3, layer: .light, anchorY: 0.0, phase: 3, "Soft headlight beam, pointing up, additive."),
         .sprite("fx_wood_chip", .effect, tiles: 0.15, 0.15, layer: .particle, anchorY: 0.5, phase: 4, "Wood chip flying off when chopping."),
         .sprite("fx_feather", .effect, tiles: 0.15, 0.15, layer: .particle, anchorY: 0.5, phase: 4, "Small feather."),
+        .sprite("fx_job_marker", .effect, tiles: 0.5, 0.5, layer: .particle, anchorY: 0.5, phase: 5,
+                 "Small round marker with a soft glow: a job the farmer has lined up."),
         .sprite("fx_bubble", .effect, tiles: 0.7, 0.7, layer: .particle, anchorY: 0.5, phase: 4,
                 "Round white speech bubble with a small tail at the bottom: shows what an animal has or wants."),
         .sprite("fx_heart", .effect, tiles: 0.3, 0.3, layer: .particle, anchorY: 0.5, phase: 4, "Small heart over a happy animal."),
@@ -402,6 +431,9 @@ public enum AssetManifest {
         .ui("ui_icon_map", points: 32, 32, phase: 3, "Folded map."),
         .ui("ui_icon_fuel", points: 24, 24, phase: 3, "Jerry can (fuel gauge)."),
         .ui("ui_icon_truck", points: 32, 32, phase: 3, "Pickup truck (drive button)."),
+        .ui("ui_icon_energy", points: 24, 24, phase: 5, "Little sun / lightning badge for the farmer's energy."),
+        .ui("ui_icon_goals", points: 32, 32, phase: 5, "Rolled-up checklist with a ribbon (goals)."),
+        .ui("ui_icon_bed", points: 32, 32, phase: 5, "Cozy bed with a moon (go to bed)."),
         .ui("ui_icon_contracts", points: 32, 32, phase: 5, "Pinned note (contracts board)."),
         .ui("ui_icon_worker", points: 32, 32, phase: 6, "Farmhand in a straw hat."),
         .ui("ui_icon_collection", points: 32, 32, phase: 7, "Leather-bound book (collection)."),

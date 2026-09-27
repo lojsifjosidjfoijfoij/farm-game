@@ -22,7 +22,10 @@ public enum FarmAction: Equatable, Sendable {
 /// Why an action could not happen. The UI turns these into friendly messages.
 public enum FarmFailure: Equatable, Sendable {
     case notYourLand
-    case truckNotHere
+    /// The farmer has to walk over first (or get out of the truck).
+    case tooFar
+    /// Out of energy: time to sleep.
+    case tooTired
     case cannotPlowHere
     case alreadyPlowed
     case notPlowed
@@ -70,19 +73,22 @@ public struct Farming: Sendable {
 
     // MARK: Rules
 
-    /// Can the player work this tile at all? (Own the land, truck parked there.)
-    public func accessProblem(at tile: TileCoord, in state: GameState) -> FarmFailure? {
+    /// Can the farmer work this tile? They must own the land and stand within
+    /// reach, on foot. Planning (which job a tap means) skips the reach check:
+    /// the farmer walks over first.
+    public func accessProblem(at tile: TileCoord, in state: GameState, checkReach: Bool = true) -> FarmFailure? {
         guard let property = PropertyCatalog.property(containing: tile),
               state.ownedProperties.contains(property.id) else { return .notYourLand }
-        // "You farm where your truck is parked": the truck must be on (or right next to) the
-        // property. A negative inset grows the rect.
-        guard property.area.insetBy(-3).contains(state.truck.position) else { return .truckNotHere }
+        if checkReach {
+            guard !state.farmer.inTruck,
+                  state.farmer.position.distance(to: tile.center) <= balance.workReach else { return .tooFar }
+        }
         return nil
     }
 
     /// Why this tile can't be plowed, or nil if it can.
-    public func plowProblem(at tile: TileCoord, in state: GameState) -> FarmFailure? {
-        if let problem = accessProblem(at: tile, in: state) { return problem }
+    public func plowProblem(at tile: TileCoord, in state: GameState, checkReach: Bool = true) -> FarmFailure? {
+        if let problem = accessProblem(at: tile, in: state, checkReach: checkReach) { return problem }
         if state.plots[tile] != nil { return .alreadyPlowed }
         if Obstacles(map: map, state: state).isBlocked(tile) { return .cannotPlowHere }
         switch map.terrain(at: tile) {
@@ -90,16 +96,17 @@ public struct Farming: Sendable {
         case .gravel, .asphalt: return .cannotPlowHere
         }
         if Self.truckFootprint(state.truck).contains(tile.center) { return .cannotPlowHere }
+        if state.woodland[tile] != nil { return .cannotPlowHere }
         return nil
     }
 
     /// The single most sensible action for a tap on this tile, or nil if
     /// there is nothing to do (e.g. a crop that is growing in wet soil).
     /// `seed` is the crop the player would plant on empty soil.
-    public func suggestedAction(at tile: TileCoord, in state: GameState, seed: String?) -> FarmAction? {
-        guard accessProblem(at: tile, in: state) == nil else { return nil }
+    public func suggestedAction(at tile: TileCoord, in state: GameState, seed: String?, checkReach: Bool = true) -> FarmAction? {
+        guard accessProblem(at: tile, in: state, checkReach: checkReach) == nil else { return nil }
         guard let plot = state.plots[tile] else {
-            return plowProblem(at: tile, in: state) == nil ? .plow : nil
+            return plowProblem(at: tile, in: state, checkReach: checkReach) == nil ? .plow : nil
         }
         guard let crop = plot.crop else {
             return seed.map { .plant(cropID: $0) }
@@ -112,12 +119,26 @@ public struct Farming: Sendable {
     // MARK: Actions
 
     public func perform(_ action: FarmAction, at tile: TileCoord, in state: inout GameState) -> FarmResult {
+        let cost = balance.energyCost.cost(of: action.kind)
+        if accessProblem(at: tile, in: state) == nil, state.farmer.energy < cost { return fail(.tooTired) }
+        let result: FarmResult
         switch action {
-        case .plow: return plow(tile, &state)
-        case .plant(let cropID): return plant(cropID, tile, &state)
-        case .water: return water(tile, &state)
-        case .harvest: return harvest(tile, &state)
+        case .plow: result = plow(tile, &state)
+        case .plant(let cropID): result = plant(cropID, tile, &state)
+        case .water: result = water(tile, &state)
+        case .harvest: result = harvest(tile, &state)
         }
+        if result.outcome.succeeded {
+            state.farmer.energy = max(0, state.farmer.energy - cost)
+            switch result.outcome {
+            case .plowed: state.goals.add(GoalCounter.plowed)
+            case .planted: state.goals.add(GoalCounter.planted)
+            case .watered: state.goals.add(GoalCounter.watered)
+            case .harvested(_, let amount, _): state.goals.add(GoalCounter.harvested, amount)
+            case .failed: break
+            }
+        }
+        return result
     }
 
     private func fail(_ failure: FarmFailure) -> FarmResult {

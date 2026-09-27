@@ -1,5 +1,34 @@
 import Foundation
 
+/// Game-time units for content. One game day is 24 real minutes at normal
+/// speed (one game minute per real second), like Big Ambitions: long enough
+/// for a working day, short enough that things happen.
+public enum GameTime {
+    public static let day: TimeInterval = 24 * 60
+    public static let hour: TimeInterval = 60
+
+    public static func days(_ count: Double) -> TimeInterval { count * day }
+}
+
+/// The days of the week. Day 0 of the game is a Monday.
+public enum Weekday: Int, CaseIterable, Sendable {
+    case monday, tuesday, wednesday, thursday, friday, saturday, sunday
+
+    public var name: String {
+        switch self {
+        case .monday: "Monday"
+        case .tuesday: "Tuesday"
+        case .wednesday: "Wednesday"
+        case .thursday: "Thursday"
+        case .friday: "Friday"
+        case .saturday: "Saturday"
+        case .sunday: "Sunday"
+        }
+    }
+
+    public var short: String { String(name.prefix(3)) }
+}
+
 /// The four seasons. Each lasts `Balance.daysPerSeason` in-game days.
 public enum Season: Int, Codable, CaseIterable, Sendable {
     case spring, summer, autumn, winter
@@ -53,6 +82,11 @@ public struct CalendarDate: Equatable, Hashable, Sendable, CustomStringConvertib
         self.season = Season(rawValue: seasonIndex % 4)!
         self.dayOfSeason = day % daysPerSeason + 1
     }
+
+    public var weekday: Weekday { Weekday(rawValue: dayIndex % 7)! }
+
+    /// 1-based week number since the start of the game.
+    public var week: Int { dayIndex / 7 + 1 }
 
     public var description: String { "\(season.name) \(dayOfSeason), Year \(year)" }
 }
@@ -116,6 +150,9 @@ public struct GameClock: Codable, Equatable, Sendable {
         guard minutes > 0, minutes.isFinite else { return }
         totalMinutes += minutes
     }
+
+    /// In-game minutes until the next 06:00.
+    public var minutesUntilNextMorning: Double { Self.minutesPerDay - minuteOfDay }
 
     /// Jumps to 06:00 at the start of the next game day ("you slept").
     public mutating func jumpToNextMorning() {

@@ -44,6 +44,16 @@ enum Theme {
         }
     }
 
+    /// Sun, sunset or moon for the clock.
+    static func clockSymbol(hour: Int) -> String {
+        switch hour {
+        case 6..<8: "sunrise.fill"
+        case 8..<18: "sun.max.fill"
+        case 18..<21: "sunset.fill"
+        default: "moon.stars.fill"
+        }
+    }
+
     static func phaseSymbol(_ phase: DayPhase) -> String {
         switch phase {
         case .morning: "sunrise.fill"

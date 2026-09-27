@@ -10,10 +10,18 @@ struct RootView: View {
             GameView(game: game, showsStats: game.showsPerformanceStats, showsChunkBorders: game.showsChunkBorders)
                 .ignoresSafeArea()
 
-            JoystickOverlay(game: game)
-                .ignoresSafeArea()
-
             HUDView(game: game)
+
+            if let sleep = game.sleep {
+                // Night falls, the clock spins, morning comes.
+                Color(red: 0.05, green: 0.06, blue: 0.14)
+                    .opacity(sleep.darkness * 0.92)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(true)
+                Text("Zzz…")
+                    .font(Theme.title(34))
+                    .foregroundStyle(.white.opacity(sleep.darkness))
+            }
 
             if let summary = game.welcome {
                 Color.black.opacity(0.25)
@@ -37,6 +45,10 @@ struct RootView: View {
         }
         .sheet(isPresented: $game.showsInventory) {
             InventoryView(game: game)
+                .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $game.showsGoals) {
+            GoalsView(game: game)
                 .presentationDetents([.medium, .large])
         }
         .sheet(item: $game.openShop) { shop in

@@ -30,11 +30,13 @@ enum InspectionTarget: Equatable {
     case tile(TileCoord)
     case pen(String)
     case tree(TileCoord)
+    case farmhouse
 }
 
 enum InspectionAction: Equatable {
     case repairPen(String)
     case chopTree(TileCoord)
+    case goToBed
 }
 
 /// A packet in the seed picker: crop seeds or a sapling.
@@ -47,13 +49,6 @@ struct SeedOption: Identifiable, Equatable {
     let inSeason: Bool
     /// When it can be planted, for out-of-season packets.
     let seasons: String
-}
-
-/// What a tap did, so the scene can give the right feedback.
-enum TapResult: Equatable {
-    case performed(FarmOutcome)
-    case inspected
-    case nothing
 }
 
 /// Owns the running game: the simulation, saving/loading, offline catch-up,
@@ -90,6 +85,7 @@ final class GameController {
     private(set) var inspection: TileInspection?
     var showsSeedPicker = false
     var showsInventory = false
+    var showsGoals = false
     private(set) var remindersEnabled: Bool
     private(set) var hapticsEnabled: Bool
 
@@ -107,9 +103,22 @@ final class GameController {
     var truckAtFarm = true
     /// The shop sheet that's open.
     var openShop: ShopDefinition?
-    /// Where the on-screen joystick is (screen points), while steering.
-    var joystick: JoystickVisual?
-    var driveControls: DriveControls
+
+    // MARK: The farmer and the clock (observed)
+
+    /// "Mon 06:00".
+    private(set) var clockText = ""
+    /// "Week 1".
+    private(set) var weekText = ""
+    private(set) var hour = 6
+    /// 0…1 for the energy bar.
+    var energyFraction = 1.0
+    /// Jobs lined up (including the one in progress).
+    var jobCount = 0
+    /// Non-nil while the farmer sleeps (the fade).
+    var sleep: SleepPhase?
+    /// The goals on show and whether one can be claimed.
+    private(set) var openGoals: [GoalProgress] = []
 
     // MARK: Tutorial (observed)
 
@@ -145,12 +154,21 @@ final class GameController {
     @ObservationIgnored private var inspectionTimeLeft: TimeInterval = 0
     @ObservationIgnored private var inspectedTarget: InspectionTarget?
     @ObservationIgnored private var inspectionRefresh: TimeInterval = 0
-    @ObservationIgnored private var paintKind: FarmAction.Kind?
-    @ObservationIgnored private var paintSeed: String?
+    @ObservationIgnored var paintKind: FarmAction.Kind?
     // Driving (not saved: a saved truck is always parked).
     @ObservationIgnored var motion = TruckMotion()
     @ObservationIgnored var autopilot: Autopilot?
-    @ObservationIgnored var joystickInput: DriveInput?
+    /// The farmer's lined-up work and what they're doing now (not saved).
+    @ObservationIgnored var jobs: [FarmerJob] = []
+    @ObservationIgnored var currentJob: FarmerJob?
+    @ObservationIgnored var farmerPath: [Vec2] = []
+    @ObservationIgnored var farmerActivity = FarmerActivity.idle
+    @ObservationIgnored var farmerFacing = Vec2(0, -1)
+    /// Bumped whenever the job line changes (for the scene's markers).
+    @ObservationIgnored var jobRevision = 0
+    /// Set when the player drags the camera while driving (to look ahead).
+    @ObservationIgnored var cameraFollowPaused = false
+    @ObservationIgnored private var lateWarningDay = -1
     /// Tap-to-drive destination, for the scene's marker.
     @ObservationIgnored var destination: Vec2?
 
@@ -174,7 +192,6 @@ final class GameController {
         let haptics = Settings.bool(Settings.hapticsKey, default: true)
         hapticsEnabled = haptics
         Haptics.isEnabled = haptics
-        driveControls = DriveControls(rawValue: UserDefaults.standard.string(forKey: Settings.controlsKey) ?? "") ?? .joystick
 
         var report: OfflineReport?
         var pendingAlert: GameAlert?
@@ -227,7 +244,14 @@ final class GameController {
         refreshDisplay()
         refreshInventory()
         refreshTruck()
+        refreshFarmer()
+        refreshGoals()
         _ = resolvedSeed()  // so the seed button shows a packet from the start
+        if simulation.state.farmer.inTruck {
+            // Saved mid-drive: start parked, with the farmer beside the truck.
+            isDriving = true
+            park()
+        }
         if let report {
             showWelcomeIfWorthIt(report)
             save()  // don't re-simulate the same absence after a crash
@@ -255,11 +279,19 @@ final class GameController {
         }
         // The world politely waits while the welcome-back card is open.
         guard welcome == nil else { return }
+        if sleep != nil {
+            updateSleep(dt: dt)
+            return
+        }
 
         let events = simulation.advance(by: dt * timeScale, mode: .live)
         if !events.isEmpty { handle(events) }
         updateDriving(dt: dt)
+        updateFarmer(dt: dt)
+        if !isDriving { refreshTruck() }  // shops notice a farmer walking in
         refreshDisplay()
+        refreshFarmer()
+        checkBedtime()
 
         autosaveTimer += dt
         if autosaveTimer >= simulation.balance.autosaveInterval {
@@ -274,6 +306,11 @@ final class GameController {
             guard suspendedAt == nil else { return }
             suspendedAt = Date()
             endPaint()
+            cancelJobs()
+            if sleep != nil {
+                // Finish the night at once rather than leaving it half done.
+                while sleep != nil { updateSleep(dt: SleepPhase.duration / 4) }
+            }
             if isDriving { park() }
             save()
             scheduleHarvestReminder()
@@ -292,62 +329,6 @@ final class GameController {
     }
 
     // MARK: Farming input
-
-    /// A tap on a tile: does the one sensible thing (plow, plant, water,
-    /// harvest), or shows what's going on there.
-    func tap(_ tile: TileCoord) -> TapResult {
-        guard welcome == nil else { return .nothing }
-        let state = simulation.state
-        let farming = self.farming
-
-        // Empty soil but nothing to plant: open the seed picker instead.
-        if let plot = state.plots[tile], plot.crop == nil,
-           farming.accessProblem(at: tile, in: state) == nil, resolvedSeed() == nil {
-            showMessage("No seeds you can plant in \(season.name). Pick another packet.")
-            showsSeedPicker = true
-            return .inspected
-        }
-
-        // A sapling picked in the seed pouch goes into empty plowed soil.
-        if let species = resolvedSapling, let plot = state.plots[tile], plot.crop == nil {
-            performTree(.plant(speciesID: species), at: tile)
-            return .inspected
-        }
-
-        guard let action = farming.suggestedAction(at: tile, in: state, seed: resolvedCropSeed) else {
-            if state.plots[tile] != nil || PropertyCatalog.property(containing: tile) != nil {
-                inspect(.tile(tile))
-                return .inspected
-            }
-            return .nothing
-        }
-        return .performed(perform(action, at: tile, painting: false))
-    }
-
-    /// Starts drag-painting at a tile. Returns nil if there is nothing to paint
-    /// there (the drag then moves the camera), otherwise the first outcome.
-    func beginPaint(at tile: TileCoord) -> FarmOutcome? {
-        guard welcome == nil,
-              let action = farming.suggestedAction(at: tile, in: simulation.state, seed: resolvedCropSeed) else { return nil }
-        paintKind = action.kind
-        if case .plant(let cropID) = action { paintSeed = cropID } else { paintSeed = nil }
-        return perform(action, at: tile, painting: true)
-    }
-
-    /// Continues a paint stroke: applies the same kind of action where it fits.
-    func paint(_ tile: TileCoord) -> FarmOutcome? {
-        guard let kind = paintKind,
-              let action = farming.suggestedAction(at: tile, in: simulation.state, seed: paintSeed),
-              action.kind == kind else { return nil }
-        return perform(action, at: tile, painting: true)
-    }
-
-    func endPaint() {
-        paintKind = nil
-        paintSeed = nil
-    }
-
-    var isPainting: Bool { paintKind != nil }
 
     /// Picks the packet that tapping empty soil plants: a crop ID or a sapling item ID.
     func select(seed id: String) {
@@ -407,12 +388,13 @@ final class GameController {
     func makeInspection(_ target: InspectionTarget) -> TileInspection {
         switch target {
         case .tile(let tile): makeInspection(tile)
+        case .farmhouse: farmhouseInspection
         case .pen(let id): penInspection(id)
         case .tree(let tile): treeInspection(tile)
         }
     }
 
-    private func perform(_ action: FarmAction, at tile: TileCoord, painting: Bool) -> FarmOutcome {
+    func perform(_ action: FarmAction, at tile: TileCoord, painting: Bool) -> FarmOutcome {
         let result = simulation.perform(action, at: tile, on: map)
         switch result.outcome {
         case .failed(let failure):
@@ -454,7 +436,7 @@ final class GameController {
 
     /// The packet to plant: the selected one if possible, else the first
     /// plantable crop. (Saplings are never picked automatically.)
-    private func resolvedSeed() -> String? {
+    func resolvedSeed() -> String? {
         if let selected = selectedSeed, selected.hasPrefix("sapling_"), (inventoryItems[selected] ?? 0) > 0 { return selected }
         let plantable = farming.plantableSeeds(in: simulation.state)
         if let selected = selectedSeed, plantable.contains(where: { $0.id == selected }) { return selected }
@@ -467,7 +449,8 @@ final class GameController {
     private func message(for failure: FarmFailure) -> String? {
         switch failure {
         case .notYourLand: return "This land isn't yours (yet)."
-        case .truckNotHere: return isDriving ? "Park the truck first." : "Park your truck here to work this land."
+        case .tooFar: return isDriving ? "Get out of the truck first." : nil
+        case .tooTired: return "Your farmer is exhausted. Time for bed!"
         case .cannotPlowHere: return "Can't plow here."
         case .noSeeds(let crop): return "No \(CropCatalog.crop(crop)?.name.lowercased() ?? crop) seeds left."
         case .outOfSeason(let crop, let season):
@@ -500,20 +483,68 @@ final class GameController {
                                   detail: seedName.map { "Tap to plant \($0)." } ?? "No seeds to plant this season.",
                                   icon: nil, symbol: "square.grid.3x3.fill")
         }
-        switch farming.plowProblem(at: tile, in: state) {
+        switch farming.plowProblem(at: tile, in: state, checkReach: false) {
         case nil:
             return TileInspection(target: .tile(tile), title: "Your land", detail: "Tap to plow. Drag to plow a whole row.",
                                   icon: nil, symbol: "square.dashed")
         case .notYourLand?:
             return TileInspection(target: .tile(tile), title: "Not your land", detail: "Land can be bought later on.",
                                   icon: nil, symbol: "signpost.right.fill")
-        case .truckNotHere?:
-            return TileInspection(target: .tile(tile), title: "Your land", detail: "Park your truck here to work it.",
-                                  icon: nil, symbol: "truck.pickup.side.fill")
+        case .tooFar?, .tooTired?:
+            return TileInspection(target: .tile(tile), title: "Your land", detail: "Tap to plow. Drag to line up a whole row.",
+                                  icon: nil, symbol: "square.dashed")
         default:
             return TileInspection(target: .tile(tile), title: "Your land", detail: "Something's in the way.",
                                   icon: nil, symbol: "xmark.circle")
         }
+    }
+
+    // MARK: Bedtime
+
+    /// A gentle nudge at 22:00; past the pass-out hour the farmer drops off.
+    private func checkBedtime() {
+        let state = simulation.state
+        if simulation.isTooLateToStayUp {
+            beginSleep(passedOut: true)
+            return
+        }
+        if state.clock.hour >= 22, lateWarningDay != state.clock.dayIndex {
+            lateWarningDay = state.clock.dayIndex
+            showBanner("It's getting late. Time to head to bed. 🌙")
+        }
+    }
+
+    /// Bedtime or worn out: the HUD offers the bed.
+    var isBedtime: Bool { hour >= 20 || hour < 6 || energyFraction < 0.25 }
+
+    var farmhouseInspection: TileInspection {
+        let energy = Int((energyFraction * 100).rounded())
+        return TileInspection(target: .farmhouse, title: "Farmhouse",
+                              detail: "Home sweet home. Energy \(energy)%. Sleep until 06:00: the farm keeps growing overnight.",
+                              icon: nil, symbol: "house.fill", action: .goToBed, actionTitle: "Go to bed")
+    }
+
+    // MARK: Goals
+
+    func refreshGoals() {
+        let state = simulation.state
+        let goals = GoalCatalog.open(in: state).map { goal -> GoalProgress in
+            let progress = GoalCatalog.progress(goal, in: state)
+            return GoalProgress(goal: goal, current: progress.current, target: progress.target)
+        }
+        if goals != openGoals { openGoals = goals }
+    }
+
+    var claimedGoalCount: Int { simulation.state.goals.claimed.count }
+
+    func claimGoal(_ id: String) {
+        guard let claim = simulation.claimGoal(id) else { return }
+        Haptics.success()
+        showBanner("Goal complete: \(claim.goal.title)! +\(claim.goal.coins) coins")
+        handle(claim.events)
+        refreshDisplay()
+        refreshGoals()
+        save()
     }
 
     // MARK: Settings
@@ -653,11 +684,18 @@ final class GameController {
         if dayOfSeason != date.dayOfSeason { dayOfSeason = date.dayOfSeason }
         if year != date.year { year = date.year }
 
-        // Time until the next season, in whole minutes of play (no clock to watch).
+        // The clock, to the minute, and the week.
+        let clock = String(format: "%@ %02d:%02d", date.weekday.short, state.clock.hour, state.clock.minute)
+        if clockText != clock { clockText = clock }
+        let week = "Week \(date.week)"
+        if weekText != week { weekText = week }
+        if hour != state.clock.hour { hour = state.clock.hour }
+        // Time until the next season, in whole minutes of play.
         let minutesPerSeason = Double(balance.daysPerSeason) * GameClock.minutesPerDay
         let into = state.clock.totalMinutes.truncatingRemainder(dividingBy: minutesPerSeason)
         let left = ((minutesPerSeason - into) / balance.gameMinutesPerRealSecond / 60).rounded(.up) * 60
         if seasonTimeLeft != left { seasonTimeLeft = left }
+        refreshGoals()
     }
 
     func refreshInventory() {
@@ -684,6 +722,22 @@ final class GameController {
     func debugSkipToNextMorning() {
         handle(simulation.startNextMorning())
         refreshDisplay()
+    }
+
+    func debugRefillEnergy() {
+        let energy = balance.energyMax
+        simulation.modify { $0.farmer.energy = energy }
+        refreshFarmer()
+    }
+
+    /// Jumps the clock forward to a given hour today (or tomorrow).
+    func debugJump(toHour target: Double) {
+        let clock = simulation.state.clock
+        var minutes = (target - clock.hourOfDay) * 60
+        if minutes <= 0 { minutes += GameClock.minutesPerDay }
+        handle(simulation.advance(by: minutes / balance.gameMinutesPerRealSecond, mode: .live))
+        refreshDisplay()
+        farmRevision += 1
     }
 
     func debugAddMoney(_ amount: Int) {
@@ -776,19 +830,31 @@ final class GameController {
         isDriving = false
         motion = TruckMotion()
         autopilot = nil
-        joystickInput = nil
-        joystick = nil
         destination = nil
         openShop = nil
+        sleep = nil
+        cancelJobs()
         tutorial = simulation.state.tutorial
         endPaint()
         refreshDisplay()
         refreshInventory()
         refreshTruck()
+        refreshFarmer()
+        refreshGoals()
         farmRevision += 1
         onWorldReset?()
         save()
     }
+}
+
+/// A goal and how far along it is (for the HUD).
+struct GoalProgress: Equatable, Identifiable {
+    let goal: GoalDefinition
+    let current: Int
+    let target: Int
+    var id: String { goal.id }
+    var fraction: Double { Double(current) / Double(max(1, target)) }
+    var isComplete: Bool { current >= target }
 }
 
 /// Short human durations: "45s", "3m 20s", "1h 05m".
@@ -807,7 +873,6 @@ enum Format {
 enum Settings {
     static let remindersKey = "acres.harvestReminders"
     static let hapticsKey = "acres.haptics"
-    static let controlsKey = "acres.driveControls"
 
     static func bool(_ key: String, default value: Bool) -> Bool {
         UserDefaults.standard.object(forKey: key) as? Bool ?? value

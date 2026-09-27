@@ -20,6 +20,14 @@ enum RanchPainter {
         case "prop_feeder": return feeder(size, ground: ground, rng: &rng)
         case "prop_sign_repair": return repairSign(size, ground: ground)
         case "fx_bubble": return bubble(size)
+        case "fx_job_marker": return Canvas.image(size) { ctx in
+            let c = CGPoint(x: size.width / 2, y: size.height / 2)
+            Paint.softSpot(ctx, c, size.width * 0.5, UIColor(hex: 0xFFE9A8).withAlpha(0.7))
+            let ring = CGPath(ellipseIn: CGRect(x: c.x - size.width * 0.3, y: c.y - size.height * 0.3,
+                                                width: size.width * 0.6, height: size.height * 0.6), transform: nil)
+            Paint.outline(ctx, ring, UIColor(hex: 0xF6C548), width: size.width * 0.09)
+            Paint.dab(ctx, c, size.width * 0.1, size.height * 0.1, UIColor(hex: 0xF6C548))
+        }
         case "fx_heart": return heart(size)
         case "fx_wood_chip": return Canvas.image(size) { ctx in
             Paint.fill(ctx, Paint.polygon([CGPoint(x: size.width * 0.1, y: size.height * 0.4), CGPoint(x: size.width * 0.9, y: size.height * 0.2),

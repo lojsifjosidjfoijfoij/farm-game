@@ -12,21 +12,46 @@ public enum ShopKind: String, Sendable, CaseIterable {
     case livestock
 }
 
-/// A place the truck can stop at to trade.
+/// A place to trade. You walk in (or stop the truck there); selling at the
+/// market needs the truck, since that's where the goods are.
 public struct ShopDefinition: Sendable, Hashable, Identifiable {
     public let id: String
     public let name: String
     public let kind: ShopKind
-    /// Where the truck must stop (tile units).
+    /// Where the farmer (or truck) must be (tile units).
     public let zone: TileRect
+    /// Opening hours, wall-clock hours (closes = 24: open until midnight).
+    public let opens: Int
+    public let closes: Int
+
+    public init(id: String, name: String, kind: ShopKind, zone: TileRect, opens: Int = 0, closes: Int = 24) {
+        self.id = id
+        self.name = name
+        self.kind = kind
+        self.zone = zone
+        self.opens = opens
+        self.closes = closes
+    }
+
+    public var isAlwaysOpen: Bool { opens == 0 && closes >= 24 }
+
+    public func isOpen(atHour hour: Int) -> Bool { hour >= opens && hour < closes }
+
+    /// "08:00–18:00" or "Open 24 hours".
+    public var hoursText: String {
+        isAlwaysOpen ? "Open 24 hours" : String(format: "%02d:00–%02d:00", opens, closes)
+    }
 }
 
 public enum ShopCatalog {
     public static let all: [ShopDefinition] = [
         ShopDefinition(id: "village_gas", name: "Village Gas", kind: .gasStation, zone: HomeValleyMap.gasStationZone),
-        ShopDefinition(id: "village_seeds", name: "Seed Shop", kind: .seedShop, zone: HomeValleyMap.seedShopZone),
-        ShopDefinition(id: "village_market", name: "Village Market", kind: .market, zone: HomeValleyMap.marketZone),
-        ShopDefinition(id: "valley_livestock", name: "Valley Livestock", kind: .livestock, zone: HomeValleyMap.livestockZone),
+        ShopDefinition(id: "village_seeds", name: "Seed Shop", kind: .seedShop, zone: HomeValleyMap.seedShopZone,
+                       opens: 8, closes: 18),
+        ShopDefinition(id: "village_market", name: "Village Market", kind: .market, zone: HomeValleyMap.marketZone,
+                       opens: 7, closes: 19),
+        ShopDefinition(id: "valley_livestock", name: "Valley Livestock", kind: .livestock, zone: HomeValleyMap.livestockZone,
+                       opens: 8, closes: 17),
     ]
 
     public static func shop(at position: Vec2) -> ShopDefinition? {
@@ -70,6 +95,9 @@ public enum TradeFailure: Error, Equatable, Sendable {
     case tankFull
     case penNotRepaired(penID: String)
     case penFull(penID: String)
+    case closed(opens: Int)
+    /// Selling and refuelling need the truck at the shop, with the farmer.
+    case truckNotHere(ShopKind)
 }
 
 /// Buying, selling, fuel and loading the truck. Pure rules over `GameState`.
@@ -88,8 +116,15 @@ public struct Trading: Sendable {
         return MarketPricing.price(of: item, day: today(state))
     }
 
+    /// The farmer must be at the shop while it's open; for the market and the
+    /// gas station the truck must be there too.
     private func requireShop(_ kind: ShopKind, _ state: GameState) throws(TradeFailure) {
-        guard ShopCatalog.shop(at: state.truck.position)?.kind == kind else { throw .notAtShop(kind) }
+        guard let shop = ShopCatalog.all.first(where: { $0.kind == kind && $0.zone.insetBy(-1).contains(state.farmerPosition) })
+        else { throw .notAtShop(kind) }
+        if kind == .market || kind == .gasStation {
+            guard shop.zone.contains(state.truck.position) else { throw .truckNotHere(kind) }
+        }
+        guard shop.isOpen(atHour: state.clock.hour) else { throw .closed(opens: shop.opens) }
     }
 
     /// Whether the truck is parked on the home farm (where loading happens).
@@ -108,6 +143,7 @@ public struct Trading: Sendable {
         guard state.money >= cost else { throw .notEnoughMoney }
         state.money -= cost
         state.inventory.add(crop.seedItemID, count)
+        state.goals.add(GoalCounter.seedsBought, count)
         return cost
     }
 
@@ -135,6 +171,7 @@ public struct Trading: Sendable {
         guard penState.animals.count < pen.capacity else { throw .penFull(penID: pen.id) }
         guard state.money >= species.price else { throw .notEnoughMoney }
         state.money -= species.price
+        state.goals.add(GoalCounter.animalsBought)
         return Ranching.addYoungAnimal(species, to: pen.id, in: &state, balance: balance)
     }
 
@@ -161,6 +198,7 @@ public struct Trading: Sendable {
         state.truck.cargo.remove(itemID, amount)
         let earned = unitPrice * amount
         state.money += earned
+        state.goals.add(GoalCounter.coinsFromSales, earned)
         return earned
     }
 

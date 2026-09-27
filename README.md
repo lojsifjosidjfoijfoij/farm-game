@@ -1,9 +1,10 @@
 # Acres
 
-A cozy, top-down open-world farming and business game for iPhone. You start with a run-down
-farm and a beat-up pickup truck, then grow it into an agricultural empire.
+A cozy, top-down farming and business game for iPhone: a farmer's version of Big Ambitions.
+You start with a run-down farm, a beat-up pickup truck and one farmer, and grow it into an
+agricultural empire.
 
-**Status: Phase 4 (Animals and trees) is done.** Phase 5 (Economy depth) starts when you say so.
+**Status: Phase 5 (The farmer's life) is done.** Phase 6 (Contracts and bills) starts when you say so.
 
 | Phase | Scope | Status |
 |---|---|---|
@@ -11,10 +12,11 @@ farm and a beat-up pickup truck, then grow it into an agricultural empire.
 | 2 | Farm: fields, planting, watering, growth, harvest, inventory, offline growth | ✅ |
 | 3 | Truck and world: driving, village, first market, tutorial | ✅ |
 | 4 | Animals and trees: pens, livestock market, woodlot, saplings, fruit | ✅ |
-| 5 | Economy depth: markets, prices, contracts | ⏳ next |
-| 6 | Properties, buildings, workers | |
-| 7 | Progression, collection book, seasons, day/night polish | |
-| 8 | Polish: audio, particles, weather, performance, balancing | |
+| 5 | The farmer's life: a farmer you walk around, clock and days, energy and sleep, tap-to-drive, goals, new HUD | ✅ |
+| 6 | Contracts and deliveries, weekly bills, a bank loan | ⏳ next |
+| 7 | Your own shop in town: rent, stock, prices, customers | |
+| 8 | Hired workers; buy land, buildings and machines | |
+| 9 | Polish: art pass, sound, weather, seasons visuals, balancing | |
 
 ## Running it
 
@@ -32,6 +34,40 @@ Tests: press **⌘U** in Xcode (runs the simulation tests in `AcresCore`), or fr
 cd Packages/AcresCore
 swift test
 ```
+
+## Phase 5: what to test
+
+Your save carries over (format v5: the farmer appears at the farmhouse door, rested, and the goal
+ladder starts). **The pace changed a lot:** one game day now takes 24 real minutes, crops take
+days (wheat 1, pumpkins 6), eggs and milk come daily, and you water once a day.
+
+1. **The farmer.** A little farmer in a straw hat stands at the farmhouse door. Tap a field tile:
+   they walk over and do the job (plow with a hoe, water with a can, plant and harvest by hand).
+   Tap more tiles while they work to line up jobs (small gold markers); **drag across the field**
+   to line up a whole row. The chip "5 jobs lined up · Stop" cancels the line. Tapping plain
+   ground just walks there.
+2. **Trees and pens** work the same way: the farmer walks to the trunk (axe) or the pen gate.
+   Repairs and "Chop down" (fruit trees) are buttons on the info card; the farmer walks over and
+   does them.
+3. **The clock.** Top right: the day and time ("Mon 06:00"), the season and the week. The sky
+   follows the clock: sunrise, noon, golden hour, night.
+4. **Energy.** The bar under the clock drains slowly while awake and with every job. At 0 the
+   farmer walks slowly and can't work. **Sleep:** tap the bed button (appears from 20:00 or when
+   tired) or the farmhouse → *Go to bed*. The farmer walks home, the screen fades, the night
+   passes (the farm keeps growing) and you wake at 06:00, rested. Staying up past 02:00, the
+   farmer falls asleep where they stand and wakes only half rested.
+5. **Driving is tap-only.** Tap **Drive** (or the truck): the farmer walks over and hops in. Then
+   tap anywhere to drive there, or use the **map button** (GPS) to pick a place: Home farm, the
+   market, the seed shop, the gas station or the livestock market. Drag to look around while
+   driving; the camera catches up at the next tap. **Get out** parks.
+6. **Opening hours.** Seed shop 08–18, market 07–19, livestock 08–17, gas station always open.
+   You can walk into shops, but selling needs the truck at the market (that's where the goods
+   are). A closed shop says when it opens.
+7. **Goals** (top left, under the level): what to aim for next, with coin rewards. Tap it for the
+   list; finished goals pulse and are claimed with a tap.
+8. **Tutorial:** now teaches walking, lining up jobs and sleeping to the next day. ⚙️ Settings →
+   *Restart the tutorial* to see it.
+9. **Debug extras:** *Jump to 20:00*, *Refill the farmer's energy*, plus the Phase 4 tools.
 
 ## Phase 4: what to test
 
@@ -170,7 +206,7 @@ especially helpful, since that art is drawn entirely in code.
 ```
 Acres.xcodeproj
 Acres/                      iOS app (SwiftUI + SpriteKit): rendering, input, UI
-  App/                      AcresApp, GameController (+Driving, +Trade, +Tutorial, +Ranch), Haptics
+  App/                      AcresApp, GameController (+Farmer, +Driving, +Trade, +Tutorial, +Ranch), Haptics
   UI/                       HUD, shops, inventory, Welcome-back card, debug panel, theme
   World/                    GameScene, camera, chunk streaming, terrain shader, sprites, trees, pens
   Art/                      AssetCatalog + procedural placeholder painters
@@ -184,6 +220,7 @@ Packages/AcresCore/         Pure Swift simulation (no UIKit/SpriteKit), plus uni
   Trade/                    Shops, market prices, buying, selling, fuel, loading
   Animals/                  Animal simulation, pen rules (repair, collect, water, feed)
   Trees/                    Tree growth, forestry rules (chop, clear, plant, pick)
+  Farmer/                   Energy, sleep, goals
   Save/                     Versioned save files, migrations, file store
   World/                    Map data, the Home Valley map
   Content/                  Crops, items, properties, asset and audio manifests

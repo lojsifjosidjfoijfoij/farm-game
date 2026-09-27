@@ -33,6 +33,9 @@ public enum HomeValleyMap {
     /// The livestock market at the east end of the village (Phase 4).
     public static let livestockZone = TileRect(minX: 123, minY: 22.4, maxX: 134, maxY: 28.8)
 
+    /// The farmhouse door: where the farmer wakes up and goes to bed.
+    public static let farmhouseDoor = Vec2(21, 35.5)
+
     /// Where the truck waits on a new game (tile units).
     public static let truckParkingSpot = Vec2(26.2, 30.2)
 

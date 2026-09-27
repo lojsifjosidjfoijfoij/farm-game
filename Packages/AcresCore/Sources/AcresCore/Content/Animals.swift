@@ -54,32 +54,32 @@ public struct AnimalSpecies: Sendable, Hashable, Identifiable {
     }
 }
 
-/// All farm animals. Times are short, game-like countdowns with water in the
-/// trough; an empty trough halves the pace (`Balance.dryProductionRate`).
+/// All farm animals. Times are in game days with water in the trough (a full
+/// trough lasts a day); an empty one halves the pace (`Balance.dryProductionRate`).
 public enum AnimalCatalog {
     public static let all: [AnimalSpecies] = [
         AnimalSpecies(
             id: "chicken", name: "Chicken", plural: "chickens", youngName: "Chick",
             adultArt: "chicken", youngArt: "chick", penID: "coop",
-            productItemID: "egg", produceSeconds: 2 * 60, growUpSeconds: 90,
+            productItemID: "egg", produceSeconds: GameTime.days(1), growUpSeconds: GameTime.days(1),
             feeds: ["wheat", "corn", "animal_feed"], price: 40, xp: 2, unlockLevel: 2,
             names: ["Henrietta", "Pip", "Nugget", "Clucky", "Maple", "Butterscotch", "Dotty", "Peaches"]),
         AnimalSpecies(
             id: "cow", name: "Cow", plural: "cows", youngName: "Calf",
             adultArt: "cow", youngArt: "calf", penID: "pasture",
-            productItemID: "milk", produceSeconds: 5 * 60, growUpSeconds: 4 * 60,
+            productItemID: "milk", produceSeconds: GameTime.days(1), growUpSeconds: GameTime.days(2),
             feeds: ["corn", "wheat", "animal_feed"], price: 250, xp: 5, unlockLevel: 4,
             names: ["Daisy", "Buttercup", "Clover", "Bessie", "Moomoo", "Hazel", "Tilly"]),
         AnimalSpecies(
             id: "sheep", name: "Sheep", plural: "sheep", youngName: "Lamb",
             adultArt: "sheep", youngArt: "lamb", penID: "sheepfold",
-            productItemID: "wool", produceSeconds: 8 * 60, growUpSeconds: 5 * 60,
+            productItemID: "wool", produceSeconds: GameTime.days(2), growUpSeconds: GameTime.days(2),
             feeds: ["carrot", "wheat", "animal_feed"], price: 350, xp: 7, unlockLevel: 5,
             names: ["Woolly", "Cloud", "Dolly", "Marshmallow", "Fluff", "Biscuit"]),
         AnimalSpecies(
             id: "pig", name: "Pig", plural: "pigs", youngName: "Piglet",
             adultArt: "pig", youngArt: "piglet", penID: "pigsty",
-            productItemID: "truffle", produceSeconds: 12 * 60, growUpSeconds: 6 * 60,
+            productItemID: "truffle", produceSeconds: GameTime.days(3), growUpSeconds: GameTime.days(3),
             feeds: ["potato", "pumpkin", "corn", "animal_feed"], price: 450, xp: 10, unlockLevel: 6,
             names: ["Truffles", "Wilbur", "Petunia", "Hamlet", "Rosie", "Porkchop"]),
     ]

@@ -10,7 +10,8 @@ public enum PenAction: Equatable, Sendable {
 
 public enum RanchFailure: Equatable, Sendable {
     case notYourLand
-    case truckNotHere
+    case tooFar
+    case tooTired
     case locked(level: Int)
     case notEnoughMoney
     case notRepaired
@@ -60,13 +61,21 @@ public struct Ranching: Sendable {
 
     // MARK: Rules
 
-    /// Own the land and park the truck there, like farming.
-    public func accessProblem(_ pen: PenDefinition, in state: GameState) -> RanchFailure? {
+    /// Own the land and stand at the pen, like farming.
+    public func accessProblem(_ pen: PenDefinition, in state: GameState, checkReach: Bool = true) -> RanchFailure? {
         let tile = TileCoord(containing: pen.area.center)
         guard let property = PropertyCatalog.property(containing: tile),
               state.ownedProperties.contains(property.id) else { return .notYourLand }
-        guard property.area.insetBy(-3).contains(state.truck.position) else { return .truckNotHere }
+        if checkReach {
+            guard !state.farmer.inTruck,
+                  pen.footprint.insetBy(-balance.workReach).contains(state.farmer.position) else { return .tooFar }
+        }
         return nil
+    }
+
+    /// Where the farmer stands to work a pen: just outside the gate.
+    public static func workSpot(_ pen: PenDefinition) -> Vec2 {
+        Vec2(pen.area.center.x, pen.area.minY - 0.7)
     }
 
     public func suggestedAction(for pen: PenDefinition, in state: GameState) -> PenAction? {
@@ -81,12 +90,22 @@ public struct Ranching: Sendable {
 
     public func perform(_ action: PenAction, on pen: PenDefinition, in state: inout GameState) -> RanchResult {
         if let problem = accessProblem(pen, in: state) { return fail(problem) }
+        let cost = action == .repair ? 0 : balance.energyCost.pen
+        guard state.farmer.energy >= cost else { return fail(.tooTired) }
+        let result: RanchResult
         switch action {
-        case .repair: return repair(pen, &state)
-        case .collect: return collect(pen, &state)
-        case .water: return water(pen, &state)
-        case .feed: return feed(pen, &state)
+        case .repair: result = repair(pen, &state)
+        case .collect: result = collect(pen, &state)
+        case .water: result = water(pen, &state)
+        case .feed: result = feed(pen, &state)
         }
+        if result.outcome.succeeded {
+            state.farmer.energy = max(0, state.farmer.energy - cost)
+            if case .collected(let items, _) = result.outcome {
+                for (item, amount) in items { state.goals.add(GoalCounter.collected(item), amount) }
+            }
+        }
+        return result
     }
 
     /// The food an animal of this species would eat now, if any.

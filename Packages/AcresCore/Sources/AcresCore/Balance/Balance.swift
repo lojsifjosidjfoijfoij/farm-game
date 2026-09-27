@@ -12,13 +12,13 @@ public struct Balance: Sendable, Equatable {
 
     // MARK: - Time
 
-    /// Real seconds for one full day/night lighting cycle while playing.
-    /// There is no clock to follow: days only drive the lighting, daily
-    /// market prices and seasons.
-    public var realSecondsPerGameDay: Double = 16 * 60
+    /// Real seconds for one game day while playing: 24 minutes, so one game
+    /// minute passes per real second (Big Ambitions pace). The clock drives
+    /// the day and night, opening hours, sleep and the weekly rhythm.
+    public var realSecondsPerGameDay: Double = GameTime.day
 
-    /// Days per season (4 × 16 min ≈ one hour of play per season).
-    public var daysPerSeason: Int = 4
+    /// Days per season: one week (7 × 24 min ≈ 2 h 50 min of play).
+    public var daysPerSeason: Int = 7
 
     // MARK: - Offline progress
 
@@ -45,20 +45,20 @@ public struct Balance: Sendable, Equatable {
     /// stop growing (the world keeps living), but watering doubles the pace.
     public var dryGrowthRate: Double = 0.5
 
-    /// How long soil stays wet after watering (real seconds).
-    public var soilWetDuration: TimeInterval = 10 * 60
+    /// How long soil stays wet after watering: a day, so you water once a day.
+    public var soilWetDuration: TimeInterval = GameTime.day
 
     /// Items the farm can store (seeds and saplings don't count). Harvesting,
     /// collecting and chopping stop when full.
-    public var storageCapacity: Int = 150
+    public var storageCapacity: Int = 300
 
     /// What's in the seed pouch at the start of a new game.
     public var startingItems: [String: Int] = ["seeds_wheat": 12, "seeds_carrot": 8, "seeds_potato": 4]
 
     // MARK: - Animals (Phase 4)
 
-    /// How long a filled water trough lasts (real seconds).
-    public var troughWaterDuration: TimeInterval = 15 * 60
+    /// How long a filled water trough lasts: a day.
+    public var troughWaterDuration: TimeInterval = GameTime.day
 
     /// Production speed of animals with an empty trough, relative to a full one.
     public var dryProductionRate: Double = 0.5
@@ -66,8 +66,8 @@ public struct Balance: Sendable, Equatable {
     /// Happiness gained per feeding with water in the trough (half when dry).
     public var happinessPerFeeding: Double = 0.2
 
-    /// Happiness lost per hour while an adult animal waits to be fed.
-    public var happinessDecayPerHour: Double = 0.25
+    /// Happiness lost per game day while an adult animal waits to be fed.
+    public var happinessDecayPerDay: Double = 0.3
 
     /// Happiness of a newly bought young animal.
     public var newAnimalHappiness: Double = 0.5
@@ -77,11 +77,34 @@ public struct Balance: Sendable, Equatable {
 
     // MARK: - Trees (Phase 4)
 
-    /// Seconds before a stump sprouts again into a sapling of the same kind.
-    public var stumpRegrowSeconds: TimeInterval = 8 * 60
+    /// Time before a stump sprouts again into a sapling of the same kind.
+    public var stumpRegrowSeconds: TimeInterval = GameTime.days(4)
 
     /// Experience for clearing away a stump.
     public var stumpRemovalXP: Int = 1
+
+    // MARK: - The farmer (Phase 5)
+
+    /// Full energy after a good night's sleep.
+    public var energyMax: Double = 100
+
+    /// Energy lost per game hour awake (a 16-hour day costs 24).
+    public var energyDrainPerHour: Double = 1.5
+
+    /// Energy gained per game hour of sleep (8 hours fills you up).
+    public var energyPerSleepHour: Double = 12.5
+
+    /// Energy each job costs.
+    public var energyCost = EnergyCosts()
+
+    /// How far the farmer can reach from where they stand (tiles).
+    public var workReach: Double = 1.6
+
+    /// Walking speed in tiles per second.
+    public var walkSpeed: Double = 2.6
+
+    /// Staying up until this hour, the farmer falls asleep on the spot.
+    public var passOutHour: Int = 2
 
     // MARK: - Progression
 
@@ -97,7 +120,7 @@ public struct Balance: Sendable, Equatable {
     public var startingMoney: Int = 500
 
     /// Items the truck bed holds.
-    public var truckCargoCapacity: Int = 30
+    public var truckCargoCapacity: Int = 60
 
     /// Coins per unit of fuel (a full tank of 100 costs 50).
     public var fuelPrice: Double = 0.5
@@ -123,6 +146,30 @@ public struct Balance: Sendable, Equatable {
 
     /// The shipping balance.
     public static let standard = Balance()
+}
+
+/// Energy per job. A day's work on a small farm uses most of a night's sleep.
+public struct EnergyCosts: Sendable, Equatable {
+    public var plow: Double = 1.5
+    public var plant: Double = 0.4
+    public var water: Double = 0.4
+    public var harvest: Double = 0.5
+    public var pen: Double = 1.5
+    public var chop: Double = 6
+    public var clearStump: Double = 3
+    public var pickFruit: Double = 1
+    public var plantTree: Double = 1
+
+    public init() {}
+
+    public func cost(of kind: FarmAction.Kind) -> Double {
+        switch kind {
+        case .plow: plow
+        case .plant: plant
+        case .water: water
+        case .harvest: harvest
+        }
+    }
 }
 
 /// Feel of the truck. Speeds are in tiles per second.

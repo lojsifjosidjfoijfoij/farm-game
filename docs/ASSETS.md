@@ -40,11 +40,12 @@ procedurally in code.
 | Buildings | 52 | 3 |
 | Props | 30 | 10 |
 | Vehicles | 116 | 1 |
+| Characters | 33 | 0 |
 | Animals | 70 | 0 |
 | Item icons | 37 | 0 |
-| Effects & particles | 32 | 4 |
-| User interface | 26 | 15 |
-| **Total** | **462** | **52** |
+| Effects & particles | 33 | 4 |
+| User interface | 29 | 15 |
+| **Total** | **499** | **52** |
 | Audio files | 57 | 0 |
 
 ## Terrain (tileable ground textures)
@@ -279,6 +280,44 @@ procedurally in code.
 | `vehicle_cargo_logs` | 102 × 51 | 0.8 × 0.4 | 0.2 | 4 | Bundle of logs shown in the truck bed. |
 | `vehicle_cargo_milk_can` | 38 × 51 | 0.3 × 0.4 | 0.2 | 4 | Milk can shown in the truck bed. |
 
+## Characters
+
+| Name | Pixels | World size (tiles) | Anchor | Phase | Description |
+|---|---|---|---|---:|---|
+| `character_farmer_down_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing the camera, standing relaxed. |
+| `character_farmer_down_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing the camera, walking, left foot forward. |
+| `character_farmer_down_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing the camera, walking, right foot forward. |
+| `character_farmer_down_hoe1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing the camera, raising a hoe. |
+| `character_farmer_down_hoe2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing the camera, striking the ground with a hoe. |
+| `character_farmer_down_can1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing the camera, tilting a watering can. |
+| `character_farmer_down_can2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing the camera, pouring from a watering can. |
+| `character_farmer_down_hands1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing the camera, bending down to the ground. |
+| `character_farmer_down_hands2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing the camera, picking something up / sowing. |
+| `character_farmer_down_axe1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing the camera, raising an axe. |
+| `character_farmer_down_axe2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing the camera, swinging an axe. |
+| `character_farmer_up_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, seen from behind, standing relaxed. |
+| `character_farmer_up_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, seen from behind, walking, left foot forward. |
+| `character_farmer_up_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, seen from behind, walking, right foot forward. |
+| `character_farmer_up_hoe1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, seen from behind, raising a hoe. |
+| `character_farmer_up_hoe2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, seen from behind, striking the ground with a hoe. |
+| `character_farmer_up_can1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, seen from behind, tilting a watering can. |
+| `character_farmer_up_can2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, seen from behind, pouring from a watering can. |
+| `character_farmer_up_hands1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, seen from behind, bending down to the ground. |
+| `character_farmer_up_hands2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, seen from behind, picking something up / sowing. |
+| `character_farmer_up_axe1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, seen from behind, raising an axe. |
+| `character_farmer_up_axe2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, seen from behind, swinging an axe. |
+| `character_farmer_side_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), standing relaxed. |
+| `character_farmer_side_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), walking, left foot forward. |
+| `character_farmer_side_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), walking, right foot forward. |
+| `character_farmer_side_hoe1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), raising a hoe. |
+| `character_farmer_side_hoe2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), striking the ground with a hoe. |
+| `character_farmer_side_can1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), tilting a watering can. |
+| `character_farmer_side_can2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), pouring from a watering can. |
+| `character_farmer_side_hands1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), bending down to the ground. |
+| `character_farmer_side_hands2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), picking something up / sowing. |
+| `character_farmer_side_axe1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), raising an axe. |
+| `character_farmer_side_axe2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), swinging an axe. |
+
 ## Animals
 
 | Name | Pixels | World size (tiles) | Anchor | Phase | Description |
@@ -413,6 +452,7 @@ procedurally in code.
 | `fx_headlight_cone` | 256 × 384 | 2 × 3 | — | 3 | Soft headlight beam, pointing up, additive. *(additive light)* |
 | `fx_wood_chip` | 19 × 19 | 0.15 × 0.15 | — | 4 | Wood chip flying off when chopping. |
 | `fx_feather` | 19 × 19 | 0.15 × 0.15 | — | 4 | Small feather. |
+| `fx_job_marker` | 64 × 64 | 0.5 × 0.5 | — | 5 | Small round marker with a soft glow: a job the farmer has lined up. |
 | `fx_bubble` | 90 × 90 | 0.7 × 0.7 | — | 4 | Round white speech bubble with a small tail at the bottom: shows what an animal has or wants. |
 | `fx_heart` | 38 × 38 | 0.3 × 0.3 | — | 4 | Small heart over a happy animal. |
 | `fx_zzz` | 38 × 38 | 0.3 × 0.3 | — | 4 | 'z' for sleeping animals. |
@@ -456,6 +496,9 @@ procedurally in code.
 | `ui_icon_map` | 96 × 96 | UI | — | 3 | Folded map. |
 | `ui_icon_fuel` | 72 × 72 | UI | — | 3 | Jerry can (fuel gauge). |
 | `ui_icon_truck` | 96 × 96 | UI | — | 3 | Pickup truck (drive button). |
+| `ui_icon_energy` | 72 × 72 | UI | — | 5 | Little sun / lightning badge for the farmer's energy. |
+| `ui_icon_goals` | 96 × 96 | UI | — | 5 | Rolled-up checklist with a ribbon (goals). |
+| `ui_icon_bed` | 96 × 96 | UI | — | 5 | Cozy bed with a moon (go to bed). |
 | `ui_icon_contracts` | 96 × 96 | UI | — | 5 | Pinned note (contracts board). |
 | `ui_icon_worker` | 96 × 96 | UI | — | 6 | Farmhand in a straw hat. |
 | `ui_icon_collection` | 96 × 96 | UI | — | 7 | Leather-bound book (collection). |

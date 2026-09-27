@@ -73,13 +73,13 @@ public struct CropDefinition: Sendable, Hashable, Identifiable {
     public var seasonList: [Season] { Season.allCases.filter(seasons.contains) }
 }
 
-/// All crops in the game. Times are short, game-like countdowns for crops kept
-/// watered; dry soil halves the speed (see `Balance.dryGrowthRate`).
+/// All crops in the game. Times are in game days for crops kept watered (one
+/// watering lasts a day); dry soil halves the speed (`Balance.dryGrowthRate`).
 public enum CropCatalog {
     public static let all: [CropDefinition] = [
         CropDefinition(
             id: "wheat", name: "Wheat", plural: "wheat", seasons: [.spring, .summer, .autumn],
-            growthSeconds: 30, seedCost: 4, sellPrice: 10...14, yield: 2...3, xp: 2, unlockLevel: 1,
+            growthSeconds: GameTime.days(1), seedCost: 4, sellPrice: 10...14, yield: 3...4, xp: 2, unlockLevel: 1,
             stageNotes: [
                 "freshly sown row, a few golden seeds on dark soil",
                 "short green sprouts",
@@ -90,7 +90,7 @@ public enum CropCatalog {
             produceNotes: "A bundle of golden wheat ears tied with twine."),
         CropDefinition(
             id: "carrot", name: "Carrot", plural: "carrots", seasons: [.spring, .autumn],
-            growthSeconds: 60, seedCost: 8, sellPrice: 18...24, yield: 2...3, xp: 3, unlockLevel: 1,
+            growthSeconds: GameTime.days(1.5), seedCost: 8, sellPrice: 18...24, yield: 2...4, xp: 3, unlockLevel: 1,
             stageNotes: [
                 "sown soil with tiny seeds",
                 "thin feathery seedlings",
@@ -101,7 +101,7 @@ public enum CropCatalog {
             produceNotes: "Two fresh carrots with green tops."),
         CropDefinition(
             id: "potato", name: "Potato", plural: "potatoes", seasons: [.spring, .summer],
-            growthSeconds: 2 * 60, seedCost: 15, sellPrice: 32...42, yield: 2...4, xp: 5, unlockLevel: 1,
+            growthSeconds: GameTime.days(2), seedCost: 15, sellPrice: 32...42, yield: 3...5, xp: 5, unlockLevel: 1,
             stageNotes: [
                 "a small mound with a seed potato",
                 "a few round leaves breaking the soil",
@@ -112,7 +112,7 @@ public enum CropCatalog {
             produceNotes: "Three earthy potatoes."),
         CropDefinition(
             id: "strawberry", name: "Strawberry", plural: "strawberries", seasons: [.spring, .summer],
-            growthSeconds: 3 * 60, regrowSeconds: 90, seedCost: 40, sellPrice: 16...22, yield: 3...5, xp: 4, unlockLevel: 3,
+            growthSeconds: GameTime.days(3), regrowSeconds: GameTime.days(1.5), seedCost: 40, sellPrice: 16...22, yield: 4...6, xp: 4, unlockLevel: 3,
             stageNotes: [
                 "sown soil",
                 "tiny three-part leaves",
@@ -123,7 +123,7 @@ public enum CropCatalog {
             produceNotes: "Two glossy red strawberries."),
         CropDefinition(
             id: "corn", name: "Corn", plural: "corn", seasons: [.summer, .autumn],
-            growthSeconds: 5 * 60, seedCost: 30, sellPrice: 60...80, yield: 2...3, xp: 9, unlockLevel: 4,
+            growthSeconds: GameTime.days(4), seedCost: 30, sellPrice: 60...80, yield: 3...5, xp: 9, unlockLevel: 4,
             stageNotes: [
                 "sown soil",
                 "a single green sprout",
@@ -134,7 +134,7 @@ public enum CropCatalog {
             produceNotes: "An ear of corn with the husk pulled back."),
         CropDefinition(
             id: "pumpkin", name: "Pumpkin", plural: "pumpkins", seasons: [.autumn],
-            growthSeconds: 12 * 60, seedCost: 80, sellPrice: 280...360, yield: 1...2, xp: 20, unlockLevel: 6,
+            growthSeconds: GameTime.days(6), seedCost: 80, sellPrice: 280...360, yield: 1...2, xp: 20, unlockLevel: 6,
             stageNotes: [
                 "sown soil",
                 "two round seed leaves",

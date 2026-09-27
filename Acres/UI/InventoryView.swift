@@ -223,25 +223,13 @@ struct SettingsView: View {
                 Text("Harvest reminders send a notification when your fields are ready while the app is closed.")
             }
             Section {
-                Picker("Driving", selection: Binding(get: { game.driveControls }, set: { game.setDriveControls($0) })) {
-                    ForEach(DriveControls.allCases) { controls in
-                        Text(controls.title).tag(controls)
-                    }
-                }
-                .pickerStyle(.segmented)
-            } header: {
-                Text("Driving")
-            } footer: {
-                Text(game.driveControls.hint)
-            }
-            Section {
                 Button("Restart the tutorial") {
                     game.restartTutorial()
                     game.showsInventory = false
                 }
             }
             Section("About") {
-                LabeledContent("Version", value: "Acres 0.4 · Phase 4")
+                LabeledContent("Version", value: "Acres 0.5 · Phase 5")
             }
         }
         .navigationTitle("Settings")

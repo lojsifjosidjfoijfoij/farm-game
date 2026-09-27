@@ -16,7 +16,7 @@ public struct AnimalSystem: SimulationSystem {
         let start = state.worldTime
         let dt = context.dt
         let balance = context.balance
-        let decayPerSecond = balance.happinessDecayPerHour / 3600
+        let decayPerSecond = balance.happinessDecayPerDay / balance.realSecondsPerGameDay
 
         for penID in state.ranch.pens.keys.sorted() {
             var pen = state.ranch.pens[penID]!
