@@ -54,6 +54,7 @@ extension GameController {
         switch result {
         case .success:
             Haptics.success()
+            advanceTutorial(.acceptedOrder)
             if let contract = simulation.state.contracts.active.first(where: { $0.id == id }), let client = contract.client {
                 showMessage("Deal! Bring \(describe(contract.items)) to \(client.name) by \(dueText(contract)).")
             }

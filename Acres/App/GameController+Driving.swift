@@ -180,6 +180,9 @@ extension GameController {
         let store = place?.store
         if store != nearbyStore { nearbyStore = store }
         let atFarm = trading.truckIsAtFarm(simulation.state)
-        if atFarm != truckAtFarm { truckAtFarm = atFarm }
+        if atFarm != truckAtFarm {
+            truckAtFarm = atFarm
+            if atFarm { advanceTutorial(.arrivedHome) }
+        }
     }
 }

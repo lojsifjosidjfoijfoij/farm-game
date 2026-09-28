@@ -203,20 +203,34 @@ final class TutorialTests: XCTestCase {
         XCTAssertEqual(t.step, .plowMore)
         for _ in 0..<TutorialState.rowLength { t.handle(.plowed) }
         XCTAssertEqual(t.step, .plant)
-        for event: TutorialEvent in [.planted, .watered, .harvested, .loaded, .arrivedAtMarket, .sold, .boughtSeeds] {
-            XCTAssertTrue(t.handle(event), "\(event)")
+        for event: TutorialEvent in [.planted, .watered, .slept, .harvested, .claimedGoal, .loaded, .arrivedAtMarket, .sold,
+                                     .boughtSeeds, .arrivedHome, .planted, .openedPhone, .acceptedOrder] {
+            XCTAssertTrue(t.handle(event), "\(event) at \(t.step)")
         }
+        XCTAssertEqual(t.step, .fieldsTour)
+        XCTAssertFalse(t.handle(.planted), "a card step waits for its button")
+        t.handle(.next)
         XCTAssertEqual(t.step, .finished)
+        XCTAssertEqual(t.stepNumber, TutorialState.stepCount)
         t.handle(.next)
         XCTAssertFalse(t.isActive)
     }
 
     func testDoingALaterStepEarlySkipsAhead() {
         var t = TutorialState(step: .water)
-        XCTAssertTrue(t.handle(.harvested), "harvesting without watering still counts")
-        XCTAssertEqual(t.step, .load)
-        XCTAssertFalse(t.handle(.planted), "earlier steps don't go backwards")
-        XCTAssertEqual(t.step, .load)
+        XCTAssertTrue(t.handle(.harvested), "harvesting without watering (or sleeping) still counts")
+        XCTAssertEqual(t.step, .claimGoal)
+        XCTAssertFalse(t.handle(.planted), "earlier steps don't go backwards, and replanting is far off")
+        XCTAssertFalse(t.handle(.acceptedOrder), "nor does it jump far ahead")
+        XCTAssertEqual(t.step, .claimGoal)
+    }
+
+    func testSavedStepNumbersNeverChange() {
+        // Saves store the raw values: the old ones must mean the same steps forever.
+        XCTAssertEqual(TutorialStep.sell.rawValue, 8)
+        XCTAssertEqual(TutorialStep.done.rawValue, 11)
+        XCTAssertEqual(Set(TutorialState.order), Set(TutorialStep.allCases), "every step is played")
+        XCTAssertEqual(TutorialState.order.last, .done)
     }
 
     func testSkipping() {

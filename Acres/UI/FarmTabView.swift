@@ -363,7 +363,7 @@ private struct LockedNote: View {
     }
 }
 
-/// A small filled capsule button.
+/// A small candy button (green, or gold for rewards and placing).
 struct ActionCapsule: View {
     let title: String
     let enabled: Bool
@@ -371,17 +371,17 @@ struct ActionCapsule: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
+        Button {
+            Haptics.tap()
+            action()
+        } label: {
             Text(title)
-                .font(Theme.label(13, weight: .bold))
-                .foregroundStyle(.white)
+                .font(Theme.label(14, weight: .heavy))
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
-                .padding(.horizontal, 12)
-                .frame(minHeight: 36)
-                .background(Capsule().fill(enabled ? tint : Color.gray))
+                .frame(minHeight: 22)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(CandyButtonStyle(tint: enabled ? CandyTint.matching(tint) : .gray, cornerRadius: 12, lip: 3))
         .disabled(!enabled)
     }
 }

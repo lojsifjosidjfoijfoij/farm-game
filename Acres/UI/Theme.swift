@@ -2,8 +2,8 @@ import SwiftUI
 import UIKit
 import AcresCore
 
-/// Colors and fonts for the HUD and menus: warm parchment and ink, rounded
-/// numbers, a serif for headings. Readable, calm, not childish.
+/// Colors and fonts for the HUD and menus: warm parchment and ink, chunky
+/// rounded type. Friendly and readable. (Buttons, wood and ribbons: `GameStyle`.)
 enum Theme {
     static let parchment = Color(red: 0.965, green: 0.937, blue: 0.867)
     static let parchmentDark = Color(red: 0.91, green: 0.866, blue: 0.77)
@@ -25,7 +25,7 @@ enum Theme {
     }
 
     static func title(_ size: CGFloat) -> Font {
-        .system(size: size, weight: .semibold, design: .serif)
+        .system(size: size, weight: .bold, design: .rounded)
     }
 
     static func seasonSymbol(_ season: Season) -> String {
@@ -66,7 +66,8 @@ enum Theme {
     }
 }
 
-/// The parchment "pill" used by HUD elements.
+/// The cream "pill" used by HUD elements: a soft gradient, a bright inner
+/// edge and a warm brown rim, floating on a shadow.
 struct HUDPanel: ViewModifier {
     var cornerRadius: CGFloat = 14
 
@@ -75,13 +76,18 @@ struct HUDPanel: ViewModifier {
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(Theme.parchment.opacity(0.94))
-                    .shadow(color: .black.opacity(0.18), radius: 5, y: 2)
+                ZStack {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(LinearGradient(colors: [Theme.cream, Theme.parchment.opacity(0.97)], startPoint: .top, endPoint: .bottom))
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.8), lineWidth: 1.5)
+                        .padding(1.5)
+                }
+                .shadow(color: .black.opacity(0.22), radius: 6, x: 0, y: 3)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(Theme.border, lineWidth: 1)
+                    .strokeBorder(Theme.wood.opacity(0.55), lineWidth: 1.5)
             )
     }
 }

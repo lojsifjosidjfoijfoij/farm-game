@@ -390,11 +390,21 @@ private struct SectionTitle: View {
 }
 
 extension View {
-    /// A soft parchment card.
+    /// A card on the menu paper: cream, with a bright top edge and a soft shadow.
     func card() -> some View {
         padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.parchmentDark.opacity(0.55)))
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(LinearGradient(colors: [Theme.cream, Theme.parchment], startPoint: .top, endPoint: .bottom))
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.9), lineWidth: 1.5)
+                        .padding(1.5)
+                }
+                .shadow(color: Theme.woodDark.opacity(0.18), radius: 4, x: 0, y: 2)
+            )
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Theme.wood.opacity(0.3), lineWidth: 1))
     }
 }
 

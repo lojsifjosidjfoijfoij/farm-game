@@ -612,6 +612,7 @@ extension GameController {
         }
         if phase.elapsed >= SleepPhase.duration {
             sleep = nil
+            advanceTutorial(.slept)
             let date = simulation.state.clock.date(daysPerSeason: balance.daysPerSeason)
             if phase.passedOut {
                 showBanner("You fell asleep on your feet! You wake up at home, only half rested.")

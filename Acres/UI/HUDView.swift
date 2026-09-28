@@ -18,28 +18,24 @@ struct HUDView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 8) {
                         moneyPill
-                        // The phone (orders, the books, the Farm tab) arrives at level 2.
-                        if game.has(.phone) && !game.tutorial.isActive { phoneButton }
+                        // The phone (orders, the books, the Farm tab) arrives at level 2
+                        // (the tutorial brings it in when it's time).
+                        if game.has(.phone) && game.tutorial.hasReached(.phone) { phoneButton }
                     }
                     levelPill
-                    if !game.tutorial.isActive, let goal = game.openGoals.first { goalTracker(goal) }
+                    if game.tutorial.hasReached(.claimGoal), let goal = game.openGoals.first { goalTracker(goal) }
                     if !game.tutorial.isActive, game.has(.chores), !game.todaysChores.isEmpty { choresChip }
                     // The tutorial talks from the side, so the field in the middle stays in view.
                     if let card = game.tutorialCard {
                         TutorialCardView(card: card, onButton: { game.advanceTutorial(.next) }, onSkip: { game.skipTutorial() })
-                            .frame(width: 290)
+                            .frame(width: 330)
                             .transition(.move(edge: .leading).combined(with: .opacity))
                     }
                 }
                 // Messages, at the top in the middle (only in the space the corners leave).
                 VStack(spacing: 8) {
                     if let banner = game.banner {
-                        Text(banner)
-                            .font(Theme.title(16))
-                            .foregroundStyle(Theme.ink)
-                            .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .hudPanel(cornerRadius: 18)
+                        BannerView(text: banner)
                             .transition(.move(edge: .top).combined(with: .opacity))
                     }
                     if let inspection = game.inspection {
@@ -230,6 +226,7 @@ struct HUDView: View {
             game.showsSeedPicker = false
             if !game.claimableAlmanacSets.isEmpty { game.businessTab = .almanac }  // a reward waits there
             game.showsBusiness = true
+            game.advanceTutorial(.openedPhone)
         } label: {
             ZStack(alignment: .topTrailing) {
                 GameIcon(asset: "ui_icon_phone", fallbackSymbol: "iphone.gen2", tint: Theme.ink, size: 22)
@@ -254,7 +251,7 @@ struct HUDView: View {
             }
         }
         .buttonStyle(.plain)
-        .pulsing(game.phoneNeedsAttention)
+        .pulsing(game.phoneNeedsAttention || game.tutorialFocus == .phoneButton)
         .accessibilityLabel(active.isEmpty ? "Business phone" : "Business phone, \(active.count) orders on")
     }
 
@@ -268,19 +265,20 @@ struct HUDView: View {
         .buttonStyle(.plain)
     }
 
+    /// The level in a gold star, and a bar filling toward the next one.
     private var levelPillContent: some View {
-        HStack(spacing: 8) {
-            GameIcon(asset: "ui_icon_level", fallbackSymbol: "star.fill", tint: Theme.gold, size: 16)
-            Text("Lv \(game.level)")
-                .font(Theme.label(14, weight: .semibold))
-                .foregroundStyle(Theme.ink)
-            ProgressView(value: game.levelProgress)
-                .tint(Theme.leaf)
-                .frame(width: 54)
-                .animation(.easeOut(duration: 0.4), value: game.levelProgress)
+        HStack(spacing: 6) {
+            XPBar(fraction: game.levelProgress)
+                .frame(width: 82, height: 14)
+                .padding(.leading, 20)
         }
-        .padding(.vertical, -2)
+        .padding(.vertical, -1)
         .hudPanel(cornerRadius: 12)
+        .overlay(alignment: .leading) {
+            StarBadge(level: game.level, size: 34)
+                .offset(x: -8)
+        }
+        .padding(.leading, 8)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Farmer level \(game.level)")
     }
@@ -313,7 +311,7 @@ struct HUDView: View {
             .hudPanel(cornerRadius: 12)
         }
         .buttonStyle(.plain)
-        .pulsing(claimable)
+        .pulsing(claimable || game.tutorialFocus == .goalTracker)
         .accessibilityLabel(claimable ? "A goal is complete. Claim the reward." : "Goal: \(goal.goal.title), \(goal.current) of \(goal.target)")
     }
 
@@ -446,20 +444,31 @@ struct HUDView: View {
         .buttonStyle(.plain)
     }
 
+    /// A big gold candy button for the place the truck is at (grey when closed).
     private func placeLabel(_ title: String, symbol: String, active: Bool) -> some View {
         HStack(spacing: 10) {
             Image(systemName: symbol)
-                .font(.system(size: 20, weight: .semibold))
+                .font(.system(size: 20, weight: .bold))
             Text(title)
-                .font(Theme.label(18, weight: .semibold))
+                .font(Theme.label(18, weight: .heavy))
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
         }
         .foregroundStyle(.white)
-        .padding(.horizontal, 22)
-        .frame(height: 54)
-        .background(Capsule().fill(active ? Theme.gold : Color(red: 0.5, green: 0.5, blue: 0.55))
-            .shadow(color: .black.opacity(0.25), radius: 6, y: 3))
+        .shadow(color: (active ? CandyTint.gold : .gray).lip.opacity(0.8), radius: 0, x: 0, y: 1.5)
+        .padding(.horizontal, 24)
+        .frame(height: 50)
+        .background(
+            ZStack {
+                Capsule().fill((active ? CandyTint.gold : .gray).lip).offset(y: 4)
+                Capsule().fill(LinearGradient(colors: [(active ? CandyTint.gold : .gray).top, (active ? CandyTint.gold : .gray).bottom],
+                                              startPoint: .top, endPoint: .bottom))
+                Capsule().fill(LinearGradient(colors: [Color.white.opacity(0.45), Color.white.opacity(0.05)], startPoint: .top, endPoint: .bottom))
+                    .padding(.horizontal, 8).padding(.top, 3).padding(.bottom, 24)
+                Capsule().strokeBorder((active ? CandyTint.gold : .gray).lip, lineWidth: 1.5)
+            }
+            .shadow(color: .black.opacity(0.28), radius: 6, x: 0, y: 4)
+        )
     }
 
     // MARK: Bottom
@@ -473,17 +482,11 @@ struct HUDView: View {
                 GameIcon(asset: "ui_icon_truck", fallbackSymbol: game.isDriving ? "figure.walk" : "truck.pickup.side.fill",
                          tint: .white, size: 24)
                 Text(game.isDriving ? "Get out" : "Drive")
-                    .font(Theme.label(15, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .font(Theme.label(16, weight: .heavy))
             }
-            .padding(.horizontal, 12)
-            .frame(height: 50)
-            .background(
-                Capsule().fill(game.isDriving ? Color(red: 0.55, green: 0.42, blue: 0.28) : Theme.leafDark)
-                    .shadow(color: .black.opacity(0.25), radius: 6, y: 3)
-            )
+            .frame(height: 28)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(CandyButtonStyle(tint: game.isDriving ? .wood : .green, cornerRadius: 18))
         .pulsing(game.tutorialFocus == .driveButton)
         .accessibilityLabel(game.isDriving ? "Get out of the truck" : "Drive the truck")
     }
@@ -499,10 +502,9 @@ struct HUDView: View {
                 }
             }
         } label: {
-            GameIcon(asset: "ui_icon_map", fallbackSymbol: "map.fill", tint: Theme.ink, size: 26)
+            GameIcon(asset: "ui_icon_map", fallbackSymbol: "map.fill", tint: Theme.woodDark, size: 24)
                 .frame(width: 52, height: 52)
-                .background(Circle().fill(Theme.parchment.opacity(0.95)).shadow(color: .black.opacity(0.2), radius: 6, y: 3))
-                .overlay(Circle().strokeBorder(Theme.border, lineWidth: 1))
+                .background(TokenBackground())
         }
         .pulsing(game.tutorial.step == .drive)
         .accessibilityLabel("Map: drive somewhere")
@@ -513,11 +515,8 @@ struct HUDView: View {
             game.goToBed()
         } label: {
             GameIcon(asset: "ui_icon_bed", fallbackSymbol: "bed.double.fill", tint: Color(red: 0.35, green: 0.4, blue: 0.7), size: 24)
-                .frame(width: 54, height: 54)
-                .background(Circle().fill(Theme.parchment.opacity(0.95)).shadow(color: .black.opacity(0.2), radius: 6, y: 3))
-                .overlay(Circle().strokeBorder(Theme.border, lineWidth: 1))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TokenButtonStyle(size: 54))
         .pulsing(game.tutorialFocus == .bedButton)
         .accessibilityLabel("Go to bed")
     }
@@ -529,10 +528,9 @@ struct HUDView: View {
             game.showsInventory = true
         } label: {
             ZStack(alignment: .topTrailing) {
-                GameIcon(asset: "ui_icon_inventory", fallbackSymbol: "basket.fill", tint: Theme.ink, size: 26)
+                GameIcon(asset: "ui_icon_inventory", fallbackSymbol: "basket.fill", tint: Theme.woodDark, size: 26)
                     .frame(width: 54, height: 54)
-                    .background(Circle().fill(Theme.parchment.opacity(0.95)).shadow(color: .black.opacity(0.2), radius: 6, y: 3))
-                    .overlay(Circle().strokeBorder(Theme.border, lineWidth: 1))
+                    .background(TokenBackground())
                 if game.cargoCount > 0 {
                     CountBadge(count: game.cargoCount)
                         .offset(x: -40, y: 0)
@@ -559,12 +557,10 @@ struct HUDView: View {
             game.showsDebugPanel = true
         } label: {
             Image(systemName: "ladybug.fill")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(Theme.ink.opacity(0.8))
-                .frame(width: 44, height: 44)
-                .background(Circle().fill(Theme.parchment.opacity(0.8)))
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Theme.woodDark.opacity(0.8))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TokenButtonStyle(size: 40))
         .accessibilityLabel("Debug tools")
     }
     #endif

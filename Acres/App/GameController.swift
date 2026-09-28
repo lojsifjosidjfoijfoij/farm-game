@@ -626,6 +626,7 @@ final class GameController {
         Haptics.success()
         Sound.play(.achievement)
         showBanner("Goal complete: \(claim.goal.title)! +\(claim.goal.coins) coins")
+        advanceTutorial(.claimedGoal)
         handle(claim.events)
         refreshDisplay()
         refreshGoals()

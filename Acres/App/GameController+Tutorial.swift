@@ -10,15 +10,19 @@ enum TutorialFocus: Equatable {
     case tool(BeltTool)
     case shopButton
     case bedButton
+    case goalTracker
+    case phoneButton
 }
 
-/// Text for the tutorial card.
+/// Text for the tutorial card, as said by Grandpa Tom, who ran the farm before you.
 struct TutorialCard: Equatable {
     let title: String
     let body: String
-    /// A button that moves on (welcome and final cards); otherwise the step
-    /// completes by doing it.
+    /// A button that moves on (card steps); otherwise the step completes by doing it.
     let button: String?
+    /// "3 of 17".
+    var step = 0
+    var steps = 0
 }
 
 extension GameController {
@@ -31,7 +35,26 @@ extension GameController {
             return
         }
         store(updated)
-        if updated.step != .done { Haptics.selection() }
+        if updated.step != .done {
+            Haptics.selection()
+            Sound.play(.tap, volume: 0.6)
+        }
+        if updated.step == .phone { reachTutorialLevel(Feature.phone.unlockLevel) }
+    }
+
+    /// The phone comes at level 2: the tutorial makes sure the farmer is there by then.
+    private func reachTutorialLevel(_ target: Int) {
+        let balance = self.balance
+        let events = simulation.modify { state -> [SimEvent] in
+            var events: [SimEvent] = []
+            while state.progress.level < target {
+                let needed = balance.xpToNextLevel(from: state.progress.level) - state.progress.xp
+                events += Progression.addXP(max(1, needed), to: &state, balance: balance)
+            }
+            return events
+        }
+        handle(events)
+        refreshDisplay()
     }
 
     func skipTutorial() {
@@ -51,43 +74,76 @@ extension GameController {
     }
 
     var tutorialCard: TutorialCard? {
+        guard var card = baseTutorialCard else { return nil }
+        card.step = tutorial.stepNumber
+        card.steps = TutorialState.stepCount
+        return card
+    }
+
+    private var baseTutorialCard: TutorialCard? {
         switch tutorial.step {
         case .welcome:
-            TutorialCard(title: "Welcome to your farm!",
-                         body: "This old place is yours now, with one small field to start. Tap where you want your farmer to go; pick a tool and they'll use it.",
-                         button: "Let's go")
+            TutorialCard(title: "Welcome to Acres!",
+                         body: "I'm Tom. I ran this farm for forty years, and now it's yours. It's seen better days, but together we'll soon have it growing again.",
+                         button: "Let's get started")
         case .plow:
             TutorialCard(title: "Plow your field",
-                         body: tool == .hoe ? "Now tap the glowing spot in your field (the marked patch). Your farmer walks over and plows it."
-                             : "Pick the hoe on your tool belt (it's glowing).", button: nil)
+                         body: tool == .hoe ? "See the glowing spot in your field? Tap it, and you'll walk over and plow it."
+                             : "First, the soil. Pick the hoe on your tool belt (it's glowing).", button: nil)
         case .plowMore:
             TutorialCard(title: "Plow a row",
-                         body: "Drag your finger across the field to plow a whole row. Crops only grow in fields. (\(tutorial.progress)/\(TutorialState.rowLength))",
+                         body: "Now drag your finger across the field to plow a whole row. (\(tutorial.progress)/\(TutorialState.rowLength))",
                          button: nil)
         case .plant:
-            TutorialCard(title: "Plant seeds",
-                         body: "Pick the seed bag, then tap or drag over the plowed soil. Tap the bag again to choose other seeds.", button: nil)
+            TutorialCard(title: "Sow some wheat",
+                         body: tool == .seeds ? "Tap or drag over the plowed soil to plant your wheat seeds."
+                             : "Pick the seed bag. Wheat is easy: it's ready in a day.", button: nil)
         case .water:
-            TutorialCard(title: "Water it",
-                         body: "Pick the watering can and tap or drag over the seedlings. Watered crops grow twice as fast, and a watering lasts a day.",
-                         button: nil)
+            TutorialCard(title: "Water the seedlings",
+                         body: tool == .can ? "Tap or drag over your seedlings. Watered crops grow twice as fast."
+                             : "Pick the watering can. Thirsty crops grow slowly.", button: nil)
+        case .sleep:
+            TutorialCard(title: "Sleep on it",
+                         body: "Crops grow overnight. Tap the bed to go home and sleep until morning.", button: nil)
         case .harvest:
-            TutorialCard(title: "Sleep, then harvest",
-                         body: "Wheat takes a day to grow. Tap the bed to sleep until morning: the farm keeps growing. When it sparkles, harvest it with the sickle.",
-                         button: nil)
+            TutorialCard(title: "Harvest time!",
+                         body: tool == .sickle ? "Tap or drag over the ripe wheat to harvest it."
+                             : "Your wheat is ripe! Pick the sickle to harvest it.", button: nil)
+        case .claimGoal:
+            TutorialCard(title: "A job well done",
+                         body: "Goals pay you for getting things done. Tap the goal at the top left and claim your reward.", button: nil)
         case .load:
-            TutorialCard(title: "Load the truck", body: "Open the basket and tap Load all to put your harvest in the truck.", button: nil)
+            TutorialCard(title: "Load the truck",
+                         body: "Open the basket and tap Load all. Your harvest goes on the truck.", button: nil)
         case .drive:
-            TutorialCard(title: "Drive to the village",
-                         body: "Tap Drive (or the truck) to hop in. Then tap the map button → Village Market, or tap the road to drive there.",
-                         button: nil)
+            TutorialCard(title: "Off to market",
+                         body: "Tap Drive to hop in, then follow the arrow (or pick the market on the map) into the village.", button: nil)
         case .sell:
-            TutorialCard(title: "Sell your harvest", body: "Stop at the market square and tap Sell. The market is open 07:00–19:00.", button: nil)
+            TutorialCard(title: "Sell your harvest",
+                         body: "Stop on the market square and tap Sell. Prices change every day.", button: nil)
         case .buySeeds:
-            TutorialCard(title: "Buy seeds", body: "Drive next door to the seed shop (open 08:00–18:00) and buy some more seeds.", button: nil)
+            TutorialCard(title: "Buy more seeds",
+                         body: "The seed shop is just down the street. Buy seeds for your next crop.", button: nil)
+        case .driveHome:
+            TutorialCard(title: "Head home",
+                         body: "Follow the arrow back to the farm.", button: nil)
+        case .replant:
+            TutorialCard(title: "Plant again",
+                         body: "A field should never stand empty for long. Plant your new seeds.", button: nil)
+        case .phone:
+            TutorialCard(title: "Your phone is ringing!",
+                         body: "Word travels fast: people in the village want to buy from you. Tap your phone.", button: nil)
+        case .acceptOrder:
+            TutorialCard(title: "Your first order",
+                         body: "Orders pay better than the market. Accept one, then bring the goods to the customer before the deadline.",
+                         button: nil)
+        case .fieldsTour:
+            TutorialCard(title: "Room to grow",
+                         body: "Crops only grow in fields. When you've saved up, buy your next field on the phone under Farm. More come up as you level up.",
+                         button: "Got it")
         case .finished:
-            TutorialCard(title: "You've got it!",
-                         body: "Your goals (top left) show what to aim for next. Grow, sell, save up, and the whole valley could be yours.",
+            TutorialCard(title: "You're a natural!",
+                         body: "The goals at the top left show what to aim for next. Grow, sell, save up, and this could be the finest farm in the valley.",
                          button: "Start farming")
         case .done:
             nil
@@ -97,15 +153,17 @@ extension GameController {
     var tutorialFocus: TutorialFocus {
         switch tutorial.step {
         case .plow, .plowMore: tool == .hoe ? .none : .tool(.hoe)
-        case .plant: tool == .seeds ? .none : .tool(.seeds)
+        case .plant, .replant: tool == .seeds ? .none : .tool(.seeds)
         case .water: tool == .can ? .none : .tool(.can)
-        case .harvest:
-            simulation.state.plots.byTile.values.contains { $0.crop?.isReady == true }
-                ? (tool == .sickle || tool == .hand ? .none : .tool(.sickle)) : .bedButton
+        case .sleep: .bedButton
+        case .harvest: tool == .sickle || tool == .hand ? .none : .tool(.sickle)
+        case .claimGoal: .goalTracker
         case .load: showsInventory ? .none : .basket
         case .drive: isDriving ? .none : .driveButton
         case .sell: nearbyShop?.kind == .market ? .shopButton : (isDriving ? .none : .driveButton)
         case .buySeeds: nearbyShop?.kind == .seedShop ? .shopButton : (isDriving ? .none : .driveButton)
+        case .driveHome: isDriving ? .none : .driveButton
+        case .phone: .phoneButton
         default: .none
         }
     }
@@ -115,6 +173,7 @@ extension GameController {
         switch tutorial.step {
         case .drive, .sell: ShopCatalog.first(.market)?.zone.center
         case .buySeeds: ShopCatalog.first(.seedShop)?.zone.center
+        case .driveHome: HomeValleyMap.truckParkingSpot
         default: deliveryTarget
         }
     }
@@ -124,7 +183,7 @@ extension GameController {
         let state = simulation.state
         switch tutorial.step {
         case .plow:
-            // A free spot on the old field, close to the yard.
+            // A free spot in the first field, close to the yard.
             let area = HomeValleyMap.homeFarmArea
             var best: (TileCoord, Double)?
             for y in Int(area.minY)..<Int(area.maxY) {
@@ -136,7 +195,7 @@ extension GameController {
                 }
             }
             return best?.0
-        case .plant:
+        case .plant, .replant:
             return state.plots.sorted.first { $0.crop == nil }?.tile
         case .water:
             return state.plots.sorted.first { $0.crop.map { !$0.isReady } == true && !$0.isWet(at: state.worldTime) }?.tile
