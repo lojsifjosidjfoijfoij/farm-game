@@ -2,8 +2,9 @@ import SpriteKit
 import AcresCore
 
 /// Draws the player's truck: the right one of 16 direction sprites, the load
-/// in its bed, a shadow that turns with it, dust on dirt roads and a guide
-/// arrow toward the current goal.
+/// in its bed, a shadow that turns with it, dust on dirt roads, a guide
+/// arrow toward the current goal, and a "Get out" bubble when it's stopped
+/// (the truck is the drive button: tap it to get in or out).
 @MainActor
 final class TruckRenderer {
     private let assets: AssetCatalog
@@ -12,6 +13,7 @@ final class TruckRenderer {
     private let shadow: SKSpriteNode
     private let dust: SKEmitterNode
     private let guide: SKSpriteNode
+    private let exitBubble = SKNode()
     private var direction = -1
     private var loadLevel = -1
 
@@ -62,6 +64,48 @@ final class TruckRenderer {
         guide.alpha = 0
         effectsLayer.addChild(guide)
         guide.run(.repeatForever(.sequence([.scale(to: 1.12, duration: 0.5), .scale(to: 1, duration: 0.5)])))
+
+        // "Get out": a small dark pill over the stopped truck.
+        let pill = SKShapeNode(rectOf: CGSize(width: 96, height: 30), cornerRadius: 15)
+        pill.fillColor = SKColor(red: 0.11, green: 0.14, blue: 0.13, alpha: 0.86)
+        pill.strokeColor = SKColor(white: 1, alpha: 0.9)
+        pill.lineWidth = 2
+        exitBubble.addChild(pill)
+        let label = SKLabelNode(fontNamed: "AvenirNext-Heavy")
+        label.text = "Get out"
+        label.fontSize = 16
+        label.fontColor = .white
+        label.verticalAlignmentMode = .center
+        exitBubble.addChild(label)
+        exitBubble.zPosition = 12
+        exitBubble.alpha = 0
+        exitBubble.isHidden = true
+        effectsLayer.addChild(exitBubble)
+        exitBubble.run(.repeatForever(.sequence([.scale(to: 1.06, duration: 0.6), .scale(to: 1, duration: 0.6)])))
+    }
+
+    /// Whether a tap (scene point) counts as tapping the truck: its picture
+    /// with some room around it, anything within `tolerance` of its middle,
+    /// or the "Get out" bubble.
+    func isHit(_ point: CGPoint, tolerance: CGFloat) -> Bool {
+        let frame = body.calculateAccumulatedFrame().insetBy(dx: -World.tileSize * 0.5, dy: -World.tileSize * 0.5)
+        if frame.contains(point) { return true }
+        let middle = CGPoint(x: body.position.x, y: body.position.y + World.tileSize * 0.3)
+        if hypot(point.x - middle.x, point.y - middle.y) < tolerance { return true }
+        if !exitBubble.isHidden, exitBubble.calculateAccumulatedFrame().insetBy(dx: -12, dy: -12).contains(point) { return true }
+        return false
+    }
+
+    /// Shows the "Get out" bubble over the truck (driving and stopped).
+    func showExit(_ visible: Bool) {
+        exitBubble.position = CGPoint(x: body.position.x, y: body.position.y + World.tileSize * 2)
+        if visible {
+            exitBubble.isHidden = false
+            if exitBubble.alpha < 1 { exitBubble.alpha = min(1, exitBubble.alpha + 0.1) }
+        } else if !exitBubble.isHidden {
+            exitBubble.alpha = max(0, exitBubble.alpha - 0.2)
+            if exitBubble.alpha <= 0 { exitBubble.isHidden = true }
+        }
     }
 
     /// Updates everything for this frame.

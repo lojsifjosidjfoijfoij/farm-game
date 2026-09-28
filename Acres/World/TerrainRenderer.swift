@@ -2,7 +2,7 @@ import SpriteKit
 import AcresCore
 
 /// Draws the ground: one sprite per chunk, blended on the GPU from tileable
-/// detail textures (grass, dirt, gravel, asphalt).
+/// detail textures (grass, dirt, gravel, asphalt), on the pixel-art grid.
 ///
 /// Each chunk sprite's own texture is a tiny "splat map" (4 texels per tile)
 /// saying how much dirt / gravel / asphalt is where (red / green / blue).
@@ -31,6 +31,8 @@ final class TerrainRenderer {
             SKUniform(name: "u_variation", texture: assets.texture("terrain_variation")),
             // Must be a whole number so the pattern continues across chunk edges.
             SKUniform(name: "u_detail_repeat", float: Float(WorldMap.chunkSize / Self.detailTiles)),
+            // The pixel-art grid: art pixels across one chunk (32 per tile).
+            SKUniform(name: "u_pixels", float: Float(Double(WorldMap.chunkSize) * AssetSpec.pixelsPerTile / Double(PixelArt.shrink))),
             grassTint,
             snow,
         ]
@@ -93,7 +95,9 @@ final class TerrainRenderer {
     /// Built-ins: u_texture (the splat map), v_tex_coord (0…1 across the chunk).
     static let shaderSource = """
     void main() {
-        vec2 uv = v_tex_coord;
+        // Snap to the pixel-art grid, so the ground (edges and all) is made of
+        // the same crisp pixels as everything standing on it.
+        vec2 uv = (floor(v_tex_coord * u_pixels) + 0.5) / u_pixels;
         vec2 d1 = fract(uv * u_detail_repeat);
         vec2 d2 = fract(uv * (u_detail_repeat - 1.0) + vec2(0.37, 0.61));
 

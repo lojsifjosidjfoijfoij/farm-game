@@ -122,7 +122,7 @@ extension GameController {
             if tool == .axe { queueAxeJob(treeTile) } else { queueTreeJob(treeTile) }
             return
         }
-        if let pen = PenCatalog.pen(tappedAt: spot) {
+        if let pen = PenCatalog.pen(tappedAt: spot), isPenShown(pen) {
             queuePenJob(pen)
             return
         }

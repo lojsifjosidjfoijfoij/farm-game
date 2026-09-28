@@ -137,6 +137,8 @@ final class ChunkManager {
             if object.kind == "building_farmhouse_t0", farmhouseTier > 0 {
                 object = MapObject(kind: "building_farmhouse_t\(farmhouseTier)", position: object.position, variant: object.variant)
             }
+            // FOR SALE signs come from the game state (only for land you can buy yet; see EstateRenderer).
+            if object.kind == "prop_sign_for_sale" { continue }
             let clearable = ObjectFootprint.isClearable(object.kind)
             let isTree = TreeCatalog.isMapTree(object.kind)
             let tile = TileCoord(containing: object.position)

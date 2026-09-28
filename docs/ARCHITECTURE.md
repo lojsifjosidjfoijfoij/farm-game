@@ -286,6 +286,10 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   finds and the rod until then; the app hides the phone, chores, tools, phone tabs and shop rows
   (showing only what's open now or next level). Orders and chores still run underneath, so the
   first orders are waiting when the phone appears.
+- **The farm grows with you** (presentation only, no save change): pens below their level are
+  drawn as overgrowth and ignore taps (`PenDefinition.isShown`, `RanchRenderer`); field outlines
+  and FOR SALE signs for fields and land appear only from their level (`EstateRenderer`, which
+  also owns every FOR SALE sign; the map's own sign is skipped by `ChunkManager`).
 
 ## The long game (Phase 12)
 
@@ -338,9 +342,14 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
 - **Chunks:** the world is 16 × 16-tile chunks (`ChunkManager`). Chunks on screen load
   immediately; nearby ones trickle in one per frame; far ones unload (with hysteresis). The map can
   grow large without more nodes on screen.
+- **Pixel art** (`Art/PixelArt.swift`): placeholders are painted at 128 px per tile, then shrunk
+  exactly 4× (32 px per tile) with hard alpha edges (soft effects keep a few alpha steps), a
+  saturation and contrast boost and a stepped palette. Textures use nearest-neighbour filtering;
+  SwiftUI shows catalog images with `.interpolation(.none)`. `PixelArt.shrink` sets the pixel size.
 - **Terrain:** one sprite per chunk. Its texture is a tiny splat map (dirt/gravel/asphalt
   weights). A fragment shader blends seamless detail textures and pushes the edges through noise,
-  so borders look organic rather than tiled. One draw call per chunk.
+  so borders look organic rather than tiled; it snaps to the same 32-per-tile pixel grid. One draw
+  call per chunk.
 - **Draw order** (`ZLayer`): ground → flat things/shadows → standing objects → day/night grade
   (a multiply overlay) → the screen-edge vignette (`fx_vignette`, on the camera) → additive night
   lights (windows) → debug.
@@ -362,8 +371,9 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
 1. `AssetManifest` lists every asset: name, world size in tiles, recommended pixels, anchor, phase
    and art notes. `docs/ASSETS.md` is generated from it (`swift run acres-tools assets`), and a
    test fails if the doc is stale.
-2. `AssetCatalog.texture(name)` looks for real art in `Assets.xcassets`, then a procedural
-   placeholder (`PlaceholderPainter`), then shows a magenta checkerboard.
+2. `AssetCatalog.texture(name)` looks for real art in `Assets.xcassets` (used as is: deliver pixel
+   art at 32 px per tile), then a procedural placeholder (`PlaceholderPainter`, put on the pixel
+   grid by `PixelArt`), then shows a magenta checkerboard.
 3. Sprites are sized from the manifest, not from the image, so art at any resolution drops in.
 
 ## Input model (Phase 5)

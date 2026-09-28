@@ -22,14 +22,16 @@ public enum AssetDocs {
           and the *front* (south-facing) side of things standing on it. Roofs are visible from above.
         - **Light:** from the upper left. Soft contact shadows are added by the game, so **do not
           paint ground shadows** into standing sprites (small self-shadows are fine).
-        - **Style:** stylized and warm, between cartoon and realistic. Soft painterly texture,
-          slightly simplified shapes, natural but rich colors. Gentle, darker-than-fill outlines only
-          where shapes need separation. Not bouncy or childish, not photorealistic.
-        - **Palette:** earthy greens, golden wheat, soft browns, muted blues. Keep saturation moderate:
-          the game tints the whole world for time of day and season.
-        - **Format:** PNG with transparency, sRGB. World scale is **\(Int(AssetSpec.pixelsPerTile)) px per tile** (one tile ≈ one
-          crop plot). Sizes below are recommendations; the game scales art to the listed world size,
-          so any resolution with the same proportions works.
+        - **Style:** indie pixel art with small pixels: **32 px per tile** (one tile ≈ one crop
+          plot), crisp hard edges (no anti-aliased fringe; transparency is on or off, except soft
+          effects like shadows and smoke), darker outlines where shapes need separation. Warm and
+          cozy, not bouncy or childish.
+        - **Palette:** saturated and punchy: fresh greens, golden wheat, warm browns, clear blues, from
+          a limited set of colors per asset. The game tints the whole world for time of day and season.
+        - **Format:** PNG with transparency, sRGB, drawn at 32 px per tile. The game scales art with
+          nearest-neighbour (no smoothing), so pixels stay square. The pixel sizes listed below are
+          what the placeholder painters paint at (\(Int(AssetSpec.pixelsPerTile)) px per tile), which
+          the game then shrinks 4× onto the pixel grid: divide them by 4 for pixel art.
         - **Anchor:** the *foot point* (where the object touches the ground) sits horizontally
           centered, at the listed fraction of the height from the bottom edge.
         - **Directions:** unless noted, animals face left (mirrored in code). Vehicles have 16

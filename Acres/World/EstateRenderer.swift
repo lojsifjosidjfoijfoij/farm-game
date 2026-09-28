@@ -17,6 +17,7 @@ final class EstateRenderer {
     private var shownEstate: EstateState?
     private var shownLand: [String]?
     private var shownFields: [String]?
+    private var shownLevel = 0
     private var staticNodes: [SKNode] = []
     private var sprinklerTiles: [TileCoord] = []
     private var workshopSprites: [TileCoord: SKSpriteNode] = [:]
@@ -44,7 +45,9 @@ final class EstateRenderer {
             $0.storageLevel != estate.storageLevel || $0.sprinklers != estate.sprinklers
                 || $0.workshops.map(\.tile) != estate.workshops.map(\.tile) || $0.workshops.map(\.kind) != estate.workshops.map(\.kind)
         } ?? true
-        guard force || layoutChanged || shownLand != state.ownedProperties || shownFields != state.ownedFields else {
+        let level = state.progress.level
+        guard force || layoutChanged || shownLand != state.ownedProperties || shownFields != state.ownedFields
+                || shownLevel != level else {
             syncWorkers(estate.workers)
             shownEstate = estate
             return
@@ -52,6 +55,7 @@ final class EstateRenderer {
         shownEstate = estate
         shownLand = state.ownedProperties
         shownFields = state.ownedFields
+        shownLevel = level
         for node in staticNodes { node.removeFromParent() }
         staticNodes = []
         workshopSprites = [:]
@@ -63,12 +67,15 @@ final class EstateRenderer {
             let kind = sprinkler.kind == "sprinkler_pro" ? "prop_sprinkler_pro" : "prop_sprinkler"
             objects.append(MapObject(kind: kind, position: sprinkler.tile.center))
         }
-        for property in PropertyCatalog.forSale where !state.ownedProperties.contains(property.id) {
+        // The farm starts small and opens up: land and fields only show once
+        // your level lets you buy them (the level-up card says so).
+        for property in PropertyCatalog.forSale where !state.ownedProperties.contains(property.id) && property.unlockLevel <= level {
             if let spot = property.signSpot { objects.append(MapObject(kind: "prop_sign_for_sale", position: spot)) }
         }
-        // Fields: yours are marked out; ones on your land you could buy get a faint outline and a sign.
+        // Fields: yours are marked out; ones on your land you could buy now get a faint outline and a sign.
         for field in FieldCatalog.all where state.ownedProperties.contains(field.propertyID) {
             let owned = state.ownedFields.contains(field.id)
+            guard owned || field.unlockLevel <= level else { continue }
             let border = Self.fieldBorder(field, owned: owned)
             flatLayer.addChild(border)
             staticNodes.append(border)
@@ -117,6 +124,7 @@ final class EstateRenderer {
             node.lineWidth = 2
         }
         node.zPosition = 0.2
+        node.isAntialiased = false  // crisp, like the pixel art around it
         return node
     }
 

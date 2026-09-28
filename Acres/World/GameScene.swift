@@ -280,7 +280,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         trees?.sync(woodland: state.woodland, forestry: game.forestry) { tile in
             chunks.isLoaded(WorldMap.chunk(containing: tile.center))
         }
-        ranch?.sync(ranch: state.ranch, now: state.worldTime, inventory: state.inventory)
+        ranch?.sync(ranch: state.ranch, now: state.worldTime, inventory: state.inventory, level: state.progress.level)
         estate?.sync(game: game)
         updateMarkers()
     }
@@ -288,6 +288,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     private func updateTruck() {
         truck?.update(truck: game.truckState, speed: game.motion.speed, surface: game.truckSurface,
                       cargoFraction: game.cargoFraction, guideTarget: game.isDriving ? game.guideTarget : nil)
+        truck?.showExit(game.isDriving && game.autopilot == nil && game.motion.isStopped)
         if let destination = game.destination {
             destinationMarker.position = World.point(destination)
             destinationMarker.isHidden = false
@@ -458,10 +459,10 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         guard let view = gesture.view, let camera = cameraController else { return }
         let point = camera.worldPoint(fromScreen: gesture.location(in: view))
 
-        // The truck is the drive button: tap it to walk over and hop in, tap it again to get out.
-        // (A little extra room around it, so it's easy to hit.)
-        if let body = truck?.body,
-           body.calculateAccumulatedFrame().insetBy(dx: -World.tileSize * 0.4, dy: -World.tileSize * 0.4).contains(point) {
+        // The truck is the drive button: tap it to walk over and hop in, tap it (or its
+        // "Get out" bubble) again to get out. Generous: anything within about a thumb's
+        // width of it counts.
+        if let truck, truck.isHit(point, tolerance: 44 * camera.zoom) {
             game.tapTruck()
             return
         }
@@ -487,7 +488,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
                 game.inspect(.tree(treeTile))
                 return
             }
-            if let pen = PenCatalog.pen(tappedAt: spot) {
+            if let pen = PenCatalog.pen(tappedAt: spot), game.isPenShown(pen) {
                 game.inspect(.pen(pen.id))
                 return
             }

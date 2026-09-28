@@ -92,15 +92,15 @@ struct TitleScreenView: View {
     private func farm(w: CGFloat, h: CGFloat) -> some View {
         let catalog = AssetCatalog.shared
         return ZStack {
-            Image(uiImage: catalog.uiImage("tree_oak_summer")).resizable().scaledToFit()
+            Image(uiImage: catalog.uiImage("tree_oak_summer")).interpolation(.none).resizable().scaledToFit()
                 .frame(height: h * 0.26).position(x: w * 0.08, y: h * 0.56)
-            Image(uiImage: catalog.uiImage("building_barn")).resizable().scaledToFit()
+            Image(uiImage: catalog.uiImage("building_barn")).interpolation(.none).resizable().scaledToFit()
                 .frame(height: h * 0.25).position(x: w * 0.36, y: h * 0.6)
-            Image(uiImage: catalog.uiImage("building_farmhouse_t1")).resizable().scaledToFit()
+            Image(uiImage: catalog.uiImage("building_farmhouse_t1")).interpolation(.none).resizable().scaledToFit()
                 .frame(height: h * 0.27).position(x: w * 0.2, y: h * 0.6)
-            Image(uiImage: catalog.uiImage("tree_apple_summer")).resizable().scaledToFit()
+            Image(uiImage: catalog.uiImage("tree_apple_summer")).interpolation(.none).resizable().scaledToFit()
                 .frame(height: h * 0.2).position(x: w * 0.48, y: h * 0.63)
-            Image(uiImage: catalog.uiImage("tree_pine_summer")).resizable().scaledToFit()
+            Image(uiImage: catalog.uiImage("tree_pine_summer")).interpolation(.none).resizable().scaledToFit()
                 .frame(height: h * 0.24).position(x: w * 0.9, y: h * 0.6)
         }
         .allowsHitTesting(false)

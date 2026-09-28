@@ -18,11 +18,25 @@ enum WorldFeedback {
     case foraged(String, id: Int)
 }
 
+extension PenDefinition {
+    /// The farm starts small: a pen appears once your level allows fixing it
+    /// up (or once it's fixed, for old saves).
+    func isShown(repaired: Bool, level: Int) -> Bool {
+        repaired || level >= unlockLevel
+    }
+}
+
 extension GameController {
     var ranching: Ranching { Ranching(balance: balance) }
     var forestry: Forestry { Forestry(map: map, balance: balance) }
 
     // MARK: Pens
+
+    /// Pens show (and answer taps) once your level allows fixing them up;
+    /// before that the ground behind the house is just overgrown.
+    func isPenShown(_ pen: PenDefinition) -> Bool {
+        pen.isShown(repaired: simulation.state.ranch[pen.id].isRepaired, level: level)
+    }
 
     @discardableResult
     func performPen(_ action: PenAction, _ pen: PenDefinition) -> RanchOutcome {

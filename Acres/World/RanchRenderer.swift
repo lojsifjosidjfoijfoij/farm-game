@@ -8,16 +8,18 @@ import AcresCore
 final class RanchRenderer {
 
     private struct PenLook: Equatable {
+        /// Not yours to have yet (below its level): just overgrown ground.
+        var locked: Bool
         var repaired: Bool
         var water: Bool
     }
 
     private final class PenNodes {
         var parts: [SKNode] = []
-        let trough: SKSpriteNode
+        let trough: SKSpriteNode?
         var look: PenLook
 
-        init(trough: SKSpriteNode, look: PenLook) {
+        init(trough: SKSpriteNode?, look: PenLook) {
             self.trough = trough
             self.look = look
         }
@@ -75,10 +77,12 @@ final class RanchRenderer {
 
     // MARK: Sync with the game state
 
-    func sync(ranch: Ranch, now: TimeInterval, inventory: Inventory) {
+    /// `level`: pens below it stay overgrown (the farm opens up as you level).
+    func sync(ranch: Ranch, now: TimeInterval, inventory: Inventory, level: Int) {
         for pen in PenCatalog.all {
             let state = ranch[pen.id]
-            let look = PenLook(repaired: state.isRepaired, water: state.hasWater(at: now))
+            let look = PenLook(locked: !pen.isShown(repaired: state.isRepaired, level: level),
+                               repaired: state.isRepaired, water: state.hasWater(at: now))
             if let existing = pens[pen.id] {
                 if existing.look != look { rebuild(pen, look) }
             } else {
@@ -109,13 +113,21 @@ final class RanchRenderer {
 
     private func rebuild(_ pen: PenDefinition, _ look: PenLook) {
         if let old = pens[pen.id] {
-            if old.look.repaired == look.repaired {
+            if old.look.repaired == look.repaired, old.look.locked == look.locked, let trough = old.trough {
                 // Only the water changed.
-                old.trough.texture = assets.texture(look.water ? "prop_water_trough" : "prop_water_trough_empty")
+                trough.texture = assets.texture(look.water ? "prop_water_trough" : "prop_water_trough_empty")
                 old.look = look
                 return
             }
             for part in old.parts { part.removeFromParent() }
+            // Just unlocked (a level up): the brush clears in a cloud of dust.
+            if old.look.locked && !look.locked { repaired(pen.id) }
+        }
+        if look.locked {
+            let nodes = PenNodes(trough: nil, look: look)
+            nodes.parts = overgrowth(pen)
+            pens[pen.id] = nodes
+            return
         }
         let trough = sprite(look.water ? "prop_water_trough" : "prop_water_trough_empty", at: pen.trough)
         let nodes = PenNodes(trough: trough, look: look)
@@ -163,6 +175,28 @@ final class RanchRenderer {
         }
         for corner in [Vec2(area.minX, area.minY), Vec2(area.maxX, area.minY), Vec2(area.minX, area.maxY), Vec2(area.maxX, area.maxY)] {
             parts.append(sprite("prop_fence_wood_post", at: corner))
+        }
+        return parts
+    }
+
+    /// A pen you can't have yet: overgrown ground, bushes and long grass.
+    /// (Always the same for a pen, so it doesn't reshuffle.)
+    private func overgrowth(_ pen: PenDefinition) -> [SKNode] {
+        var rng = SeededRandom(seed: SeededRandom.stableHash(pen.id))
+        var parts: [SKNode] = []
+        let area = pen.area.insetBy(0.4)
+        let count = max(6, Int(area.width * area.height * 0.9))
+        for k in 0..<count {
+            let kind = switch k % 5 {
+            case 0: "nature_bush_a"
+            case 1: "nature_grass_tuft_a"
+            case 2: "nature_bush_b"
+            case 3: "nature_grass_tuft_b"
+            default: k % 10 == 4 ? "nature_rock_small" : "nature_grass_tuft_a"
+            }
+            let spot = Vec2(area.minX + rng.nextUnit() * area.width, area.minY + rng.nextUnit() * area.height)
+            parts.append(sprite(kind, at: spot))
+            if let shadow = shadow(for: kind, at: spot) { parts.append(shadow) }
         }
         return parts
     }

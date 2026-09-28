@@ -21,7 +21,8 @@ final class AssetCatalog {
     func texture(_ name: String) -> SKTexture {
         if let cached = textures[name] { return cached }
         let texture = SKTexture(image: image(name))
-        texture.filteringMode = .linear
+        // Pixel art: no smoothing when scaled, so every pixel stays a crisp square.
+        texture.filteringMode = PixelArt.isPixelated(name) ? .nearest : .linear
         textures[name] = texture
         return texture
     }
@@ -35,9 +36,12 @@ final class AssetCatalog {
     }
 
     /// Uncached image lookup (real art → placeholder → missing marker).
+    /// Placeholders are painted big, then put on the pixel-art grid.
     func image(_ name: String) -> UIImage {
         if let art = UIImage(named: name) { return art }
-        if let placeholder = PlaceholderPainter.paint(name) { return placeholder }
+        if let placeholder = PlaceholderPainter.paint(name), let spec = AssetManifest.spec(named: name) {
+            return PixelArt.pixelate(placeholder, spec: spec)
+        }
         if warnedMissing.insert(name).inserted {
             print("⚠️ AssetCatalog: no art and no placeholder painter for '\(name)'")
         }

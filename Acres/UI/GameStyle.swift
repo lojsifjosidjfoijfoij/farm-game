@@ -269,6 +269,7 @@ struct MentorPortrait: View {
         ZStack {
             Circle().fill(Color(red: 0.5, green: 0.71, blue: 0.85))
             Image(uiImage: AssetCatalog.shared.uiImage("ui_portrait_mentor"))
+                .interpolation(.none)
                 .resizable()
                 .scaledToFit()
                 .clipShape(Circle())

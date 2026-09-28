@@ -47,6 +47,23 @@ cd Packages/AcresCore
 swift test
 ```
 
+## Pixel art, a small start, and the truck: what to test
+
+Your save carries over (same format, v13). For the full effect: basket → *Settings* → *From the
+beginning* → *Start a new farm…*.
+
+1. **Pixel art:** the whole world is crisp indie pixel art with small pixels (32 per tile) and
+   punchier, saturated colours: every placeholder picture is painted big, then shrunk 4× onto the
+   pixel grid with hard edges and a limited palette, and drawn with no smoothing. The ground uses
+   the same grid. Item icons in the menus and Tom's portrait are pixel art too; the HUD itself
+   stays smooth.
+2. **A small farm to start:** at level 1 you have the house, the old barn and one field. The pens
+   behind the house are overgrown until their level (coop 2, cows 4, sheep 5, pigs 6), and clear in
+   a puff of dust when you get there. Fields and land only show their outline and FOR SALE sign
+   once your level lets you buy them.
+3. **Getting out of the truck:** tap the truck again. The spot that counts is bigger now (a thumb's
+   width around it), and when the truck stops a **Get out** bubble appears over it; tap that too.
+
 ## The long tutorial and the new look: what to test
 
 Your save carries over (same format, v13). To see it all from the start: basket → *Settings* →

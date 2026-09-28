@@ -34,13 +34,9 @@ extension GameController {
 
     /// The card for a field you could buy (tapping it on your land).
     func fieldInspection(_ tile: TileCoord) -> TileInspection? {
+        // Fields for later levels aren't there yet (the farm opens up as you level).
         guard let field = FieldCatalog.field(containing: tile), !simulation.state.ownedFields.contains(field.id),
-              simulation.state.ownedProperties.contains(field.propertyID) else { return nil }
-        if level < field.unlockLevel {
-            return TileInspection(target: .tile(tile), title: "\(field.name) (level \(field.unlockLevel))",
-                                  detail: "\(field.tileCount) tiles of farmland, \(field.price) coins, from level \(field.unlockLevel).",
-                                  icon: nil, symbol: "lock.fill")
-        }
+              simulation.state.ownedProperties.contains(field.propertyID), level >= field.unlockLevel else { return nil }
         return TileInspection(target: .tile(tile), title: "\(field.name) for sale",
                               detail: "\(field.tileCount) more tiles to farm for \(field.price) coins.", icon: nil,
                               symbol: "square.grid.3x3.fill", action: .buyField(field.id), actionTitle: "Buy · \(field.price)")

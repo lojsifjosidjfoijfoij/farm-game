@@ -570,6 +570,7 @@ struct ItemIcon: View {
 
     var body: some View {
         Image(uiImage: AssetCatalog.shared.uiImage(name))
+            .interpolation(.none)  // pixel art: crisp pixels
             .resizable()
             .scaledToFit()
             .frame(width: size, height: size)
