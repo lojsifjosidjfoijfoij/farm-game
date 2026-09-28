@@ -231,6 +231,25 @@ public struct EstateRules: Sendable {
         return price
     }
 
+    /// Clears a field for farming (on land you own). Returns the price.
+    @discardableResult
+    public func buyField(_ id: String, state: inout GameState) throws(EstateFailure) -> Int {
+        guard let field = FieldCatalog.field(id) else { throw .unknown }
+        guard !state.ownedFields.contains(id) else { throw .alreadyOwned }
+        guard state.ownedProperties.contains(field.propertyID) else { throw .notYourLand }
+        guard state.progress.level >= field.unlockLevel else { throw .locked(level: field.unlockLevel) }
+        try pay(field.price, LedgerCategory.land, &state)
+        state.ownedFields.append(id)
+        state.ownedFields.sort()
+        state.goals.add(GoalCounter.fieldsBought)
+        return field.price
+    }
+
+    /// Fields on your land you could buy now or soon (not owned yet), cheapest first.
+    public func fieldsForSale(_ state: GameState) -> [FieldDefinition] {
+        FieldCatalog.all.filter { state.ownedProperties.contains($0.propertyID) && !state.ownedFields.contains($0.id) }
+    }
+
     // MARK: Upgrades
 
     /// The next storage upgrade: (capacity after, cost, level needed), or nil at the top.
@@ -285,7 +304,7 @@ public struct EstateRules: Sendable {
     /// fields, trees and buildings; planning skips the reach check.)
     public func placeProblem(at tile: TileCoord, in state: GameState, checkReach: Bool = true) -> EstateFailure? {
         let farming = Farming(map: map, balance: balance)
-        switch farming.plowProblem(at: tile, in: state, checkReach: checkReach) {
+        switch farming.groundProblem(at: tile, in: state, checkReach: checkReach) {
         case nil: return nil
         case .notYourLand?: return .notYourLand
         case .tooFar?: return .tooFar

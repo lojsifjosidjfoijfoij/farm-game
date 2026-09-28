@@ -32,12 +32,38 @@ iOS 17+ simulator or iPhone. No third-party dependencies.
 3. For a real device: select the *Acres* target → *Signing & Capabilities* → choose your Team.
    You may need to change the bundle ID (`com.acresgame.Acres`) to something unique.
 
+The game is played **sideways (landscape)**, either way round. In the simulator, turn it with
+⌘← / ⌘→ if it opens upright.
+
+**Starting over:** basket → *Settings* → *From the beginning*:
+- **Replay the tutorial** runs the tutorial again on your current farm.
+- **Start a new farm…** deletes the current farm (after asking) and starts on day one with the
+  tutorial.
+
 Tests: press **⌘U** in Xcode (runs the simulation tests in `AcresCore`), or from a terminal:
 
 ```sh
 cd Packages/AcresCore
 swift test
 ```
+
+## A simpler start: what to test
+
+Your save carries over (format v13: your farm gets every field its level and land have earned,
+and anything you already plowed keeps working).
+
+1. **Fields:** crops only grow in fields now, marked out on the ground. A new farm has one small
+   field (15 tiles) next to the old barn. More fields go on sale as you level up (phone → Farm →
+   *Fields*, or tap a field with a FOR SALE sign and hit **Buy**). Land you buy comes with its own
+   fields to buy. Tapping the hoe outside your fields says where crops can grow.
+2. **It starts small and opens up:**
+   - Level 1: the hand, hoe, seeds, watering can and sickle; the market and the seed shop.
+   - Level 2: the phone (orders, the books, the Farm tab), daily chores, the axe.
+   - Level 3: the fishing rod and wild finds; the corner shop.
+   - Level 4: the almanac and your farm's rank.
+   The level-up card says what's new. Shops and the Farm tab only show what you can get now or at
+   the next level.
+3. **Played sideways**, with **Start a new farm** in Settings (see *Running it*).
 
 ## Phase 12: what to test
 

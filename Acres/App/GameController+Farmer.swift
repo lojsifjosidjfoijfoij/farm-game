@@ -130,6 +130,11 @@ extension GameController {
             inspect(.farmhouse)
             return
         }
+        if state.plots[tile] == nil, fieldInspection(tile) != nil {
+            // A field on your land that isn't yours yet: what it costs, and a Buy button.
+            inspect(.tile(tile))
+            return
+        }
         if tool == .hoe, isFieldTarget(tile, for: .plow) {
             queueToolJob(.plow, at: tile, reportProblems: true)
             return
@@ -218,6 +223,7 @@ extension GameController {
         switch failure {
         case .notYourLand: text = "This land isn't yours (yet)."
         case .cannotPlowHere: text = "Can't plow here."
+        case .notAField: text = Self.notAFieldMessage
         case .alreadyPlowed: text = state.plots[tile]?.crop == nil ? "Already plowed. Pick the seed bag to plant it." : nil
         case .notPlowed: text = kind == .plant ? "Plow it first: pick the hoe." : "Nothing planted here."
         case .alreadyPlanted: text = "Something's already growing here."

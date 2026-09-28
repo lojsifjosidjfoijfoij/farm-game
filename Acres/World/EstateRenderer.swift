@@ -16,6 +16,7 @@ final class EstateRenderer {
 
     private var shownEstate: EstateState?
     private var shownLand: [String]?
+    private var shownFields: [String]?
     private var staticNodes: [SKNode] = []
     private var sprinklerTiles: [TileCoord] = []
     private var workshopSprites: [TileCoord: SKSpriteNode] = [:]
@@ -43,13 +44,14 @@ final class EstateRenderer {
             $0.storageLevel != estate.storageLevel || $0.sprinklers != estate.sprinklers
                 || $0.workshops.map(\.tile) != estate.workshops.map(\.tile) || $0.workshops.map(\.kind) != estate.workshops.map(\.kind)
         } ?? true
-        guard force || layoutChanged || shownLand != state.ownedProperties else {
+        guard force || layoutChanged || shownLand != state.ownedProperties || shownFields != state.ownedFields else {
             syncWorkers(estate.workers)
             shownEstate = estate
             return
         }
         shownEstate = estate
         shownLand = state.ownedProperties
+        shownFields = state.ownedFields
         for node in staticNodes { node.removeFromParent() }
         staticNodes = []
         workshopSprites = [:]
@@ -63,6 +65,16 @@ final class EstateRenderer {
         }
         for property in PropertyCatalog.forSale where !state.ownedProperties.contains(property.id) {
             if let spot = property.signSpot { objects.append(MapObject(kind: "prop_sign_for_sale", position: spot)) }
+        }
+        // Fields: yours are marked out; ones on your land you could buy get a faint outline and a sign.
+        for field in FieldCatalog.all where state.ownedProperties.contains(field.propertyID) {
+            let owned = state.ownedFields.contains(field.id)
+            let border = Self.fieldBorder(field, owned: owned)
+            flatLayer.addChild(border)
+            staticNodes.append(border)
+            if !owned {
+                objects.append(MapObject(kind: "prop_sign_for_sale", position: Vec2(field.area.minX + 0.5, field.area.minY + 0.25)))
+            }
         }
         for object in objects {
             guard let nodes = factory.makeNodes(for: object, season: game.season) else { continue }
@@ -86,6 +98,26 @@ final class EstateRenderer {
         }
         sprinklerTiles = estate.sprinklers.map(\.tile)
         syncWorkers(estate.workers)
+    }
+
+    /// A field marked out on the ground: a soft soil tint with an edge (yours),
+    /// or just a faint outline (for sale).
+    private static func fieldBorder(_ field: FieldDefinition, owned: Bool) -> SKShapeNode {
+        let origin = World.point(Vec2(field.area.minX, field.area.minY))
+        let rect = CGRect(x: origin.x, y: origin.y, width: CGFloat(field.area.width) * World.tileSize,
+                          height: CGFloat(field.area.height) * World.tileSize)
+        let node = SKShapeNode(rect: rect.insetBy(dx: 2, dy: 2), cornerRadius: World.tileSize * 0.18)
+        if owned {
+            node.fillColor = UIColor(red: 0.45, green: 0.33, blue: 0.2, alpha: 0.16)
+            node.strokeColor = UIColor(red: 0.42, green: 0.3, blue: 0.18, alpha: 0.6)
+            node.lineWidth = 3
+        } else {
+            node.fillColor = UIColor(white: 1, alpha: 0.06)
+            node.strokeColor = UIColor(white: 1, alpha: 0.45)
+            node.lineWidth = 2
+        }
+        node.zPosition = 0.2
+        return node
     }
 
     /// Where a workshop's picture stands on its tile.

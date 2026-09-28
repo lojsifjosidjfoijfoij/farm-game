@@ -123,6 +123,15 @@ public struct SaveMigrator: Sendable {
                 state["rank"] = ["rank": 0] as [String: Any]
                 json["state"] = state
             },
+            12: { json in
+                // Crops now grow only in fields. Existing farms get every field their
+                // level and land have earned (and fields they plowed keep working).
+                var state = json["state"] as? [String: Any] ?? [:]
+                let level = (state["progress"] as? [String: Any])?["level"] as? Int ?? 1
+                let properties = state["ownedProperties"] as? [String] ?? [PropertyCatalog.homeFarm.id]
+                state["ownedFields"] = FieldCatalog.earned(level: level, properties: properties).sorted()
+                json["state"] = state
+            },
         ]
     )
 

@@ -17,6 +17,7 @@ final class EstateTests: XCTestCase {
         state.progress.level = level
         state.money = money
         state.tutorial = .complete
+        state.ownedFields = FieldCatalog.all.filter { $0.propertyID == PropertyCatalog.homeFarm.id }.map(\.id)
         return Simulation(state: state)
     }
 
@@ -67,10 +68,10 @@ final class EstateTests: XCTestCase {
                     let tile = TileCoord(x, y)
                     guard property.contains(tile) else { continue }
                     XCTAssertNotEqual(map.terrain(at: tile), .asphalt, "\(property.name) takes in a road at \(tile)")
-                    if farming.plowProblem(at: tile, in: state, checkReach: false) == nil { farmable += 1 }
+                    if farming.groundProblem(at: tile, in: state, checkReach: false) == nil { farmable += 1 }
                 }
             }
-            XCTAssertGreaterThan(farmable, 60, "\(property.name) has room to farm")
+            XCTAssertGreaterThan(farmable, 60, "\(property.name) has room for fields and buildings")
         }
         for building in EstateLayout.buildings {
             XCTAssertNil(PropertyCatalog.property(containing: TileCoord(containing: building.position)),
@@ -93,11 +94,48 @@ final class EstateTests: XCTestCase {
         XCTAssertEqual(Bank.weeklyBills(sim.state, balance: balance).first { $0.category == LedgerCategory.propertyTax }?.amount,
                        2 * balance.propertyTaxPerWeek, "taxed like the farm")
 
-        // The new land can be farmed.
+        // The new land's fields go on sale; once one is bought, it can be farmed.
         let meadow = PropertyCatalog.property("east_meadow")!
+        let field = FieldCatalog.field("meadow_1")!
         let tile = TileCoord(50, 35)
-        XCTAssertTrue(meadow.contains(tile))
+        XCTAssertTrue(meadow.contains(tile) && field.contains(tile))
+        XCTAssertEqual(sim.work(.plow, at: tile, on: map).outcome, .failed(.notAField))
+        XCTAssertEqual(sim.estate(on: map) { try $0.buyField("meadow_1", state: &$1) }, .failure(.locked(level: field.unlockLevel)))
+        sim.modify { $0.progress.level = field.unlockLevel; $0.money = field.price }
+        XCTAssertEqual(sim.estate(on: map) { try $0.buyField("meadow_1", state: &$1) }, .success(field.price))
+        XCTAssertEqual(sim.state.money, 0)
+        XCTAssertTrue(sim.state.ownedFields.contains("meadow_1"))
+        XCTAssertEqual(sim.estate(on: map) { try $0.buyField("meadow_1", state: &$1) }, .failure(.alreadyOwned))
         XCTAssertEqual(sim.work(.plow, at: tile, on: map).outcome, .plowed)
+        XCTAssertEqual(sim.estate(on: map) { try $0.buyField("west_1", state: &$1) }, .failure(.notYourLand), "not their land yet")
+    }
+
+    func testFieldsLieOnTheirLandOnClearGround() {
+        var state = GameState.newGame(seed: 1)
+        state.ownedProperties = PropertyCatalog.all.map(\.id)
+        state.ownAllFields()
+        let fields = FieldCatalog.all
+        XCTAssertEqual(Set(fields.map(\.id)).count, fields.count)
+        XCTAssertNotNil(FieldCatalog.field(FieldCatalog.starterID))
+        for (index, field) in fields.enumerated() {
+            let property = PropertyCatalog.property(field.propertyID)
+            XCTAssertNotNil(property, field.id)
+            XCTAssertEqual(field.area.minX.rounded(), field.area.minX, "\(field.id) has whole-tile edges")
+            for other in fields[(index + 1)...] {
+                XCTAssertFalse(field.area.intersects(other.area) && field.tiles.contains(where: other.contains),
+                               "\(field.id) overlaps \(other.id)")
+            }
+            var plowable = 0
+            for tile in field.tiles {
+                XCTAssertTrue(property?.contains(tile) ?? false, "\(field.id) \(tile) is on \(field.propertyID)")
+                if farming.plowProblem(at: tile, in: state, checkReach: false) == nil { plowable += 1 }
+            }
+            XCTAssertGreaterThanOrEqual(Double(plowable), Double(field.tileCount) * 0.8, "\(field.id) is mostly clear ground")
+        }
+        // Old saves: the fields a farm's level and land have earned.
+        XCTAssertEqual(FieldCatalog.earned(level: 1, properties: ["home_farm"]), [FieldCatalog.starterID])
+        XCTAssertEqual(Set(FieldCatalog.earned(level: 3, properties: ["home_farm", "east_meadow"])),
+                       ["home_1", "home_2", "home_3", "meadow_1"])
     }
 
     func testTreesOnBoughtLandCanBeChopped() {

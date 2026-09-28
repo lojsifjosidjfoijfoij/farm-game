@@ -41,6 +41,7 @@ public enum GoalCounter {
     public static let workersHired = "workersHired"
     public static let workshopsPlaced = "workshopsPlaced"
     public static let crafted = "crafted"
+    public static let fieldsBought = "fieldsBought"
     public static let casts = "casts"
     public static let fishCaught = "fishCaught"
     public static let foraged = "foraged"
@@ -92,6 +93,8 @@ public enum GoalCatalog {
                        requirement: .count(GoalCounter.contractsCompleted, 1), coins: 120, xp: 15),
         GoalDefinition(id: "seeds30", title: "Stock up", detail: "Buy 30 seeds at the seed shop.",
                        requirement: .count(GoalCounter.seedsBought, 30), coins: 60, xp: 10),
+        GoalDefinition(id: "field2", title: "A second field", detail: "Buy another field next to your first one (phone → Farm).",
+                       requirement: .count(GoalCounter.fieldsBought, 1), coins: 100, xp: 15),
         GoalDefinition(id: "level2", title: "Getting the hang of it", detail: "Reach farmer level 2.",
                        requirement: .level(2), coins: 100, xp: 0),
         GoalDefinition(id: "coop", title: "Chicken keeper", detail: "Fix up the chicken coop behind the farmhouse.",
@@ -102,10 +105,10 @@ public enum GoalCatalog {
                        requirement: .count(GoalCounter.collected("egg"), 12), coins: 150, xp: 20),
         GoalDefinition(id: "chop5", title: "Lumberjack", detail: "Chop 5 trees in your woodlot.",
                        requirement: .count(GoalCounter.treesChopped, 5), coins: 120, xp: 15),
-        GoalDefinition(id: "fish1", title: "Gone fishing", detail: "Catch a fish: pick the rod, tap the farm pond, tap when it bites.",
-                       requirement: .count(GoalCounter.fishCaught, 1), coins: 80, xp: 10),
         GoalDefinition(id: "shop1", title: "Open for business", detail: "Rent the corner shop in the village (level 3).",
                        requirement: .count(GoalCounter.shopRented, 1), coins: 150, xp: 20),
+        GoalDefinition(id: "fish1", title: "Gone fishing", detail: "Catch a fish: pick the rod, tap the farm pond, tap when it bites.",
+                       requirement: .count(GoalCounter.fishCaught, 1), coins: 80, xp: 10),
         GoalDefinition(id: "storage1", title: "More room", detail: "Build a storage shed (phone → Farm).",
                        requirement: .count(GoalCounter.storageUpgrades, 1), coins: 200, xp: 25),
         GoalDefinition(id: "money3k", title: "Nest egg", detail: "Have 3,000 coins.",

@@ -15,6 +15,37 @@ extension GameController {
         }
     }
 
+    // MARK: Fields
+
+    static let notAFieldMessage = "Crops only grow in your fields (the marked patches). More fields are on your phone → Farm."
+
+    /// Fields on your land that aren't yours yet (to buy now or later).
+    var fieldsForSale: [FieldDefinition] { estateRules.fieldsForSale(simulation.state) }
+
+    func buyField(_ id: String) {
+        guard let field = FieldCatalog.field(id) else { return }
+        runEstate({ try $0.buyField(id, state: &$1) }) { _ in
+            Haptics.success()
+            Sound.play(.coins)
+            showBanner("\(field.name) is ready: \(field.tileCount) more tiles to farm! 🌱")
+            onWorldReset?()  // its border appears
+        }
+    }
+
+    /// The card for a field you could buy (tapping it on your land).
+    func fieldInspection(_ tile: TileCoord) -> TileInspection? {
+        guard let field = FieldCatalog.field(containing: tile), !simulation.state.ownedFields.contains(field.id),
+              simulation.state.ownedProperties.contains(field.propertyID) else { return nil }
+        if level < field.unlockLevel {
+            return TileInspection(target: .tile(tile), title: "\(field.name) (level \(field.unlockLevel))",
+                                  detail: "\(field.tileCount) tiles of farmland, \(field.price) coins, from level \(field.unlockLevel).",
+                                  icon: nil, symbol: "lock.fill")
+        }
+        return TileInspection(target: .tile(tile), title: "\(field.name) for sale",
+                              detail: "\(field.tileCount) more tiles to farm for \(field.price) coins.", icon: nil,
+                              symbol: "square.grid.3x3.fill", action: .buyField(field.id), actionTitle: "Buy · \(field.price)")
+    }
+
     func upgradeStorage() {
         runEstate({ try $0.upgradeStorage(state: &$1) }) { _ in
             Haptics.success()

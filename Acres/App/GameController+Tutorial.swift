@@ -54,15 +54,15 @@ extension GameController {
         switch tutorial.step {
         case .welcome:
             TutorialCard(title: "Welcome to your farm!",
-                         body: "This old place is yours now. Tap where you want your farmer to go. Pick a tool on your belt, and they'll walk over and use it.",
+                         body: "This old place is yours now, with one small field to start. Tap where you want your farmer to go; pick a tool and they'll use it.",
                          button: "Let's go")
         case .plow:
-            TutorialCard(title: "Plow the land",
-                         body: tool == .hoe ? "Now tap the glowing spot inside the fence. Your farmer walks over and plows it."
+            TutorialCard(title: "Plow your field",
+                         body: tool == .hoe ? "Now tap the glowing spot in your field (the marked patch). Your farmer walks over and plows it."
                              : "Pick the hoe on your tool belt (it's glowing).", button: nil)
         case .plowMore:
             TutorialCard(title: "Plow a row",
-                         body: "With the hoe in hand, drag your finger across the grass to line up a whole row. Two fingers move the map. (\(tutorial.progress)/\(TutorialState.rowLength))",
+                         body: "Drag your finger across the field to plow a whole row. Crops only grow in fields. (\(tutorial.progress)/\(TutorialState.rowLength))",
                          button: nil)
         case .plant:
             TutorialCard(title: "Plant seeds",

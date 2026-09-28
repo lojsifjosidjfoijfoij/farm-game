@@ -111,6 +111,7 @@ public struct Foraging: Sendable {
 
     /// The finds lying out today (not picked, not built over).
     public func today(_ state: GameState) -> [ForageSpawn] {
+        guard state.has(.foraging) else { return [] }  // the woods keep their secrets for a while
         let day = state.clock.dayIndex
         let season = state.clock.date(daysPerSeason: balance.daysPerSeason).season
         let picked = state.forage.picked(on: day)
@@ -118,7 +119,7 @@ public struct Foraging: Sendable {
         return Self.spawns(day: day, season: season, count: count(in: season)).filter { spawn in
             let tile = TileCoord(containing: spawn.position)
             return !picked.contains(spawn.id) && state.plots[tile] == nil && state.woodland.trees[tile] == nil
-                && !state.estate.isOccupied(tile) && !obstacles.contains(tile)
+                && !state.estate.isOccupied(tile) && !obstacles.contains(tile) && !state.isFarmland(tile)
         }
     }
 

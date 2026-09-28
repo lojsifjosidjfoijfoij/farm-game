@@ -57,7 +57,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
 
     init(game: GameController) {
         self.game = game
-        super.init(size: CGSize(width: 390, height: 844))
+        super.init(size: CGSize(width: 844, height: 390))  // landscape; resized to the view at once
         scaleMode = .resizeFill
         // Grass-colored backdrop, in case anything peeks past the loaded chunks.
         backgroundColor = SKColor(red: 0.45, green: 0.57, blue: 0.32, alpha: 1)

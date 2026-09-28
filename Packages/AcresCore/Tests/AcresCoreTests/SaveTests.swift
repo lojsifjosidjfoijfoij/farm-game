@@ -504,8 +504,53 @@ enum SaveFixtures {
     }
     """
 
+    static let v13 = """
+    {
+      "createdAt": 1800000000,
+      "deviceID": "fixture-device",
+      "presentation": { "cameraCenter": { "x": 28, "y": 33 }, "cameraZoom": 1.3, "selectedSeed": "wheat" },
+      "revision": 360,
+      "savedAt": 1800060000,
+      "state": {
+        "clock": { "totalMinutes": 50400 },
+        "contracts": { "active": [], "completed": 0, "failed": 0, "nextID": 25, "offers": [], "reputation": 10 },
+        "daily": { "bestStreak": 2, "bonusClaimed": false, "chores": [], "day": 35, "streak": 1 },
+        "estate": {
+          "nextWorkerID": 1, "sprinklers": [], "storageLevel": 0, "truckBedLevel": 0, "workers": [],
+          "workshops": [
+            { "kind": "mill", "lastRecipe": "flour", "progress": 120, "queued": 2, "ready": 2, "recipe": "flour",
+              "tile": { "x": 20, "y": 30 } },
+            { "kind": "beehive", "progress": 0, "queued": 0, "ready": 0, "tile": { "x": 24, "y": 30 } }
+          ]
+        },
+        "farmer": { "energy": 95, "inTruck": false, "position": { "x": 21, "y": 35.5 } },
+        "finance": { "lastProcessedDay": 35, "thisWeek": { "expenses": {}, "income": {}, "week": 6 } },
+        "almanac": { "claimedSets": ["orchard"], "discovered": ["apple", "cherry", "wheat"] },
+        "forage": { "day": 35, "picked": [3, 17] },
+        "goals": { "claimed": [], "counters": { "crafted": 4, "fishCaught": 2 } },
+        "inventory": { "items": { "wheat": 8 } },
+        "money": 4200,
+        "ownedFields": ["home_1", "home_2"],
+        "ownedProperties": ["home_farm"],
+        "plots": [],
+        "progress": { "level": 5, "xp": 30 },
+        "rank": { "finaleDay": 30, "rank": 6 },
+        "ranch": { "nextAnimalID": 1, "pens": {} },
+        "rng": "32",
+        "stats": { "offlineSeconds": 12000, "playSeconds": 25000, "returns": 11 },
+        "store": { "isRented": false, "shelves": [], "today": { "coins": 0, "day": 35, "items": 0, "sales": {} }, "totalCoins": 0 },
+        "truck": { "cargo": { "items": {} }, "fuel": 70, "heading": 3.1, "position": { "x": 26.2, "y": 30.2 } },
+        "tutorial": { "progress": 0, "step": 11 },
+        "woodland": { "hiddenMapTrees": [], "trees": [] },
+        "worldTime": 70000
+      },
+      "version": 13
+    }
+    """
+
     /// All fixtures, oldest first.
-    static let all: [(version: Int, json: String)] = [(1, v1), (2, v2), (3, v3), (4, v4), (5, v5), (6, v6), (7, v7), (8, v8), (9, v9), (10, v10), (11, v11), (12, v12)]
+    static let all: [(version: Int, json: String)] = [(1, v1), (2, v2), (3, v3), (4, v4), (5, v5), (6, v6), (7, v7), (8, v8), (9, v9),
+                                                      (10, v10), (11, v11), (12, v12), (13, v13)]
     static var latest: (version: Int, json: String) { all.last! }
 
     /// What `v1` must decode to after migrating to the current version.
@@ -558,7 +603,8 @@ enum SaveFixtures {
             ownedProperties: ["home_farm"],
             tutorial: .new,
             finance: Finance(thisWeek: Ledger(week: 1), lastProcessedDay: 3),
-            store: StoreState(today: StoreDay(day: 3))  // added by v6 → v7
+            store: StoreState(today: StoreDay(day: 3)),  // added by v6 → v7
+            ownedFields: ["home_1", "home_2"]  // added by v12 → v13: the fields level 2 has earned
         ),
         presentation: PresentationState(cameraCenter: Vec2(26, 32.5), cameraZoom: 1.5, selectedSeed: "carrot")
     )
@@ -585,7 +631,8 @@ enum SaveFixtures {
             ranch: Ranch(),        // added by v3 → v4
             woodland: Woodland(),  // added by v3 → v4
             finance: Finance(thisWeek: Ledger(week: 1), lastProcessedDay: 3),
-            store: StoreState(today: StoreDay(day: 3))  // added by v6 → v7
+            store: StoreState(today: StoreDay(day: 3)),  // added by v6 → v7
+            ownedFields: ["home_1", "home_2", "home_3"]
         ),
         presentation: PresentationState(cameraCenter: Vec2(70, 24), cameraZoom: 1.5, selectedSeed: "wheat")
     )
@@ -622,7 +669,8 @@ enum SaveFixtures {
             farmer: FarmerState(position: Vec2(21, 35.5), energy: 100, inTruck: false),  // added by v4 → v5
             goals: GoalState(),                                                           // added by v4 → v5
             finance: Finance(thisWeek: Ledger(week: 1), lastProcessedDay: 6),
-            store: StoreState(today: StoreDay(day: 6))  // added by v6 → v7
+            store: StoreState(today: StoreDay(day: 6)),  // added by v6 → v7
+            ownedFields: SaveFixtures.homeFields
         ),
         presentation: PresentationState(cameraCenter: Vec2(24, 46), cameraZoom: 1.2, selectedSeed: "sapling_apple")
     )
@@ -657,7 +705,8 @@ enum SaveFixtures {
             farmer: FarmerState(position: Vec2(30, 31), energy: 72.5, inTruck: true),
             goals: GoalState(counters: ["harvested": 14, "plowed": 9], claimed: ["plow8"]),
             finance: Finance(thisWeek: Ledger(week: 2), lastProcessedDay: 8),  // added by v5 → v6
-            store: StoreState(today: StoreDay(day: 8))  // added by v6 → v7
+            store: StoreState(today: StoreDay(day: 8)),  // added by v6 → v7
+            ownedFields: SaveFixtures.homeFields
         ),
         presentation: PresentationState(cameraCenter: Vec2(24, 40), cameraZoom: 1.1, selectedSeed: "wheat")
     )
@@ -696,7 +745,8 @@ enum SaveFixtures {
                 lastWeek: Ledger(week: 1, income: ["Contracts": 400], expenses: ["Property tax": 100]),
                 loan: Loan(amount: 1000, balance: 840, weeklyPayment: 280, weeksLeft: 3),
                 lastProcessedDay: 13),
-            store: StoreState(today: StoreDay(day: 13))  // added by v6 → v7
+            store: StoreState(today: StoreDay(day: 13)),  // added by v6 → v7
+            ownedFields: SaveFixtures.homeFields
         ),
         presentation: PresentationState(cameraCenter: Vec2(129, 21), cameraZoom: 1.1, selectedSeed: "wheat")
     )
@@ -735,7 +785,8 @@ enum SaveFixtures {
                     Shelf(),
                 ],
                 today: StoreDay(day: 21, coins: 60, items: 9, sales: ["carrot": 9]),
-                totalCoins: 180)
+                totalCoins: 180),
+            ownedFields: SaveFixtures.homeFields
         ),
         presentation: PresentationState(cameraCenter: Vec2(73, 26), cameraZoom: 1.2, selectedSeed: "carrot")
     )
@@ -772,7 +823,8 @@ enum SaveFixtures {
                 sprinklers: [Sprinkler(tile: TileCoord(30, 33), kind: "sprinkler")],
                 workers: [Worker(id: 1, name: "Mia", look: 1, job: .fields, position: Vec2(30.5, 34.5), progress: 0.25,
                                  tasksDone: 14, lastTask: .water)],
-                nextWorkerID: 2)
+                nextWorkerID: 2),
+            ownedFields: SaveFixtures.homeFields + ["meadow_1", "meadow_2", "meadow_3"]  // level 6 with East Meadow
         ),
         presentation: PresentationState(cameraCenter: Vec2(28, 33), cameraZoom: 1.3, selectedSeed: "wheat")
     )
@@ -810,7 +862,8 @@ enum SaveFixtures {
                     DailyChore(counter: "harvested", title: "Harvest 24 crops", target: 24, startCount: 30, coins: 88, xp: 10, claimed: false),
                     DailyChore(counter: "planted", title: "Plant 18 crops", target: 18, startCount: 30, coins: 88, xp: 10, claimed: true),
                 ],
-                streak: 3, bestStreak: 5, bonusClaimed: false, specialItem: "carrot")
+                streak: 3, bestStreak: 5, bonusClaimed: false, specialItem: "carrot"),
+            ownedFields: SaveFixtures.homeFields
         ),
         presentation: PresentationState(cameraCenter: Vec2(28, 33), cameraZoom: 1.3, selectedSeed: "wheat")
     )
@@ -845,7 +898,8 @@ enum SaveFixtures {
                 Workshop(tile: TileCoord(20, 30), kind: "mill", recipe: "flour", queued: 2, progress: 120, ready: 2, lastRecipe: "flour"),
                 Workshop(tile: TileCoord(24, 30), kind: "beehive"),
             ]),
-            daily: DailyState(day: 35, chores: [], streak: 1, bestStreak: 2, bonusClaimed: false, specialItem: nil)
+            daily: DailyState(day: 35, chores: [], streak: 1, bestStreak: 2, bonusClaimed: false, specialItem: nil),
+            ownedFields: SaveFixtures.homeFields
         ),
         presentation: PresentationState(cameraCenter: Vec2(28, 33), cameraZoom: 1.3, selectedSeed: "wheat")
     )
@@ -881,14 +935,18 @@ enum SaveFixtures {
                 Workshop(tile: TileCoord(24, 30), kind: "beehive"),
             ]),
             daily: DailyState(day: 35, chores: [], streak: 1, bestStreak: 2, bonusClaimed: false, specialItem: nil),
-            forage: ForageState(day: 35, picked: [3, 17])
+            forage: ForageState(day: 35, picked: [3, 17]),
+            ownedFields: SaveFixtures.homeFields
         ),
         presentation: PresentationState(cameraCenter: Vec2(28, 33), cameraZoom: 1.3, selectedSeed: "wheat")
     )
 
-    /// What `v12` must decode to.
-    static let v12Expected = SaveFile(
-        version: 12,
+    /// Fields a level-4+ farm with just the home farm has earned (v12 → v13).
+    static let homeFields = ["home_1", "home_2", "home_3", "home_4"]
+
+    /// What `v12` becomes after migrating.
+    static let v12Migrated = SaveFile(
+        version: SaveFile.currentVersion,
         revision: 360,
         deviceID: "fixture-device",
         createdAt: Date(timeIntervalSince1970: 1_800_000_000),
@@ -919,13 +977,22 @@ enum SaveFixtures {
             daily: DailyState(day: 35, chores: [], streak: 1, bestStreak: 2, bonusClaimed: false, specialItem: nil),
             forage: ForageState(day: 35, picked: [3, 17]),
             almanac: AlmanacState(discovered: ["apple", "cherry", "wheat"], claimedSets: ["orchard"]),
-            rank: RankState(rank: 6, finaleDay: 30)
+            rank: RankState(rank: 6, finaleDay: 30),
+            ownedFields: SaveFixtures.homeFields
         ),
         presentation: PresentationState(cameraCenter: Vec2(28, 33), cameraZoom: 1.3, selectedSeed: "wheat")
     )
 
+    /// What `v13` must decode to.
+    static let v13Expected: SaveFile = {
+        var file = v12Migrated
+        file.version = 13
+        file.state.ownedFields = ["home_1", "home_2"]
+        return file
+    }()
+
     /// The value whose encoding must have the same shape as the latest fixture.
-    static var latestExpected: SaveFile { v12Expected }
+    static var latestExpected: SaveFile { v13Expected }
 }
 
 /// In-memory store for tests.
@@ -1042,10 +1109,16 @@ final class SaveTests: XCTestCase {
         XCTAssertEqual(file, SaveFixtures.v11Migrated)
     }
 
-    func testVersion12FixtureDecodesExactly() throws {
+    func testVersion12FixtureMigratesExactly() throws {
         let system = SaveSystem(store: MemorySaveStore(), deviceID: "test")
         let file = try system.decode(Data(SaveFixtures.v12.utf8)).get()
-        XCTAssertEqual(file, SaveFixtures.v12Expected)
+        XCTAssertEqual(file, SaveFixtures.v12Migrated)
+    }
+
+    func testVersion13FixtureDecodesExactly() throws {
+        let system = SaveSystem(store: MemorySaveStore(), deviceID: "test")
+        let file = try system.decode(Data(SaveFixtures.v13.utf8)).get()
+        XCTAssertEqual(file, SaveFixtures.v13Expected)
     }
 
     func testCurrentFormatMatchesLatestFixture() throws {

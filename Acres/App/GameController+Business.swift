@@ -34,6 +34,7 @@ extension GameController {
         for i in estate.workshops.indices { estate.workshops[i].progress = 0 }
         if estateState != estate { estateState = estate }
         if ownedLand != state.ownedProperties { ownedLand = state.ownedProperties }
+        if ownedFields != state.ownedFields { ownedFields = state.ownedFields }
         if almanac != state.almanac { almanac = state.almanac }
         if rankIndex != state.rank.rank { rankIndex = state.rank.rank }
     }

@@ -47,6 +47,8 @@ enum InspectionAction: Equatable {
     case pickUpSprinkler(TileCoord)
     /// Opens the phone's Farm tab (land for sale).
     case showFarm
+    /// Buys a field for farming.
+    case buyField(String)
 }
 
 /// A packet in the seed picker: crop seeds or a sapling.
@@ -137,6 +139,7 @@ final class GameController {
     /// Upgrades, machines and farmhands, and the land owned (copied when they change).
     var estateState = EstateState()
     var ownedLand: [String] = []
+    var ownedFields: [String] = []
     /// A machine being placed: the next tap on your land puts it there.
     var placingMachine: String?
     /// The workshop whose panel is open, and a copy of it (ticks once a second).
@@ -527,6 +530,7 @@ final class GameController {
         case .tooFar: return isDriving ? "Get out of the truck first." : nil
         case .tooTired: return "Your farmer is exhausted. Time for bed!"
         case .cannotPlowHere: return "Can't plow here."
+        case .notAField: return Self.notAFieldMessage
         case .noSeeds(let crop): return "No \(CropCatalog.crop(crop)?.name.lowercased() ?? crop) seeds left."
         case .outOfSeason(let crop, let season):
             let name = CropCatalog.crop(crop)?.name ?? crop
@@ -569,6 +573,10 @@ final class GameController {
         case .tooFar?, .tooTired?:
             return TileInspection(target: .tile(tile), title: "Your land", detail: "Pick the hoe, then tap or drag to plow.",
                                   icon: nil, symbol: "square.dashed")
+        case .notAField?:
+            return fieldInspection(tile)
+                ?? TileInspection(target: .tile(tile), title: "Grass", detail: "Crops only grow in your fields (the marked patches).",
+                                  icon: nil, symbol: "leaf")
         default:
             return TileInspection(target: .tile(tile), title: "Your land", detail: "Something's in the way.",
                                   icon: nil, symbol: "xmark.circle")
@@ -753,7 +761,9 @@ final class GameController {
 
     /// What a new farmer level opens up, for the level-up banner.
     static func unlocks(at level: Int, balance: Balance = .standard) -> [String] {
-        var result: [String] = []
+        var result: [String] = Feature.allCases.filter { $0.unlockLevel == level }.map(\.title)
+        let fields = FieldCatalog.all.filter { $0.unlockLevel == level && $0.propertyID == PropertyCatalog.homeFarm.id }
+        if !fields.isEmpty { result.append(fields.count == 1 ? "a new field for sale on your farm" : "new fields for sale on your farm") }
         result += PenCatalog.all.filter { $0.unlockLevel == level }.map { "fix up the \($0.name.lowercased())" }
         result += AnimalCatalog.all.filter { $0.unlockLevel == level }.map { $0.plural }
         result += CropCatalog.all.filter { $0.unlockLevel == level }.map { "\($0.name.lowercased()) seeds" }
@@ -969,7 +979,11 @@ final class GameController {
         refreshInventory()
     }
 
-    func debugResetFarm() {
+    // MARK: A new farm
+
+    /// Throws the current farm away (save and backup) and starts over from
+    /// day one, with the tutorial. (Settings, and the debug panel.)
+    func startNewFarm() {
         if savingEnabled { try? saveSystem?.store.deleteAll() }
         simulation = Simulation(state: .newGame(seed: UInt64.random(in: 1...UInt64.max)))
         presentation = PresentationState()
@@ -991,8 +1005,16 @@ final class GameController {
         weeklyReport = nil
         morningNews = []
         sleep = nil
+        levelUpCard = nil
+        rankUpCard = nil
+        workshopSnapshot = nil
+        showsInventory = false
+        showsSeedPicker = false
+        dismissInspection()
+        tool = .hand
         cancelJobs()
         tutorial = simulation.state.tutorial
+        pickSeedsIfNoneInHand()
         endPaint()
         refreshDisplay()
         refreshInventory()

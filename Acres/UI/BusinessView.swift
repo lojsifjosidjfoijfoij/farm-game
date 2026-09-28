@@ -10,7 +10,7 @@ struct BusinessView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 Picker("Tab", selection: $game.businessTab) {
-                    ForEach(BusinessTab.allCases) { tab in
+                    ForEach(game.businessTabs) { tab in
                         Text(tab.rawValue).tag(tab)
                     }
                 }
@@ -20,7 +20,8 @@ struct BusinessView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 14) {
-                        switch game.businessTab {
+                        // (A tab that isn't open yet falls back to the orders.)
+                        switch game.businessTabs.contains(game.businessTab) ? game.businessTab : .orders {
                         case .orders: orders
                         case .shop: shop
                         case .farm: FarmTabView(game: game)

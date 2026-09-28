@@ -27,6 +27,8 @@ public enum FarmFailure: Error, Equatable, Sendable {
     /// Out of energy: time to sleep.
     case tooTired
     case cannotPlowHere
+    /// Outside the farm's fields (crops only grow in fields).
+    case notAField
     case alreadyPlowed
     case notPlowed
     case alreadyPlanted
@@ -86,8 +88,17 @@ public struct Farming: Sendable {
         return nil
     }
 
-    /// Why this tile can't be plowed, or nil if it can.
+    /// Why this tile can't be plowed, or nil if it can: free ground inside
+    /// one of the farm's fields.
     public func plowProblem(at tile: TileCoord, in state: GameState, checkReach: Bool = true) -> FarmFailure? {
+        if let problem = groundProblem(at: tile, in: state, checkReach: checkReach) { return problem }
+        if !state.isFarmland(tile) { return .notAField }
+        return nil
+    }
+
+    /// Why nothing can go on this tile, or nil if it's free ground of your
+    /// land (fields or not: sprinklers and workshops stand anywhere).
+    public func groundProblem(at tile: TileCoord, in state: GameState, checkReach: Bool = true) -> FarmFailure? {
         if let problem = accessProblem(at: tile, in: state, checkReach: checkReach) { return problem }
         if state.plots[tile] != nil { return .alreadyPlowed }
         if Obstacles(map: map, state: state).isBlocked(tile) { return .cannotPlowHere }

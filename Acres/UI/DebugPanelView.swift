@@ -93,7 +93,7 @@ struct DebugPanelView: View {
             }
             .confirmationDialog("Start over with a brand-new farm?", isPresented: $confirmsReset, titleVisibility: .visible) {
                 Button("Reset farm", role: .destructive) {
-                    game.debugResetFarm()
+                    game.startNewFarm()
                     game.showsDebugPanel = false
                 }
             }

@@ -28,8 +28,10 @@ struct RootView: View {
                 Color.black.opacity(0.25)
                     .ignoresSafeArea()
                     .transition(.opacity)
-                WeeklyReportCard(report: report) {
-                    withAnimation(.easeOut(duration: 0.25)) { game.weeklyReport = nil }
+                FittedCard {
+                    WeeklyReportCard(report: report) {
+                        withAnimation(.easeOut(duration: 0.25)) { game.weeklyReport = nil }
+                    }
                 }
                 .transition(.scale(scale: 0.92).combined(with: .opacity))
             }
@@ -38,8 +40,10 @@ struct RootView: View {
                 Color.black.opacity(0.3)
                     .ignoresSafeArea()
                     .transition(.opacity)
-                LevelUpCardView(card: card) {
-                    withAnimation(.easeOut(duration: 0.25)) { game.dismissLevelUp() }
+                FittedCard {
+                    LevelUpCardView(card: card) {
+                        withAnimation(.easeOut(duration: 0.25)) { game.dismissLevelUp() }
+                    }
                 }
                 .transition(.scale(scale: 0.85).combined(with: .opacity))
             }
@@ -48,7 +52,7 @@ struct RootView: View {
                 Color.black.opacity(card.isFinale ? 0.45 : 0.3)
                     .ignoresSafeArea()
                     .transition(.opacity)
-                Group {
+                FittedCard {
                     if card.isFinale {
                         FinaleCardView(stats: game.farmStats) {
                             withAnimation(.easeOut(duration: 0.3)) { game.dismissRankUp() }
@@ -66,8 +70,10 @@ struct RootView: View {
                 Color.black.opacity(0.25)
                     .ignoresSafeArea()
                     .transition(.opacity)
-                WelcomeBackView(summary: summary) {
-                    withAnimation(.easeOut(duration: 0.25)) { game.dismissWelcome() }
+                FittedCard {
+                    WelcomeBackView(summary: summary) {
+                        withAnimation(.easeOut(duration: 0.25)) { game.dismissWelcome() }
+                    }
                 }
                 .transition(.scale(scale: 0.92).combined(with: .opacity))
             }

@@ -1,84 +1,107 @@
 import SwiftUI
 import AcresCore
 
-/// The heads-up display: money and level, the clock and the farmer's
-/// energy, the current goal, messages, and the buttons along the bottom.
-/// Big touch targets, one thumb.
+/// The heads-up display, laid out for a phone held sideways: money, level,
+/// goal and chores in the top-left corner, the clock, energy and fuel in the
+/// top-right, messages at the top in the middle, and along the bottom the
+/// truck on the left, the tool belt in the middle and the basket on the right.
+/// Big touch targets, two thumbs.
 struct HUDView: View {
     @Bindable var game: GameController
 
+    /// How wide the things in the middle may get, so the corners stay clear.
+    static let centerWidth: CGFloat = 440
+
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(alignment: .top) {
+        ZStack(alignment: .top) {
+            HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 8) {
                         moneyPill
-                        phoneButton
+                        // The phone (orders, the books, the Farm tab) arrives at level 2.
+                        if game.has(.phone) && !game.tutorial.isActive { phoneButton }
                     }
                     levelPill
                     if !game.tutorial.isActive, let goal = game.openGoals.first { goalTracker(goal) }
-                    if !game.tutorial.isActive, !game.todaysChores.isEmpty { choresChip }
+                    if !game.tutorial.isActive, game.has(.chores), !game.todaysChores.isEmpty { choresChip }
+                    // The tutorial talks from the side, so the field in the middle stays in view.
+                    if let card = game.tutorialCard {
+                        TutorialCardView(card: card, onButton: { game.advanceTutorial(.next) }, onSkip: { game.skipTutorial() })
+                            .frame(width: 290)
+                            .transition(.move(edge: .leading).combined(with: .opacity))
+                    }
                 }
-                Spacer(minLength: 12)
+                // Messages, at the top in the middle (only in the space the corners leave).
+                VStack(spacing: 8) {
+                    if let banner = game.banner {
+                        Text(banner)
+                            .font(Theme.title(16))
+                            .foregroundStyle(Theme.ink)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .hudPanel(cornerRadius: 18)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+                    if let inspection = game.inspection {
+                        InspectionCard(inspection: inspection, onAction: { game.performInspectionAction() }) { game.dismissInspection() }
+                            .transition(.scale(scale: 0.9).combined(with: .opacity))
+                    }
+                }
+                .frame(maxWidth: 380)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 2)
                 VStack(alignment: .trailing, spacing: 6) {
                     clockPill
                     energyPill
                     if game.isDriving || game.fuelFraction < 0.999 { fuelPill }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
+            .padding(.horizontal, 12)
+            .padding(.top, 6)
 
-            VStack(spacing: 8) {
-                if let banner = game.banner {
-                    Text(banner)
-                        .font(Theme.title(17))
-                        .foregroundStyle(Theme.ink)
-                        .multilineTextAlignment(.center)
-                        .hudPanel(cornerRadius: 18)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                }
-                if let inspection = game.inspection {
-                    InspectionCard(inspection: inspection, onAction: { game.performInspectionAction() }) { game.dismissInspection() }
-                        .transition(.scale(scale: 0.9).combined(with: .opacity))
-                }
+            VStack(spacing: 0) {
+                Spacer()
+                bottomCenter
+                    .frame(maxWidth: Self.centerWidth)
+                bottomBar
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 12)
+        }
+        .animation(.spring(duration: 0.35), value: game.banner)
+        .animation(.spring(duration: 0.35), value: game.inspection)
+        .animation(.spring(duration: 0.35), value: game.showsSeedPicker)
+        .animation(.spring(duration: 0.25), value: game.tool)
+        .animation(.spring(duration: 0.3), value: game.placingMachine)
+        .animation(.spring(duration: 0.25), value: game.fishingHint)
+        .animation(.spring(duration: 0.35), value: game.nearbyShop)
+        .animation(.spring(duration: 0.35), value: game.nearbyClient)
+        .animation(.spring(duration: 0.35), value: game.nearbyStore)
+        .animation(.spring(duration: 0.35), value: game.tutorialCard)
+        .animation(.spring(duration: 0.35), value: game.isDriving)
+        .animation(.spring(duration: 0.35), value: game.jobCount > 0)
+    }
 
-            Spacer()
-
-            if let card = game.tutorialCard {
-                TutorialCardView(card: card, onButton: { game.advanceTutorial(.next) }, onSkip: { game.skipTutorial() })
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 10)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-
+    /// Cards and buttons that come and go above the belt.
+    @ViewBuilder
+    private var bottomCenter: some View {
+        VStack(spacing: 8) {
             if game.jobCount > 0 && !game.isDriving {
                 jobChip
-                    .padding(.bottom, 10)
                     .transition(.scale.combined(with: .opacity))
             }
 
             if let shop = game.nearbyShop, game.openShop == nil {
                 shopButton(shop)
-                    .padding(.bottom, 10)
                     .transition(.scale.combined(with: .opacity))
             } else if let client = game.nearbyClient {
                 clientButton(client)
-                    .padding(.bottom, 10)
                     .transition(.scale.combined(with: .opacity))
             } else if game.nearbyStore != nil, !game.showsStore {
                 storeButton
-                    .padding(.bottom, 10)
                     .transition(.scale.combined(with: .opacity))
             }
 
             if game.showsSeedPicker && !game.isDriving {
                 SeedPicker(game: game)
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 10)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
@@ -94,8 +117,6 @@ struct HUDView: View {
                         .foregroundStyle(Theme.danger)
                 }
                 .hudPanel(cornerRadius: 18)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 8)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
@@ -108,44 +129,33 @@ struct HUDView: View {
                         .foregroundStyle(Theme.ink)
                 }
                 .hudPanel(cornerRadius: 18)
-                .padding(.bottom, 8)
                 .allowsHitTesting(false)
                 .transition(.scale.combined(with: .opacity))
                 .id(hint)
             }
+        }
+        .padding(.bottom, 8)
+    }
 
+    /// Truck on the left, tools in the middle, bed and basket on the right.
+    private var bottomBar: some View {
+        HStack(alignment: .bottom, spacing: 10) {
+            #if DEBUG
+            debugButton
+            #endif
+            driveButton
+            if game.isDriving { mapMenu }
+            Spacer(minLength: 6)
             if !game.isDriving {
                 ToolBelt(game: game)
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 8)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
+                Spacer(minLength: 6)
             }
-
-            HStack(alignment: .bottom, spacing: 12) {
-                #if DEBUG
-                debugButton
-                #endif
-                driveButton
-                if game.isDriving { mapMenu }
-                Spacer()
-                if !game.isDriving && (game.isBedtime || game.tutorialFocus == .bedButton) { bedButton }
-                inventoryButton
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 12)
+            if !game.isDriving && (game.isBedtime || game.tutorialFocus == .bedButton) { bedButton }
+            inventoryButton
         }
-        .animation(.spring(duration: 0.35), value: game.banner)
-        .animation(.spring(duration: 0.35), value: game.inspection)
-        .animation(.spring(duration: 0.35), value: game.showsSeedPicker)
-        .animation(.spring(duration: 0.25), value: game.tool)
-        .animation(.spring(duration: 0.3), value: game.placingMachine)
-        .animation(.spring(duration: 0.25), value: game.fishingHint)
-        .animation(.spring(duration: 0.35), value: game.nearbyShop)
-        .animation(.spring(duration: 0.35), value: game.nearbyClient)
-        .animation(.spring(duration: 0.35), value: game.nearbyStore)
-        .animation(.spring(duration: 0.35), value: game.tutorialCard)
-        .animation(.spring(duration: 0.35), value: game.isDriving)
-        .animation(.spring(duration: 0.35), value: game.jobCount > 0)
+        .padding(.horizontal, 12)
+        .padding(.bottom, 6)
     }
 
     // MARK: Top
@@ -463,11 +473,11 @@ struct HUDView: View {
                 GameIcon(asset: "ui_icon_truck", fallbackSymbol: game.isDriving ? "figure.walk" : "truck.pickup.side.fill",
                          tint: .white, size: 24)
                 Text(game.isDriving ? "Get out" : "Drive")
-                    .font(Theme.label(17, weight: .semibold))
+                    .font(Theme.label(15, weight: .semibold))
                     .foregroundStyle(.white)
             }
-            .padding(.horizontal, 16)
-            .frame(height: 52)
+            .padding(.horizontal, 12)
+            .frame(height: 50)
             .background(
                 Capsule().fill(game.isDriving ? Color(red: 0.55, green: 0.42, blue: 0.28) : Theme.leafDark)
                     .shadow(color: .black.opacity(0.25), radius: 6, y: 3)
@@ -502,8 +512,8 @@ struct HUDView: View {
         Button {
             game.goToBed()
         } label: {
-            GameIcon(asset: "ui_icon_bed", fallbackSymbol: "bed.double.fill", tint: Color(red: 0.35, green: 0.4, blue: 0.7), size: 26)
-                .frame(width: 60, height: 60)
+            GameIcon(asset: "ui_icon_bed", fallbackSymbol: "bed.double.fill", tint: Color(red: 0.35, green: 0.4, blue: 0.7), size: 24)
+                .frame(width: 54, height: 54)
                 .background(Circle().fill(Theme.parchment.opacity(0.95)).shadow(color: .black.opacity(0.2), radius: 6, y: 3))
                 .overlay(Circle().strokeBorder(Theme.border, lineWidth: 1))
         }
@@ -519,13 +529,13 @@ struct HUDView: View {
             game.showsInventory = true
         } label: {
             ZStack(alignment: .topTrailing) {
-                GameIcon(asset: "ui_icon_inventory", fallbackSymbol: "basket.fill", tint: Theme.ink, size: 28)
-                    .frame(width: 60, height: 60)
+                GameIcon(asset: "ui_icon_inventory", fallbackSymbol: "basket.fill", tint: Theme.ink, size: 26)
+                    .frame(width: 54, height: 54)
                     .background(Circle().fill(Theme.parchment.opacity(0.95)).shadow(color: .black.opacity(0.2), radius: 6, y: 3))
                     .overlay(Circle().strokeBorder(Theme.border, lineWidth: 1))
                 if game.cargoCount > 0 {
                     CountBadge(count: game.cargoCount)
-                        .offset(x: -44, y: 0)
+                        .offset(x: -40, y: 0)
                         .accessibilityHidden(true)
                 }
                 if game.storageUsed >= game.storageCapacity {
@@ -656,14 +666,16 @@ struct ToolBelt: View {
                     .font(Theme.label(13, weight: .semibold))
                     .foregroundStyle(Theme.ink)
                     .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 5)
                     .background(Capsule().fill(Theme.parchment.opacity(0.92)))
+                    .frame(maxWidth: 360)
                     .transition(.opacity)
                     .id(game.tool)
             }
             HStack(spacing: 5) {
-                ForEach(BeltTool.allCases) { tool in
+                ForEach(game.beltTools) { tool in
                     button(tool)
                 }
             }
@@ -799,33 +811,36 @@ struct TutorialCardView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline) {
                 Text(card.title)
-                    .font(Theme.title(19))
+                    .font(Theme.title(18))
                     .foregroundStyle(Theme.ink)
-                Spacer()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Spacer(minLength: 6)
                 if card.button == nil {
-                    Button("Skip tutorial", action: onSkip)
+                    Button("Skip", action: onSkip)
                         .font(Theme.label(13))
                         .foregroundStyle(Theme.inkSoft)
+                        .accessibilityLabel("Skip the tutorial")
                 }
             }
             Text(card.body)
-                .font(Theme.label(15))
+                .font(Theme.label(14))
                 .foregroundStyle(Theme.ink)
                 .fixedSize(horizontal: false, vertical: true)
             if let title = card.button {
                 Button(action: onButton) {
                     Text(title)
-                        .font(Theme.label(17, weight: .semibold))
+                        .font(Theme.label(16, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
+                        .padding(.vertical, 10)
                         .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.leafDark))
                 }
                 .buttonStyle(.plain)
-                .padding(.top, 4)
+                .padding(.top, 2)
             }
         }
-        .padding(16)
+        .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(Theme.parchment.opacity(0.97))

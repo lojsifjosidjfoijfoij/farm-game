@@ -5,8 +5,11 @@ final class FarmingTests: XCTestCase {
 
     let map = HomeValleyMap.map
 
+    /// A new farm that owns every field on its land (crops only grow in fields).
     private func newSim(balance: Balance = .standard) -> Simulation {
-        Simulation(state: .newGame(seed: 99, balance: balance), balance: balance)
+        var state = GameState.newGame(seed: 99, balance: balance)
+        state.ownAllFields()
+        return Simulation(state: state, balance: balance)
     }
 
     /// The first `count` plowable tiles on the home farm (row by row).
@@ -31,8 +34,17 @@ final class FarmingTests: XCTestCase {
 
     // MARK: Land rules
 
-    func testTheHomeFarmHasPlentyOfFarmland() {
-        XCTAssertGreaterThan(plowableTiles(1000, in: newSim()).count, 200)
+    func testTheHomeFarmsFieldsHaveRoom() {
+        XCTAssertGreaterThan(plowableTiles(1000, in: newSim()).count, 60)
+    }
+
+    func testCropsGrowOnlyInFields() {
+        var sim = Simulation(state: .newGame(seed: 99))
+        let starter = FieldCatalog.field(FieldCatalog.starterID)!
+        XCTAssertEqual(sim.state.ownedFields, [starter.id], "a new farm has one small field")
+        XCTAssertEqual(plowableTiles(1000, in: sim).count, starter.tileCount, "and that's all the farmland there is")
+        XCTAssertEqual(sim.work(.plow, at: TileCoord(36, 36), on: map).outcome, .failed(.notAField), "grass next to it")
+        XCTAssertEqual(sim.work(.plow, at: starter.tiles[0], on: map).outcome, .plowed)
     }
 
     func testCannotFarmOutsideYourLand() {

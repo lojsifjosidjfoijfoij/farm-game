@@ -26,6 +26,9 @@ struct FarmStats: Equatable {
 }
 
 extension GameController {
+    /// A part of the game that opens up with the farmer's level.
+    func has(_ feature: Feature) -> Bool { level >= feature.unlockLevel }
+
     var netWorth: Int { NetWorth.of(simulation.state, balance: balance) }
     var farmRank: FarmRank { FarmRanks.rank(rankIndex) }
     var nextFarmRank: FarmRank? { FarmRanks.next(after: rankIndex) }
@@ -49,6 +52,8 @@ extension GameController {
         // (Runs before the copy of the rank is refreshed, so `rankIndex` is still the old one.)
         let renovated = FarmRanks.rank(rankIndex).farmhouseTier < rank.farmhouseTier || (rankUpCard?.renovated ?? false)
         rankIndex = index
+        // Ranks show up with the almanac (a new farmhouse is always worth a card).
+        guard has(.almanac) || renovated else { return }
         rankUpCard = RankUpCard(rank: rank, renovated: renovated)
         Sound.play(.achievement)
         Haptics.success()
@@ -61,6 +66,7 @@ extension GameController {
 
     /// New almanac entries: one line for the lot.
     func discovered(_ items: [String]) {
+        guard has(.almanac) else { return }  // noted quietly until the almanac arrives
         if items.count == 1, let item = ItemCatalog.item(items[0]) {
             showMessage("📖 New in your almanac: \(item.name.lowercased())!")
         } else {
@@ -71,7 +77,19 @@ extension GameController {
 
     /// Almanac sets finished but not claimed yet (for the badge on the phone).
     var claimableAlmanacSets: [AlmanacSet] {
-        Almanac.sets.filter { !almanac.claimedSets.contains($0.id) && Almanac.isComplete($0, almanac) }
+        guard has(.almanac) else { return [] }
+        return Almanac.sets.filter { !almanac.claimedSets.contains($0.id) && Almanac.isComplete($0, almanac) }
+    }
+
+    /// The phone's tabs at this level: orders and money first, the rest as they open up.
+    var businessTabs: [BusinessTab] {
+        BusinessTab.allCases.filter { tab in
+            switch tab {
+            case .orders, .money, .farm: true
+            case .shop: level >= balance.storeUnlockLevel
+            case .almanac: has(.almanac)
+            }
+        }
     }
 
     func claimAlmanacSet(_ id: String) {

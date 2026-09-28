@@ -1,6 +1,23 @@
 import SwiftUI
 import AcresCore
 
+/// Holds a pop-up card on the short landscape screen: never too wide,
+/// centred when it fits, scrolling when it's taller than the screen.
+struct FittedCard<Content: View>: View {
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        GeometryReader { proxy in
+            ScrollView(.vertical, showsIndicators: false) {
+                content
+                    .frame(maxWidth: 500)
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity, minHeight: proxy.size.height)
+            }
+        }
+    }
+}
+
 /// "+120" drifting up and fading from the coin counter.
 struct FloatingAmount: View {
     let amount: Int
@@ -248,17 +265,21 @@ struct FinaleCardView: View {
                     .foregroundStyle(Theme.inkSoft)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
-                VStack(spacing: 6) {
-                    statRow("calendar", "Days farmed", "\(stats.days)")
-                    statRow("star.fill", "Farmer level", "\(stats.level)")
-                    statRow("banknote.fill", "Net worth", stats.netWorth.formatted())
-                    statRow("leaf.fill", "Crops harvested", stats.harvested.formatted())
-                    statRow("fish.fill", "Fish caught", stats.fishCaught.formatted())
-                    statRow("tree.fill", "Wild finds", stats.foraged.formatted())
-                    statRow("hammer.fill", "Goods made", stats.crafted.formatted())
-                    statRow("shippingbox.fill", "Orders delivered", stats.ordersDone.formatted())
-                    statRow("book.fill", "Almanac", "\(Int((stats.almanac * 100).rounded()))%")
-                    statRow("flame.fill", "Best streak", "\(stats.bestStreak) days")
+                HStack(alignment: .top, spacing: 18) {
+                    VStack(spacing: 6) {
+                        statRow("calendar", "Days farmed", "\(stats.days)")
+                        statRow("star.fill", "Farmer level", "\(stats.level)")
+                        statRow("banknote.fill", "Net worth", stats.netWorth.formatted())
+                        statRow("leaf.fill", "Crops", stats.harvested.formatted())
+                        statRow("fish.fill", "Fish caught", stats.fishCaught.formatted())
+                    }
+                    VStack(spacing: 6) {
+                        statRow("tree.fill", "Wild finds", stats.foraged.formatted())
+                        statRow("hammer.fill", "Goods made", stats.crafted.formatted())
+                        statRow("shippingbox.fill", "Orders", stats.ordersDone.formatted())
+                        statRow("book.fill", "Almanac", "\(Int((stats.almanac * 100).rounded()))%")
+                        statRow("flame.fill", "Best streak", "\(stats.bestStreak) days")
+                    }
                 }
                 .padding(12)
                 .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.parchmentDark.opacity(0.6)))

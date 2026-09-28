@@ -81,6 +81,9 @@ public struct GameState: Codable, Equatable, Sendable {
     /// The farm's rank in the valley, and when it became the finest. (v12)
     public var rank: RankState
 
+    /// IDs from `FieldCatalog` the farm has cleared for farming, sorted. (v13)
+    public var ownedFields: [String]
+
     public init(
         worldTime: TimeInterval,
         clock: GameClock,
@@ -104,7 +107,8 @@ public struct GameState: Codable, Equatable, Sendable {
         daily: DailyState = DailyState(),
         forage: ForageState = ForageState(),
         almanac: AlmanacState = AlmanacState(),
-        rank: RankState = RankState()
+        rank: RankState = RankState(),
+        ownedFields: [String] = [FieldCatalog.starterID]
     ) {
         self.worldTime = worldTime
         self.clock = clock
@@ -129,6 +133,7 @@ public struct GameState: Codable, Equatable, Sendable {
         self.forage = forage
         self.almanac = almanac
         self.rank = rank
+        self.ownedFields = ownedFields
     }
 
     /// Where the farmer is: in the truck, or on foot.
@@ -159,7 +164,8 @@ public struct GameState: Codable, Equatable, Sendable {
             daily: DailyState(),
             forage: ForageState(),
             almanac: AlmanacState(),
-            rank: RankState()
+            rank: RankState(),
+            ownedFields: [FieldCatalog.starterID]
         )
     }
 }

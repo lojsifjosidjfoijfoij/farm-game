@@ -1,6 +1,13 @@
 import Foundation
 @testable import AcresCore
 
+extension GameState {
+    /// Every field on the map, as if bought (tests that need lots of farmland).
+    mutating func ownAllFields() {
+        ownedFields = FieldCatalog.all.map(\.id).sorted()
+    }
+}
+
 /// Test helpers: put the farmer where a job happens, the way the app walks them there.
 extension Simulation {
     /// The farmer stands at a spot, on foot, fully rested.

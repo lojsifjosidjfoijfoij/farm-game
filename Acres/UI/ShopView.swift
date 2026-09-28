@@ -59,21 +59,32 @@ struct ShopView: View {
 
     // MARK: Seed shop
 
+    /// Only what the farmer can buy now, or at the next level (the shop grows with you).
+    private func isInView(_ unlockLevel: Int) -> Bool { unlockLevel <= game.level + 1 }
+
     private var seedShop: some View {
         VStack(alignment: .leading, spacing: 10) {
-            ForEach(CropCatalog.all) { crop in
+            ForEach(CropCatalog.all.filter { isInView($0.unlockLevel) }) { crop in
                 seedRow(crop)
             }
-            Text("Saplings")
-                .font(Theme.title(18))
-                .foregroundStyle(Theme.ink)
-                .padding(.top, 6)
-            Text("Plant them on plowed soil. Wood trees give logs, fruit trees give fruit again and again.")
-                .font(Theme.label(13))
-                .foregroundStyle(Theme.inkSoft)
-                .fixedSize(horizontal: false, vertical: true)
-            ForEach(TreeCatalog.all) { tree in
-                saplingRow(tree)
+            let saplings = TreeCatalog.all.filter { isInView($0.unlockLevel) }
+            if !saplings.isEmpty {
+                Text("Saplings")
+                    .font(Theme.title(18))
+                    .foregroundStyle(Theme.ink)
+                    .padding(.top, 6)
+                Text("Plant them on plowed soil. Wood trees give logs, fruit trees give fruit again and again.")
+                    .font(Theme.label(13))
+                    .foregroundStyle(Theme.inkSoft)
+                    .fixedSize(horizontal: false, vertical: true)
+                ForEach(saplings) { tree in
+                    saplingRow(tree)
+                }
+            }
+            if CropCatalog.all.contains(where: { !isInView($0.unlockLevel) }) {
+                Label("More seeds come in as you level up.", systemImage: "sparkles")
+                    .font(Theme.label(12))
+                    .foregroundStyle(Theme.inkSoft)
             }
         }
     }
@@ -218,7 +229,7 @@ struct ShopView: View {
 
     private var livestock: some View {
         VStack(alignment: .leading, spacing: 10) {
-            ForEach(AnimalCatalog.all) { species in
+            ForEach(AnimalCatalog.all.filter { isInView($0.unlockLevel) }) { species in
                 animalRow(species)
             }
             Text("Feed")

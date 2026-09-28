@@ -8,6 +8,15 @@ enum BeltTool: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    /// Farmer level that puts the tool on the belt (the start is kept simple).
+    var unlockLevel: Int {
+        switch self {
+        case .hand, .hoe, .seeds, .can, .sickle: 1
+        case .axe: Feature.axe.unlockLevel
+        case .rod: Feature.rod.unlockLevel
+        }
+    }
+
     var name: String {
         switch self {
         case .hand: "Hand"
@@ -59,6 +68,9 @@ enum BeltTool: String, CaseIterable, Identifiable {
 }
 
 extension GameController {
+    /// The tools on the belt at this level.
+    var beltTools: [BeltTool] { BeltTool.allCases.filter { $0.unlockLevel <= level } }
+
     /// Picks a tool. The seed bag, tapped again, opens the seed picker.
     func selectTool(_ newTool: BeltTool) {
         endPaint()

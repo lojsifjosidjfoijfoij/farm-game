@@ -1,20 +1,27 @@
 import SwiftUI
 import AcresCore
 
-/// The phone's Farm tab: grow the farm. Farmhands, machines, buildings and
-/// land for sale, each with what it costs and what it needs.
+/// The phone's Farm tab: grow the farm. Fields, farmhands, machines,
+/// workshops, buildings and land, each with what it costs and what it needs.
+/// It opens up with the farmer: only what's here now or next level shows.
 struct FarmTabView: View {
     let game: GameController
     @State private var pendingLand: PropertyDefinition?
     @State private var pendingDismissal: Worker?
 
+    /// Shown if it's open now or opens at the next level (something to look forward to).
+    private func isInView(_ unlockLevel: Int) -> Bool { unlockLevel <= game.level + 1 }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            workers
-            machines
-            workshops
-            buildings
-            land
+            fields
+            if !game.estateState.workers.isEmpty || game.nextHireLevel.map(isInView) == true { workers }
+            if MachineCatalog.all.contains(where: { isInView($0.unlockLevel) }) { machines }
+            if WorkshopCatalog.all.contains(where: { isInView($0.unlockLevel) }) { workshops }
+            if game.estateState.storageLevel > 0 || game.estateState.truckBedLevel > 0
+                || game.nextStorageUpgrade.map({ isInView($0.level) }) == true
+                || game.nextTruckBedUpgrade.map({ isInView($0.level) }) == true { buildings }
+            if PropertyCatalog.forSale.contains(where: { isInView($0.unlockLevel) || game.ownedLand.contains($0.id) }) { land }
         }
         .confirmationDialog(pendingLand.map { "Buy \($0.name)?" } ?? "", isPresented: Binding(
             get: { pendingLand != nil }, set: { if !$0 { pendingLand = nil } }), titleVisibility: .visible) {
@@ -100,9 +107,55 @@ struct FarmTabView: View {
     @ViewBuilder
     private var machines: some View {
         FarmSectionTitle(title: "Machines", trailing: nil)
-        ForEach(MachineCatalog.all) { machine in
+        ForEach(MachineCatalog.all.filter { isInView($0.unlockLevel) }) { machine in
             machineCard(machine)
         }
+    }
+
+    // MARK: Fields
+
+    /// Your fields, and the ones on your land you can buy (crops only grow in fields).
+    @ViewBuilder
+    private var fields: some View {
+        let owned = FieldCatalog.all.filter { game.ownedFields.contains($0.id) }
+        FarmSectionTitle(title: "Fields", trailing: "\(owned.map(\.tileCount).reduce(0, +)) tiles to farm")
+        let forSale = game.fieldsForSale.filter { isInView($0.unlockLevel) }.sorted { ($0.unlockLevel, $0.price) < ($1.unlockLevel, $1.price) }
+        if forSale.isEmpty {
+            LockedNote(text: game.fieldsForSale.isEmpty
+                       ? "Every field on your land is yours. Buy more land for more fields."
+                       : "More fields come up for sale as you level up.")
+        }
+        ForEach(forSale) { field in
+            fieldCard(field)
+        }
+    }
+
+    private func fieldCard(_ field: FieldDefinition) -> some View {
+        let locked = game.level < field.unlockLevel
+        let where_ = PropertyCatalog.property(field.propertyID)?.name ?? ""
+        return HStack(spacing: 10) {
+            Image(systemName: "square.grid.3x3.fill")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(locked ? Theme.inkSoft : Theme.leafDark)
+                .frame(width: 40, height: 40)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(field.name)
+                    .font(Theme.label(15, weight: .semibold))
+                Text("\(field.tileCount) tiles of farmland · \(where_)")
+                    .font(Theme.label(12))
+                    .foregroundStyle(Theme.inkSoft)
+            }
+            Spacer(minLength: 4)
+            if locked {
+                Label("Level \(field.unlockLevel)", systemImage: "lock.fill")
+                    .font(Theme.label(12, weight: .semibold))
+                    .foregroundStyle(Theme.inkSoft)
+            } else {
+                ActionCapsule(title: "Buy · \(field.price)", enabled: game.money >= field.price) { game.buyField(field.id) }
+            }
+        }
+        .foregroundStyle(Theme.ink)
+        .card()
     }
 
     private func machineCard(_ machine: MachineDefinition) -> some View {
@@ -146,7 +199,7 @@ struct FarmTabView: View {
     @ViewBuilder
     private var workshops: some View {
         FarmSectionTitle(title: "Workshops", trailing: "Turn crops into goods worth more")
-        ForEach(WorkshopCatalog.all) { workshop in
+        ForEach(WorkshopCatalog.all.filter { isInView($0.unlockLevel) }) { workshop in
             workshopCard(workshop)
         }
     }
@@ -238,7 +291,7 @@ struct FarmTabView: View {
     @ViewBuilder
     private var land: some View {
         FarmSectionTitle(title: "Land for sale", trailing: nil)
-        ForEach(PropertyCatalog.forSale) { property in
+        ForEach(PropertyCatalog.forSale.filter { isInView($0.unlockLevel) || game.ownedLand.contains($0.id) }) { property in
             landCard(property)
         }
     }

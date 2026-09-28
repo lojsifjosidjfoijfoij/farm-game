@@ -264,7 +264,8 @@ final class TreeTests: XCTestCase {
         XCTAssertEqual(sim.work(.clearStump, at: tile, on: map).outcome, .stumpCleared(xp: sim.balance.stumpRemovalXP))
         XCTAssertNil(Forestry(map: map, balance: sim.balance).tree(at: tile, in: sim.state))
         XCTAssertFalse(Obstacles(map: map, state: sim.state).isBlocked(tile))
-        XCTAssertEqual(sim.work(.plow, at: tile, on: map).outcome, .plowed, "cleared land can be farmed")
+        XCTAssertNil(Farming(map: map, balance: sim.balance).groundProblem(at: tile, in: sim.state, checkReach: false),
+                     "cleared ground is free (to plow, if it's in a field, or to build on)")
     }
 
     func testCannotChopOutsideYourLand() {

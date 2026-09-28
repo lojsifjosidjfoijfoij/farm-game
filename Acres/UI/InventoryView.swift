@@ -213,6 +213,7 @@ struct InventoryView: View {
 /// Player settings (stored on the device, not in the save).
 struct SettingsView: View {
     let game: GameController
+    @State private var confirmsNewFarm = false
 
     var body: some View {
         Form {
@@ -224,15 +225,26 @@ struct SettingsView: View {
                 Text("Harvest reminders send a notification when your fields are ready while the app is closed.")
             }
             Section {
-                Button("Restart the tutorial") {
+                Button("Replay the tutorial") {
                     game.restartTutorial()
                     game.showsInventory = false
                 }
+                Button("Start a new farm…", role: .destructive) { confirmsNewFarm = true }
+            } header: {
+                Text("From the beginning")
+            } footer: {
+                Text("Replaying the tutorial keeps your farm. A new farm starts over on day one with the tutorial, "
+                     + "and your current farm is gone for good.")
             }
             Section("About") {
-                LabeledContent("Version", value: "Acres 0.5 · Phase 5")
+                LabeledContent("Version", value: "Acres 1.0")
             }
         }
         .navigationTitle("Settings")
+        .confirmationDialog("Start over with a brand-new farm?", isPresented: $confirmsNewFarm, titleVisibility: .visible) {
+            Button("Start a new farm", role: .destructive) { game.startNewFarm() }
+        } message: {
+            Text("Your current farm, coins and progress will be deleted. This can't be undone.")
+        }
     }
 }

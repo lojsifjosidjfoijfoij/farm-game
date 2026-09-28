@@ -193,6 +193,9 @@ extension GameController {
                 }
                 return card(detail, icon: "item_\(fruitID)", action: .chopTree(tile), actionTitle: "Chop down")
             }
+            guard has(.axe) else {
+                return card("A fine tree. You'll get an axe at level \(Feature.axe.unlockLevel).", icon: "item_log")
+            }
             return card("Chop it with the axe: \(species.logs.lowerBound)–\(species.logs.upperBound) logs. The stump grows back.", icon: "item_log")
         }
     }
@@ -217,6 +220,9 @@ extension GameController {
             dismissInspection()
             businessTab = .farm
             showsBusiness = true
+        case .buyField(let id):
+            dismissInspection()
+            buyField(id)
         }
     }
 

@@ -10,7 +10,7 @@ final class CameraController {
     var worldBounds: CGRect {
         didSet { clampCenter(); apply() }
     }
-    var viewSize: CGSize = CGSize(width: 390, height: 844) {
+    var viewSize: CGSize = CGSize(width: 844, height: 390) {
         didSet {
             // SpriteKit can briefly report a zero size before layout; ignore it,
             // or the zoom limits would collapse.
@@ -26,7 +26,8 @@ final class CameraController {
     private(set) var center: CGPoint
     private(set) var zoom: CGFloat
 
-    // How many tiles fit across the screen width at the zoom limits.
+    // How many tiles fit across the screen's short side (its height, held
+    // sideways) at the zoom limits.
     static let closestTilesAcross: CGFloat = 5.5
     static let farthestTilesAcross: CGFloat = 20
     static let defaultTilesAcross: CGFloat = 9
@@ -48,8 +49,9 @@ final class CameraController {
         apply()
     }
 
-    var minZoom: CGFloat { Self.closestTilesAcross * World.tileSize / max(viewSize.width, 1) }
-    var maxZoom: CGFloat { Self.farthestTilesAcross * World.tileSize / max(viewSize.width, 1) }
+    private var shortSide: CGFloat { max(min(viewSize.width, viewSize.height), 1) }
+    var minZoom: CGFloat { Self.closestTilesAcross * World.tileSize / shortSide }
+    var maxZoom: CGFloat { Self.farthestTilesAcross * World.tileSize / shortSide }
 
     /// The part of the world currently on screen.
     var visibleRect: CGRect {

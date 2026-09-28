@@ -142,6 +142,8 @@ public enum OutdoorFailure: Error, Equatable, Sendable {
     /// Nothing to forage there (or it was picked).
     case nothingHere
     case inTruck
+    /// The rod comes later.
+    case locked(level: Int)
 }
 
 /// A fish on the line: what it is, where it was hooked.
@@ -173,6 +175,7 @@ public struct Fishing: Sendable {
     /// Why a cast at `target` wouldn't work, if it wouldn't.
     public func castProblem(at target: Vec2, in state: GameState, checkReach: Bool = true) -> OutdoorFailure? {
         guard let water = Waters.water(at: target) else { return .notWater }
+        guard state.has(.rod) else { return .locked(level: Feature.rod.unlockLevel) }
         if state.farmer.inTruck { return .inTruck }
         if checkReach, water.area.distance(to: state.farmer.position) > balance.castReach { return .tooFar }
         if state.farmer.energy < balance.energyCost.cast { return .tooTired }

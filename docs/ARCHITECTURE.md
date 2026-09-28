@@ -272,6 +272,17 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   line, "!" and catch bar in SpriteKit, so the per-frame minigame never re-renders SwiftUI; the HUD
   only shows `fishingHint`.
 
+## Fields and a gradual start
+
+- **Fields** (`FieldCatalog`, `GameState.ownedFields`, v13): fixed patches of farmland on each
+  property. `Farming.plowProblem` = `groundProblem` (free ground of your land) + inside an owned
+  field; machines and workshops only need `groundProblem`. `EstateRules.buyField` sells the fields
+  on land you own, by level. Plots already plowed anywhere keep working (old saves).
+- **Features** (`Feature`): parts of the game with an unlock level. The simulation hides wild
+  finds and the rod until then; the app hides the phone, chores, tools, phone tabs and shop rows
+  (showing only what's open now or next level). Orders and chores still run underneath, so the
+  first orders are waiting when the phone appears.
+
 ## The long game (Phase 12)
 
 - **Almanac** (`Almanac`, `AlmanacState`, v12): entries are the sellable-kind items (crops,
@@ -313,7 +324,7 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   `woodland`). v5 (Phase 5: `farmer`, `goals`). v6 (Phase 6: `contracts`, `finance`; a migrated
   save starts its books in the current week and gets fresh orders on the first step). v7 (Phase 7:
   `store`, not rented). v8 (Phase 8: `estate`: upgrades, sprinklers, farmhands). v9 (Phase 9:
-  `daily`: chores, streak, market special). v10 (Phase 10: `estate.workshops`). v11 (Phase 11: `forage`). v12 (Phase 12: `almanac`, `rank`).
+  `daily`: chores, streak, market special). v10 (Phase 10: `estate.workshops`). v11 (Phase 11: `forage`). v12 (Phase 12: `almanac`, `rank`). v13 (`ownedFields`).
 
 ## Rendering
 
