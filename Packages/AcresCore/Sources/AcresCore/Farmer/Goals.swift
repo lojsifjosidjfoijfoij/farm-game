@@ -41,6 +41,13 @@ public enum GoalCounter {
     public static let workersHired = "workersHired"
     public static let workshopsPlaced = "workshopsPlaced"
     public static let crafted = "crafted"
+    public static let casts = "casts"
+    public static let fishCaught = "fishCaught"
+    public static let foraged = "foraged"
+    /// Fish of one kind caught.
+    public static func caught(_ fish: String) -> String { "caught:\(fish)" }
+    /// Wild finds of one kind picked.
+    public static func foundWild(_ item: String) -> String { "found:\(item)" }
     public static func collected(_ item: String) -> String { "collected:\(item)" }
 }
 
@@ -95,6 +102,8 @@ public enum GoalCatalog {
                        requirement: .count(GoalCounter.collected("egg"), 12), coins: 150, xp: 20),
         GoalDefinition(id: "chop5", title: "Lumberjack", detail: "Chop 5 trees in your woodlot.",
                        requirement: .count(GoalCounter.treesChopped, 5), coins: 120, xp: 15),
+        GoalDefinition(id: "fish1", title: "Gone fishing", detail: "Catch a fish: pick the rod, tap the farm pond, tap when it bites.",
+                       requirement: .count(GoalCounter.fishCaught, 1), coins: 80, xp: 10),
         GoalDefinition(id: "shop1", title: "Open for business", detail: "Rent the corner shop in the village (level 3).",
                        requirement: .count(GoalCounter.shopRented, 1), coins: 150, xp: 20),
         GoalDefinition(id: "storage1", title: "More room", detail: "Build a storage shed (phone → Farm).",
@@ -103,6 +112,8 @@ public enum GoalCatalog {
                        requirement: .money(3_000), coins: 200, xp: 20),
         GoalDefinition(id: "land1", title: "Room to grow", detail: "Buy a parcel of land next to your farm.",
                        requirement: .count(GoalCounter.landBought, 1), coins: 300, xp: 40),
+        GoalDefinition(id: "forage15", title: "Forager", detail: "Pick 15 wild finds (they turn up in the woods and meadows every morning).",
+                       requirement: .count(GoalCounter.foraged, 15), coins: 200, xp: 25),
         GoalDefinition(id: "orchard", title: "Orchard", detail: "Plant 2 fruit trees.",
                        requirement: .count(GoalCounter.fruitTreesPlanted, 2), coins: 150, xp: 20),
         GoalDefinition(id: "sprinkler1", title: "Rain maker", detail: "Place a sprinkler in your fields.",
@@ -117,6 +128,8 @@ public enum GoalCatalog {
                        requirement: .count(GoalCounter.workersHired, 1), coins: 300, xp: 40),
         GoalDefinition(id: "crafted50", title: "Artisan", detail: "Make 50 goods in your workshops.",
                        requirement: .count(GoalCounter.crafted, 50), coins: 500, xp: 50),
+        GoalDefinition(id: "fish25", title: "Angler", detail: "Catch 25 fish. Willow Lake, south of the village, has bigger ones.",
+                       requirement: .count(GoalCounter.fishCaught, 25), coins: 350, xp: 40),
         GoalDefinition(id: "cows2", title: "Dairy farmer", detail: "Own 2 cows.",
                        requirement: .animals("cow", 2), coins: 300, xp: 30),
         GoalDefinition(id: "harvest300", title: "Big harvest", detail: "Harvest 300 crops.",
@@ -125,6 +138,8 @@ public enum GoalCatalog {
                        requirement: .count(GoalCounter.collected("wool"), 10), coins: 400, xp: 40),
         GoalDefinition(id: "level8", title: "Seasoned farmer", detail: "Reach farmer level 8.",
                        requirement: .level(8), coins: 500, xp: 0),
+        GoalDefinition(id: "goats2", title: "Goat herd", detail: "Buy Goat Hill, fix up its pen and own 2 goats.",
+                       requirement: .animals("goat", 2), coins: 500, xp: 50),
         GoalDefinition(id: "truffles5", title: "Truffle hunter", detail: "Collect 5 truffles.",
                        requirement: .count(GoalCounter.collected("truffle"), 5), coins: 500, xp: 50),
         GoalDefinition(id: "money25k", title: "Farming empire", detail: "Have 25,000 coins.",

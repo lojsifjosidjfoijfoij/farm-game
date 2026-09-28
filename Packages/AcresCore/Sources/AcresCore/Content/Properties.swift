@@ -55,6 +55,9 @@ public enum PropertyCatalog {
         PropertyDefinition(id: "south_pasture", name: "South Pasture", area: TileRect(minX: 8, minY: 3, maxX: 55, maxY: 20.5),
                            price: 12_000, unlockLevel: 7, blurb: "A big sunny pasture across the road. Room for a real operation.",
                            signSpot: Vec2(28.6, 19.6)),
+        PropertyDefinition(id: "goat_hill", name: "Goat Hill", area: TileRect(minX: 46, minY: 49, maxX: 55.5, maxY: 64),
+                           price: 3_500, unlockLevel: 5, blurb: "A wooded hillside up the county road, with an old goat pen.",
+                           signSpot: Vec2(54.4, 51.8)),
     ]
 
     public static let all: [PropertyDefinition] = [homeFarm] + forSale

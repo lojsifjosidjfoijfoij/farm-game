@@ -95,6 +95,12 @@ public struct DailyRoutine: Sendable {
         if state.ownedProperties.count > 1 || state.woodland.trees.count > 0 || level >= 2 {
             result.append((GoalCounter.treesChopped, { "Chop \($0) trees" }, 3))
         }
+        if state.goals.count(GoalCounter.fishCaught) > 0 {
+            result.append((GoalCounter.fishCaught, { $0 == 1 ? "Catch a fish" : "Catch \($0) fish" }, 3 + level / 3))
+        }
+        if level >= 2 {
+            result.append((GoalCounter.foraged, { "Pick \($0) wild finds" }, 3 + level / 4))
+        }
         if !state.estate.workshops.isEmpty {
             result.append((GoalCounter.crafted, { "Make \($0) goods in your workshops" }, 2 + level / 3))
         }
@@ -107,7 +113,10 @@ public struct DailyRoutine: Sendable {
     /// Items the farm can make now (for the market special).
     private func specialCandidates(_ state: GameState) -> [String] {
         let level = state.progress.level
-        return ItemCatalog.all.filter { $0.category.isSellable && Contracts.isObtainable($0.id, level: level) }.map(\.id)
+        let season = state.clock.date(daysPerSeason: balance.daysPerSeason).season
+        return ItemCatalog.all.filter {
+            $0.category.isSellable && Contracts.isObtainable($0.id, level: level) && Contracts.isInSeason($0.id, season)
+        }.map(\.id)
     }
 
     /// Starts a new day: counts the streak, sets three chores and the special.

@@ -4,7 +4,7 @@ import AcresCore
 /// The tools on the farmer's belt. A field tool only ever does its own job,
 /// so a tap or a drag never plows or plants by surprise.
 enum BeltTool: String, CaseIterable, Identifiable {
-    case hand, hoe, seeds, can, sickle, axe
+    case hand, hoe, seeds, can, sickle, axe, rod
 
     var id: String { rawValue }
 
@@ -16,6 +16,7 @@ enum BeltTool: String, CaseIterable, Identifiable {
         case .can: "Watering can"
         case .sickle: "Sickle"
         case .axe: "Axe"
+        case .rod: "Fishing rod"
         }
     }
 
@@ -26,7 +27,7 @@ enum BeltTool: String, CaseIterable, Identifiable {
         case .seeds: .plant
         case .can: .water
         case .sickle: .harvest
-        case .hand, .axe: nil
+        case .hand, .axe, .rod: nil
         }
     }
 
@@ -39,6 +40,7 @@ enum BeltTool: String, CaseIterable, Identifiable {
         case .can: "ui_icon_watering_can"
         case .sickle: "ui_icon_sickle"
         case .axe: "ui_icon_axe"
+        case .rod: "ui_icon_rod"
         }
     }
 
@@ -51,6 +53,7 @@ enum BeltTool: String, CaseIterable, Identifiable {
         case .can: "Tap or drag over your crops to water them."
         case .sickle: "Tap or drag over ripe crops to harvest."
         case .axe: "Tap a grown tree to chop it, or a stump to clear it."
+        case .rod: "Tap the pond or the lake to cast. Tap when a fish bites, then again in the green."
         }
     }
 }

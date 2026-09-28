@@ -20,15 +20,19 @@ public enum ClientCatalog {
     public static let all: [ClientDefinition] = [
         ClientDefinition(id: "rusty_spoon", name: "The Rusty Spoon", kind: "Restaurant", zone: HomeValleyMap.restaurantZone,
                          wants: ["carrot", "potato", "corn", "pumpkin", "egg", "milk", "truffle", "lettuce", "onion", "tomato",
-                                 "garlic", "cabbage", "tomato_sauce", "cornmeal", "carrot_juice"], opens: 7, closes: 22),
+                                 "garlic", "cabbage", "tomato_sauce", "cornmeal", "carrot_juice", "perch", "trout", "bass",
+                                 "whitefish", "catfish", "wild_garlic", "chanterelle", "smoked_trout"], opens: 7, closes: 22),
         ClientDefinition(id: "hansens_bakery", name: "Hansen's Bakery", kind: "Bakery", zone: HomeValleyMap.bakeryZone,
-                         wants: ["wheat", "egg", "milk", "apple", "cherry", "strawberry", "blueberry", "sunflower", "flour", "honey"],
+                         wants: ["wheat", "egg", "milk", "apple", "cherry", "strawberry", "blueberry", "sunflower", "flour", "honey",
+                                 "blackberry", "hazelnut", "elderflower"],
                          opens: 5, closes: 17),
         ClientDefinition(id: "lumber_yard", name: "North Woods Lumber", kind: "Lumber yard", zone: HomeValleyMap.lumberYardZone,
                          wants: ["log", "plank"], opens: 7, closes: 18),
         ClientDefinition(id: "valley_deli", name: "Valley Deli", kind: "Delicatessen", zone: HomeValleyMap.deliZone,
                          wants: ["cheese", "goat_cheese", "strawberry_jam", "blueberry_jam", "honey", "apple_juice", "cherry_juice",
-                                 "sunflower_oil", "sauerkraut", "pickled_onions", "cloth"], opens: 9, closes: 19),
+                                 "sunflower_oil", "sauerkraut", "pickled_onions", "cloth", "blackberry_jam", "elderflower_cordial",
+                                 "chamomile_tea", "dried_mushrooms", "smoked_salmon", "smoked_eel", "morel", "goat_milk"],
+                         opens: 9, closes: 19),
     ]
 
     public static func client(_ id: String) -> ClientDefinition? { all.first { $0.id == id } }
@@ -119,6 +123,14 @@ public struct Contracts: Sendable {
     }
 
     /// Could the farm produce this item at its current level?
+    /// Fish and wild finds are only asked for while they're around.
+    public static func isInSeason(_ item: String, _ season: Season) -> Bool {
+        if let fish = FishCatalog.fish(item) { return fish.seasons.isEmpty || fish.seasons.contains(season) }
+        if let find = ForageCatalog.find(item) { return find.season == season }
+        if let maker = WorkshopCatalog.maker(of: item) { return maker.recipe.inputs.keys.allSatisfy { isInSeason($0, season) } }
+        return true
+    }
+
     public static func isObtainable(_ item: String, level: Int) -> Bool {
         if let crop = CropCatalog.crop(item) { return level >= crop.unlockLevel }
         if let species = AnimalCatalog.all.first(where: { $0.productItemID == item }) { return level >= species.unlockLevel }
@@ -126,6 +138,9 @@ public struct Contracts: Sendable {
         if let maker = WorkshopCatalog.maker(of: item) {
             return level >= maker.workshop.unlockLevel && maker.recipe.inputs.keys.allSatisfy { isObtainable($0, level: level) }
         }
+        // The rod and wild finds are there from the start; orders for them come once you're settled in.
+        if let fish = FishCatalog.fish(item) { return level >= 2 && !fish.isLegendary }
+        if ForageCatalog.find(item) != nil { return level >= 2 }
         return item == "log"
     }
 
@@ -143,10 +158,12 @@ public struct Contracts: Sendable {
 
     private func makeOffer(_ state: inout GameState) -> Contract? {
         let level = state.progress.level
-        let clients = ClientCatalog.all.filter { client in client.wants.contains { Self.isObtainable($0, level: level) } }
+        let season = state.clock.date(daysPerSeason: balance.daysPerSeason).season
+        let available = { (item: String) in Self.isObtainable(item, level: level) && Self.isInSeason(item, season) }
+        let clients = ClientCatalog.all.filter { client in client.wants.contains(where: available) }
         guard !clients.isEmpty else { return nil }
         let client = clients[Int(state.rng.nextUnit() * Double(clients.count)) % clients.count]
-        let wanted = client.wants.filter { Self.isObtainable($0, level: level) }
+        let wanted = client.wants.filter(available)
         let itemCount = wanted.count > 1 && state.rng.nextUnit() < 0.4 ? 2 : 1
         var pool = wanted
         var picked: [String] = []

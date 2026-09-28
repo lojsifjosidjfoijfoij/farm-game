@@ -104,6 +104,11 @@ extension GameController {
             result.append(Destination(id: client.id, name: client.name, symbol: Self.symbol(for: client), target: client.zone.center,
                                       note: busy.contains(client.id) ? "order" : nil))
         }
+        // The outdoors (Phase 11).
+        result.append(Destination(id: "willow_lake", name: "Willow Lake", symbol: "fish.fill", target: Vec2(101.4, 13.2),
+                                  note: "fishing"))
+        result.append(Destination(id: "goat_hill", name: "Goat Hill", symbol: "mountain.2.fill", target: Vec2(56.6, 50.4),
+                                  note: ownedLand.contains("goat_hill") ? nil : "for sale"))
         return result
     }
 

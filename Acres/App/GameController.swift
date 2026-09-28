@@ -142,6 +142,10 @@ final class GameController {
     /// The workshop whose panel is open, and a copy of it (ticks once a second).
     var openWorkshop: WorkshopSheet?
     var workshopSnapshot: Workshop?
+    /// What the fishing minigame says ("A bite! Tap!"), while fishing.
+    var fishingHint: String?
+    /// The fishing minigame (changes every frame, so not observed: the scene draws it).
+    @ObservationIgnored var fishing: FishingSession?
     /// Today's chores (copied when they change).
     var dailyState = DailyState()
     var todaysChores: [ChoreProgress] = []
@@ -348,6 +352,7 @@ final class GameController {
         let events = simulation.advance(by: dt * timeScale, mode: .live)
         if !events.isEmpty { handle(events) }
         updateDriving(dt: dt)
+        if fishing != nil { updateFishing(dt: dt) }
         updateFarmer(dt: dt)
         if !isDriving { refreshTruck() }  // shops notice a farmer walking in
         if openWorkshop != nil { refreshWorkshopSnapshot() }
@@ -967,6 +972,8 @@ final class GameController {
         showsStore = false
         placingMachine = nil
         openWorkshop = nil
+        fishing = nil
+        fishingHint = nil
         weeklyReport = nil
         morningNews = []
         sleep = nil

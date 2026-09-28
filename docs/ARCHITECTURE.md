@@ -250,6 +250,28 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   The copy of the estate the HUD observes zeroes workshop progress so SwiftUI isn't re-rendered
   every frame; the open panel ticks once a second from its own snapshot.
 
+## The outdoors (Phase 11)
+
+- **Water** (`Waters`): the farm pond and Willow Lake, each a rect matching its map object's
+  footprint (solid, so the farmer stands on `shoreSpots`). **Fish** (`FishCatalog`) bite by water
+  kind, season and (for some) night hours, weighted; legends have tiny weights.
+- **Fishing** (`Fishing`, via `Simulation.outdoors { }`): `cast` checks reach and energy, spends
+  energy and picks the fish with the game's RNG (deterministic); `land` puts it in storage with
+  XP and counters (`fishCaught`, `caught:<id>`). The catch itself is the app's
+  `FishingSession` (bite window, then a catch bar whose zone and speed follow the fish's
+  difficulty): skill decides whether `land` is called.
+- **Foraging** (`Foraging`): `spots` is a fixed scatter of open grass away from roads, the farm and
+  the village. Each day's finds are a hash of the day (like chores and weather), so only the
+  picked spot indices are saved (`ForageState`, v11). Finds on fields, trees or buildings are
+  hidden.
+- **Goats**: a new species and pen on the new **Goat Hill** property; pens already work on any
+  owned property, so buying the land is what opens it. The map clears the track and pen.
+- **Orders** only ask for fish and wild finds in season (`Contracts.isInSeason`, also used for the
+  market special); legends are never ordered.
+- **App side:** `OutdoorsRenderer` draws the finds (item icons with a twinkle), and the bobber,
+  line, "!" and catch bar in SpriteKit, so the per-frame minigame never re-renders SwiftUI; the HUD
+  only shows `fishingHint`.
+
 ## Saves
 
 - File: `Application Support/Saves/farm.json` plus `farm.backup.json` (the previous save).
@@ -273,7 +295,7 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   `woodland`). v5 (Phase 5: `farmer`, `goals`). v6 (Phase 6: `contracts`, `finance`; a migrated
   save starts its books in the current week and gets fresh orders on the first step). v7 (Phase 7:
   `store`, not rented). v8 (Phase 8: `estate`: upgrades, sprinklers, farmhands). v9 (Phase 9:
-  `daily`: chores, streak, market special). v10 (Phase 10: `estate.workshops`).
+  `daily`: chores, streak, market special). v10 (Phase 10: `estate.workshops`). v11 (Phase 11: `forage`).
 
 ## Rendering
 

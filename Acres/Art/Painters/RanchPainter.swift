@@ -14,6 +14,7 @@ enum RanchPainter {
         case "building_coop": return coop(size, ground: ground, rng: &rng)
         case "building_pigsty": return pigsty(size, ground: ground, rng: &rng)
         case "building_sheep_shelter": return sheepShelter(size, ground: ground, rng: &rng)
+        case "building_goat_shed": return goatShed(size, ground: ground, rng: &rng)
         case "building_livestock_market": return livestockMarket(size, ground: ground, rng: &rng)
         case "prop_water_trough": return trough(size, ground: ground, water: true)
         case "prop_water_trough_empty": return trough(size, ground: ground, water: false)
@@ -148,6 +149,25 @@ enum RanchPainter {
         return Canvas.image(size) { ctx in
             shed(ctx, size, ground: ground, wall: UIColor(hex: 0xC2A27A), roof: UIColor(hex: 0x5E6B4E),
                  wallTop: h * 0.4, peak: h * 0.2, open: true, rng: &rng)
+        }
+    }
+
+    static func goatShed(_ size: CGSize, ground: CGFloat, rng: inout SeededRandom) -> UIImage {
+        let w = size.width, h = size.height
+        return Canvas.image(size) { ctx in
+            shed(ctx, size, ground: ground, wall: UIColor(hex: 0xB89A70), roof: UIColor(hex: 0xA8483A),
+                 wallTop: h * 0.42, peak: h * 0.18, open: true, rng: &rng)
+            // A hay rack on the side wall.
+            let rack = CGRect(x: w * 0.72, y: h * 0.5, width: w * 0.16, height: h * 0.16)
+            Paint.fill(ctx, Paint.roundedRect(rack, 3), UIColor(hex: 0xD9B964))
+            ctx.setStrokeColor(UIColor(hex: 0x6E4B2E).cgColor)
+            ctx.setLineWidth(2)
+            var x = rack.minX
+            while x <= rack.maxX {
+                ctx.move(to: CGPoint(x: x, y: rack.minY)); ctx.addLine(to: CGPoint(x: x, y: rack.maxY))
+                x += rack.width / 4
+            }
+            ctx.strokePath()
         }
     }
 

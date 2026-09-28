@@ -12,6 +12,10 @@ enum WorldFeedback {
     case sprinkler(TileCoord)
     /// A workshop was set up (nil) or its goods collected.
     case workshop(TileCoord, collected: String?)
+    /// A fish landed from the water at a point.
+    case caught(String, at: Vec2)
+    /// A wild find was picked up.
+    case foraged(String, id: Int)
 }
 
 extension GameController {

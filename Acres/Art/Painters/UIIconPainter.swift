@@ -13,6 +13,7 @@ enum UIIconPainter {
         case "ui_icon_watering_can": draw = wateringCan
         case "ui_icon_sickle": draw = sickle
         case "ui_icon_axe": draw = axe
+        case "ui_icon_rod": draw = rod
         default: draw = nil
         }
         guard let draw else { return nil }
@@ -106,6 +107,26 @@ enum UIIconPainter {
         Paint.outline(ctx, blade, ink, width: 5)
         Paint.fill(ctx, blade, top: metal.shaded(0.15), bottom: metal.shaded(-0.1))
         handle(ctx, from: point(212, radius - 4), to: CGPoint(x: 14, y: 88), width: 10)
+    }
+
+    private static func rod(_ ctx: CGContext) {
+        // A bamboo rod leaning across, the line hanging to a bobber.
+        Paint.stroke(ctx, from: CGPoint(x: 14, y: 90), to: CGPoint(x: 84, y: 8), bend: -4, width: 9, color: ink)
+        Paint.stroke(ctx, from: CGPoint(x: 14, y: 90), to: CGPoint(x: 84, y: 8), bend: -4, width: 6, color: UIColor(hex: 0xD9B464))
+        for t in [0.3, 0.5, 0.7] as [CGFloat] {
+            let p = CGPoint(x: 14 + 70 * t, y: 90 - 82 * t)
+            Paint.dab(ctx, p, 5, 2, UIColor(hex: 0x8A6A2E), rotation: -0.86)
+        }
+        Paint.dab(ctx, CGPoint(x: 26, y: 76), 8, 8, UIColor(hex: 0x6E757C))
+        Paint.dab(ctx, CGPoint(x: 26, y: 76), 3, 3, UIColor(hex: 0x3A3E42))
+        Paint.stroke(ctx, from: CGPoint(x: 84, y: 8), to: CGPoint(x: 80, y: 62), bend: 3, width: 1.6, color: UIColor(hex: 0x3A3A3A))
+        let ball = CGPath(ellipseIn: CGRect(x: 71, y: 60, width: 18, height: 18), transform: nil)
+        Paint.outline(ctx, ball, ink, width: 3)
+        Paint.fill(ctx, ball, UIColor.white)
+        Paint.clipped(ctx, to: ball) {
+            ctx.setFillColor(UIColor(hex: 0xD8403A).cgColor)
+            ctx.fill(CGRect(x: 70, y: 58, width: 20, height: 10))
+        }
     }
 
     private static func axe(_ ctx: CGContext) {

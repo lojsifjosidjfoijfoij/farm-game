@@ -160,6 +160,8 @@ public enum AssetManifest {
                 "Small farm pond seen from above with soft muddy banks and a few reeds; flat."),
         .sprite("nature_reeds", .nature, tiles: 1, 1.2, anchorY: 0.1, phase: 3, "Clump of reeds for lake shores."),
         .sprite("nature_lily_pads", .nature, tiles: 1, 0.6, layer: .flat, anchorY: 0.5, phase: 3, "Lily pads floating on water."),
+        .sprite("nature_lake", .nature, tiles: 10.4, 5.8, layer: .flat, anchorY: 0.5, phase: 11,
+                "Willow Lake seen from above: a big rounded lake with sandy and grassy banks and darker deep water; flat."),
         .sprite("nature_mushrooms", .nature, tiles: 0.5, 0.4, anchorY: 0.1, phase: 3, "Small cluster of forest mushrooms."),
         .sprite("nature_log_fallen", .nature, tiles: 2.5, 0.9, anchorY: 0.2, shadow: 2.2, phase: 3, "Old mossy fallen log in the forest."),
     ]
@@ -186,6 +188,7 @@ public enum AssetManifest {
         result += building("building_coop", 3, 3, phase: 4, "Chicken coop with a little ramp.")
         result += building("building_pigsty", 3, 2.5, phase: 4, "Pigsty: low shed with a muddy yard.")
         result += building("building_sheep_shelter", 3, 2.5, phase: 4, "Open-fronted sheep shelter with a sloped roof and straw inside.")
+        result += building("building_goat_shed", 3, 2.5, phase: 11, "Small open goat shed with a red roof and a hay rack.")
         result += building("building_beehives", 2, 1.6, phase: 7, "Row of three painted beehives.")
         result += building("building_stable", 4, 4, phase: 7, "Horse stable with half doors.")
         result += building("building_storage_shed", 3, 3, phase: 2, "Wooden storage shed for harvested goods.")
@@ -297,7 +300,8 @@ public enum AssetManifest {
     /// The farmer: three facings (side faces left; mirrored in code), walking,
     /// and working with a tool.
     public static let farmerFacings = ["down", "up", "side"]
-    public static let farmerPoses = ["idle", "walk1", "walk2", "hoe1", "hoe2", "can1", "can2", "hands1", "hands2", "axe1", "axe2"]
+    public static let farmerPoses = ["idle", "walk1", "walk2", "hoe1", "hoe2", "can1", "can2", "hands1", "hands2", "axe1", "axe2",
+                                     "rod1", "rod2"]
 
     static let characters: [AssetSpec] = {
         var result: [AssetSpec] = []
@@ -308,6 +312,7 @@ public enum AssetManifest {
             "can1": "tilting a watering can", "can2": "pouring from a watering can",
             "hands1": "bending down to the ground", "hands2": "picking something up / sowing",
             "axe1": "raising an axe", "axe2": "swinging an axe",
+            "rod1": "holding a fishing rod out, waiting for a bite", "rod2": "pulling up a bent fishing rod",
         ]
         for facing in farmerFacings {
             for pose in farmerPoses {
@@ -401,7 +406,6 @@ public enum AssetManifest {
             ("plank", 6, "Stack of planks"), ("flour", 6, "Sack of flour"), ("cheese", 6, "Wheel of cheese"),
             ("juice", 6, "Bottle of juice"), ("apple", 4, "Red apple"), ("cherry", 4, "Pair of cherries"),
             ("fertilizer", 7, "Bag of fertilizer"), ("animal_feed", 4, "Sack of animal feed"),
-            ("fish_perch", 6, "Perch"), ("fish_trout", 6, "Trout"), ("fish_pike", 6, "Pike"),
             ("sprinkler", 8, "Brass sprinkler head on a short stake"), ("sprinkler_pro", 8, "Big rotating sprinkler, green and brass"),
         ]
         for (name, phase, look) in goods {
@@ -414,6 +418,13 @@ public enum AssetManifest {
         }
         for workshop in WorkshopCatalog.all {
             result.append(.ui(workshop.icon, .item, points: 44, 44, phase: 10, "\(workshop.name) (workshop), inventory icon."))
+        }
+        // Fish and wild finds (Phase 11).
+        for fish in FishCatalog.all {
+            result.append(.ui("item_\(fish.id)", .item, points: 44, 44, phase: 11, "\(fish.name) (fish), side view, inventory icon."))
+        }
+        for find in ForageCatalog.all {
+            result.append(.ui("item_\(find.id)", .item, points: 44, 44, phase: 11, "\(find.name) (wild find), inventory icon."))
         }
         for species in seasonalTreeSpecies {
             result.append(.ui("item_sapling_\(species)", .item, points: 44, 44, phase: 4, "\(species.capitalized) sapling in a pot."))
@@ -443,6 +454,9 @@ public enum AssetManifest {
                  "Small round marker with a soft glow: a job the farmer has lined up."),
         .sprite("fx_bubble", .effect, tiles: 0.7, 0.7, layer: .particle, anchorY: 0.5, phase: 4,
                 "Round white speech bubble with a small tail at the bottom: shows what an animal has or wants."),
+        .sprite("fx_bobber", .effect, tiles: 0.3, 0.3, layer: .particle, anchorY: 0.5, phase: 11, "Red and white fishing bobber."),
+        .sprite("fx_exclaim", .effect, tiles: 0.5, 0.5, layer: .particle, anchorY: 0.5, phase: 11,
+                "Bold '!' in a white speech bubble: a fish bites."),
         .sprite("fx_heart", .effect, tiles: 0.3, 0.3, layer: .particle, anchorY: 0.5, phase: 4, "Small heart over a happy animal."),
         .sprite("fx_zzz", .effect, tiles: 0.3, 0.3, layer: .particle, anchorY: 0.5, phase: 4, "'z' for sleeping animals."),
         .sprite("fx_bee", .effect, tiles: 0.12, 0.12, layer: .particle, anchorY: 0.5, phase: 7, "Tiny bee."),
@@ -487,6 +501,7 @@ public enum AssetManifest {
         .ui("ui_icon_hand", points: 32, 32, phase: 8, "Work glove (the bare-hand tool: walk, pick, tend animals)."),
         .ui("ui_icon_sickle", points: 32, 32, phase: 8, "Sickle with a wooden handle (harvest tool)."),
         .ui("ui_icon_axe", points: 32, 32, phase: 8, "Wood axe (chop trees, clear stumps)."),
+        .ui("ui_icon_rod", points: 32, 32, phase: 11, "Bamboo fishing rod with a red and white bobber."),
         .ui("ui_icon_map", points: 32, 32, phase: 3, "Folded map."),
         .ui("ui_icon_fuel", points: 24, 24, phase: 3, "Jerry can (fuel gauge)."),
         .ui("ui_icon_truck", points: 32, 32, phase: 3, "Pickup truck (drive button)."),

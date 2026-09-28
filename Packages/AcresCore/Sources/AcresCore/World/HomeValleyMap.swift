@@ -49,6 +49,12 @@ public enum HomeValleyMap {
     /// Its door, where customers go in.
     public static let storeDoor = Vec2(73.4, 27.7)
 
+    // --- The outdoors (Phase 11) -------------------------------------------
+    /// Willow Lake, south of the village (the water, as the map object's footprint).
+    public static let lakeArea = TileRect(minX: 91.4, minY: 5.6, maxX: 100.6, maxY: 10.4)
+    /// The goat pen's approach up the county road (Goat Hill).
+    public static let goatHillTrack = TileRect(minX: 46.2, minY: 49.4, maxX: 55.4, maxY: 51.2)
+
     /// The farmhouse door: where the farmer wakes up and goes to bed.
     public static let farmhouseDoor = Vec2(21, 35.5)
 
@@ -141,6 +147,8 @@ public enum HomeValleyMap {
         buildBackyardAndLivestock(&b)
         // Phase 6.
         buildBusinesses(&b)
+        // Phase 11.
+        buildOutdoors(&b)
 
         return b.build(name: "Home Valley")
     }
@@ -316,6 +324,34 @@ public enum HomeValleyMap {
         b.paintRect(.gravel, TileRect(minX: 48, minY: 76.8, maxX: 54.6, maxY: 80))
         b.place("building_bakery", at: Vec2(50.8, 80.2), radius: 2.2)
         b.place("prop_crate", at: Vec2(53.4, 80.4), variant: 2, radius: 0.4)
+    }
+
+    /// Willow Lake with a path down from the village, and the track up to Goat Hill (Phase 11).
+    private static func buildOutdoors(_ b: inout MapBuilder) {
+        // The lake, in the fields south of the village houses.
+        let shore = lakeArea.insetBy(-1.4)
+        b.removeObjects { object, _ in
+            (object.kind.hasPrefix("tree_") || object.kind.hasPrefix("nature_")) && shore.contains(object.position)
+        }
+        b.place("nature_lake", at: lakeArea.center, radius: 5)
+        b.reserve(shore)
+        b.paintPath(.dirt, through: [Vec2(101.2, 22.8), Vec2(101.6, 16), Vec2(100.4, 11.6)], width: 1.3, roughness: 0.25)
+        b.removeObjects { object, terrain in
+            terrain == .dirt && (object.kind.hasPrefix("nature_") || object.kind.hasPrefix("tree_"))
+                && TileRect(minX: 99, minY: 10, maxX: 104, maxY: 23).contains(object.position)
+        }
+        b.place("nature_reeds", at: Vec2(91.0, 9.2), radius: 0.4)
+        b.place("nature_reeds", at: Vec2(100.9, 6.4), variant: 1, radius: 0.4)
+        b.place("nature_lily_pads", at: Vec2(93.6, 7.2), radius: 0.4)
+        b.place("nature_lily_pads", at: Vec2(98.2, 9.0), variant: 1, radius: 0.4)
+        b.place("prop_bench", at: Vec2(96.2, 12.0), radius: 0.7)
+
+        // Goat Hill: a track from the county road to the old goat pen.
+        b.removeObjects { object, _ in
+            (object.kind.hasPrefix("tree_") || object.kind.hasPrefix("nature_")) && goatHillTrack.contains(object.position)
+        }
+        b.paintPath(.dirt, through: [Vec2(55.6, 50.3), Vec2(52.5, 50.4), Vec2(49.6, 50.3)], width: 1.4, roughness: 0.25)
+        if let pen = PenCatalog.pen("goat_pen") { b.paintRect(.dirt, pen.area.insetBy(0.8)) }
     }
 
     /// An old wooden fence around the home farm, with gaps and broken rails.

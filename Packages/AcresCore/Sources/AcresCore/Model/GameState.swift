@@ -72,6 +72,9 @@ public struct GameState: Codable, Equatable, Sendable {
     /// Today's chores, the streak and the market special. (v9)
     public var daily: DailyState
 
+    /// Today's wild finds already picked. (v11)
+    public var forage: ForageState
+
     public init(
         worldTime: TimeInterval,
         clock: GameClock,
@@ -92,7 +95,8 @@ public struct GameState: Codable, Equatable, Sendable {
         finance: Finance = Finance(),
         store: StoreState = StoreState(),
         estate: EstateState = EstateState(),
-        daily: DailyState = DailyState()
+        daily: DailyState = DailyState(),
+        forage: ForageState = ForageState()
     ) {
         self.worldTime = worldTime
         self.clock = clock
@@ -114,6 +118,7 @@ public struct GameState: Codable, Equatable, Sendable {
         self.store = store
         self.estate = estate
         self.daily = daily
+        self.forage = forage
     }
 
     /// Where the farmer is: in the truck, or on foot.
@@ -141,7 +146,8 @@ public struct GameState: Codable, Equatable, Sendable {
             finance: Finance(),
             store: StoreState(),
             estate: EstateState(),
-            daily: DailyState()
+            daily: DailyState(),
+            forage: ForageState()
         )
     }
 }

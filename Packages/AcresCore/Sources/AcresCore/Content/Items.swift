@@ -14,6 +14,10 @@ public enum ItemCategory: String, Sendable, CaseIterable {
     case machine
     /// Made in workshops: flour, jam, cheese, juice …
     case artisan
+    /// Caught at the pond and the lake.
+    case fish
+    /// Found in the wild: mushrooms, berries, flowers.
+    case forage
 
     public var title: String {
         switch self {
@@ -26,6 +30,8 @@ public enum ItemCategory: String, Sendable, CaseIterable {
         case .sapling: "Saplings"
         case .machine: "Machines"
         case .artisan: "Artisan goods"
+        case .fish: "Fish"
+        case .forage: "Wild finds"
         }
     }
 
@@ -35,7 +41,7 @@ public enum ItemCategory: String, Sendable, CaseIterable {
     /// Things markets buy.
     public var isSellable: Bool {
         switch self {
-        case .crop, .fruit, .animalProduct, .wood, .artisan: true
+        case .crop, .fruit, .animalProduct, .wood, .artisan, .fish, .forage: true
         case .feed, .seed, .sapling, .machine: false
         }
     }
@@ -75,6 +81,14 @@ public enum ItemCatalog {
             ItemDefinition(id: "animal_feed", name: "Animal feed", plural: "sacks of feed", category: .feed,
                            icon: "item_animal_feed", value: 6...6),
         ]
+        for fish in FishCatalog.all {
+            items.append(ItemDefinition(id: fish.id, name: fish.name, plural: fish.plural, category: .fish,
+                                        icon: "item_\(fish.id)", value: fish.value))
+        }
+        for find in ForageCatalog.all {
+            items.append(ItemDefinition(id: find.id, name: find.name, plural: find.plural, category: .forage,
+                                        icon: "item_\(find.id)", value: find.value))
+        }
         for crop in CropCatalog.all {
             items.append(ItemDefinition(id: crop.seedItemID, name: "\(crop.name) seeds", plural: "\(crop.name.lowercased()) seeds",
                                         category: .seed, icon: "item_seeds_\(crop.id)", value: crop.seedCost...crop.seedCost))

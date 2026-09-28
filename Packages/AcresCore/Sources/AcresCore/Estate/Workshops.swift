@@ -73,6 +73,18 @@ public enum WorkshopCatalog {
                        amount: 1, hours: 6, xp: 4, value: 110...140, category: .artisan),
                 Recipe(id: "blueberry_jam", name: "Blueberry jam", plural: "jars of blueberry jam", inputs: ["blueberry": 5],
                        amount: 1, hours: 8, xp: 5, value: 170...210, category: .artisan),
+                Recipe(id: "blackberry_jam", name: "Blackberry jam", plural: "jars of blackberry jam", inputs: ["blackberry": 5],
+                       amount: 1, hours: 8, xp: 4, value: 150...180, category: .artisan),
+                Recipe(id: "elderflower_cordial", name: "Elderflower cordial", plural: "bottles of elderflower cordial",
+                       inputs: ["elderflower": 4], amount: 1, hours: 8, xp: 5, value: 170...200, category: .artisan),
+            ], isAutomatic: false, holds: 0),
+        WorkshopDefinition(
+            id: "drying_rack", name: "Drying rack", plural: "drying racks", price: 1_400, unlockLevel: 4,
+            blurb: "Dries herbs and mushrooms from the woods.", recipes: [
+                Recipe(id: "chamomile_tea", name: "Chamomile tea", plural: "tins of chamomile tea", inputs: ["chamomile": 3],
+                       amount: 1, hours: 6, xp: 4, value: 95...115, category: .artisan),
+                Recipe(id: "dried_mushrooms", name: "Dried mushrooms", plural: "bags of dried mushrooms", inputs: ["chanterelle": 3],
+                       amount: 1, hours: 8, xp: 5, value: 200...240, category: .artisan),
             ], isAutomatic: false, holds: 0),
         WorkshopDefinition(
             id: "pickling_crock", name: "Pickling crock", plural: "pickling crocks", price: 1_800, unlockLevel: 4,
@@ -111,6 +123,16 @@ public enum WorkshopCatalog {
             blurb: "Weaves wool into fine cloth.", recipes: [
                 Recipe(id: "cloth", name: "Cloth", plural: "bolts of cloth", inputs: ["wool": 2], amount: 1, hours: 24, xp: 10,
                        value: 300...360, category: .artisan),
+            ], isAutomatic: false, holds: 0),
+        WorkshopDefinition(
+            id: "smokehouse", name: "Smokehouse", plural: "smokehouses", price: 2_800, unlockLevel: 5,
+            blurb: "Smokes fish over beech wood.", recipes: [
+                Recipe(id: "smoked_trout", name: "Smoked trout", plural: "smoked trout", inputs: ["trout": 2], amount: 1, hours: 8,
+                       xp: 5, value: 130...160, category: .artisan),
+                Recipe(id: "smoked_salmon", name: "Smoked salmon", plural: "smoked salmon", inputs: ["salmon": 2], amount: 1,
+                       hours: 10, xp: 7, value: 250...300, category: .artisan),
+                Recipe(id: "smoked_eel", name: "Smoked eel", plural: "smoked eels", inputs: ["eel": 2], amount: 1, hours: 10,
+                       xp: 8, value: 280...330, category: .artisan),
             ], isAutomatic: false, holds: 0),
     ]
 

@@ -70,10 +70,10 @@ enum FarmerPainter {
     enum Facing: String { case down, up, side }
 
     enum Pose: String {
-        case idle, walk1, walk2, hoe1, hoe2, can1, can2, hands1, hands2, axe1, axe2
+        case idle, walk1, walk2, hoe1, hoe2, can1, can2, hands1, hands2, axe1, axe2, rod1, rod2
     }
 
-    enum Tool { case hoe, can, axe }
+    enum Tool { case hoe, can, axe, rod }
 
     // Palette.
     static let skin = UIColor(hex: 0xF1C9A5)
@@ -157,6 +157,14 @@ enum FarmerPainter {
             l.leftHand = CGPoint(x: side ? -18 : 6, y: 30)
             l.rightHand = CGPoint(x: side ? -12 : 12, y: 26)
             l.toolAngle = side ? 2.9 : 0.9
+        case .rod1, .rod2:
+            // Held out in front; pulled up when a fish is on.
+            l.tool = .rod
+            let up = pose == .rod2
+            l.leftHand = CGPoint(x: side ? -10 : 10, y: up ? 14 : 24)
+            l.rightHand = CGPoint(x: side ? -4 : 16, y: up ? 18 : 28)
+            l.toolAngle = side ? (up ? -2.2 : -2.6) : (up ? -1.25 : -0.9)
+            l.bob = up ? -1 : 0
         }
         return l
     }
@@ -346,7 +354,8 @@ enum FarmerPainter {
             Paint.stroke(ctx, from: shoulderL, to: handL, bend: 0, width: 9 * s, color: shirt)
             Paint.dab(ctx, handL, 4.5 * s, 4.5 * s, skin)
         }
-        if facing != .up, let tool = l.tool {
+        // (From behind, only the rod shows: it sticks up over the shoulder.)
+        if let tool = l.tool, facing != .up || tool == .rod {
             drawTool(ctx, tool, at: side ? handL : handR, angle: l.toolAngle, pouring: l.pouring, s: s)
         }
     }
@@ -374,6 +383,12 @@ enum FarmerPainter {
                 Paint.outline(ctx, head, ink, width: 1.4 * s)
             }
             ctx.restoreGState()
+        case .rod:
+            let length: CGFloat = 64 * s
+            let tip = CGPoint(x: hand.x + cos(angle) * length, y: hand.y + sin(angle) * length)
+            let butt = CGPoint(x: hand.x - cos(angle) * 8 * s, y: hand.y - sin(angle) * 8 * s)
+            Paint.stroke(ctx, from: butt, to: tip, bend: pouring ? 6 * s : 2 * s, width: 3 * s, color: UIColor(hex: 0xD9B464))
+            Paint.dab(ctx, CGPoint(x: hand.x + cos(angle) * 4 * s, y: hand.y + sin(angle) * 4 * s), 3.5 * s, 3.5 * s, metal)
         case .can:
             ctx.saveGState()
             ctx.translateBy(x: hand.x, y: hand.y + 6 * s)

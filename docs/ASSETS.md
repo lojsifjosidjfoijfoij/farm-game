@@ -36,16 +36,16 @@ procedurally in code.
 | Fields | 4 | 0 |
 | Crops | 75 | 0 |
 | Trees | 40 | 4 |
-| Nature props | 14 | 10 |
-| Buildings | 58 | 3 |
-| Props | 42 | 10 |
+| Nature props | 15 | 10 |
+| Buildings | 59 | 3 |
+| Props | 44 | 10 |
 | Vehicles | 116 | 1 |
-| Characters | 123 | 0 |
+| Characters | 129 | 0 |
 | Animals | 70 | 0 |
-| Item icons | 78 | 0 |
-| Effects & particles | 33 | 4 |
-| User interface | 33 | 15 |
-| **Total** | **697** | **52** |
+| Item icons | 107 | 0 |
+| Effects & particles | 35 | 4 |
+| User interface | 34 | 15 |
+| **Total** | **739** | **52** |
 | Audio files | 58 | 0 |
 
 ## Terrain (tileable ground textures)
@@ -214,6 +214,7 @@ procedurally in code.
 | `nature_pond_small` | 435 × 307 | 3.4 × 2.4 | — | 1 | Small farm pond seen from above with soft muddy banks and a few reeds; flat. *(flat)* |
 | `nature_reeds` | 128 × 154 | 1 × 1.2 | 0.1 | 3 | Clump of reeds for lake shores. |
 | `nature_lily_pads` | 128 × 77 | 1 × 0.6 | — | 3 | Lily pads floating on water. *(flat)* |
+| `nature_lake` | 1331 × 742 | 10.4 × 5.8 | — | 11 | Willow Lake seen from above: a big rounded lake with sandy and grassy banks and darker deep water; flat. *(flat)* |
 | `nature_mushrooms` | 64 × 51 | 0.5 × 0.4 | 0.1 | 3 | Small cluster of forest mushrooms. |
 | `nature_log_fallen` | 320 × 115 | 2.5 × 0.9 | 0.2 | 3 | Old mossy fallen log in the forest. |
 
@@ -235,6 +236,7 @@ procedurally in code.
 | `building_coop` | 384 × 384 | 3 × 3 | 0.06 | 4 | Chicken coop with a little ramp. |
 | `building_pigsty` | 384 × 320 | 3 × 2.5 | 0.06 | 4 | Pigsty: low shed with a muddy yard. |
 | `building_sheep_shelter` | 384 × 320 | 3 × 2.5 | 0.06 | 4 | Open-fronted sheep shelter with a sloped roof and straw inside. |
+| `building_goat_shed` | 384 × 320 | 3 × 2.5 | 0.06 | 11 | Small open goat shed with a red roof and a hay rack. |
 | `building_beehives` | 256 × 205 | 2 × 1.6 | 0.06 | 7 | Row of three painted beehives. |
 | `building_stable` | 512 × 512 | 4 × 4 | 0.06 | 7 | Horse stable with half doors. |
 | `building_storage_shed` | 384 × 384 | 3 × 3 | 0.06 | 2 | Wooden storage shed for harvested goods. |
@@ -321,11 +323,13 @@ procedurally in code.
 | `prop_workshop_mill` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Hand mill standing on the farm: grinds grain into flour and meal. |
 | `prop_workshop_beehive` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Beehive standing on the farm: bees make honey by themselves every two days. |
 | `prop_workshop_jam_kitchen` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Jam kitchen standing on the farm: cooks fruit and tomatoes into jars. |
+| `prop_workshop_drying_rack` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Drying rack standing on the farm: dries herbs and mushrooms from the woods. |
 | `prop_workshop_pickling_crock` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Pickling crock standing on the farm: slowly pickles vegetables. |
 | `prop_workshop_cheese_press` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Cheese press standing on the farm: turns milk into cheese. |
 | `prop_workshop_juice_press` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Juice press standing on the farm: presses fruit and carrots into juice. |
 | `prop_workshop_oil_press` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Oil press standing on the farm: presses sunflowers into golden oil. |
 | `prop_workshop_loom` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Loom standing on the farm: weaves wool into fine cloth. |
+| `prop_workshop_smokehouse` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Smokehouse standing on the farm: smokes fish over beech wood. |
 
 ## Vehicles
 
@@ -358,6 +362,8 @@ procedurally in code.
 | `character_farmer_down_hands2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing the camera, picking something up / sowing. |
 | `character_farmer_down_axe1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing the camera, raising an axe. |
 | `character_farmer_down_axe2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing the camera, swinging an axe. |
+| `character_farmer_down_rod1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing the camera, holding a fishing rod out, waiting for a bite. |
+| `character_farmer_down_rod2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing the camera, pulling up a bent fishing rod. |
 | `character_farmer_up_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, seen from behind, standing relaxed. |
 | `character_farmer_up_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, seen from behind, walking, left foot forward. |
 | `character_farmer_up_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, seen from behind, walking, right foot forward. |
@@ -369,6 +375,8 @@ procedurally in code.
 | `character_farmer_up_hands2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, seen from behind, picking something up / sowing. |
 | `character_farmer_up_axe1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, seen from behind, raising an axe. |
 | `character_farmer_up_axe2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, seen from behind, swinging an axe. |
+| `character_farmer_up_rod1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, seen from behind, holding a fishing rod out, waiting for a bite. |
+| `character_farmer_up_rod2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, seen from behind, pulling up a bent fishing rod. |
 | `character_farmer_side_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), standing relaxed. |
 | `character_farmer_side_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), walking, left foot forward. |
 | `character_farmer_side_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), walking, right foot forward. |
@@ -380,6 +388,8 @@ procedurally in code.
 | `character_farmer_side_hands2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), picking something up / sowing. |
 | `character_farmer_side_axe1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), raising an axe. |
 | `character_farmer_side_axe2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), swinging an axe. |
+| `character_farmer_side_rod1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), holding a fishing rod out, waiting for a bite. |
+| `character_farmer_side_rod2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 5 | The farmer: friendly young farmer in a straw hat, checked shirt, blue overalls and boots, facing left (mirrored for right), pulling up a bent fishing rod. |
 | `character_worker1_down_idle` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, facing the camera, standing relaxed. |
 | `character_worker1_down_walk1` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, facing the camera, walking, left foot forward. |
 | `character_worker1_down_walk2` | 115 × 192 | 0.9 × 1.5 | 0.05 | 8 | Farmhand: farmhand in a green cap, red shirt and brown dungarees, facing the camera, walking, right foot forward. |
@@ -596,15 +606,16 @@ procedurally in code.
 | `item_cherry` | 132 × 132 | UI | — | 4 | Pair of cherries, inventory icon. |
 | `item_fertilizer` | 132 × 132 | UI | — | 7 | Bag of fertilizer, inventory icon. |
 | `item_animal_feed` | 132 × 132 | UI | — | 4 | Sack of animal feed, inventory icon. |
-| `item_fish_perch` | 132 × 132 | UI | — | 6 | Perch, inventory icon. |
-| `item_fish_trout` | 132 × 132 | UI | — | 6 | Trout, inventory icon. |
-| `item_fish_pike` | 132 × 132 | UI | — | 6 | Pike, inventory icon. |
 | `item_sprinkler` | 132 × 132 | UI | — | 8 | Brass sprinkler head on a short stake, inventory icon. |
 | `item_sprinkler_pro` | 132 × 132 | UI | — | 8 | Big rotating sprinkler, green and brass, inventory icon. |
 | `item_cornmeal` | 132 × 132 | UI | — | 10 | Cornmeal, inventory icon. |
 | `item_strawberry_jam` | 132 × 132 | UI | — | 10 | Strawberry jam, inventory icon. |
 | `item_tomato_sauce` | 132 × 132 | UI | — | 10 | Tomato sauce, inventory icon. |
 | `item_blueberry_jam` | 132 × 132 | UI | — | 10 | Blueberry jam, inventory icon. |
+| `item_blackberry_jam` | 132 × 132 | UI | — | 10 | Blackberry jam, inventory icon. |
+| `item_elderflower_cordial` | 132 × 132 | UI | — | 10 | Elderflower cordial, inventory icon. |
+| `item_chamomile_tea` | 132 × 132 | UI | — | 10 | Chamomile tea, inventory icon. |
+| `item_dried_mushrooms` | 132 × 132 | UI | — | 10 | Dried mushrooms, inventory icon. |
 | `item_pickled_onions` | 132 × 132 | UI | — | 10 | Pickled onions, inventory icon. |
 | `item_sauerkraut` | 132 × 132 | UI | — | 10 | Sauerkraut, inventory icon. |
 | `item_goat_cheese` | 132 × 132 | UI | — | 10 | Goat cheese, inventory icon. |
@@ -613,15 +624,43 @@ procedurally in code.
 | `item_cherry_juice` | 132 × 132 | UI | — | 10 | Cherry juice, inventory icon. |
 | `item_sunflower_oil` | 132 × 132 | UI | — | 10 | Sunflower oil, inventory icon. |
 | `item_cloth` | 132 × 132 | UI | — | 10 | Cloth, inventory icon. |
+| `item_smoked_trout` | 132 × 132 | UI | — | 10 | Smoked trout, inventory icon. |
+| `item_smoked_salmon` | 132 × 132 | UI | — | 10 | Smoked salmon, inventory icon. |
+| `item_smoked_eel` | 132 × 132 | UI | — | 10 | Smoked eel, inventory icon. |
 | `item_sawhorse` | 132 × 132 | UI | — | 10 | Sawhorse (workshop), inventory icon. |
 | `item_mill` | 132 × 132 | UI | — | 10 | Hand mill (workshop), inventory icon. |
 | `item_beehive` | 132 × 132 | UI | — | 10 | Beehive (workshop), inventory icon. |
 | `item_jam_kitchen` | 132 × 132 | UI | — | 10 | Jam kitchen (workshop), inventory icon. |
+| `item_drying_rack` | 132 × 132 | UI | — | 10 | Drying rack (workshop), inventory icon. |
 | `item_pickling_crock` | 132 × 132 | UI | — | 10 | Pickling crock (workshop), inventory icon. |
 | `item_cheese_press` | 132 × 132 | UI | — | 10 | Cheese press (workshop), inventory icon. |
 | `item_juice_press` | 132 × 132 | UI | — | 10 | Juice press (workshop), inventory icon. |
 | `item_oil_press` | 132 × 132 | UI | — | 10 | Oil press (workshop), inventory icon. |
 | `item_loom` | 132 × 132 | UI | — | 10 | Loom (workshop), inventory icon. |
+| `item_smokehouse` | 132 × 132 | UI | — | 10 | Smokehouse (workshop), inventory icon. |
+| `item_sunfish` | 132 × 132 | UI | — | 11 | Sunfish (fish), side view, inventory icon. |
+| `item_carp` | 132 × 132 | UI | — | 11 | Carp (fish), side view, inventory icon. |
+| `item_perch` | 132 × 132 | UI | — | 11 | Perch (fish), side view, inventory icon. |
+| `item_catfish` | 132 × 132 | UI | — | 11 | Catfish (fish), side view, inventory icon. |
+| `item_golden_koi` | 132 × 132 | UI | — | 11 | Golden koi (fish), side view, inventory icon. |
+| `item_trout` | 132 × 132 | UI | — | 11 | Trout (fish), side view, inventory icon. |
+| `item_bass` | 132 × 132 | UI | — | 11 | Bass (fish), side view, inventory icon. |
+| `item_whitefish` | 132 × 132 | UI | — | 11 | Whitefish (fish), side view, inventory icon. |
+| `item_pike` | 132 × 132 | UI | — | 11 | Pike (fish), side view, inventory icon. |
+| `item_salmon` | 132 × 132 | UI | — | 11 | Salmon (fish), side view, inventory icon. |
+| `item_eel` | 132 × 132 | UI | — | 11 | Eel (fish), side view, inventory icon. |
+| `item_sturgeon` | 132 × 132 | UI | — | 11 | Sturgeon (fish), side view, inventory icon. |
+| `item_wild_garlic` | 132 × 132 | UI | — | 11 | Wild garlic (wild find), inventory icon. |
+| `item_daffodil` | 132 × 132 | UI | — | 11 | Daffodil (wild find), inventory icon. |
+| `item_morel` | 132 × 132 | UI | — | 11 | Morel (wild find), inventory icon. |
+| `item_blackberry` | 132 × 132 | UI | — | 11 | Blackberries (wild find), inventory icon. |
+| `item_chamomile` | 132 × 132 | UI | — | 11 | Chamomile (wild find), inventory icon. |
+| `item_elderflower` | 132 × 132 | UI | — | 11 | Elderflower (wild find), inventory icon. |
+| `item_chanterelle` | 132 × 132 | UI | — | 11 | Chanterelle (wild find), inventory icon. |
+| `item_hazelnut` | 132 × 132 | UI | — | 11 | Hazelnuts (wild find), inventory icon. |
+| `item_holly` | 132 × 132 | UI | — | 11 | Holly (wild find), inventory icon. |
+| `item_pinecone` | 132 × 132 | UI | — | 11 | Pinecone (wild find), inventory icon. |
+| `item_snowdrop` | 132 × 132 | UI | — | 11 | Snowdrop (wild find), inventory icon. |
 | `item_sapling_oak` | 132 × 132 | UI | — | 4 | Oak sapling in a pot. |
 | `item_sapling_birch` | 132 × 132 | UI | — | 4 | Birch sapling in a pot. |
 | `item_sapling_pine` | 132 × 132 | UI | — | 4 | Pine sapling in a pot. |
@@ -648,6 +687,8 @@ procedurally in code.
 | `fx_feather` | 19 × 19 | 0.15 × 0.15 | — | 4 | Small feather. |
 | `fx_job_marker` | 64 × 64 | 0.5 × 0.5 | — | 5 | Small round marker with a soft glow: a job the farmer has lined up. |
 | `fx_bubble` | 90 × 90 | 0.7 × 0.7 | — | 4 | Round white speech bubble with a small tail at the bottom: shows what an animal has or wants. |
+| `fx_bobber` | 38 × 38 | 0.3 × 0.3 | — | 11 | Red and white fishing bobber. |
+| `fx_exclaim` | 64 × 64 | 0.5 × 0.5 | — | 11 | Bold '!' in a white speech bubble: a fish bites. |
 | `fx_heart` | 38 × 38 | 0.3 × 0.3 | — | 4 | Small heart over a happy animal. |
 | `fx_zzz` | 38 × 38 | 0.3 × 0.3 | — | 4 | 'z' for sleeping animals. |
 | `fx_bee` | 15 × 15 | 0.12 × 0.12 | — | 7 | Tiny bee. |
@@ -690,6 +731,7 @@ procedurally in code.
 | `ui_icon_hand` | 96 × 96 | UI | — | 8 | Work glove (the bare-hand tool: walk, pick, tend animals). |
 | `ui_icon_sickle` | 96 × 96 | UI | — | 8 | Sickle with a wooden handle (harvest tool). |
 | `ui_icon_axe` | 96 × 96 | UI | — | 8 | Wood axe (chop trees, clear stumps). |
+| `ui_icon_rod` | 96 × 96 | UI | — | 11 | Bamboo fishing rod with a red and white bobber. |
 | `ui_icon_map` | 96 × 96 | UI | — | 3 | Folded map. |
 | `ui_icon_fuel` | 72 × 72 | UI | — | 3 | Jerry can (fuel gauge). |
 | `ui_icon_truck` | 96 × 96 | UI | — | 3 | Pickup truck (drive button). |

@@ -329,7 +329,10 @@ final class Phase4WorldTests: XCTestCase {
 
     func testPensAreOnTheFarmSolidAndClear() {
         for pen in PenCatalog.all {
-            XCTAssertEqual(PropertyCatalog.property(containing: TileCoord(containing: pen.area.center))?.id, "home_farm")
+            // The first pens are on the farm; later ones come with land you buy.
+            let property = PropertyCatalog.property(containing: TileCoord(containing: pen.area.center))
+            XCTAssertEqual(property?.id, pen.id == "goat_pen" ? "goat_hill" : "home_farm", pen.id)
+            XCTAssertTrue(property.map { $0.area.contains(pen.footprint.center) && $0.area.insetBy(0.01).intersects(pen.footprint) } ?? false)
             XCTAssertNotNil(pen.species, pen.id)
             XCTAssertTrue(pen.area.contains(pen.trough), "\(pen.id) trough inside")
             for tile in WorldMap.tiles(covering: pen.footprint) {

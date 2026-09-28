@@ -82,6 +82,12 @@ public enum AnimalCatalog {
             productItemID: "truffle", produceSeconds: GameTime.days(3), growUpSeconds: GameTime.days(3),
             feeds: ["potato", "pumpkin", "corn", "animal_feed"], price: 450, xp: 10, unlockLevel: 6,
             names: ["Truffles", "Wilbur", "Petunia", "Hamlet", "Rosie", "Porkchop"]),
+        AnimalSpecies(
+            id: "goat", name: "Goat", plural: "goats", youngName: "Kid",
+            adultArt: "goat", youngArt: "goat_kid", penID: "goat_pen",
+            productItemID: "goat_milk", produceSeconds: GameTime.days(1), growUpSeconds: GameTime.days(2),
+            feeds: ["cabbage", "kale", "carrot", "wheat", "animal_feed"], price: 320, xp: 6, unlockLevel: 5,
+            names: ["Billy", "Nanny", "Pepper", "Clementine", "Juniper", "Biscuit", "Gruff"]),
     ]
 
     private static let index: [String: AnimalSpecies] = {
@@ -155,6 +161,12 @@ public enum PenCatalog {
             area: TileRect(minX: 17, minY: 50.6, maxX: 23, maxY: 54.4),
             shelterKind: "building_pigsty", shelterPosition: Vec2(20, 54.7),
             trough: Vec2(18.4, 51.4), capacity: 3, repairCost: 1200, unlockLevel: 6),
+        // On Goat Hill (Phase 11), up the county road: bought with the land.
+        PenDefinition(
+            id: "goat_pen", name: "Goat pen", speciesID: "goat",
+            area: TileRect(minX: 47.4, minY: 51.4, maxX: 53.6, maxY: 55.6),
+            shelterKind: "building_goat_shed", shelterPosition: Vec2(50.5, 55.9),
+            trough: Vec2(48.8, 52.2), capacity: 4, repairCost: 900, unlockLevel: 5),
     ]
 
     private static let index: [String: PenDefinition] = {

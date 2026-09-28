@@ -154,7 +154,8 @@ final class WorkshopTests: XCTestCase {
     func testArtisanGoodsAreOrderedAndObtainable() {
         XCTAssertTrue(Contracts.isObtainable("flour", level: 3))
         XCTAssertFalse(Contracts.isObtainable("flour", level: 2))
-        XCTAssertFalse(Contracts.isObtainable("goat_cheese", level: 20), "no goats yet")
+        XCTAssertFalse(Contracts.isObtainable("goat_cheese", level: 4), "goats come at level 5")
+        XCTAssertTrue(Contracts.isObtainable("goat_cheese", level: 5))
         XCTAssertTrue(Contracts.isObtainable("honey", level: 3))
         let deli = ClientCatalog.client("valley_deli")!
         XCTAssertTrue(deli.wants.allSatisfy { ItemCatalog.item($0) != nil })

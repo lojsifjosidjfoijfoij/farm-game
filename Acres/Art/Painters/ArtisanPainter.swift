@@ -54,6 +54,10 @@ enum ArtisanPainter {
         case "plank": { planks($0, $1, $2) }
         case "cloth": { cloth($0, $1, $2) }
         case "goat_milk": { jug($0, $1, $2) }
+        case "blackberry_jam": { jar($0, $1, $2, fill: UIColor(hex: 0x3A1E3A), lid: UIColor(hex: 0x7A4A8A)) }
+        case "elderflower_cordial": { bottle($0, $1, $2, fill: UIColor(hex: 0xEFE3A8), label: UIColor(hex: 0x6E9A4E), tall: true) }
+        case "chamomile_tea": { tin($0, $1, $2, color: UIColor(hex: 0x6E9A5A), label: UIColor(hex: 0xF4E08A)) }
+        case "dried_mushrooms": { sack($0, $1, $2, color: UIColor(hex: 0xD9C4A0), mark: UIColor(hex: 0xD08A2E)) }
         default: nil
         }
     }
@@ -99,6 +103,23 @@ enum ArtisanPainter {
                          width: 4 * s, color: woodDark)
             Paint.dab(ctx, CGPoint(x: c.x + 20 * s, y: c.y - 52 * s), 6 * s, 5 * s, wood)
         }
+    }
+
+    /// A round tea tin with a lid and a paper label.
+    private static func tin(_ ctx: CGContext, _ c: CGPoint, _ s: CGFloat, color: UIColor, label: UIColor) {
+        let body = Paint.roundedRect(CGRect(x: c.x - 24 * s, y: c.y - 24 * s, width: 48 * s, height: 58 * s), 6 * s)
+        Paint.outline(ctx, body, ink, width: 2.5 * s)
+        Paint.fill(ctx, body, top: color.shaded(0.12), bottom: color.shaded(-0.18))
+        let lid = Paint.roundedRect(CGRect(x: c.x - 26 * s, y: c.y - 34 * s, width: 52 * s, height: 13 * s), 4 * s)
+        Paint.outline(ctx, lid, ink, width: 2 * s)
+        Paint.fill(ctx, lid, top: color.shaded(0.2), bottom: color.shaded(-0.05))
+        let tag = Paint.roundedRect(CGRect(x: c.x - 18 * s, y: c.y - 6 * s, width: 36 * s, height: 22 * s), 3 * s)
+        Paint.fill(ctx, tag, label)
+        for dx in [-8.0, 0, 8] as [CGFloat] {
+            Paint.dab(ctx, CGPoint(x: c.x + dx * s, y: c.y + 5 * s), 3.5 * s, 3.5 * s, UIColor.white)
+            Paint.dab(ctx, CGPoint(x: c.x + dx * s, y: c.y + 5 * s), 1.6 * s, 1.6 * s, UIColor(hex: 0xE8B83A))
+        }
+        Paint.dab(ctx, CGPoint(x: c.x - 16 * s, y: c.y + 4 * s), 2.5 * s, 16 * s, UIColor.white.withAlpha(0.25))
     }
 
     private static func bottle(_ ctx: CGContext, _ c: CGPoint, _ s: CGFloat, fill: UIColor, label: UIColor, tall: Bool = false) {
@@ -327,6 +348,35 @@ enum ArtisanPainter {
             ctx.strokePath()
             box(-30, 22, 60, 26, UIColor(hex: 0x5A7AB8), radius: 1)
             beam(P(-36, 50), P(36, 50), 3, woodDark)
+        case "drying_rack":
+            beam(P(-36, 0), P(-30, 78)); beam(P(36, 0), P(30, 78)); beam(P(-36, 78), P(36, 78), 6)
+            for (y, color) in [(62.0, 0x7FA35A), (42.0, 0xE0A63A), (22.0, 0xC8A878)] as [(CGFloat, UInt32)] {
+                beam(P(-32, y + 4), P(32, y + 4), 3, woodDark)
+                for k in 0..<6 {
+                    let x = -26 + CGFloat(k) * 10.4
+                    Paint.dab(ctx, P(x, y - 2), 4 * s, 6 * s, UIColor(hex: color).shaded(CGFloat(k % 2) * 0.08))
+                    Paint.stroke(ctx, from: P(x, y + 4), to: P(x, y + 1), bend: 0, width: 1 * s, color: ink)
+                }
+            }
+        case "smokehouse":
+            box(-30, 0, 60, 58, UIColor(hex: 0x8A6A4A), radius: 3)
+            ctx.setStrokeColor(woodDark.withAlpha(0.6).cgColor)
+            ctx.setLineWidth(1.5 * s)
+            for k in 1..<5 {
+                let y = CGFloat(k) * 11.6
+                ctx.move(to: P(-30, y)); ctx.addLine(to: P(30, y))
+            }
+            ctx.strokePath()
+            let roof = Paint.polygon([P(-38, 56), P(38, 56), P(0, 84)])
+            Paint.outline(ctx, roof, ink, width: 2.5 * s)
+            Paint.fill(ctx, roof, top: UIColor(hex: 0x5A4E48), bottom: UIColor(hex: 0x3E3632))
+            box(-12, 0, 24, 34, UIColor(hex: 0x4A3424), radius: 2)
+            Paint.dab(ctx, P(0, 8), 7 * s, 4 * s, UIColor(hex: 0xF08A3A).withAlpha(0.9))
+            box(14, 70, 10, 22, UIColor(hex: 0x6E625A), radius: 1)
+            for k in 0..<3 {
+                Paint.softSpot(ctx, P(19 + CGFloat(k) * 4, 98 + CGFloat(k) * 8), (6 + CGFloat(k) * 2) * s,
+                               UIColor(hex: 0xD8D4CE).withAlpha(0.7))
+            }
         default:
             box(-30, 0, 60, 50, wood)
         }

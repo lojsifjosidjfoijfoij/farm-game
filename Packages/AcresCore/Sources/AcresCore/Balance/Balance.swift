@@ -128,6 +128,14 @@ public struct Balance: Sendable, Equatable {
     /// The market's special of the day pays this much more.
     public var marketSpecialBonus: Double = 0.5
 
+    // MARK: - Fishing and foraging (Phase 11)
+
+    /// How far from the water the farmer can cast (tiles).
+    public var castReach: Double = 2.4
+    /// Wild finds that turn up each morning (fewer in winter).
+    public var forageCount: Int = 12
+    public var forageWinterCount: Int = 8
+
     // MARK: - Your shop (Phase 7)
 
     /// Rent for the corner shop, every Monday (the first payment covers the
@@ -145,6 +153,8 @@ public struct Balance: Sendable, Equatable {
         case .animalProduct: 1.0
         case .wood: 0.5
         case .artisan: 0.8
+        case .fish: 0.9
+        case .forage: 0.7
         case .feed, .seed, .sapling, .machine: 0
         }
     }
@@ -236,6 +246,8 @@ public struct EnergyCosts: Sendable, Equatable {
     public var clearStump: Double = 3
     public var pickFruit: Double = 1
     public var plantTree: Double = 1
+    /// One cast of the fishing rod.
+    public var cast: Double = 2
 
     public init() {}
 

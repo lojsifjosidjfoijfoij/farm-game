@@ -99,6 +99,21 @@ struct HUDView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
+            if let hint = game.fishingHint {
+                HStack(spacing: 8) {
+                    Image(systemName: "fish.fill")
+                        .foregroundStyle(Theme.leafDark)
+                    Text(hint)
+                        .font(Theme.label(15, weight: .bold))
+                        .foregroundStyle(Theme.ink)
+                }
+                .hudPanel(cornerRadius: 18)
+                .padding(.bottom, 8)
+                .allowsHitTesting(false)
+                .transition(.scale.combined(with: .opacity))
+                .id(hint)
+            }
+
             if !game.isDriving {
                 ToolBelt(game: game)
                     .padding(.horizontal, 12)
@@ -124,6 +139,7 @@ struct HUDView: View {
         .animation(.spring(duration: 0.35), value: game.showsSeedPicker)
         .animation(.spring(duration: 0.25), value: game.tool)
         .animation(.spring(duration: 0.3), value: game.placingMachine)
+        .animation(.spring(duration: 0.25), value: game.fishingHint)
         .animation(.spring(duration: 0.35), value: game.nearbyShop)
         .animation(.spring(duration: 0.35), value: game.nearbyClient)
         .animation(.spring(duration: 0.35), value: game.nearbyStore)
@@ -645,7 +661,7 @@ struct ToolBelt: View {
                     .transition(.opacity)
                     .id(game.tool)
             }
-            HStack(spacing: 6) {
+            HStack(spacing: 5) {
                 ForEach(BeltTool.allCases) { tool in
                     button(tool)
                 }
@@ -666,7 +682,7 @@ struct ToolBelt: View {
         } label: {
             ZStack(alignment: .topTrailing) {
                 icon(tool)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 42, height: 42)
                     .background(Circle().fill(selected ? Theme.gold.opacity(0.35) : Color.clear))
                     .overlay(Circle().strokeBorder(selected ? Theme.gold : Color.clear, lineWidth: 2.5))
                     .scaleEffect(selected ? 1.1 : 1)

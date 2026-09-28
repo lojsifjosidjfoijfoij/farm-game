@@ -23,6 +23,8 @@ public enum ObjectFootprint {
             return TileRect(minX: p.x - 2.0, minY: p.y - 0.2, maxX: p.x + 2.0, maxY: p.y + 4.2)
         case "nature_pond_small":
             return TileRect(minX: p.x - 1.6, minY: p.y - 1.1, maxX: p.x + 1.6, maxY: p.y + 1.1)
+        case "nature_lake":
+            return TileRect(minX: p.x - 4.6, minY: p.y - 2.4, maxX: p.x + 4.6, maxY: p.y + 2.4)
         case "prop_well":
             return TileRect(minX: p.x - 0.7, minY: p.y - 0.3, maxX: p.x + 0.7, maxY: p.y + 0.8)
         case "prop_log_pile":

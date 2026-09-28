@@ -20,6 +20,10 @@ struct FarmerJob: Equatable {
         case pickUpSprinkler(TileCoord)
         /// Walking up to a workshop to open its panel.
         case workshop(TileCoord)
+        /// Casting from the shore at a point on the water.
+        case fish(Vec2)
+        /// Picking up a wild find (by its spot).
+        case forage(Int)
         case pen(String, repair: Bool)
         case enterTruck
         case sleep
@@ -49,7 +53,7 @@ enum FarmerActivity: Equatable {
 }
 
 enum FarmerTool: String {
-    case hoe, can, hands, axe
+    case hoe, can, hands, axe, rod
 }
 
 /// Everything the scene needs to draw the farmer this frame.
@@ -73,6 +77,10 @@ extension GameController {
     /// whatever is in hand.
     func handleTap(at spot: Vec2) {
         guard welcome == nil, sleep == nil else { return }
+        if fishing != nil {
+            fishingTap()
+            return
+        }
         if isDriving {
             driveTo(spot)
             return
@@ -91,6 +99,18 @@ extension GameController {
         }
         if let workshopTile = workshopTile(at: spot) {
             queueWorkshopJob(workshopTile)
+            return
+        }
+        if let water = Waters.water(at: spot) {
+            if tool == .rod {
+                queueFishingJob(at: spot, water: water)
+            } else {
+                showMessage("Pick the fishing rod to fish here.")
+            }
+            return
+        }
+        if let find = forageFind(near: spot) {
+            queueForageJob(find)
             return
         }
         // Soil first: a field tool on a field does only its own job.
@@ -300,6 +320,10 @@ extension GameController {
 
     /// Clears the job line (the current walk stops where it is).
     func cancelJobs() {
+        if fishing != nil {
+            fishing = nil
+            fishingHint = nil
+        }
         jobs.removeAll()
         currentJob = nil
         farmerPath = []
@@ -349,6 +373,10 @@ extension GameController {
 
     func updateFarmer(dt: TimeInterval) {
         guard sleep == nil else { return }
+        if let session = fishing {
+            if farmerActivity != session.farmerActivity { farmerActivity = session.farmerActivity }
+            return
+        }
         let state = simulation.state
         if state.farmer.inTruck {
             if farmerActivity != .idle { farmerActivity = .idle }
@@ -455,6 +483,7 @@ extension GameController {
         case .field(_, .plow): .hoe
         case .field(_, .water): .can
         case .chopTree: .axe
+        case .fish: .rod
         default: .hands
         }
     }
@@ -469,6 +498,8 @@ extension GameController {
         case .tree: 0.9
         case .placeMachine, .pickUpSprinkler: 1.0
         case .workshop: 0.35
+        case .fish: 0.25
+        case .forage: 0.6
         case .pen: 1.1
         default: 0.3
         }
@@ -517,6 +548,10 @@ extension GameController {
             finishPickingUp(at: tile)
         case .workshop(let tile):
             arrivedAtWorkshop(tile)
+        case .fish(let target):
+            startFishing(at: target)
+        case .forage(let id):
+            finishForaging(id)
         case .enterTruck, .sleep, .walk:
             break
         }

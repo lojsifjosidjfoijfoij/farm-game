@@ -21,7 +21,8 @@ public struct SaveFile: Codable, Equatable, Sendable {
     /// - v8: `estate` (storage and truck upgrades, sprinklers, farmhands) (Phase 8).
     /// - v9: `daily` (chores, streak, market special) (Phase 9).
     /// - v10: `estate.workshops` (workshops and what they're making).
-    public static let currentVersion = 10
+    /// - v11: `forage` (today's wild finds already picked).
+    public static let currentVersion = 11
 
     /// Format version of this file.
     public var version: Int

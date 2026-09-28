@@ -4,7 +4,7 @@ A cozy, top-down farming and business game for iPhone: a farmer's version of Big
 You start with a run-down farm, a beat-up pickup truck and one farmer, and grow it into an
 agricultural empire.
 
-**Status: phases 1–10 are done.** Next: fishing, foraging and goats, then the almanac, farm ranks and an ending.
+**Status: phases 1–11 are done.** Next: the almanac, farm ranks and an ending.
 
 | Phase | Scope | Status |
 |---|---|---|
@@ -18,6 +18,7 @@ agricultural empire.
 | 8 | Hired workers; buy land, buildings and machines | ✅ |
 | 9 | Polish: daily chores and streaks, market specials, weather, seasons, sound, celebrations | ✅ |
 | 10 | More to do: nine new crops, workshops and artisan goods, the Valley Deli | ✅ |
+| 11 | The outdoors: fishing, foraging, goats on Goat Hill, a smokehouse and a drying rack | ✅ |
 
 ## Running it
 
@@ -35,6 +36,34 @@ Tests: press **⌘U** in Xcode (runs the simulation tests in `AcresCore`), or fr
 cd Packages/AcresCore
 swift test
 ```
+
+## Phase 11: what to test
+
+Your save carries over (format v11).
+
+1. **Fishing:** pick the new **fishing rod** on the tool belt and tap the farm pond (west of the
+   farmhouse). The farmer walks to the shore and casts. Wait for the **"!"**, tap anywhere, then a
+   catch bar appears over the farmer: **tap when the marker is in the green**. Too slow or off the
+   green and it gets away. Tap while waiting to reel in. Each cast costs a little energy.
+   - 12 fish. The pond has sunfish, carp, perch, catfish (summer and autumn nights) and the
+     legendary golden koi. **Willow Lake** (drive menu → *Willow Lake*, south of the village) has
+     trout, bass, whitefish (winter), pike, salmon (autumn), eels (nights) and the legendary sturgeon.
+   - Harder fish have smaller green zones and faster markers. First catches of a kind say *New!*.
+2. **Foraging:** every morning a dozen wild finds turn up in the woods and meadows (fewer in
+   winter), twinkling: wild garlic, daffodils and morels in spring; blackberries, chamomile and
+   elderflower in summer; chanterelles and hazelnuts in autumn; holly, pinecones and snowdrops in
+   winter. Tap one to walk over and pick it. They're gone once picked; tomorrow brings new ones.
+3. **Goat Hill** (phone → Farm → land, level 5): a wooded hillside up the county road with an old
+   goat pen. Fix the pen, buy goats at the livestock market (they like cabbage, kale and carrots)
+   and collect **goat milk**, which the cheese press turns into goat cheese.
+4. **New workshops:** the **drying rack** (level 4: chamomile tea, dried mushrooms) and the
+   **smokehouse** (level 5: smoked trout, salmon and eel). The jam kitchen also makes blackberry jam
+   and elderflower cordial.
+5. **Orders:** the diner orders fish and wild garlic and chanterelles; the bakery blackberries,
+   hazelnuts and elderflower; the deli smoked fish, tea, dried mushrooms, morels and goat milk.
+   Orders only ask for fish and finds that are around this season.
+6. **Goals and chores:** *Gone fishing*, *Forager*, *Angler*, *Goat herd*; daily chores to catch
+   fish and pick wild finds.
 
 ## Phase 10: what to test
 

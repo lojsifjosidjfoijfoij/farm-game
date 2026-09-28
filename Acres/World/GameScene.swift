@@ -27,6 +27,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     private var farmer: FarmerRenderer?
     private var store: StoreRenderer?
     private var estate: EstateRenderer?
+    private var outdoors: OutdoorsRenderer?
     private var terrain: TerrainRenderer?
     private var weather: WeatherRenderer?
     private var lastWeather: Weather?
@@ -136,6 +137,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         store = StoreRenderer(assets: assets, objectLayer: objectLayer, flatLayer: flatLayer)
         estate = EstateRenderer(assets: assets, objectLayer: objectLayer, flatLayer: flatLayer, effectsLayer: effectsLayer)
         estate?.sync(game: game, force: true)
+        outdoors = OutdoorsRenderer(assets: assets, objectLayer: objectLayer, effectsLayer: effectsLayer)
         weather = WeatherRenderer(layer: effectsLayer, assets: assets)
         updateSeason()
         setUpMarkers()
@@ -240,6 +242,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         ranch?.update(dt: dt)
         store?.update(store: game.storeState, hour: game.hour, dt: dt)
         estate?.update(game: game, dt: dt)
+        outdoors?.update(game: game, dt: dt)
         updateSeason()
         weather?.update(weather: game.weather, visible: camera.visibleRect, dt: dt)
         updateLighting(force: false)
@@ -545,6 +548,10 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         case .workshop(let tile, let collected):
             estate?.sync(game: game, force: collected == nil)
             estate?.workshopFeedback(at: tile, collected: collected)
+        case .caught(let item, let water):
+            outdoors?.caught(item, from: water, to: game.simulation.state.farmer.position)
+        case .foraged(_, let id):
+            outdoors?.picked(id)
         case .tree(let outcome, let tile, let position):
             switch outcome {
             case .chopped(let speciesID, let logs, _):
