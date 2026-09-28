@@ -236,7 +236,7 @@ extension GameController {
         case .tooTired: "Your farmer is too tired."
         case .storageFull: "Storage is full. Sell or deliver something first."
         case .nothingHere: "Nothing there anymore."
-        case .inTruck: "Get out of the truck first."
+        case .inTruck: "Tap the truck to get out first."
         case .locked(let level): "You'll get a fishing rod at level \(level)."
         }
     }

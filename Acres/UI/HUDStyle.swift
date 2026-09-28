@@ -129,7 +129,7 @@ struct HUDRoundButtonStyle: ButtonStyle {
     }
 }
 
-/// The main pill button (Drive, "Sell at the market", Tom's "Next"): a flat
+/// The main pill button ("Sell at the market", Tom's "Next"): a flat
 /// colour with a slightly darker bottom edge that it presses into.
 struct HUDPillButtonStyle: ButtonStyle {
     var tint: Color = HUD.accent

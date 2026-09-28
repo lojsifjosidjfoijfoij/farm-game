@@ -37,6 +37,11 @@ extension GameController {
         Haptics.tap()
         Sound.play(.door, volume: 0.8)
         refreshFarmer()
+        // There's no button for it, so say how, the first couple of drives each session.
+        if truckHintsShown < 2 {
+            truckHintsShown += 1
+            showMessage("Tap where to go. Tap the truck to get out.")
+        }
     }
 
     /// Stops the truck and the farmer steps out beside it.

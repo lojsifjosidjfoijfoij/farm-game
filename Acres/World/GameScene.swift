@@ -298,8 +298,14 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
 
     /// Tutorial highlights (refreshed with the fields, a few times a second).
     private func updateMarkers() {
-        if let tile = game.tutorialTargetTile, !game.isDriving {
+        if game.tutorialFocus == .truck {
+            // Time to get in (or out): ring the truck.
+            tutorialRing.position = World.point(game.truckState.position)
+            tutorialRing.size = CGSize(width: World.tileSize * 2.6, height: World.tileSize * 2.6)
+            tutorialRing.isHidden = false
+        } else if let tile = game.tutorialTargetTile, !game.isDriving {
             tutorialRing.position = World.point(tile.center)
+            tutorialRing.size = CGSize(width: World.tileSize, height: World.tileSize)
             tutorialRing.isHidden = false
         } else {
             tutorialRing.isHidden = true
@@ -452,15 +458,17 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         guard let view = gesture.view, let camera = cameraController else { return }
         let point = camera.worldPoint(fromScreen: gesture.location(in: view))
 
+        // The truck is the drive button: tap it to walk over and hop in, tap it again to get out.
+        // (A little extra room around it, so it's easy to hit.)
+        if let body = truck?.body,
+           body.calculateAccumulatedFrame().insetBy(dx: -World.tileSize * 0.4, dy: -World.tileSize * 0.4).contains(point) {
+            game.tapTruck()
+            return
+        }
         if game.isDriving {
             // Tap to drive there.
             game.driveTo(World.tiles(point))
             showTapRipple(at: point, color: SKColor(red: 0.45, green: 0.75, blue: 1, alpha: 1))
-            return
-        }
-        // Tap the truck to walk over and hop in.
-        if let body = truck?.body, body.calculateAccumulatedFrame().contains(point) {
-            game.tapTruck()
             return
         }
         let spot = World.tiles(point)

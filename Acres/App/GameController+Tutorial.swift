@@ -1,10 +1,12 @@
 import Foundation
 import AcresCore
 
-/// Which HUD element the tutorial is pointing at (it pulses).
+/// What the tutorial is pointing at: a HUD element (it pulses) or the truck
+/// (ringed, with the arrow over it).
 enum TutorialFocus: Equatable {
     case none
-    case driveButton
+    /// The truck in the world: tap it to get in (or out).
+    case truck
     case basket
     /// A tool on the belt.
     case tool(BeltTool)
@@ -117,7 +119,8 @@ extension GameController {
                          body: "Open the basket and tap Load all. Your harvest goes on the truck.", button: nil)
         case .drive:
             TutorialCard(title: "Off to market",
-                         body: "Tap Drive to hop in, then follow the arrow (or pick the market on the map) into the village.", button: nil)
+                         body: isDriving ? "Tap the road where you want to go, or pick the market on the map. Follow the arrow into the village."
+                             : "Tap the truck to hop in (it's glowing). There's no key: tap it again to get out.", button: nil)
         case .sell:
             TutorialCard(title: "Sell your harvest",
                          body: "Stop on the market square and tap Sell. Prices change every day.", button: nil)
@@ -129,7 +132,8 @@ extension GameController {
                          body: "Follow the arrow back to the farm.", button: nil)
         case .replant:
             TutorialCard(title: "Plant again",
-                         body: "A field should never stand empty for long. Plant your new seeds.", button: nil)
+                         body: isDriving ? "Home again! Tap the truck to get out, then plant your new seeds."
+                             : "A field should never stand empty for long. Plant your new seeds.", button: nil)
         case .phone:
             TutorialCard(title: "Your phone is ringing!",
                          body: "Word travels fast: people in the village want to buy from you. Tap your phone.", button: nil)
@@ -153,24 +157,27 @@ extension GameController {
     var tutorialFocus: TutorialFocus {
         switch tutorial.step {
         case .plow, .plowMore: tool == .hoe ? .none : .tool(.hoe)
-        case .plant, .replant: tool == .seeds ? .none : .tool(.seeds)
+        case .plant: tool == .seeds ? .none : .tool(.seeds)
+        case .replant: isDriving ? .truck : (tool == .seeds ? .none : .tool(.seeds))
         case .water: tool == .can ? .none : .tool(.can)
         case .sleep: .bedButton
         case .harvest: tool == .sickle || tool == .hand ? .none : .tool(.sickle)
         case .claimGoal: .goalTracker
         case .load: showsInventory ? .none : .basket
-        case .drive: isDriving ? .none : .driveButton
-        case .sell: nearbyShop?.kind == .market ? .shopButton : (isDriving ? .none : .driveButton)
-        case .buySeeds: nearbyShop?.kind == .seedShop ? .shopButton : (isDriving ? .none : .driveButton)
-        case .driveHome: isDriving ? .none : .driveButton
+        case .drive: isDriving ? .none : .truck
+        case .sell: nearbyShop?.kind == .market ? .shopButton : (isDriving ? .none : .truck)
+        case .buySeeds: nearbyShop?.kind == .seedShop ? .shopButton : (isDriving ? .none : .truck)
+        case .driveHome: isDriving ? .none : .truck
         case .phone: .phoneButton
         default: .none
         }
     }
 
-    /// Where the guide arrow points while driving.
+    /// Where the guide arrow points: the truck when it's time to get in or out,
+    /// otherwise where to drive.
     var guideTarget: Vec2? {
-        switch tutorial.step {
+        if tutorialFocus == .truck { return simulation.state.truck.position }
+        return switch tutorial.step {
         case .drive, .sell: ShopCatalog.first(.market)?.zone.center
         case .buySeeds: ShopCatalog.first(.seedShop)?.zone.center
         case .driveHome: HomeValleyMap.truckParkingSpot

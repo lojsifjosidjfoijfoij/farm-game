@@ -171,20 +171,20 @@ extension GameController {
     /// Where tapping counts as tapping the farmhouse (its picture).
     static let farmhouseTapArea = TileRect(minX: 18.8, minY: 35.8, maxX: 23.2, maxY: 40.8)
 
-    /// The truck was tapped: walk over and hop in.
+    /// The truck was tapped (it's the drive button): hop in, walking over
+    /// first if it's further away, or, already in it, get out.
     func tapTruck() {
-        guard welcome == nil, sleep == nil, !isDriving else { return }
+        guard welcome == nil, sleep == nil else { return }
+        if isDriving {
+            park()
+            return
+        }
         cancelJobs()
         let truck = simulation.state.truck.position
-        enqueueJob(FarmerJob(kind: .enterTruck, spot: truck, marker: truck))
-    }
-
-    /// The Drive button: same as tapping the truck.
-    func startDriving() {
-        if simulation.state.farmer.position.distance(to: simulation.state.truck.position) < 1.8 {
+        if simulation.state.farmer.position.distance(to: truck) < 1.8 {
             enterTruck()
         } else {
-            tapTruck()
+            enqueueJob(FarmerJob(kind: .enterTruck, spot: truck, marker: truck))
         }
     }
 

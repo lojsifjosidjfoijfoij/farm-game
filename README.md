@@ -57,17 +57,20 @@ Your save carries over (same format, v13). To see it all from the start: basket 
    in 17 steps with a step counter and a progress bar on his card: plow, plow a row, plant,
    water, go to bed, harvest, claim your first goal, load the truck, drive to the market, sell,
    buy seeds, drive home, replant, open the phone (you reach level 2 here), take an order, and a
-   tour of your fields. The thing to tap pulses (tool, bed, goal, phone, drive button); the
-   world shows a ring or an arrow. Doing a step early counts (e.g. harvesting skips ahead).
+   tour of your fields. The thing to tap pulses (tool, bed, goal, phone), or, for the truck, gets
+   a ring and an arrow in the world. Doing a step early counts (e.g. harvesting skips ahead).
    *Skip tutorial* ends it.
 3. **The HUD** (designed together on the *Acres HUD* canvas in Claude, board "C2"): slim,
    see-through dark slate so the farm shows through, white rounded numbers with a thin dark
    edge, and one orange accent. Top left: your level in a gold star over the XP bar, then the
    goal and today's chores (they turn orange when a reward waits). Top right: coins, energy,
-   the clock (and fuel). Bottom: Drive on the left, the tools on a slim tray in the middle (the
-   one in hand rises onto an orange disc), and bed, **phone** (moved here) and basket on the
-   right. Tom's card is dark too, with his portrait over its corner.
-4. **Everything else:** paper behind every menu and softly darker screen edges. Level ups, new
+   the clock (and fuel). Bottom: the tools on a slim tray in the middle (the one in hand rises
+   onto an orange disc), and bed, **phone** (moved here) and basket on the right. Tom's card is
+   dark too, with his portrait over its corner.
+4. **No Drive button: the truck is the button.** Tap the truck to hop in (the farmer walks over
+   if it's further away). While driving, tap the road to go there, or use the map (bottom left).
+   Tap the truck again to get out. The first couple of drives each session say so.
+5. **Everything else:** paper behind every menu and softly darker screen edges. Level ups, new
    ranks and the ending get rays of light, a ribbon and confetti; the welcome back card and the
    weekly report match. Going to bed shows the moon.
 

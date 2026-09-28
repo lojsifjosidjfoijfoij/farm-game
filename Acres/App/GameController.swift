@@ -200,6 +200,8 @@ final class GameController {
     let map: WorldMap = HomeValleyMap.map
     /// Camera position etc., written by the scene, stored in the save.
     @ObservationIgnored var presentation: PresentationState
+    /// How often "tap the truck to get out" has been said this session.
+    @ObservationIgnored var truckHintsShown = 0
     /// Lets the scene rebuild state-dependent visuals after resets and big time jumps.
     @ObservationIgnored var onWorldReset: (@MainActor () -> Void)?
     /// Bumped whenever farmland changes through an action, so the scene redraws at once.
@@ -527,7 +529,7 @@ final class GameController {
     private func message(for failure: FarmFailure) -> String? {
         switch failure {
         case .notYourLand: return "This land isn't yours (yet)."
-        case .tooFar: return isDriving ? "Get out of the truck first." : nil
+        case .tooFar: return isDriving ? "Tap the truck to get out first." : nil
         case .tooTired: return "Your farmer is exhausted. Time for bed!"
         case .cannotPlowHere: return "Can't plow here."
         case .notAField: return Self.notAFieldMessage

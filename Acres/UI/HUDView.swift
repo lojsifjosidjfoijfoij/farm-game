@@ -4,9 +4,9 @@ import AcresCore
 /// The heads-up display, laid out for a phone held sideways, slim and
 /// see-through so the farm shows (look: `HUD`). Level, goal and chores in the
 /// top-left corner; coins, energy, the clock and fuel in the top-right;
-/// messages at the top in the middle. Along the bottom: the truck on the
-/// left, the tool belt in the middle, and bed, phone and basket on the right.
-/// Big touch targets, two thumbs.
+/// messages at the top in the middle. Along the bottom: the tool belt in the
+/// middle, and bed, phone and basket on the right (the map on the left while
+/// driving). To drive, tap the truck itself. Big touch targets, two thumbs.
 struct HUDView: View {
     @Bindable var game: GameController
 
@@ -129,25 +129,27 @@ struct HUDView: View {
         .padding(.bottom, 8)
     }
 
-    /// Truck on the left, tools in the middle, bed, phone and basket on the right.
+    /// Tools in the middle; bed, phone and basket on the right; the map on
+    /// the left while driving. (No drive button: the truck in the world is
+    /// the button. Tap it to hop in, tap it again to get out.)
     private var bottomBar: some View {
-        HStack(alignment: .bottom, spacing: 8) {
-            #if DEBUG
-            debugButton
-            #endif
-            driveButton
-            if game.isDriving { mapMenu }
-            Spacer(minLength: 6)
+        ZStack(alignment: .bottom) {
+            HStack(alignment: .bottom, spacing: 8) {
+                #if DEBUG
+                debugButton
+                #endif
+                if game.isDriving { mapMenu }
+                Spacer(minLength: 0)
+                if !game.isDriving && (game.isBedtime || game.tutorialFocus == .bedButton) { bedButton }
+                // The phone (orders, the books, the Farm tab) arrives at level 2
+                // (the tutorial brings it in when it's time).
+                if game.has(.phone) && game.tutorial.hasReached(.phone) { phoneButton }
+                inventoryButton
+            }
             if !game.isDriving {
                 ToolBelt(game: game)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
-                Spacer(minLength: 6)
             }
-            if !game.isDriving && (game.isBedtime || game.tutorialFocus == .bedButton) { bedButton }
-            // The phone (orders, the books, the Farm tab) arrives at level 2
-            // (the tutorial brings it in when it's time).
-            if game.has(.phone) && game.tutorial.hasReached(.phone) { phoneButton }
-            inventoryButton
         }
         .padding(.horizontal, 10)
         .padding(.bottom, 8)
@@ -427,22 +429,6 @@ struct HUDView: View {
     }
 
     // MARK: Bottom
-
-    /// Hop in (the farmer walks to the truck) / get out.
-    private var driveButton: some View {
-        Button {
-            if game.isDriving { game.park() } else { game.startDriving() }
-        } label: {
-            HStack(spacing: 7) {
-                GameIcon(asset: "ui_icon_truck", fallbackSymbol: game.isDriving ? "figure.walk" : "truck.pickup.side.fill",
-                         tint: .white, size: 22)
-                Text(game.isDriving ? "Get out" : "Drive")
-            }
-        }
-        .buttonStyle(HUDPillButtonStyle(tint: game.isDriving ? HUD.slate : HUD.accent))
-        .pulsing(game.tutorialFocus == .driveButton)
-        .accessibilityLabel(game.isDriving ? "Get out of the truck" : "Drive the truck")
-    }
 
     /// The GPS: pick a place and the truck drives there.
     private var mapMenu: some View {
