@@ -18,6 +18,8 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     private let cameraNode = SKCameraNode()
     /// Full-screen color multiplied over the world: the day/night grade.
     private let gradeOverlay = SKSpriteNode(color: .white, size: CGSize(width: 16, height: 16))
+    /// Softly darkened screen edges that frame the world like a painting.
+    private let vignette = SKSpriteNode(texture: nil)
 
     private var cameraController: CameraController?
     private var chunks: ChunkManager?
@@ -96,6 +98,9 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         gradeOverlay.blendMode = .multiply
         gradeOverlay.zPosition = ZLayer.lightingOverlay
         cameraNode.addChild(gradeOverlay)
+        vignette.texture = assets.texture("fx_vignette")
+        vignette.zPosition = ZLayer.lightingOverlay + 1
+        cameraNode.addChild(vignette)
         resizeOverlay()
 
         // Warm the texture cache so the first frames don't hitch.
@@ -211,6 +216,8 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     private func resizeOverlay() {
         // Generously oversized: camera children may be scaled with the camera.
         gradeOverlay.size = CGSize(width: size.width * 4, height: size.height * 4)
+        // Camera children scale with the camera, so the view's size covers the screen at any zoom.
+        vignette.size = size
     }
 
     // MARK: Frame loop

@@ -665,22 +665,24 @@ struct ToolBelt: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 5)
-                    .background(Capsule().fill(Theme.parchment.opacity(0.92)))
+                    .background(
+                        Capsule()
+                            .fill(LinearGradient(colors: [Theme.cream, Theme.parchment], startPoint: .top, endPoint: .bottom))
+                            .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                    )
+                    .overlay(Capsule().strokeBorder(Theme.wood.opacity(0.5), lineWidth: 1.5))
                     .frame(maxWidth: 360)
                     .transition(.opacity)
                     .id(game.tool)
             }
-            HStack(spacing: 5) {
+            HStack(spacing: 6) {
                 ForEach(game.beltTools) { tool in
                     button(tool)
                 }
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
-            .background(
-                Capsule().fill(Theme.parchment.opacity(0.95)).shadow(color: .black.opacity(0.2), radius: 6, y: 3)
-            )
-            .overlay(Capsule().strokeBorder(Theme.border, lineWidth: 1))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(WoodPlank(cornerRadius: 30))
         }
     }
 
@@ -691,11 +693,11 @@ struct ToolBelt: View {
         } label: {
             ZStack(alignment: .topTrailing) {
                 icon(tool)
-                    .frame(width: 42, height: 42)
-                    .background(Circle().fill(selected ? Theme.gold.opacity(0.35) : Color.clear))
-                    .overlay(Circle().strokeBorder(selected ? Theme.gold : Color.clear, lineWidth: 2.5))
-                    .scaleEffect(selected ? 1.1 : 1)
-                    .offset(y: selected ? -3 : 0)
+                    .frame(width: 44, height: 44)
+                    .background(slot(selected: selected))
+                    .scaleEffect(selected ? 1.12 : 1)
+                    .offset(y: selected ? -5 : 0)
+                    .animation(.spring(response: 0.25, dampingFraction: 0.6), value: selected)
                 if tool == .seeds, let packet = game.selectedPacket {
                     CountBadge(count: packet.count)
                 }
@@ -705,6 +707,26 @@ struct ToolBelt: View {
         .pulsing(game.tutorialFocus == .tool(tool))
         .accessibilityLabel(tool == .seeds ? "Seeds" : tool.name)
         .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    /// A round well carved into the plank; the tool in hand sits on a gold coin.
+    @ViewBuilder
+    private func slot(selected: Bool) -> some View {
+        if selected {
+            ZStack {
+                Circle().fill(Theme.goldDark).offset(y: 3)
+                Circle().fill(LinearGradient(colors: [Theme.goldLight, Theme.gold], startPoint: .top, endPoint: .bottom))
+                Circle().strokeBorder(Color.white.opacity(0.7), lineWidth: 1.5).padding(2)
+            }
+            .shadow(color: Theme.goldLight.opacity(0.8), radius: 6, x: 0, y: 0)
+        } else {
+            ZStack {
+                Circle().fill(Theme.woodDark.opacity(0.55))
+                Circle().fill(LinearGradient(colors: [Theme.cream.opacity(0.85), Theme.parchmentDark], startPoint: .top, endPoint: .bottom))
+                    .padding(3)
+                    .offset(y: 1)
+            }
+        }
     }
 
     @ViewBuilder
@@ -797,52 +819,85 @@ struct SeedPicker: View {
     }
 }
 
-/// The tutorial's instruction card.
+/// The tutorial's instruction card: Tom talking, from the side of the screen.
 struct TutorialCardView: View {
     let card: TutorialCard
     let onButton: () -> Void
     let onSkip: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(card.title)
-                    .font(Theme.title(18))
-                    .foregroundStyle(Theme.ink)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                Spacer(minLength: 6)
-                if card.button == nil {
-                    Button("Skip", action: onSkip)
-                        .font(Theme.label(13))
-                        .foregroundStyle(Theme.inkSoft)
-                        .accessibilityLabel("Skip the tutorial")
-                }
+        HStack(alignment: .top, spacing: 10) {
+            VStack(spacing: 4) {
+                MentorPortrait(size: 54)
+                Text("Tom")
+                    .font(Theme.display(12))
+                    .foregroundStyle(Theme.woodDark)
             }
-            Text(card.body)
-                .font(Theme.label(14))
-                .foregroundStyle(Theme.ink)
-                .fixedSize(horizontal: false, vertical: true)
-            if let title = card.button {
-                Button(action: onButton) {
-                    Text(title)
-                        .font(Theme.label(16, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.leafDark))
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(card.title)
+                        .font(Theme.display(17))
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                    Spacer(minLength: 4)
+                    if card.steps > 0 {
+                        Text("\(card.step)/\(card.steps)")
+                            .font(Theme.number(11))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 2)
+                            .background(Capsule().fill(Theme.wood))
+                            .accessibilityLabel("Step \(card.step) of \(card.steps)")
+                    }
                 }
-                .buttonStyle(.plain)
+                Text(card.body)
+                    .font(Theme.label(14))
+                    .foregroundStyle(Theme.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                if card.steps > 0 {
+                    XPBar(fraction: Double(card.step) / Double(card.steps),
+                          top: Theme.goldLight, bottom: Theme.gold)
+                        .frame(height: 6)
+                        .accessibilityHidden(true)
+                }
+                HStack {
+                    if card.button == nil {
+                        Button("Skip tutorial", action: onSkip)
+                            .font(Theme.label(12))
+                            .foregroundStyle(Theme.inkSoft)
+                            .accessibilityLabel("Skip the tutorial")
+                    }
+                    Spacer(minLength: 0)
+                    if let title = card.button {
+                        Button {
+                            Haptics.tap()
+                            onButton()
+                        } label: {
+                            Text(title)
+                                .font(Theme.display(16))
+                                .frame(minWidth: 120)
+                        }
+                        .buttonStyle(CandyButtonStyle(tint: .green, cornerRadius: 14))
+                    }
+                }
                 .padding(.top, 2)
             }
         }
-        .padding(14)
+        .padding(12)
         .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Theme.parchment.opacity(0.97))
-                .shadow(color: .black.opacity(0.22), radius: 10, y: 4)
+            ZStack {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(LinearGradient(colors: [Theme.cream, Theme.parchment], startPoint: .top, endPoint: .bottom))
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.9), lineWidth: 1.5)
+                    .padding(3)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(LinearGradient(colors: [Theme.goldLight, Theme.goldDark], startPoint: .top, endPoint: .bottom),
+                                  lineWidth: 3)
+            }
+            .shadow(color: .black.opacity(0.28), radius: 10, x: 0, y: 5)
         )
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Theme.gold.opacity(0.7), lineWidth: 2))
     }
 }
 

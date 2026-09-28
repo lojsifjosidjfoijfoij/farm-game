@@ -37,64 +37,141 @@ struct FloatingAmount: View {
     }
 }
 
-/// Level up! The new level and everything it opens up, over a shower of confetti.
-struct LevelUpCardView: View {
-    let card: LevelUpCard
-    let onClose: () -> Void
+/// The frame every celebration shares: rays of light and confetti behind,
+/// cream paper with a gold rim, and a ribbon across the top edge.
+struct RewardCard<Content: View>: View {
+    let ribbon: String
+    var tint: CandyTint = .gold
+    var confetti = 1
+    /// Rays, confetti and a buzz; off for quieter cards (welcome back, the weekly report).
+    var celebrates = true
+    @ViewBuilder let content: Content
     @State private var pop = false
 
     var body: some View {
         ZStack {
-            Confetti()
-            VStack(spacing: 12) {
-                Text("Level \(card.level)!")
-                    .font(Theme.title(34))
-                    .foregroundStyle(Theme.ink)
-                    .scaleEffect(pop ? 1 : 0.6)
-                Image(systemName: "star.fill")
-                    .font(.system(size: 40, weight: .bold))
-                    .foregroundStyle(Theme.gold)
-                    .rotationEffect(.degrees(pop ? 0 : -40))
-                if card.unlocks.isEmpty {
-                    Text("You're getting good at this.")
-                        .font(Theme.label(15))
-                        .foregroundStyle(Theme.inkSoft)
-                } else {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("New for you")
-                            .font(Theme.label(13, weight: .bold))
-                            .foregroundStyle(Theme.inkSoft)
-                        ForEach(card.unlocks, id: \.self) { unlock in
-                            Label(unlock.prefix(1).uppercased() + unlock.dropFirst(), systemImage: "lock.open.fill")
-                                .font(Theme.label(16, weight: .semibold))
-                                .foregroundStyle(Theme.ink)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(12)
-                    .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.parchmentDark.opacity(0.6)))
-                }
-                Button(action: onClose) {
-                    Text("Great!")
-                        .font(Theme.label(17, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.leafDark))
-                }
-                .buttonStyle(.plain)
+            if celebrates {
+                Sunburst()
+                    .scaleEffect(pop ? 1.1 : 0.3)
+                    .opacity(pop ? 1 : 0)
+                ForEach(0..<confetti, id: \.self) { _ in Confetti() }
             }
-            .padding(22)
-            .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Theme.parchment)
-                    .shadow(color: .black.opacity(0.25), radius: 18, y: 6)
-            )
-            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Theme.gold, lineWidth: 3))
-            .padding(.horizontal, 32)
+            VStack(spacing: 10) { content }
+                .padding(.horizontal, 22)
+                .padding(.top, 34)
+                .padding(.bottom, 18)
+                .frame(maxWidth: 440)
+                .background(RewardPaper())
+                .overlay(alignment: .top) {
+                    RibbonTitle(text: ribbon, tint: tint, size: 22)
+                        .fixedSize(horizontal: true, vertical: true)
+                        .offset(y: -22)
+                }
+                .padding(.top, 22)
+                .padding(.horizontal, 28)
+                .scaleEffect(pop ? 1 : 0.7)
+                .opacity(pop ? 1 : 0)
         }
         .onAppear {
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.55)) { pop = true }
+            if celebrates { Haptics.success() }
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.6)) { pop = true }
+        }
+    }
+}
+
+/// Cream card paper with a bright inner edge and a gold rim.
+struct RewardPaper: View {
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .fill(LinearGradient(colors: [Theme.cream, Theme.parchment, Theme.parchmentDark], startPoint: .top, endPoint: .bottom))
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.9), lineWidth: 2)
+                .padding(5)
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .strokeBorder(LinearGradient(colors: [Theme.goldLight, Theme.goldDark], startPoint: .top, endPoint: .bottom),
+                              lineWidth: 4)
+        }
+        .shadow(color: .black.opacity(0.35), radius: 20, x: 0, y: 8)
+    }
+}
+
+/// The big green "carry on" button at the bottom of a celebration.
+struct RewardButton: View {
+    let title: String
+    let action: () -> Void
+
+    var body: some View {
+        Button {
+            Haptics.tap()
+            action()
+        } label: {
+            Text(title)
+                .font(Theme.display(19))
+                .frame(minWidth: 170)
+                .padding(.vertical, 2)
+        }
+        .buttonStyle(CandyButtonStyle(tint: .green, cornerRadius: 18, lip: 5))
+        .padding(.top, 4)
+    }
+}
+
+/// Level up! The new level and everything it opens up.
+struct LevelUpCardView: View {
+    let card: LevelUpCard
+    let onClose: () -> Void
+    @State private var spin = false
+
+    var body: some View {
+        RewardCard(ribbon: "LEVEL UP!") {
+            StarBadge(level: card.level, size: 84)
+                .rotationEffect(.degrees(spin ? 0 : -120))
+                .scaleEffect(spin ? 1 : 0.3)
+                .shadow(color: Theme.goldLight.opacity(0.9), radius: 12, x: 0, y: 0)
+            if card.unlocks.isEmpty {
+                Text("You're getting good at this.")
+                    .font(Theme.label(15, weight: .semibold))
+                    .foregroundStyle(Theme.inkSoft)
+            } else {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("NEW FOR YOU")
+                        .font(Theme.display(12))
+                        .foregroundStyle(Theme.wood)
+                    ForEach(card.unlocks, id: \.self) { unlock in
+                        HStack(spacing: 8) {
+                            Image(systemName: "lock.open.fill")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(width: 24, height: 24)
+                                .background(Circle().fill(LinearGradient(colors: [CandyTint.green.top, CandyTint.green.bottom],
+                                                                         startPoint: .top, endPoint: .bottom)))
+                            Text(unlock.prefix(1).uppercased() + unlock.dropFirst())
+                                .font(Theme.label(15, weight: .semibold))
+                                .foregroundStyle(Theme.ink)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(12)
+                .background(InsetPanel())
+            }
+            RewardButton(title: "Great!", action: onClose)
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.5).delay(0.15)) { spin = true }
+        }
+    }
+}
+
+/// A shallow, darker well inside a card (lists of unlocks, stats).
+struct InsetPanel: View {
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Theme.parchmentDark.opacity(0.7))
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Theme.wood.opacity(0.3), lineWidth: 1.5)
         }
     }
 }
@@ -164,7 +241,7 @@ struct LevelRoadmapView: View {
                 }
                 .padding(16)
             }
-            .background(Theme.parchment)
+            .background(PaperBackground())
             .navigationTitle("What's next")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -184,59 +261,41 @@ struct RankUpCardView: View {
     @State private var pop = false
 
     var body: some View {
-        ZStack {
-            Confetti()
-            VStack(spacing: 12) {
-                Text("Your farm is now")
-                    .font(Theme.label(15, weight: .semibold))
+        RewardCard(ribbon: "NEW RANK!", tint: .green) {
+            Image(systemName: card.renovated ? "house.fill" : "rosette")
+                .font(.system(size: 44, weight: .bold))
+                .foregroundStyle(LinearGradient(colors: [Theme.goldLight, Theme.goldDark], startPoint: .top, endPoint: .bottom))
+                .shadow(color: Theme.goldDark.opacity(0.6), radius: 0, x: 0, y: 2)
+                .rotationEffect(.degrees(pop ? 0 : -30))
+                .scaleEffect(pop ? 1 : 0.4)
+            Text("Your farm is now")
+                .font(Theme.label(14, weight: .semibold))
+                .foregroundStyle(Theme.inkSoft)
+            Text(card.rank.title)
+                .font(Theme.display(28))
+                .foregroundStyle(Theme.ink)
+                .multilineTextAlignment(.center)
+            Text(card.rank.blurb)
+                .font(Theme.label(14))
+                .foregroundStyle(Theme.ink)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            if card.renovated {
+                Label("Go and see the farmhouse!", systemImage: "sparkles")
+                    .font(Theme.label(14, weight: .bold))
+                    .foregroundStyle(Theme.leafDark)
+            }
+            if let next {
+                Text("Next: \(next.title) at a net worth of \(next.netWorth.formatted()) coins.")
+                    .font(Theme.label(12))
                     .foregroundStyle(Theme.inkSoft)
-                Text(card.rank.title)
-                    .font(Theme.title(30))
-                    .foregroundStyle(Theme.ink)
-                    .multilineTextAlignment(.center)
-                    .scaleEffect(pop ? 1 : 0.6)
-                Image(systemName: card.renovated ? "house.fill" : "rosette")
-                    .font(.system(size: 40, weight: .bold))
-                    .foregroundStyle(Theme.gold)
-                    .rotationEffect(.degrees(pop ? 0 : -30))
-                Text(card.rank.blurb)
-                    .font(Theme.label(15))
-                    .foregroundStyle(Theme.ink)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
-                if card.renovated {
-                    Label("Go and see the farmhouse!", systemImage: "sparkles")
-                        .font(Theme.label(14, weight: .semibold))
-                        .foregroundStyle(Theme.leafDark)
-                }
-                if let next {
-                    Text("Next: \(next.title) at a net worth of \(next.netWorth.formatted()) coins.")
-                        .font(Theme.label(13))
-                        .foregroundStyle(Theme.inkSoft)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Button(action: onClose) {
-                    Text("Wonderful!")
-                        .font(Theme.label(17, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.leafDark))
-                }
-                .buttonStyle(.plain)
             }
-            .padding(22)
-            .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Theme.parchment)
-                    .shadow(color: .black.opacity(0.25), radius: 18, y: 6)
-            )
-            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Theme.gold, lineWidth: 3))
-            .padding(.horizontal, 32)
+            RewardButton(title: "Wonderful!", action: onClose)
         }
         .onAppear {
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.55)) { pop = true }
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.5).delay(0.15)) { pop = true }
         }
     }
 }
@@ -248,62 +307,39 @@ struct FinaleCardView: View {
     @State private var pop = false
 
     var body: some View {
-        ZStack {
-            Confetti()
-            Confetti()
-            VStack(spacing: 12) {
-                Image(systemName: "trophy.fill")
-                    .font(.system(size: 52, weight: .bold))
-                    .foregroundStyle(Theme.gold)
-                    .scaleEffect(pop ? 1 : 0.4)
-                Text("The Valley's Finest Farm")
-                    .font(Theme.title(28))
-                    .foregroundStyle(Theme.ink)
-                    .multilineTextAlignment(.center)
-                Text("From a leaky roof and a field of weeds to the pride of the valley. The farmhouse has never looked better.")
-                    .font(Theme.label(14))
-                    .foregroundStyle(Theme.inkSoft)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                HStack(alignment: .top, spacing: 18) {
-                    VStack(spacing: 6) {
-                        statRow("calendar", "Days farmed", "\(stats.days)")
-                        statRow("star.fill", "Farmer level", "\(stats.level)")
-                        statRow("banknote.fill", "Net worth", stats.netWorth.formatted())
-                        statRow("leaf.fill", "Crops", stats.harvested.formatted())
-                        statRow("fish.fill", "Fish caught", stats.fishCaught.formatted())
-                    }
-                    VStack(spacing: 6) {
-                        statRow("tree.fill", "Wild finds", stats.foraged.formatted())
-                        statRow("hammer.fill", "Goods made", stats.crafted.formatted())
-                        statRow("shippingbox.fill", "Orders", stats.ordersDone.formatted())
-                        statRow("book.fill", "Almanac", "\(Int((stats.almanac * 100).rounded()))%")
-                        statRow("flame.fill", "Best streak", "\(stats.bestStreak) days")
-                    }
+        RewardCard(ribbon: "THE VALLEY'S FINEST FARM", confetti: 2) {
+            Image(systemName: "trophy.fill")
+                .font(.system(size: 50, weight: .bold))
+                .foregroundStyle(LinearGradient(colors: [Theme.goldLight, Theme.goldDark], startPoint: .top, endPoint: .bottom))
+                .shadow(color: Theme.goldDark.opacity(0.6), radius: 0, x: 0, y: 2)
+                .scaleEffect(pop ? 1 : 0.4)
+            Text("From a leaky roof and a field of weeds to the pride of the valley. The farmhouse has never looked better.")
+                .font(Theme.label(14))
+                .foregroundStyle(Theme.inkSoft)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(alignment: .top, spacing: 18) {
+                VStack(spacing: 6) {
+                    statRow("calendar", "Days farmed", "\(stats.days)")
+                    statRow("star.fill", "Farmer level", "\(stats.level)")
+                    statRow("banknote.fill", "Net worth", stats.netWorth.formatted())
+                    statRow("leaf.fill", "Crops", stats.harvested.formatted())
+                    statRow("fish.fill", "Fish caught", stats.fishCaught.formatted())
                 }
-                .padding(12)
-                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.parchmentDark.opacity(0.6)))
-                Button(action: onClose) {
-                    Text("Keep farming")
-                        .font(Theme.label(17, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.leafDark))
+                VStack(spacing: 6) {
+                    statRow("tree.fill", "Wild finds", stats.foraged.formatted())
+                    statRow("hammer.fill", "Goods made", stats.crafted.formatted())
+                    statRow("shippingbox.fill", "Orders", stats.ordersDone.formatted())
+                    statRow("book.fill", "Almanac", "\(Int((stats.almanac * 100).rounded()))%")
+                    statRow("flame.fill", "Best streak", "\(stats.bestStreak) days")
                 }
-                .buttonStyle(.plain)
             }
-            .padding(22)
-            .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Theme.parchment)
-                    .shadow(color: .black.opacity(0.3), radius: 22, y: 8)
-            )
-            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Theme.gold, lineWidth: 4))
-            .padding(.horizontal, 24)
+            .padding(12)
+            .background(InsetPanel())
+            RewardButton(title: "Keep farming", action: onClose)
         }
         .onAppear {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.5)) { pop = true }
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.5).delay(0.15)) { pop = true }
         }
     }
 

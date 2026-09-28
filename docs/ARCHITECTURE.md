@@ -108,10 +108,14 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   the **truck bed** (30 items), so harvest has to be loaded at the farm and driven to market.
   Prices drift daily inside each crop's range (`MarketPricing`, deterministic per day). Every
   trade is a typed `TradeFailure` or success, applied atomically through `Simulation.trade`.
-- **Tutorial** (`TutorialState`, saved): plow → plow a row → plant → water → harvest → load →
-  drive → sell → buy seeds. Steps advance from game events, can be skipped, and can be restarted
-  from Settings. The scene highlights a target tile, the HUD pulses the right button and a guide
-  arrow points the way while driving.
+- **Tutorial** (`TutorialState`, saved): Tom walks a whole first loop in 17 steps: plow → plow a
+  row → plant → water → sleep → harvest → claim a goal → load → drive → sell → buy seeds → drive
+  home → replant → open the phone → take an order → a tour of the fields. Saved step numbers never
+  change; the play order is `TutorialState.order`, so steps can be added anywhere. Steps advance
+  from game events (an event can complete a step up to two ahead, so doing things early counts);
+  only card steps advance with a button. They can be skipped and restarted from Settings. The
+  scene highlights a target tile, the HUD pulses the right button and a guide arrow points the
+  way while driving.
 
 ## Animals and trees (Phase 4)
 
@@ -338,7 +342,13 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   weights). A fragment shader blends seamless detail textures and pushes the edges through noise,
   so borders look organic rather than tiled. One draw call per chunk.
 - **Draw order** (`ZLayer`): ground → flat things/shadows → standing objects → day/night grade
-  (a multiply overlay) → additive night lights (windows) → debug.
+  (a multiply overlay) → the screen-edge vignette (`fx_vignette`, on the camera) → additive night
+  lights (windows) → debug.
+- **HUD look** (`UI/GameStyle.swift`): one design system for every screen. Candy buttons
+  (`CandyButtonStyle`) press down onto a darker lip; round buttons are wooden tokens; the tool
+  belt is a wooden plank; menus sit on paper (`PaperBackground`); celebrations share
+  `RewardCard` (sunburst, ribbon title, gold-rimmed paper). Everything is drawn in SwiftUI, so it
+  stays sharp at any size, and real art can replace pieces later.
 - **Day/night:** `DayNightCurve` (core, tested) gives a tint and a night-light strength per hour.
 - **Frame rate:** capped at 60 fps (also on ProMotion screens) for battery life and consistent
   behavior.

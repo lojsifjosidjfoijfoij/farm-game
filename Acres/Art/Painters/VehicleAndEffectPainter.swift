@@ -173,6 +173,16 @@ enum EffectPainter {
                     Paint.softSpot(ctx, c, size.width * rng.cg(0.25...0.4), UIColor(hex: 0xF2F0EC).withAlpha(0.7))
                 }
             }
+        case "fx_vignette":
+            // Stretched to the screen, so the circle becomes an ellipse around the view.
+            return Canvas.image(size) { ctx in
+                let c = CGPoint(x: size.width / 2, y: size.height / 2)
+                let edge = UIColor(hex: 0x2A1C10)
+                let gradient = Paint.gradient([edge.withAlpha(0), edge.withAlpha(0), edge.withAlpha(0.16), edge.withAlpha(0.5)],
+                                              [0, 0.55, 0.8, 1])
+                ctx.drawRadialGradient(gradient, startCenter: c, startRadius: 0, endCenter: c, endRadius: hypot(c.x, c.y),
+                                       options: [.drawsAfterEndLocation])
+            }
         case "fx_window_glow":
             return Canvas.image(size) { ctx in
                 Paint.softSpot(ctx, CGPoint(x: size.width / 2, y: size.height / 2), size.width / 2, UIColor(hex: 0xFFC766))

@@ -47,6 +47,25 @@ cd Packages/AcresCore
 swift test
 ```
 
+## The long tutorial and the new look: what to test
+
+Your save carries over (same format, v13). To see it all from the start: basket → *Settings* →
+*From the beginning*.
+
+1. **Title screen:** the valley at dawn, the Acres logo and *Tap to play*. It shows once per launch.
+2. **Tom teaches you.** The old farmer who ran the place talks you through a whole first loop,
+   in 17 steps with a step counter and a progress bar on his card: plow, plow a row, plant,
+   water, go to bed, harvest, claim your first goal, load the truck, drive to the market, sell,
+   buy seeds, drive home, replant, open the phone (you reach level 2 here), take an order, and a
+   tour of your fields. The thing to tap pulses (tool, bed, goal, phone, drive button); the
+   world shows a ring or an arrow. Doing a step early counts (e.g. harvesting skips ahead).
+   *Skip tutorial* ends it.
+3. **The look:** glossy buttons that press down, wooden tokens for the round buttons, a wooden
+   tool belt with a gold coin under the tool in hand, a gold star for your level with a glossy
+   XP bar, cream panels with gold rims, paper behind every menu, softly darker screen edges.
+   Level ups, new ranks and the ending get rays of light, a ribbon and confetti; the welcome
+   back card and the weekly report match. Going to bed shows the moon.
+
 ## A simpler start: what to test
 
 Your save carries over (format v13: your farm gets every field its level and land have earned,

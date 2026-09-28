@@ -7,17 +7,13 @@ struct WelcomeBackView: View {
     let onContinue: () -> Void
 
     var body: some View {
-        VStack(spacing: 16) {
-            Text("Welcome back!")
-                .font(Theme.title(28))
-                .foregroundStyle(Theme.ink)
-
+        RewardCard(ribbon: "WELCOME BACK!", tint: .green, celebrates: false) {
             Text("You were away for \(Self.format(summary.awayDuration)).")
-                .font(Theme.label(16))
+                .font(Theme.label(15, weight: .semibold))
                 .foregroundStyle(Theme.inkSoft)
                 .multilineTextAlignment(.center)
 
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 9) {
                 ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
                     HStack(alignment: .center, spacing: 10) {
                         if let asset = line.asset {
@@ -35,31 +31,12 @@ struct WelcomeBackView: View {
                     }
                 }
             }
-            .padding(14)
+            .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.parchmentDark.opacity(0.6)))
+            .background(InsetPanel())
 
-            Button(action: onContinue) {
-                Text("Back to the farm")
-                    .font(Theme.label(18, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(LinearGradient(colors: [Theme.leaf, Theme.leafDark], startPoint: .top, endPoint: .bottom))
-                    )
-            }
-            .buttonStyle(.plain)
+            RewardButton(title: "Back to the farm", action: onContinue)
         }
-        .padding(22)
-        .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(Theme.parchment)
-                .shadow(color: .black.opacity(0.25), radius: 18, y: 8)
-        )
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Theme.border, lineWidth: 1))
-        .padding(.horizontal, 28)
     }
 
     private struct Line {

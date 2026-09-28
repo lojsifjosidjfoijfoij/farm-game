@@ -22,7 +22,7 @@ struct ShopView: View {
                 }
                 .padding(16)
             }
-            .background(Theme.parchment)
+            .background(PaperBackground())
             .navigationTitle(shop.name)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

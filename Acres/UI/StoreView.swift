@@ -17,7 +17,7 @@ struct StoreView: View {
                 }
                 .padding(16)
             }
-            .background(Theme.parchment)
+            .background(PaperBackground())
             .navigationTitle(state.isRented ? "Your shop" : store.name)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

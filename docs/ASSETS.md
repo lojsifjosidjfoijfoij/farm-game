@@ -43,9 +43,9 @@ procedurally in code.
 | Characters | 129 | 0 |
 | Animals | 70 | 0 |
 | Item icons | 107 | 0 |
-| Effects & particles | 35 | 4 |
-| User interface | 34 | 15 |
-| **Total** | **739** | **52** |
+| Effects & particles | 36 | 4 |
+| User interface | 35 | 15 |
+| **Total** | **741** | **52** |
 | Audio files | 58 | 0 |
 
 ## Terrain (tileable ground textures)
@@ -707,6 +707,7 @@ procedurally in code.
 | `fx_firefly` | 13 × 13 | 0.1 × 0.1 | — | 8 | Firefly glow dot (summer nights). *(additive light)* |
 | `fx_cloud_shadow` | 1536 × 1024 | 12 × 8 | — | 8 | Very soft cloud shadow drifting over the land. *(flat)* |
 | `fx_water_ripple` | 128 × 64 | 1 × 0.5 | — | 8 | Expanding ripple ring on water. *(flat)* |
+| `fx_vignette` | 384 × 384 | UI | — | 13 | Screen-edge vignette: clear centre, soft warm-brown edges (about 50 % at the corners). Stretched over the whole view. |
 
 ## User interface
 
@@ -742,6 +743,7 @@ procedurally in code.
 | `ui_icon_phone` | 96 × 96 | UI | — | 6 | Chunky flip phone (business phone: orders and money). |
 | `ui_icon_worker` | 96 × 96 | UI | — | 6 | Farmhand in a straw hat. |
 | `ui_icon_collection` | 96 × 96 | UI | — | 7 | Leather-bound book (collection). |
+| `ui_portrait_mentor` | 192 × 192 | UI | — | 13 | Tom, the old farmer who teaches you (tutorial card): head and shoulders, grey hair and beard, straw hat, green shirt, overalls. Transparent; the card puts it on a sky-blue disc. |
 | `ui_joystick_base` | 420 × 420 | UI | — | 3 | Joystick ring, soft translucent. |
 | `ui_joystick_knob` | 192 × 192 | UI | — | 3 | Joystick knob. |
 | `ui_panel_parchment` | 288 × 288 | UI | — | 1 | 9-slice panel: warm parchment with a subtle hand-drawn border (slice 32 pt). |

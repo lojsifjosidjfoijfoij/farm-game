@@ -29,7 +29,7 @@ struct WorkshopView: View {
                 }
                 .padding(16)
             }
-            .background(Theme.parchment)
+            .background(PaperBackground())
             .navigationTitle(game.workshopSnapshot?.definition?.name ?? "Workshop")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

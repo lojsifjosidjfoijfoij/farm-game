@@ -32,7 +32,7 @@ struct BusinessView: View {
                     .padding(16)
                 }
             }
-            .background(Theme.parchment)
+            .background(PaperBackground())
             .navigationTitle("Business")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -414,12 +414,7 @@ struct WeeklyReportCard: View {
     let onClose: () -> Void
 
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "calendar.badge.clock")
-                .font(.system(size: 30, weight: .semibold))
-                .foregroundStyle(Theme.gold)
-            Text("Week \(report.week) is done")
-                .font(Theme.title(22))
+        RewardCard(ribbon: "WEEK \(report.week) DONE", tint: .blue, celebrates: false) {
             VStack(spacing: 6) {
                 LedgerLine(name: "Earned", amount: report.ledger.totalIncome)
                 LedgerLine(name: "Spent", amount: -report.ledger.totalExpenses)
@@ -427,10 +422,12 @@ struct WeeklyReportCard: View {
                 LedgerLine(name: "Profit", amount: report.ledger.profit, bold: true)
                 LedgerLine(name: "Bills paid this morning", amount: -report.billsPaid)
             }
+            .padding(12)
+            .background(InsetPanel())
             HStack(spacing: 6) {
-                CoinIcon(size: 18)
+                CoinIcon(size: 20)
                 Text("\(report.moneyAfter) coins")
-                    .font(Theme.number(17))
+                    .font(Theme.number(18))
                     .foregroundStyle(report.moneyAfter < 0 ? Theme.danger : Theme.ink)
             }
             if report.moneyAfter < 0 {
@@ -440,24 +437,8 @@ struct WeeklyReportCard: View {
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Button(action: onClose) {
-                Text("New week, let's go")
-                    .font(Theme.label(17, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.leafDark))
-            }
-            .buttonStyle(.plain)
+            RewardButton(title: "New week, let's go", action: onClose)
         }
         .foregroundStyle(Theme.ink)
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(Theme.parchment)
-                .shadow(color: .black.opacity(0.25), radius: 16, y: 6)
-        )
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Theme.gold.opacity(0.7), lineWidth: 2))
-        .padding(.horizontal, 28)
     }
 }

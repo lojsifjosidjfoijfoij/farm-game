@@ -6,6 +6,7 @@ import AcresCore
 enum UIIconPainter {
 
     static func paint(_ spec: AssetSpec) -> UIImage? {
+        if spec.name == "ui_portrait_mentor" { return mentorPortrait(spec) }
         let draw: ((CGContext) -> Void)?
         switch spec.name {
         case "ui_icon_hand": draw = glove
@@ -21,6 +22,21 @@ enum UIIconPainter {
         return Canvas.image(size) { ctx in
             ctx.scaleBy(x: size.width / 96, y: size.height / 96)
             draw(ctx)
+        }
+    }
+
+    /// Tom, head and shoulders, for the tutorial card. The figure is drawn by
+    /// `FarmerPainter` on a larger virtual canvas so the head fills the frame.
+    private static func mentorPortrait(_ spec: AssetSpec) -> UIImage {
+        let side = CGFloat(spec.pixelWidth)
+        let tom = FarmerPainter.Outfit(skin: UIColor(hex: 0xEAB994), hair: UIColor(hex: 0xC8C2BA), shirt: UIColor(hex: 0x5E8A45),
+                                       trousers: UIColor(hex: 0x4F6FA3), boots: UIColor(hex: 0x5A3C28),
+                                       overalls: true, checks: true, beard: true, hat: .straw)
+        return Canvas.image(CGSize(width: side, height: side)) { ctx in
+            // Head at 45 % of the height, shoulders near the bottom, centred.
+            ctx.translateBy(x: -0.068 * side, y: 0)
+            FarmerPainter.draw(ctx, size: CGSize(width: 1.136 * side, height: 1.84 * side), ground: 1.75 * side,
+                               facing: .down, pose: .idle, outfit: tom)
         }
     }
 

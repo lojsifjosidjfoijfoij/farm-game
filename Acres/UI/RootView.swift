@@ -5,6 +5,8 @@ import AcresCore
 struct RootView: View {
     @Bindable var game: GameController
     @Environment(\.scenePhase) private var scenePhase
+    /// The title screen, once per launch.
+    @State private var showsTitle = true
 
     var body: some View {
         ZStack {
@@ -19,9 +21,14 @@ struct RootView: View {
                     .opacity(sleep.darkness * 0.92)
                     .ignoresSafeArea()
                     .allowsHitTesting(true)
-                Text("Zzz…")
-                    .font(Theme.title(34))
-                    .foregroundStyle(.white.opacity(sleep.darkness))
+                VStack(spacing: 6) {
+                    Image(systemName: "moon.stars.fill")
+                        .font(.system(size: 54, weight: .bold))
+                        .foregroundStyle(LinearGradient(colors: [Theme.goldLight, Theme.gold], startPoint: .top, endPoint: .bottom))
+                        .shadow(color: Theme.goldLight.opacity(0.6), radius: 16, x: 0, y: 0)
+                    OutlinedTitle(text: "Zzz…", size: 38, outline: Color(red: 0.1, green: 0.12, blue: 0.3))
+                }
+                .opacity(sleep.darkness)
             }
 
             if let report = game.weeklyReport, game.welcome == nil, game.sleep == nil {
@@ -76,6 +83,13 @@ struct RootView: View {
                     }
                 }
                 .transition(.scale(scale: 0.92).combined(with: .opacity))
+            }
+
+            if showsTitle {
+                TitleScreenView {
+                    withAnimation(.easeInOut(duration: 0.6)) { showsTitle = false }
+                }
+                .transition(.opacity.combined(with: .scale(scale: 1.08)))
             }
         }
         .animation(.easeOut(duration: 0.3), value: game.welcome != nil)

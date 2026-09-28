@@ -23,7 +23,7 @@ struct InventoryView: View {
                 }
                 .padding(16)
             }
-            .background(Theme.parchment)
+            .background(PaperBackground())
             .navigationTitle("Farm storage")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
