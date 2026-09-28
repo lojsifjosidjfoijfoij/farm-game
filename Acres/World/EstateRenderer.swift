@@ -2,8 +2,9 @@ import SpriteKit
 import AcresCore
 
 /// The farm's own additions in the world: the storage shed and silos,
-/// sprinklers (with a spray now and then), FOR SALE signs on land that isn't
-/// yours, and the farmhands walking to their jobs. Visual only: the
+/// sprinklers (with a spray now and then), workshops (puffing while they
+/// work, with a bubble when goods are ready), FOR SALE signs on land that
+/// isn't yours, and the farmhands walking to their jobs. Visual only: the
 /// simulation decides what they do.
 @MainActor
 final class EstateRenderer {
@@ -17,6 +18,9 @@ final class EstateRenderer {
     private var shownLand: [String]?
     private var staticNodes: [SKNode] = []
     private var sprinklerTiles: [TileCoord] = []
+    private var workshopSprites: [TileCoord: SKSpriteNode] = [:]
+    private var bubbles: [TileCoord: (icon: String, node: SKSpriteNode)] = [:]
+    private var puffTimer: TimeInterval = 0
     private var workers: [Int: FarmhandSprite] = [:]
     private var sprayTimer: TimeInterval = 0
     private var rng = SeededRandom(seed: 0xE57A7E)
@@ -35,7 +39,10 @@ final class EstateRenderer {
     func sync(game: GameController, force: Bool = false) {
         let state = game.simulation.state
         let estate = state.estate
-        let layoutChanged = shownEstate.map { $0.storageLevel != estate.storageLevel || $0.sprinklers != estate.sprinklers } ?? true
+        let layoutChanged = shownEstate.map {
+            $0.storageLevel != estate.storageLevel || $0.sprinklers != estate.sprinklers
+                || $0.workshops.map(\.tile) != estate.workshops.map(\.tile) || $0.workshops.map(\.kind) != estate.workshops.map(\.kind)
+        } ?? true
         guard force || layoutChanged || shownLand != state.ownedProperties else {
             syncWorkers(estate.workers)
             shownEstate = estate
@@ -45,6 +52,9 @@ final class EstateRenderer {
         shownLand = state.ownedProperties
         for node in staticNodes { node.removeFromParent() }
         staticNodes = []
+        workshopSprites = [:]
+        for bubble in bubbles.values { bubble.node.removeFromParent() }
+        bubbles = [:]
 
         var objects: [MapObject] = EstateLayout.standing(estate).map { MapObject(kind: $0.kind, position: $0.position) }
         for sprinkler in estate.sprinklers {
@@ -63,8 +73,100 @@ final class EstateRenderer {
                 staticNodes.append(shadow)
             }
         }
+        for workshop in estate.workshops {
+            let object = MapObject(kind: "prop_workshop_\(workshop.kind)", position: Self.workshopBase(workshop.tile))
+            guard let nodes = factory.makeNodes(for: object, season: game.season) else { continue }
+            objectLayer.addChild(nodes.main)
+            staticNodes.append(nodes.main)
+            if let sprite = nodes.main as? SKSpriteNode { workshopSprites[workshop.tile] = sprite }
+            if let shadow = nodes.shadow {
+                flatLayer.addChild(shadow)
+                staticNodes.append(shadow)
+            }
+        }
         sprinklerTiles = estate.sprinklers.map(\.tile)
         syncWorkers(estate.workers)
+    }
+
+    /// Where a workshop's picture stands on its tile.
+    static func workshopBase(_ tile: TileCoord) -> Vec2 { tile.center + Vec2(0, -0.3) }
+
+    /// A workshop was set up, or its goods collected: a bounce (and the goods popping out).
+    func workshopFeedback(at tile: TileCoord, collected item: String?) {
+        guard let sprite = workshopSprites[tile] else { return }
+        sprite.removeAction(forKey: "bounce")
+        sprite.run(.sequence([.scaleX(to: 1.12, y: 0.9, duration: 0.08), .scale(to: 1, duration: 0.25)]), withKey: "bounce")
+        puff(at: tile, count: item == nil ? 5 : 2)
+        guard let item else { return }
+        let icon = SKSpriteNode(texture: assets.texture("item_\(item)"))
+        icon.size = CGSize(width: World.tileSize * 0.5, height: World.tileSize * 0.5)
+        icon.position = CGPoint(x: sprite.position.x, y: sprite.position.y + World.tileSize * 0.9)
+        icon.zPosition = 60
+        effectsLayer.addChild(icon)
+        icon.run(.sequence([
+            .group([.moveBy(x: 0, y: World.tileSize * 0.9, duration: 0.5), .sequence([.wait(forDuration: 0.3), .fadeOut(withDuration: 0.2)])]),
+            .removeFromParent(),
+        ]))
+    }
+
+    /// Smoke from the chimney (or a busy workshop's roof).
+    private func puff(at tile: TileCoord, count: Int) {
+        guard let sprite = workshopSprites[tile] else { return }
+        for k in 0..<count {
+            let puff = SKSpriteNode(texture: assets.texture("fx_smoke_puff"))
+            puff.size = CGSize(width: World.tileSize * 0.3, height: World.tileSize * 0.3)
+            puff.position = CGPoint(x: sprite.position.x + World.tileSize * 0.22 + CGFloat(k) * 3,
+                                    y: sprite.position.y + sprite.size.height * 0.85)
+            puff.zPosition = 40
+            puff.alpha = 0.7
+            puff.setScale(0.6)
+            effectsLayer.addChild(puff)
+            puff.run(.sequence([
+                .wait(forDuration: Double(k) * 0.12),
+                .group([.moveBy(x: 6, y: World.tileSize * 0.6, duration: 1.4), .scale(to: 1.4, duration: 1.4), .fadeOut(withDuration: 1.4)]),
+                .removeFromParent(),
+            ]))
+        }
+    }
+
+    /// Bubbles over workshops with goods ready; puffs from the busy ones.
+    private func updateWorkshops(_ workshops: [Workshop], dt: TimeInterval) {
+        var wanted: [TileCoord: String] = [:]
+        var busy: [TileCoord] = []
+        for workshop in workshops {
+            if workshop.ready > 0, let recipe = workshop.currentRecipe ?? workshop.lastRecipe.flatMap({ id in
+                workshop.definition?.recipes.first { $0.id == id }
+            }) {
+                wanted[workshop.tile] = "item_\(recipe.output)"
+            }
+            if workshop.queued > 0, workshop.definition?.isAutomatic == false { busy.append(workshop.tile) }
+        }
+        for (tile, bubble) in bubbles where wanted[tile] != bubble.icon {
+            bubble.node.removeFromParent()
+            bubbles[tile] = nil
+        }
+        for (tile, icon) in wanted where bubbles[tile] == nil {
+            guard let sprite = workshopSprites[tile] else { continue }
+            let bubble = SKSpriteNode(texture: assets.texture("fx_bubble"))
+            bubble.size = CGSize(width: World.tileSize * 0.62, height: World.tileSize * 0.62)
+            bubble.position = CGPoint(x: sprite.position.x, y: sprite.position.y + sprite.size.height * 0.95 + bubble.size.height * 0.4)
+            bubble.zPosition = 55
+            let item = SKSpriteNode(texture: assets.texture(icon))
+            item.size = CGSize(width: bubble.size.width * 0.6, height: bubble.size.height * 0.6)
+            item.position = CGPoint(x: 0, y: bubble.size.height * 0.06)
+            bubble.addChild(item)
+            bubble.setScale(0.2)
+            bubble.run(.sequence([.scale(to: 1, duration: 0.25),
+                                  .repeatForever(.sequence([.moveBy(x: 0, y: 5, duration: 0.6), .moveBy(x: 0, y: -5, duration: 0.6)]))]))
+            effectsLayer.addChild(bubble)
+            bubbles[tile] = (icon, bubble)
+        }
+        guard !busy.isEmpty else { return }
+        puffTimer -= dt
+        if puffTimer <= 0 {
+            puffTimer = 1.1 + rng.nextUnit() * 0.9
+            puff(at: busy[Int(rng.nextUnit() * Double(busy.count)) % busy.count], count: 1)
+        }
     }
 
     /// A burst of spray from one sprinkler.
@@ -101,6 +203,8 @@ final class EstateRenderer {
                 spray(at: sprinklerTiles[index])
             }
         }
+        let workshops = game.simulation.state.estate.workshops
+        if !workshops.isEmpty || !bubbles.isEmpty { updateWorkshops(workshops, dt: dt) }
         let working = game.hour >= game.balance.workStartHour && game.hour < game.balance.workEndHour
         for worker in game.simulation.state.estate.workers {
             workers[worker.id]?.update(worker, working: working, dt: dt, assets: assets)

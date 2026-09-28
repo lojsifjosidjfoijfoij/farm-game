@@ -69,7 +69,43 @@ struct Farmhands {
         switch worker.job {
         case .fields: return fieldTask(index, worker, &state)
         case .animals: return animalTask(index, worker, &state)
+        case .workshops: return workshopTask(index, worker, &state)
         }
+    }
+
+    /// Collect finished goods first (while storage has room), then start idle
+    /// workshops again on their last recipe, if storage holds the goods.
+    private func workshopTask(_ index: Int, _ worker: Worker, _ state: inout GameState) -> Bool {
+        let rules = Workshops(balance: balance)
+        let room = state.storageCapacity(balance) - state.inventory.storageUsed
+        var best: (tile: TileCoord, collect: Bool, recipe: String?, rank: Int, distance: Double)?
+        for workshop in state.estate.workshops {
+            var option: (Bool, String?, Int)?
+            if workshop.ready > 0, workshop.ready <= room {
+                option = (true, nil, 0)
+            } else if workshop.queued == 0, workshop.ready == 0, !(workshop.definition?.isAutomatic ?? true),
+                      let last = workshop.lastRecipe, let recipe = workshop.definition?.recipes.first(where: { $0.id == last }),
+                      rules.affordableBatches(recipe, in: state) > 0 {
+                option = (false, last, 1)
+            }
+            guard let (collect, recipe, rank) = option else { continue }
+            let distance = worker.position.distance(to: workshop.tile.center)
+            if best == nil || rank < best!.rank || (rank == best!.rank && distance < best!.distance) {
+                best = (workshop.tile, collect, recipe, rank, distance)
+            }
+        }
+        guard let best else { return false }
+        do {
+            if best.collect {
+                try rules.collect(at: best.tile, state: &state, byWorker: true)
+            } else if let recipe = best.recipe {
+                try rules.start(recipe, at: best.tile, state: &state, byWorker: true)
+            }
+        } catch {
+            return false
+        }
+        finish(index, at: best.tile.center + Vec2(0, -0.6), task: .craft, &state)
+        return true
     }
 
     /// Harvest ripe crops first (while storage has room), then water thirsty ones.

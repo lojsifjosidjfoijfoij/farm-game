@@ -144,6 +144,7 @@ public struct Balance: Sendable, Equatable {
         case .fruit: 1.2
         case .animalProduct: 1.0
         case .wood: 0.5
+        case .artisan: 0.8
         case .feed, .seed, .sapling, .machine: 0
         }
     }

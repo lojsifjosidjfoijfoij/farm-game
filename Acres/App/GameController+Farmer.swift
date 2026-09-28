@@ -15,9 +15,11 @@ struct FarmerJob: Equatable {
         case tree(TileCoord)
         /// The axe: fell the tree or clear its stump (decided on arrival).
         case chopTree(TileCoord)
-        /// Setting up a machine from the pouch (a sprinkler).
+        /// Setting up a machine from the pouch (a sprinkler or a workshop).
         case placeMachine(TileCoord, kind: String)
         case pickUpSprinkler(TileCoord)
+        /// Walking up to a workshop to open its panel.
+        case workshop(TileCoord)
         case pen(String, repair: Bool)
         case enterTruck
         case sleep
@@ -33,7 +35,7 @@ struct FarmerJob: Equatable {
     var tile: TileCoord? {
         switch kind {
         case .field(let tile, _), .plantCrop(let tile, _), .plantTree(let tile, _), .tree(let tile), .chopTree(let tile),
-             .placeMachine(let tile, _), .pickUpSprinkler(let tile): tile
+             .placeMachine(let tile, _), .pickUpSprinkler(let tile), .workshop(let tile): tile
         default: nil
         }
     }
@@ -85,6 +87,10 @@ extension GameController {
         }
         if state.estate.sprinkler(at: tile) != nil {
             inspect(.sprinkler(tile))
+            return
+        }
+        if let workshopTile = workshopTile(at: spot) {
+            queueWorkshopJob(workshopTile)
             return
         }
         // Soil first: a field tool on a field does only its own job.
@@ -462,6 +468,7 @@ extension GameController {
         case .chopTree: 1.6
         case .tree: 0.9
         case .placeMachine, .pickUpSprinkler: 1.0
+        case .workshop: 0.35
         case .pen: 1.1
         default: 0.3
         }
@@ -508,6 +515,8 @@ extension GameController {
             finishPlacing(kind, at: tile)
         case .pickUpSprinkler(let tile):
             finishPickingUp(at: tile)
+        case .workshop(let tile):
+            arrivedAtWorkshop(tile)
         case .enterTruck, .sleep, .walk:
             break
         }

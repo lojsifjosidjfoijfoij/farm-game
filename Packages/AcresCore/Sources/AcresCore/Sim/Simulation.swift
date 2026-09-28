@@ -85,6 +85,7 @@ public struct Simulation: Sendable {
         WeatherSystem(),
         SprinklerSystem(),
         CropSystem(),
+        WorkshopSystem(),
         AnimalSystem(),
         TreeSystem(),
         FarmerSystem(),

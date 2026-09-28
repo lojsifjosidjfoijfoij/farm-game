@@ -10,6 +10,8 @@ enum WorldFeedback {
     case refused(TileCoord)
     /// A sprinkler was just set up.
     case sprinkler(TileCoord)
+    /// A workshop was set up (nil) or its goods collected.
+    case workshop(TileCoord, collected: String?)
 }
 
 extension GameController {

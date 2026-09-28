@@ -92,18 +92,21 @@ public enum WorkerJob: String, Codable, CaseIterable, Sendable {
     case fields
     /// Collects eggs, milk and more, fills troughs and feeds hungry animals.
     case animals
+    /// Collects finished goods from the workshops and starts them again.
+    case workshops
 
     public var title: String {
         switch self {
         case .fields: "Field hand"
         case .animals: "Animal keeper"
+        case .workshops: "Workshop hand"
         }
     }
 }
 
 /// What a farmhand just did (the scene animates it).
 public enum WorkerTask: String, Codable, Sendable {
-    case water, harvest, collect, fillTrough, feed
+    case water, harvest, collect, fillTrough, feed, craft
 }
 
 /// A hired farmhand.
@@ -141,14 +144,22 @@ public struct EstateState: Codable, Equatable, Sendable {
     public var sprinklers: [Sprinkler]
     public var workers: [Worker]
     public var nextWorkerID: Int
+    /// Workshops standing on the farm. (v10)
+    public var workshops: [Workshop]
 
     public init(storageLevel: Int = 0, truckBedLevel: Int = 0, sprinklers: [Sprinkler] = [], workers: [Worker] = [],
-                nextWorkerID: Int = 1) {
+                nextWorkerID: Int = 1, workshops: [Workshop] = []) {
         self.storageLevel = storageLevel
         self.truckBedLevel = truckBedLevel
         self.sprinklers = sprinklers
         self.workers = workers
         self.nextWorkerID = nextWorkerID
+        self.workshops = workshops
+    }
+
+    /// Something placed on this tile (a sprinkler or a workshop).
+    public func isOccupied(_ tile: TileCoord) -> Bool {
+        sprinkler(at: tile) != nil || workshops.contains { $0.tile == tile }
     }
 
     public func sprinkler(at tile: TileCoord) -> Sprinkler? { sprinklers.first { $0.tile == tile } }
@@ -254,13 +265,20 @@ public struct EstateRules: Sendable {
 
     // MARK: Machines
 
-    /// Buys a machine; it's delivered to the farm (the pouch).
+    /// Buys a machine or a workshop; it's delivered to the farm (the pouch).
     public func buyMachine(_ id: String, state: inout GameState) throws(EstateFailure) -> Int {
-        guard let machine = MachineCatalog.machine(id) else { throw .unknown }
-        guard state.progress.level >= machine.unlockLevel else { throw .locked(level: machine.unlockLevel) }
-        try pay(machine.price, LedgerCategory.machines, &state)
+        let price: Int, level: Int
+        if let machine = MachineCatalog.machine(id) {
+            (price, level) = (machine.price, machine.unlockLevel)
+        } else if let workshop = WorkshopCatalog.workshop(id) {
+            (price, level) = (workshop.price, workshop.unlockLevel)
+        } else {
+            throw .unknown
+        }
+        guard state.progress.level >= level else { throw .locked(level: level) }
+        try pay(price, LedgerCategory.machines, &state)
         state.inventory.add(id, 1)
-        return machine.price
+        return price
     }
 
     /// Why a sprinkler can't stand here, or nil. (Grass on your land, free of
@@ -276,13 +294,25 @@ public struct EstateRules: Sendable {
     }
 
     public func placeSprinkler(_ kind: String, at tile: TileCoord, state: inout GameState) throws(EstateFailure) {
-        guard MachineCatalog.machine(kind) != nil else { throw .unknown }
+        try placeMachine(kind, at: tile, state: &state)
+    }
+
+    /// Sets a sprinkler or a workshop from the pouch down on free grass.
+    public func placeMachine(_ kind: String, at tile: TileCoord, state: inout GameState) throws(EstateFailure) {
+        let isSprinkler = MachineCatalog.machine(kind) != nil
+        guard isSprinkler || WorkshopCatalog.workshop(kind) != nil else { throw .unknown }
         guard state.inventory.count(kind) > 0 else { throw .noneInPouch }
         if let problem = placeProblem(at: tile, in: state) { throw problem }
         state.inventory.remove(kind, 1)
-        state.estate.sprinklers.append(Sprinkler(tile: tile, kind: kind))
-        state.estate.sprinklers.sort { ($0.tile.y, $0.tile.x) < ($1.tile.y, $1.tile.x) }
-        state.goals.add(GoalCounter.sprinklersPlaced)
+        if isSprinkler {
+            state.estate.sprinklers.append(Sprinkler(tile: tile, kind: kind))
+            state.estate.sprinklers.sort { ($0.tile.y, $0.tile.x) < ($1.tile.y, $1.tile.x) }
+            state.goals.add(GoalCounter.sprinklersPlaced)
+        } else {
+            state.estate.workshops.append(Workshop(tile: tile, kind: kind))
+            state.estate.workshops.sort { ($0.tile.y, $0.tile.x) < ($1.tile.y, $1.tile.x) }
+            state.goals.add(GoalCounter.workshopsPlaced)
+        }
     }
 
     public func pickUpSprinkler(at tile: TileCoord, state: inout GameState) throws(EstateFailure) {

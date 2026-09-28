@@ -97,7 +97,7 @@ public struct Farming: Sendable {
         }
         if Self.truckFootprint(state.truck).contains(tile.center) { return .cannotPlowHere }
         if state.woodland[tile] != nil { return .cannotPlowHere }
-        if state.estate.sprinkler(at: tile) != nil { return .cannotPlowHere }
+        if state.estate.isOccupied(tile) { return .cannotPlowHere }
         return nil
     }
 

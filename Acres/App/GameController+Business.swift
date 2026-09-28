@@ -28,7 +28,10 @@ extension GameController {
         if contractBoard != state.contracts { contractBoard = state.contracts }
         if finance != state.finance { finance = state.finance }
         if storeState != state.store { storeState = state.store }
-        if estateState != state.estate { estateState = state.estate }
+        // Workshop timers tick every frame; the copy only changes when something happens.
+        var estate = state.estate
+        for i in estate.workshops.indices { estate.workshops[i].progress = 0 }
+        if estateState != estate { estateState = estate }
         if ownedLand != state.ownedProperties { ownedLand = state.ownedProperties }
     }
 

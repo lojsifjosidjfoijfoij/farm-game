@@ -65,6 +65,8 @@ enum VillagePainter {
         // Phase 7: the corner shop the farmer can rent.
         "building_town_shop": CottageStyle(wall: UIColor(hex: 0xF2E6CC), roof: UIColor(hex: 0x3F6B8A), door: UIColor(hex: 0x5E4030),
                                            sign: "SHOP", signColor: UIColor(hex: 0x2F5A7A), awning: UIColor(hex: 0x4F86B0)),
+        "building_deli": CottageStyle(wall: UIColor(hex: 0xEFE3C8), roof: UIColor(hex: 0x6E4A6E), door: UIColor(hex: 0x4A3A2A),
+                                      sign: "DELI", signColor: UIColor(hex: 0x6E3A5E), awning: UIColor(hex: 0x8A5A8A)),
         "building_lumber_yard": CottageStyle(wall: UIColor(hex: 0xB08A5E), roof: UIColor(hex: 0x5A4A3A), door: UIColor(hex: 0x4A3A2A),
                                              sign: "LUMBER", signColor: UIColor(hex: 0x5A3E22), timberYard: 0.36),
     ]

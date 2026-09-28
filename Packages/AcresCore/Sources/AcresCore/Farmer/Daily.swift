@@ -95,6 +95,9 @@ public struct DailyRoutine: Sendable {
         if state.ownedProperties.count > 1 || state.woodland.trees.count > 0 || level >= 2 {
             result.append((GoalCounter.treesChopped, { "Chop \($0) trees" }, 3))
         }
+        if !state.estate.workshops.isEmpty {
+            result.append((GoalCounter.crafted, { "Make \($0) goods in your workshops" }, 2 + level / 3))
+        }
         if state.store.isRented {
             result.append((GoalCounter.coinsFromShop, { "Take in \($0) coins at your shop" }, 100 + 40 * level))
         }

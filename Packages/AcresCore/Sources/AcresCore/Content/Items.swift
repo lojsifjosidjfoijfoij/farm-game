@@ -10,8 +10,10 @@ public enum ItemCategory: String, Sendable, CaseIterable {
     case feed
     case seed
     case sapling
-    /// Things you place on the farm (sprinklers).
+    /// Things you place on the farm (sprinklers, workshops).
     case machine
+    /// Made in workshops: flour, jam, cheese, juice …
+    case artisan
 
     public var title: String {
         switch self {
@@ -23,6 +25,7 @@ public enum ItemCategory: String, Sendable, CaseIterable {
         case .seed: "Seeds"
         case .sapling: "Saplings"
         case .machine: "Machines"
+        case .artisan: "Artisan goods"
         }
     }
 
@@ -32,7 +35,7 @@ public enum ItemCategory: String, Sendable, CaseIterable {
     /// Things markets buy.
     public var isSellable: Bool {
         switch self {
-        case .crop, .fruit, .animalProduct, .wood: true
+        case .crop, .fruit, .animalProduct, .wood, .artisan: true
         case .feed, .seed, .sapling, .machine: false
         }
     }
@@ -66,6 +69,8 @@ public enum ItemCatalog {
             ItemDefinition(id: "milk", name: "Milk", plural: "bottles of milk", category: .animalProduct, icon: "item_milk", value: 55...75),
             ItemDefinition(id: "wool", name: "Wool", plural: "wool", category: .animalProduct, icon: "item_wool", value: 80...110),
             ItemDefinition(id: "truffle", name: "Truffle", plural: "truffles", category: .animalProduct, icon: "item_truffle", value: 140...190),
+            ItemDefinition(id: "goat_milk", name: "Goat milk", plural: "jugs of goat milk", category: .animalProduct,
+                           icon: "item_goat_milk", value: 70...90),
             ItemDefinition(id: "log", name: "Log", plural: "logs", category: .wood, icon: "item_log", value: 8...12),
             ItemDefinition(id: "animal_feed", name: "Animal feed", plural: "sacks of feed", category: .feed,
                            icon: "item_animal_feed", value: 6...6),
@@ -73,6 +78,14 @@ public enum ItemCatalog {
         for crop in CropCatalog.all {
             items.append(ItemDefinition(id: crop.seedItemID, name: "\(crop.name) seeds", plural: "\(crop.name.lowercased()) seeds",
                                         category: .seed, icon: "item_seeds_\(crop.id)", value: crop.seedCost...crop.seedCost))
+        }
+        for recipe in WorkshopCatalog.recipes {
+            items.append(ItemDefinition(id: recipe.output, name: recipe.name, plural: recipe.plural, category: recipe.category,
+                                        icon: "item_\(recipe.output)", value: recipe.value))
+        }
+        for workshop in WorkshopCatalog.all {
+            items.append(ItemDefinition(id: workshop.id, name: workshop.name, plural: workshop.plural, category: .machine,
+                                        icon: workshop.icon, value: workshop.price...workshop.price))
         }
         for machine in MachineCatalog.all {
             items.append(ItemDefinition(id: machine.id, name: machine.name, plural: machine.plural, category: .machine,

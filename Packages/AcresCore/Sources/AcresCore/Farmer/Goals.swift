@@ -39,6 +39,8 @@ public enum GoalCounter {
     public static let storageUpgrades = "storageUpgrades"
     public static let sprinklersPlaced = "sprinklersPlaced"
     public static let workersHired = "workersHired"
+    public static let workshopsPlaced = "workshopsPlaced"
+    public static let crafted = "crafted"
     public static func collected(_ item: String) -> String { "collected:\(item)" }
 }
 
@@ -105,12 +107,16 @@ public enum GoalCatalog {
                        requirement: .count(GoalCounter.fruitTreesPlanted, 2), coins: 150, xp: 20),
         GoalDefinition(id: "sprinkler1", title: "Rain maker", detail: "Place a sprinkler in your fields.",
                        requirement: .count(GoalCounter.sprinklersPlaced, 1), coins: 150, xp: 25),
+        GoalDefinition(id: "workshop1", title: "Handmade", detail: "Place a workshop (phone → Farm) and make something in it.",
+                       requirement: .count(GoalCounter.crafted, 1), coins: 200, xp: 25),
         GoalDefinition(id: "contract5", title: "Reliable supplier", detail: "Finish 5 orders. Reliable farms get bigger ones.",
                        requirement: .count(GoalCounter.contractsCompleted, 5), coins: 400, xp: 40),
         GoalDefinition(id: "shop500", title: "Shopkeeper", detail: "Take in 500 coins at your shop.",
                        requirement: .count(GoalCounter.coinsFromShop, 500), coins: 250, xp: 30),
         GoalDefinition(id: "worker1", title: "A helping hand", detail: "Hire a farmhand (phone → Farm).",
                        requirement: .count(GoalCounter.workersHired, 1), coins: 300, xp: 40),
+        GoalDefinition(id: "crafted50", title: "Artisan", detail: "Make 50 goods in your workshops.",
+                       requirement: .count(GoalCounter.crafted, 50), coins: 500, xp: 50),
         GoalDefinition(id: "cows2", title: "Dairy farmer", detail: "Own 2 cows.",
                        requirement: .animals("cow", 2), coins: 300, xp: 30),
         GoalDefinition(id: "harvest300", title: "Big harvest", detail: "Harvest 300 crops.",

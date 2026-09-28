@@ -34,6 +34,12 @@ enum InspectionTarget: Equatable {
     case sprinkler(TileCoord)
 }
 
+/// The workshop panel that's open (by the workshop's tile).
+struct WorkshopSheet: Identifiable, Equatable {
+    let tile: TileCoord
+    var id: String { "\(tile.x),\(tile.y)" }
+}
+
 enum InspectionAction: Equatable {
     case repairPen(String)
     case chopTree(TileCoord)
@@ -133,6 +139,9 @@ final class GameController {
     var ownedLand: [String] = []
     /// A machine being placed: the next tap on your land puts it there.
     var placingMachine: String?
+    /// The workshop whose panel is open, and a copy of it (ticks once a second).
+    var openWorkshop: WorkshopSheet?
+    var workshopSnapshot: Workshop?
     /// Today's chores (copied when they change).
     var dailyState = DailyState()
     var todaysChores: [ChoreProgress] = []
@@ -341,6 +350,7 @@ final class GameController {
         updateDriving(dt: dt)
         updateFarmer(dt: dt)
         if !isDriving { refreshTruck() }  // shops notice a farmer walking in
+        if openWorkshop != nil { refreshWorkshopSnapshot() }
         refreshDisplay()
         refreshFarmer()
         checkBedtime()
@@ -956,6 +966,7 @@ final class GameController {
         showsBusiness = false
         showsStore = false
         placingMachine = nil
+        openWorkshop = nil
         weeklyReport = nil
         morningNews = []
         sleep = nil

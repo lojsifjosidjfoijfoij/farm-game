@@ -85,6 +85,10 @@ struct RootView: View {
             StoreView(game: game)
                 .presentationDetents([.large])
         }
+        .sheet(item: $game.openWorkshop) { sheet in
+            WorkshopView(game: game, sheet: sheet)
+                .presentationDetents([.medium, .large])
+        }
         .sheet(item: $game.openShop) { shop in
             ShopView(game: game, shop: shop)
                 .presentationDetents([.medium, .large])

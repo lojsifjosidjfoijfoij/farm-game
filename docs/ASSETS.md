@@ -37,15 +37,15 @@ procedurally in code.
 | Crops | 75 | 0 |
 | Trees | 40 | 4 |
 | Nature props | 14 | 10 |
-| Buildings | 56 | 3 |
-| Props | 33 | 10 |
+| Buildings | 58 | 3 |
+| Props | 42 | 10 |
 | Vehicles | 116 | 1 |
 | Characters | 123 | 0 |
 | Animals | 70 | 0 |
-| Item icons | 57 | 0 |
+| Item icons | 78 | 0 |
 | Effects & particles | 33 | 4 |
 | User interface | 33 | 15 |
-| **Total** | **665** | **52** |
+| **Total** | **697** | **52** |
 | Audio files | 58 | 0 |
 
 ## Terrain (tileable ground textures)
@@ -272,6 +272,8 @@ procedurally in code.
 | `building_lumber_yard` | 768 × 640 | 6 × 5 | 0.06 | 6 | North Woods Lumber: yard office with stacked timber (contract client). |
 | `building_town_shop` | 512 × 576 | 4 × 4.5 | 0.06 | 6 | Player-owned shop in town (sell your own goods). |
 | `building_town_shop_lights` | 512 × 576 | 4 × 4.5 | — | 6 | Night overlay for building_town_shop: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
+| `building_deli` | 512 × 576 | 4 × 4.5 | 0.06 | 10 | Valley Deli: striped awning, cheeses and jars in the window (client). |
+| `building_deli_lights` | 512 × 576 | 4 × 4.5 | — | 10 | Night overlay for building_deli: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
 | `building_cabin_lakeside` | 512 × 512 | 4 × 4 | 0.06 | 6 | Lakeside log cabin with a small jetty. |
 | `building_cabin_lakeside_lights` | 512 × 512 | 4 × 4 | — | 6 | Night overlay for building_cabin_lakeside: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
 | `building_farm_abandoned` | 768 × 768 | 6 × 6 | 0.06 | 6 | The old abandoned farmhouse, overgrown; a long-term restoration goal. |
@@ -315,6 +317,15 @@ procedurally in code.
 | `prop_rowboat` | 256 × 128 | 2 × 1 | — | 3 | Small wooden rowboat on water. *(flat)* |
 | `prop_bridge_wood` | 384 × 512 | 3 × 4 | — | 3 | Wooden road bridge over a stream, seen from above. *(flat)* |
 | `prop_merchant_wagon` | 384 × 320 | 3 × 2.5 | 0.08 | 5 | The traveling merchant's colorful covered wagon. |
+| `prop_workshop_sawhorse` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Sawhorse standing on the farm: saws logs into planks. |
+| `prop_workshop_mill` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Hand mill standing on the farm: grinds grain into flour and meal. |
+| `prop_workshop_beehive` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Beehive standing on the farm: bees make honey by themselves every two days. |
+| `prop_workshop_jam_kitchen` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Jam kitchen standing on the farm: cooks fruit and tomatoes into jars. |
+| `prop_workshop_pickling_crock` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Pickling crock standing on the farm: slowly pickles vegetables. |
+| `prop_workshop_cheese_press` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Cheese press standing on the farm: turns milk into cheese. |
+| `prop_workshop_juice_press` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Juice press standing on the farm: presses fruit and carrots into juice. |
+| `prop_workshop_oil_press` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Oil press standing on the farm: presses sunflowers into golden oil. |
+| `prop_workshop_loom` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Loom standing on the farm: weaves wool into fine cloth. |
 
 ## Vehicles
 
@@ -590,6 +601,27 @@ procedurally in code.
 | `item_fish_pike` | 132 × 132 | UI | — | 6 | Pike, inventory icon. |
 | `item_sprinkler` | 132 × 132 | UI | — | 8 | Brass sprinkler head on a short stake, inventory icon. |
 | `item_sprinkler_pro` | 132 × 132 | UI | — | 8 | Big rotating sprinkler, green and brass, inventory icon. |
+| `item_cornmeal` | 132 × 132 | UI | — | 10 | Cornmeal, inventory icon. |
+| `item_strawberry_jam` | 132 × 132 | UI | — | 10 | Strawberry jam, inventory icon. |
+| `item_tomato_sauce` | 132 × 132 | UI | — | 10 | Tomato sauce, inventory icon. |
+| `item_blueberry_jam` | 132 × 132 | UI | — | 10 | Blueberry jam, inventory icon. |
+| `item_pickled_onions` | 132 × 132 | UI | — | 10 | Pickled onions, inventory icon. |
+| `item_sauerkraut` | 132 × 132 | UI | — | 10 | Sauerkraut, inventory icon. |
+| `item_goat_cheese` | 132 × 132 | UI | — | 10 | Goat cheese, inventory icon. |
+| `item_apple_juice` | 132 × 132 | UI | — | 10 | Apple juice, inventory icon. |
+| `item_carrot_juice` | 132 × 132 | UI | — | 10 | Carrot juice, inventory icon. |
+| `item_cherry_juice` | 132 × 132 | UI | — | 10 | Cherry juice, inventory icon. |
+| `item_sunflower_oil` | 132 × 132 | UI | — | 10 | Sunflower oil, inventory icon. |
+| `item_cloth` | 132 × 132 | UI | — | 10 | Cloth, inventory icon. |
+| `item_sawhorse` | 132 × 132 | UI | — | 10 | Sawhorse (workshop), inventory icon. |
+| `item_mill` | 132 × 132 | UI | — | 10 | Hand mill (workshop), inventory icon. |
+| `item_beehive` | 132 × 132 | UI | — | 10 | Beehive (workshop), inventory icon. |
+| `item_jam_kitchen` | 132 × 132 | UI | — | 10 | Jam kitchen (workshop), inventory icon. |
+| `item_pickling_crock` | 132 × 132 | UI | — | 10 | Pickling crock (workshop), inventory icon. |
+| `item_cheese_press` | 132 × 132 | UI | — | 10 | Cheese press (workshop), inventory icon. |
+| `item_juice_press` | 132 × 132 | UI | — | 10 | Juice press (workshop), inventory icon. |
+| `item_oil_press` | 132 × 132 | UI | — | 10 | Oil press (workshop), inventory icon. |
+| `item_loom` | 132 × 132 | UI | — | 10 | Loom (workshop), inventory icon. |
 | `item_sapling_oak` | 132 × 132 | UI | — | 4 | Oak sapling in a pot. |
 | `item_sapling_birch` | 132 × 132 | UI | — | 4 | Birch sapling in a pot. |
 | `item_sapling_pine` | 132 × 132 | UI | — | 4 | Pine sapling in a pot. |

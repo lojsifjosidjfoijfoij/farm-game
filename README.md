@@ -4,7 +4,7 @@ A cozy, top-down farming and business game for iPhone: a farmer's version of Big
 You start with a run-down farm, a beat-up pickup truck and one farmer, and grow it into an
 agricultural empire.
 
-**Status: all nine phases are done.** Next up is whatever playtesting says: balance, art, more content.
+**Status: phases 1–10 are done.** Next: fishing, foraging and goats, then the almanac, farm ranks and an ending.
 
 | Phase | Scope | Status |
 |---|---|---|
@@ -17,6 +17,7 @@ agricultural empire.
 | 7 | Your own shop in town: rent, stock, prices, customers | ✅ |
 | 8 | Hired workers; buy land, buildings and machines | ✅ |
 | 9 | Polish: daily chores and streaks, market specials, weather, seasons, sound, celebrations | ✅ |
+| 10 | More to do: nine new crops, workshops and artisan goods, the Valley Deli | ✅ |
 
 ## Running it
 
@@ -34,6 +35,31 @@ Tests: press **⌘U** in Xcode (runs the simulation tests in `AcresCore`), or fr
 cd Packages/AcresCore
 swift test
 ```
+
+## Phase 10: what to test
+
+Your save carries over (format v10: no workshops yet).
+
+1. **Nine new crops** (seed shop): lettuce and onions (spring and autumn), kale (winter and
+   spring), tomatoes and blueberries (summer, pick again and again), garlic and cabbage (autumn
+   and winter), sunflowers (summer) and melons (summer, level 7). **Winter has crops now.**
+2. **Workshops** (phone → Farm → *Workshops*): buy one, tap **Place**, tap grass on your land.
+   Tap a workshop: the farmer walks over and its panel opens. Pick a recipe, **Make** (or **×5**):
+   the goods come out of storage and the timer starts (it keeps going while the game is closed).
+   A bubble over the workshop means the goods are ready: tap it and **Collect** (XP!).
+   - Sawhorse (level 2): logs → planks. Mill (3): wheat → flour, corn → cornmeal.
+   - Beehive (3): honey on its own, every two days (holds two jars; collect to keep it going).
+   - Jam kitchen (3): strawberry and blueberry jam, tomato sauce.
+   - Pickling crock (4): pickled onions, sauerkraut. Cheese press (4): cheese (and goat cheese, later).
+   - Juice press (5): apple, carrot and cherry juice. Oil press (5): sunflower oil. Loom (6): cloth.
+   Goods are worth clearly more than what goes in, and sell at the market, in your shop and to clients.
+3. **The Valley Deli** (a new client in the village): orders cheese, jam, honey, juice, oil,
+   pickles and cloth. The diner and the bakery order flour, cornmeal, sauce and juice too; the
+   lumber yard takes planks.
+4. **A workshop hand** (Farm → Farmhands): collects finished goods and restarts idle workshops on
+   their last recipe while storage has what they need.
+5. **Goals and chores:** *Handmade* (set up a workshop), *Artisan* (make 50 goods), and a daily
+   chore to make goods once you have a workshop. Pick up an empty workshop from its panel to move it.
 
 ## Phase 9: what to test
 

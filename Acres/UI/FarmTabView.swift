@@ -12,6 +12,7 @@ struct FarmTabView: View {
         VStack(alignment: .leading, spacing: 14) {
             workers
             machines
+            workshops
             buildings
             land
         }
@@ -66,7 +67,7 @@ struct FarmTabView: View {
     private func workerCard(_ worker: Worker) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
-                Image(systemName: worker.job == .fields ? "leaf.fill" : "hare.fill")
+                Image(systemName: worker.job.symbol)
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(width: 36, height: 36)
@@ -132,6 +133,54 @@ struct FarmTabView: View {
                     ActionCapsule(title: "Buy · \(machine.price)", enabled: game.money >= machine.price) { game.buyMachine(machine.id) }
                     if owned > 0 {
                         ActionCapsule(title: "Place", enabled: true, tint: Theme.gold) { game.startPlacing(machine.id) }
+                    }
+                }
+            }
+        }
+        .foregroundStyle(Theme.ink)
+        .card()
+    }
+
+    // MARK: Workshops
+
+    @ViewBuilder
+    private var workshops: some View {
+        FarmSectionTitle(title: "Workshops", trailing: "Turn crops into goods worth more")
+        ForEach(WorkshopCatalog.all) { workshop in
+            workshopCard(workshop)
+        }
+    }
+
+    private func workshopCard(_ workshop: WorkshopDefinition) -> some View {
+        let owned = game.inventoryItems[workshop.id] ?? 0
+        let standing = game.estateState.workshops.filter { $0.kind == workshop.id }.count
+        let locked = game.level < workshop.unlockLevel
+        let makes = workshop.recipes.map { $0.name.lowercased() }.joined(separator: ", ")
+        return HStack(spacing: 10) {
+            ItemIcon(name: workshop.icon, size: 40)
+                .opacity(locked ? 0.4 : 1)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(workshop.name)
+                    .font(Theme.label(15, weight: .semibold))
+                Text(workshop.blurb)
+                    .font(Theme.label(12))
+                    .foregroundStyle(Theme.inkSoft)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(standing + owned > 0 ? "Makes \(makes) · \(standing) set up · \(owned) to place" : "Makes \(makes)")
+                    .font(Theme.label(11))
+                    .foregroundStyle(Theme.inkSoft)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 4)
+            VStack(spacing: 6) {
+                if locked {
+                    Label("Level \(workshop.unlockLevel)", systemImage: "lock.fill")
+                        .font(Theme.label(12, weight: .semibold))
+                        .foregroundStyle(Theme.inkSoft)
+                } else {
+                    ActionCapsule(title: "Buy · \(workshop.price)", enabled: game.money >= workshop.price) { game.buyMachine(workshop.id) }
+                    if owned > 0 {
+                        ActionCapsule(title: "Place", enabled: true, tint: Theme.gold) { game.startPlacing(workshop.id) }
                     }
                 }
             }
@@ -281,5 +330,16 @@ struct ActionCapsule: View {
         }
         .buttonStyle(.plain)
         .disabled(!enabled)
+    }
+}
+
+extension WorkerJob {
+    /// SF Symbol for the job.
+    var symbol: String {
+        switch self {
+        case .fields: "leaf.fill"
+        case .animals: "hare.fill"
+        case .workshops: "hammer.fill"
+        }
     }
 }

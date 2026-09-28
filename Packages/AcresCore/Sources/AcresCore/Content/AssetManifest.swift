@@ -10,7 +10,13 @@ import Foundation
 public enum AssetManifest {
 
     public static let all: [AssetSpec] =
-        terrain + fields + crops + trees + nature + buildings + props + vehicles + characters + animals + items + effects + ui
+        terrain + fields + crops + trees + nature + buildings + props + workshops + vehicles + characters + animals + items + effects + ui
+
+    /// Workshops standing on the farm (after Phase 9).
+    static let workshops: [AssetSpec] = WorkshopCatalog.all.map { workshop in
+        .sprite(workshop.prop, .prop, tiles: 1.1, 1.4, anchorY: 0.1, shadow: 0.9, phase: 10,
+                "\(workshop.name) standing on the farm: \(workshop.blurb.lowercased())")
+    }
 
     private static let index: [String: AssetSpec] = {
         var result: [String: AssetSpec] = [:]
@@ -206,6 +212,7 @@ public enum AssetManifest {
         result += building("building_harbor_warehouse", 7, 5, phase: 5, "Old brick harbor warehouse.")
         result += building("building_lumber_yard", 6, 5, phase: 6, "North Woods Lumber: yard office with stacked timber (contract client).")
         result += building("building_town_shop", 4, 4.5, phase: 6, lights: true, "Player-owned shop in town (sell your own goods).")
+        result += building("building_deli", 4, 4.5, phase: 10, lights: true, "Valley Deli: striped awning, cheeses and jars in the window (client).")
         result += building("building_cabin_lakeside", 4, 4, phase: 6, lights: true, "Lakeside log cabin with a small jetty.")
         result += building("building_farm_abandoned", 6, 6, phase: 6, "The old abandoned farmhouse, overgrown; a long-term restoration goal.")
         result += building("building_lighthouse", 2, 6, phase: 8, lights: true, "Harbor lighthouse, white with a red band.")
@@ -399,6 +406,14 @@ public enum AssetManifest {
         ]
         for (name, phase, look) in goods {
             result.append(.ui("item_\(name)", .item, points: 44, 44, phase: phase, "\(look), inventory icon."))
+        }
+        // Workshop goods and the workshops themselves (after Phase 9).
+        let listed = Set(goods.map(\.0))
+        for recipe in WorkshopCatalog.recipes where !listed.contains(recipe.output) {
+            result.append(.ui("item_\(recipe.output)", .item, points: 44, 44, phase: 10, "\(recipe.name), inventory icon."))
+        }
+        for workshop in WorkshopCatalog.all {
+            result.append(.ui(workshop.icon, .item, points: 44, 44, phase: 10, "\(workshop.name) (workshop), inventory icon."))
         }
         for species in seasonalTreeSpecies {
             result.append(.ui("item_sapling_\(species)", .item, points: 44, 44, phase: 4, "\(species.capitalized) sapling in a pot."))

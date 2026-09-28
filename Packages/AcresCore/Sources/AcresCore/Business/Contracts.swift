@@ -20,11 +20,15 @@ public enum ClientCatalog {
     public static let all: [ClientDefinition] = [
         ClientDefinition(id: "rusty_spoon", name: "The Rusty Spoon", kind: "Restaurant", zone: HomeValleyMap.restaurantZone,
                          wants: ["carrot", "potato", "corn", "pumpkin", "egg", "milk", "truffle", "lettuce", "onion", "tomato",
-                                 "garlic", "cabbage"], opens: 7, closes: 22),
+                                 "garlic", "cabbage", "tomato_sauce", "cornmeal", "carrot_juice"], opens: 7, closes: 22),
         ClientDefinition(id: "hansens_bakery", name: "Hansen's Bakery", kind: "Bakery", zone: HomeValleyMap.bakeryZone,
-                         wants: ["wheat", "egg", "milk", "apple", "cherry", "strawberry", "blueberry", "sunflower"], opens: 5, closes: 17),
+                         wants: ["wheat", "egg", "milk", "apple", "cherry", "strawberry", "blueberry", "sunflower", "flour", "honey"],
+                         opens: 5, closes: 17),
         ClientDefinition(id: "lumber_yard", name: "North Woods Lumber", kind: "Lumber yard", zone: HomeValleyMap.lumberYardZone,
-                         wants: ["log"], opens: 7, closes: 18),
+                         wants: ["log", "plank"], opens: 7, closes: 18),
+        ClientDefinition(id: "valley_deli", name: "Valley Deli", kind: "Delicatessen", zone: HomeValleyMap.deliZone,
+                         wants: ["cheese", "goat_cheese", "strawberry_jam", "blueberry_jam", "honey", "apple_juice", "cherry_juice",
+                                 "sunflower_oil", "sauerkraut", "pickled_onions", "cloth"], opens: 9, closes: 19),
     ]
 
     public static func client(_ id: String) -> ClientDefinition? { all.first { $0.id == id } }
@@ -119,6 +123,9 @@ public struct Contracts: Sendable {
         if let crop = CropCatalog.crop(item) { return level >= crop.unlockLevel }
         if let species = AnimalCatalog.all.first(where: { $0.productItemID == item }) { return level >= species.unlockLevel }
         if let tree = TreeCatalog.all.first(where: { $0.fruitItemID == item }) { return level >= tree.unlockLevel + 1 }
+        if let maker = WorkshopCatalog.maker(of: item) {
+            return level >= maker.workshop.unlockLevel && maker.recipe.inputs.keys.allSatisfy { isObtainable($0, level: level) }
+        }
         return item == "log"
     }
 

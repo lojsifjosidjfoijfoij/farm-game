@@ -110,7 +110,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         chunkManager.isTileCleared = { [weak self] tile in
             guard let state = self?.game.simulation.state else { return false }
             // No weeds on fields, under the farm's buildings or at sprinklers.
-            return state.plots[tile] != nil || state.estate.sprinkler(at: tile) != nil
+            return state.plots[tile] != nil || state.estate.isOccupied(tile)
                 || (state.estate.storageLevel > 0 && EstateLayout.blockedTiles(state.estate).contains(tile))
         }
         chunkManager.isMapTreeHidden = { [weak self] tile in
@@ -542,6 +542,9 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         case .sprinkler(let tile):
             estate?.sync(game: game, force: true)
             estate?.spray(at: tile)
+        case .workshop(let tile, let collected):
+            estate?.sync(game: game, force: collected == nil)
+            estate?.workshopFeedback(at: tile, collected: collected)
         case .tree(let outcome, let tile, let position):
             switch outcome {
             case .chopped(let speciesID, let logs, _):

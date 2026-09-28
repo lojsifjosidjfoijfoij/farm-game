@@ -230,6 +230,26 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   `WeatherRenderer` recycles rain/snow particles over the visible rect; `Sound` plays bundle
   recordings named like the audio manifest, else synthesized placeholders.
 
+## Workshops and artisan goods (Phase 10)
+
+- **Catalog** (`WorkshopCatalog`): each workshop has recipes (`Recipe`: inputs from storage, an
+  output item and amount, game hours, XP, a value range). Outputs are `ItemCategory.artisan`
+  items, sold like crops (market, shop, clients). Automatic workshops (the beehive) have no inputs
+  and stop when `holds` batches wait.
+- **State** (`EstateState.workshops`): tile, kind, the recipe running, batches queued, progress
+  and goods ready. Workshops are placed from the pouch like sprinklers (`EstateRules.placeMachine`);
+  `EstateState.isOccupied` keeps fields, sprinklers and workshops apart.
+- **Rules** (`Workshops`, via `Simulation.workshops { }`): start (takes the inputs; more batches
+  of the same recipe queue up), collect (into storage, with XP for the farmer), pick up (only
+  when empty). `WorkshopSystem` is a bulk system: whole batches finish in order for any step size,
+  so offline time is exact (tested).
+- **Workshop hands** (`WorkerJob.workshops`): collect first, then restart idle workshops on their
+  last recipe if storage pays for it.
+- **App side:** `EstateRenderer` draws workshops, a bubble with the ready goods and puffs while
+  busy; tapping one queues a `.workshop` job and the panel (`WorkshopView`) opens on arrival.
+  The copy of the estate the HUD observes zeroes workshop progress so SwiftUI isn't re-rendered
+  every frame; the open panel ticks once a second from its own snapshot.
+
 ## Saves
 
 - File: `Application Support/Saves/farm.json` plus `farm.backup.json` (the previous save).
@@ -253,7 +273,7 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   `woodland`). v5 (Phase 5: `farmer`, `goals`). v6 (Phase 6: `contracts`, `finance`; a migrated
   save starts its books in the current week and gets fresh orders on the first step). v7 (Phase 7:
   `store`, not rented). v8 (Phase 8: `estate`: upgrades, sprinklers, farmhands). v9 (Phase 9:
-  `daily`: chores, streak, market special).
+  `daily`: chores, streak, market special). v10 (Phase 10: `estate.workshops`).
 
 ## Rendering
 

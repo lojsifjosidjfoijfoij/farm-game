@@ -31,10 +31,12 @@ extension GameController {
     }
 
     func buyMachine(_ id: String) {
-        let name = MachineCatalog.machine(id)?.name.lowercased() ?? "machine"
+        let name = ItemCatalog.item(id)?.name.lowercased() ?? "machine"
+        let isWorkshop = WorkshopCatalog.workshop(id) != nil
         runEstate({ try $0.buyMachine(id, state: &$1) }) { _ in
             Haptics.success()
-            showMessage("A \(name) was delivered to your farm. Tap Place to put it in a field.")
+            showMessage(isWorkshop ? "A \(name) was delivered. Tap Place to set it up on your land."
+                : "A \(name) was delivered to your farm. Tap Place to put it in a field.")
         }
     }
 
@@ -45,8 +47,12 @@ extension GameController {
         showsBusiness = false
         showsSeedPicker = false
         dismissInspection()
-        let name = MachineCatalog.machine(kind)?.name.lowercased() ?? "machine"
-        showBanner("Tap grass in your fields where the \(name) should stand. It waters the tiles around it.")
+        let name = ItemCatalog.item(kind)?.name.lowercased() ?? "machine"
+        if WorkshopCatalog.workshop(kind) != nil {
+            showBanner("Tap grass on your land where the \(name) should stand.")
+        } else {
+            showBanner("Tap grass in your fields where the \(name) should stand. It waters the tiles around it.")
+        }
     }
 
     func cancelPlacing() {
@@ -72,9 +78,15 @@ extension GameController {
 
     /// The farmer arrived: set the machine up.
     func finishPlacing(_ kind: String, at tile: TileCoord) {
-        runEstate({ try $0.placeSprinkler(kind, at: tile, state: &$1) }) { _ in
+        runEstate({ try $0.placeMachine(kind, at: tile, state: &$1) }) { _ in
             Haptics.success()
-            onFeedback?(.sprinkler(tile))
+            if let workshop = WorkshopCatalog.workshop(kind) {
+                onFeedback?(.workshop(tile, collected: nil))
+                showMessage(workshop.isAutomatic ? "The \(workshop.name.lowercased()) is up. It works on its own: tap it now and then."
+                    : "The \(workshop.name.lowercased()) is ready. Tap it to make something.")
+            } else {
+                onFeedback?(.sprinkler(tile))
+            }
         }
     }
 
@@ -123,7 +135,13 @@ extension GameController {
         case .collect?: return "Collecting from the animals"
         case .fillTrough?: return "Filling the troughs"
         case .feed?: return "Feeding the animals"
-        case nil: return worker.job == .fields ? "Looking for thirsty crops" : "Checking on the animals"
+        case .craft?: return "Busy in the workshops"
+        case nil:
+            switch worker.job {
+            case .fields: return "Looking for thirsty crops"
+            case .animals: return "Checking on the animals"
+            case .workshops: return "Checking the workshops"
+            }
         }
     }
 

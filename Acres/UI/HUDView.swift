@@ -84,8 +84,8 @@ struct HUDView: View {
 
             if let kind = game.placingMachine, !game.isDriving {
                 HStack(spacing: 10) {
-                    ItemIcon(name: MachineCatalog.machine(kind)?.icon ?? "item_sprinkler", size: 30)
-                    Text("Tap grass in your fields to place the \(MachineCatalog.machine(kind)?.name.lowercased() ?? "machine").")
+                    ItemIcon(name: "item_\(kind)", size: 30)
+                    Text("Tap grass on your land to place the \(ItemCatalog.item(kind)?.name.lowercased() ?? "machine").")
                         .font(Theme.label(14, weight: .semibold))
                         .foregroundStyle(Theme.ink)
                         .fixedSize(horizontal: false, vertical: true)
