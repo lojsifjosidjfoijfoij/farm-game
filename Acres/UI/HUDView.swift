@@ -218,6 +218,7 @@ struct HUDView: View {
             Haptics.tap()
             Sound.play(.open, volume: 0.7)
             game.showsSeedPicker = false
+            if !game.claimableAlmanacSets.isEmpty { game.businessTab = .almanac }  // a reward waits there
             game.showsBusiness = true
         } label: {
             ZStack(alignment: .topTrailing) {
@@ -233,7 +234,7 @@ struct HUDView: View {
                         .padding(.vertical, 2)
                         .background(Capsule().fill(urgent ? Theme.danger : Theme.leafDark))
                         .offset(x: 4, y: -4)
-                } else if !game.contractBoard.offers.isEmpty {
+                } else if !game.contractBoard.offers.isEmpty || !game.claimableAlmanacSets.isEmpty {
                     Circle()
                         .fill(Theme.gold)
                         .frame(width: 11, height: 11)

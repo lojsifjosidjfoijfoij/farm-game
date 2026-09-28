@@ -25,6 +25,7 @@ struct BusinessView: View {
                         case .shop: shop
                         case .farm: FarmTabView(game: game)
                         case .money: money
+                        case .almanac: AlmanacTabView(game: game)
                         }
                     }
                     .padding(16)

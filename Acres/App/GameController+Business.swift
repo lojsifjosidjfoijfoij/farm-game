@@ -7,6 +7,7 @@ enum BusinessTab: String, CaseIterable, Identifiable {
     case shop = "Shop"
     case farm = "Farm"
     case money = "Money"
+    case almanac = "Almanac"
     var id: String { rawValue }
 }
 
@@ -33,6 +34,8 @@ extension GameController {
         for i in estate.workshops.indices { estate.workshops[i].progress = 0 }
         if estateState != estate { estateState = estate }
         if ownedLand != state.ownedProperties { ownedLand = state.ownedProperties }
+        if almanac != state.almanac { almanac = state.almanac }
+        if rankIndex != state.rank.rank { rankIndex = state.rank.rank }
     }
 
     var today: Int { simulation.state.clock.dayIndex }

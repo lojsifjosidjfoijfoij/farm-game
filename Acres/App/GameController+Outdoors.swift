@@ -174,8 +174,6 @@ extension GameController {
             Sound.play(.harvest)
             if fish?.isLegendary == true {
                 showBanner("A legendary \(name.lowercased())! 🏆 Worth a small fortune.")
-            } else if caught.isNew {
-                showMessage("First \(name.lowercased()) caught! It goes into your storage.")
             }
             onFeedback?(.caught(caught.item, at: session.target))
             handle(caught.events)
@@ -208,7 +206,7 @@ extension GameController {
         switch simulation.outdoors({ _, foraging, state in try foraging.pick(id, state: &state) }) {
         case .success(let found):
             let name = ItemCatalog.item(found.item)?.name ?? found.item
-            showMessage(found.isNew ? "New find: \(name.lowercased())! +\(found.xp) XP" : "+1 \(name.lowercased()) · +\(found.xp) XP")
+            showMessage("+1 \(name.lowercased()) · +\(found.xp) XP")
             Haptics.success()
             Sound.play(.harvest, volume: 0.7)
             onFeedback?(.foraged(found.item, id: id))

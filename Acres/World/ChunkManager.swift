@@ -35,6 +35,11 @@ final class ChunkManager {
     /// Asked while loading: wild trees the player chopped or cleared are skipped
     /// (the tree renderer draws what's there now).
     var isMapTreeHidden: ((TileCoord) -> Bool)?
+    /// Which farmhouse stands (it's renovated as the farm climbs the ranks).
+    /// Changing it reloads the chunks.
+    var farmhouseTier = 0 {
+        didSet { if farmhouseTier != oldValue { unloadAll() } }
+    }
     /// Season used to pick object art (trees change their leaves). Changing it
     /// reloads the chunks.
     var season: Season = .summer {
@@ -128,7 +133,10 @@ final class ChunkManager {
         groundLayer.addChild(ground)
         let chunk = LoadedChunk(ground: ground)
 
-        for object in map.objects(in: coord) {
+        for var object in map.objects(in: coord) {
+            if object.kind == "building_farmhouse_t0", farmhouseTier > 0 {
+                object = MapObject(kind: "building_farmhouse_t\(farmhouseTier)", position: object.position, variant: object.variant)
+            }
             let clearable = ObjectFootprint.isClearable(object.kind)
             let isTree = TreeCatalog.isMapTree(object.kind)
             let tile = TileCoord(containing: object.position)

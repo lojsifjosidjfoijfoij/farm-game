@@ -158,3 +158,146 @@ struct LevelRoadmapView: View {
         }
     }
 }
+
+/// The farm climbed a rank: its new title, and the farmhouse renovation if any.
+struct RankUpCardView: View {
+    let card: RankUpCard
+    let next: FarmRank?
+    let onClose: () -> Void
+    @State private var pop = false
+
+    var body: some View {
+        ZStack {
+            Confetti()
+            VStack(spacing: 12) {
+                Text("Your farm is now")
+                    .font(Theme.label(15, weight: .semibold))
+                    .foregroundStyle(Theme.inkSoft)
+                Text(card.rank.title)
+                    .font(Theme.title(30))
+                    .foregroundStyle(Theme.ink)
+                    .multilineTextAlignment(.center)
+                    .scaleEffect(pop ? 1 : 0.6)
+                Image(systemName: card.renovated ? "house.fill" : "rosette")
+                    .font(.system(size: 40, weight: .bold))
+                    .foregroundStyle(Theme.gold)
+                    .rotationEffect(.degrees(pop ? 0 : -30))
+                Text(card.rank.blurb)
+                    .font(Theme.label(15))
+                    .foregroundStyle(Theme.ink)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                if card.renovated {
+                    Label("Go and see the farmhouse!", systemImage: "sparkles")
+                        .font(Theme.label(14, weight: .semibold))
+                        .foregroundStyle(Theme.leafDark)
+                }
+                if let next {
+                    Text("Next: \(next.title) at a net worth of \(next.netWorth.formatted()) coins.")
+                        .font(Theme.label(13))
+                        .foregroundStyle(Theme.inkSoft)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Button(action: onClose) {
+                    Text("Wonderful!")
+                        .font(Theme.label(17, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.leafDark))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(22)
+            .background(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(Theme.parchment)
+                    .shadow(color: .black.opacity(0.25), radius: 18, y: 6)
+            )
+            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Theme.gold, lineWidth: 3))
+            .padding(.horizontal, 32)
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.55)) { pop = true }
+        }
+    }
+}
+
+/// The ending: the Valley's Finest Farm, and the story in numbers. Farming goes on.
+struct FinaleCardView: View {
+    let stats: FarmStats
+    let onClose: () -> Void
+    @State private var pop = false
+
+    var body: some View {
+        ZStack {
+            Confetti()
+            Confetti()
+            VStack(spacing: 12) {
+                Image(systemName: "trophy.fill")
+                    .font(.system(size: 52, weight: .bold))
+                    .foregroundStyle(Theme.gold)
+                    .scaleEffect(pop ? 1 : 0.4)
+                Text("The Valley's Finest Farm")
+                    .font(Theme.title(28))
+                    .foregroundStyle(Theme.ink)
+                    .multilineTextAlignment(.center)
+                Text("From a leaky roof and a field of weeds to the pride of the valley. The farmhouse has never looked better.")
+                    .font(Theme.label(14))
+                    .foregroundStyle(Theme.inkSoft)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                VStack(spacing: 6) {
+                    statRow("calendar", "Days farmed", "\(stats.days)")
+                    statRow("star.fill", "Farmer level", "\(stats.level)")
+                    statRow("banknote.fill", "Net worth", stats.netWorth.formatted())
+                    statRow("leaf.fill", "Crops harvested", stats.harvested.formatted())
+                    statRow("fish.fill", "Fish caught", stats.fishCaught.formatted())
+                    statRow("tree.fill", "Wild finds", stats.foraged.formatted())
+                    statRow("hammer.fill", "Goods made", stats.crafted.formatted())
+                    statRow("shippingbox.fill", "Orders delivered", stats.ordersDone.formatted())
+                    statRow("book.fill", "Almanac", "\(Int((stats.almanac * 100).rounded()))%")
+                    statRow("flame.fill", "Best streak", "\(stats.bestStreak) days")
+                }
+                .padding(12)
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.parchmentDark.opacity(0.6)))
+                Button(action: onClose) {
+                    Text("Keep farming")
+                        .font(Theme.label(17, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.leafDark))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(22)
+            .background(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(Theme.parchment)
+                    .shadow(color: .black.opacity(0.3), radius: 22, y: 8)
+            )
+            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Theme.gold, lineWidth: 4))
+            .padding(.horizontal, 24)
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.5)) { pop = true }
+        }
+    }
+
+    private func statRow(_ symbol: String, _ title: String, _ value: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: symbol)
+                .foregroundStyle(Theme.leafDark)
+                .frame(width: 22)
+            Text(title)
+                .font(Theme.label(14))
+                .foregroundStyle(Theme.ink)
+            Spacer(minLength: 8)
+            Text(value)
+                .font(Theme.number(15))
+                .foregroundStyle(Theme.ink)
+        }
+    }
+}

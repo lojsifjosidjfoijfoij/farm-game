@@ -224,12 +224,12 @@ procedurally in code.
 |---|---|---|---|---:|---|
 | `building_farmhouse_t0` | 640 × 640 | 5 × 5 | 0.06 | 1 | The starting farmhouse: small run-down wooden house, faded paint, patched roof, one boarded window, sagging porch. |
 | `building_farmhouse_t0_lights` | 640 × 640 | 5 × 5 | — | 1 | Night overlay for building_farmhouse_t0: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
-| `building_farmhouse_t1` | 640 × 640 | 5 × 5 | 0.06 | 6 | Repaired cozy cottage: fresh paint, flower boxes. |
-| `building_farmhouse_t1_lights` | 640 × 640 | 5 × 5 | — | 6 | Night overlay for building_farmhouse_t1: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
-| `building_farmhouse_t2` | 768 × 768 | 6 × 6 | 0.06 | 6 | Two-story farmhouse with a wraparound porch. |
-| `building_farmhouse_t2_lights` | 768 × 768 | 6 × 6 | — | 6 | Night overlay for building_farmhouse_t2: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
-| `building_farmhouse_t3` | 896 × 896 | 7 × 7 | 0.06 | 6 | Grand estate farmhouse, the reward of a thriving empire. |
-| `building_farmhouse_t3_lights` | 896 × 896 | 7 × 7 | — | 6 | Night overlay for building_farmhouse_t3: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
+| `building_farmhouse_t1` | 640 × 640 | 5 × 5 | 0.06 | 12 | Repaired cozy cottage: new roof, fresh paint, flower boxes. |
+| `building_farmhouse_t1_lights` | 640 × 640 | 5 × 5 | — | 12 | Night overlay for building_farmhouse_t1: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
+| `building_farmhouse_t2` | 640 × 640 | 5 × 5 | 0.06 | 12 | Farmhouse with a porch, shutters and a dormer window. |
+| `building_farmhouse_t2_lights` | 640 × 640 | 5 × 5 | — | 12 | Night overlay for building_farmhouse_t2: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
+| `building_farmhouse_t3` | 640 × 640 | 5 × 5 | 0.06 | 12 | Grand farmhouse: green roof, two dormers, a golden weathervane, lanterns and flower beds. |
+| `building_farmhouse_t3_lights` | 640 × 640 | 5 × 5 | — | 12 | Night overlay for building_farmhouse_t3: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
 | `building_barn_old` | 640 × 704 | 5 × 5.5 | 0.06 | 1 | Old weathered red barn: sagging roof, missing planks. Restorable. |
 | `building_barn` | 640 × 704 | 5 × 5.5 | 0.06 | 4 | Restored red barn (cows, sheep, goats). |
 | `building_barn_lights` | 640 × 704 | 5 × 5.5 | — | 4 | Night overlay for building_barn: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |

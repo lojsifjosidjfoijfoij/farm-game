@@ -116,6 +116,13 @@ public struct SaveMigrator: Sendable {
                 state["forage"] = ["day": -1, "picked": [Any]()] as [String: Any]
                 json["state"] = state
             },
+            11: { json in
+                // Discoveries fill in on the first step from storage and the counters.
+                var state = json["state"] as? [String: Any] ?? [:]
+                state["almanac"] = ["discovered": [Any](), "claimedSets": [Any]()] as [String: Any]
+                state["rank"] = ["rank": 0] as [String: Any]
+                json["state"] = state
+            },
         ]
     )
 

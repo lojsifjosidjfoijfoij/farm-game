@@ -272,6 +272,24 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   line, "!" and catch bar in SpriteKit, so the per-frame minigame never re-renders SwiftUI; the HUD
   only shows `fishingHint`.
 
+## The long game (Phase 12)
+
+- **Almanac** (`Almanac`, `AlmanacState`, v12): entries are the sellable-kind items (crops,
+  fruit, animal products, fish, wild finds, artisan goods, wood). `AlmanacSystem` (bulk, once per
+  span) adds anything seen in storage, the truck or the shop's shelves, plus everything counted by
+  the `caught:` / `found:` / `collected:` counters, and emits `.discovered`. That's also how old
+  saves fill in after migrating. `Almanac.sets` are themed pages with one-time rewards (tested:
+  every entry is on a page).
+- **Net worth** (`NetWorth.of`): coins + land prices + upgrade costs + machines and workshops +
+  repaired pens + animals + goods at their usual value − the loan.
+- **Ranks** (`FarmRanks`, `RankState`, `RankSystem`): the best rank reached, never lower;
+  `RankSystem` (bulk) moves it up through every threshold passed, with `.rankUp` events and XP.
+  The last rank is the finale (`finaleDay`). Each rank names a farmhouse tier.
+- **App side:** `ChunkManager.farmhouseTier` swaps the map's farmhouse for the renovated art (the
+  same 5×5 footprint, so blocked tiles never change) and reloads chunks; `BuildingPainter`
+  paints the four tiers from one layout (lights and the chimney line up). `RankUpCardView` and
+  `FinaleCardView` show after any level-up card; the Almanac tab lives on the phone.
+
 ## Saves
 
 - File: `Application Support/Saves/farm.json` plus `farm.backup.json` (the previous save).
@@ -295,7 +313,7 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   `woodland`). v5 (Phase 5: `farmer`, `goals`). v6 (Phase 6: `contracts`, `finance`; a migrated
   save starts its books in the current week and gets fresh orders on the first step). v7 (Phase 7:
   `store`, not rented). v8 (Phase 8: `estate`: upgrades, sprinklers, farmhands). v9 (Phase 9:
-  `daily`: chores, streak, market special). v10 (Phase 10: `estate.workshops`). v11 (Phase 11: `forage`).
+  `daily`: chores, streak, market special). v10 (Phase 10: `estate.workshops`). v11 (Phase 11: `forage`). v12 (Phase 12: `almanac`, `rank`).
 
 ## Rendering
 

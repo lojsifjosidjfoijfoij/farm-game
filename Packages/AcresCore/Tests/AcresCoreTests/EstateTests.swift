@@ -221,6 +221,7 @@ final class EstateTests: XCTestCase {
         plant("wheat", at: tiles, in: &sim)
         sim.goHome()
         _ = sim.estate(on: map) { try $0.hire(.fields, state: &$1) }
+        sim.modify { $0.rank.rank = FarmRanks.finale.id }  // no rank-up XP in the way
         let xp = sim.state.progress.xp
         let level = sim.state.progress.level
 

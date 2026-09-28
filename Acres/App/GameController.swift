@@ -155,6 +155,11 @@ final class GameController {
     var moneyFloats: [MoneyFloat] = []
     /// The level-up celebration.
     var levelUpCard: LevelUpCard?
+    /// A new farm rank (or the finale), shown after any level-up card.
+    var rankUpCard: RankUpCard?
+    /// The almanac and the farm's rank (copied when they change).
+    var almanac = AlmanacState()
+    var rankIndex = 0
     /// What each coming level unlocks.
     var showsRoadmap = false
 
@@ -693,6 +698,8 @@ final class GameController {
 
     func handle(_ events: [SimEvent], quiet: Bool = false) {
         var hasLevelUp = false
+        var discoveries: [String] = []
+        var newRank: Int?
         for event in events {
             switch event {
             case .newSeason(let newSeason, _):
@@ -714,6 +721,10 @@ final class GameController {
                     showBanner(text)
                     Haptics.warning()
                 }
+            case .discovered(let item):
+                discoveries.append(item)
+            case .rankUp(let rank):
+                newRank = max(newRank ?? rank, rank)
             case .shelfSoldOut(let itemID):
                 if !quiet && sleep == nil {
                     let name = ItemCatalog.item(itemID)?.plural ?? itemID
@@ -730,6 +741,8 @@ final class GameController {
                 }
             }
         }
+        if let newRank { rankedUp(to: newRank) }
+        if !discoveries.isEmpty && !quiet && sleep == nil { discovered(discoveries) }
         guard !quiet else { return }
         if hasLevelUp {
             Haptics.success()
@@ -747,6 +760,7 @@ final class GameController {
         result += TreeCatalog.all.filter { $0.unlockLevel == level }.map { "\($0.name.lowercased()) saplings" }
         result += PropertyCatalog.forSale.filter { $0.unlockLevel == level }.map { "\($0.name) for sale" }
         result += MachineCatalog.all.filter { $0.unlockLevel == level }.map { $0.plural }
+        result += WorkshopCatalog.all.filter { $0.unlockLevel == level }.map { $0.plural }
         if balance.storeUnlockLevel == level { result.append("the corner shop") }
         if let index = balance.workerUnlockLevels.firstIndex(of: level) {
             result.append(index == 0 ? "a farmhand" : "farmhand no. \(index + 1)")

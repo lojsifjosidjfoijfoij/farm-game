@@ -75,6 +75,12 @@ public struct GameState: Codable, Equatable, Sendable {
     /// Today's wild finds already picked. (v11)
     public var forage: ForageState
 
+    /// Everything discovered, and the collection sets claimed. (v12)
+    public var almanac: AlmanacState
+
+    /// The farm's rank in the valley, and when it became the finest. (v12)
+    public var rank: RankState
+
     public init(
         worldTime: TimeInterval,
         clock: GameClock,
@@ -96,7 +102,9 @@ public struct GameState: Codable, Equatable, Sendable {
         store: StoreState = StoreState(),
         estate: EstateState = EstateState(),
         daily: DailyState = DailyState(),
-        forage: ForageState = ForageState()
+        forage: ForageState = ForageState(),
+        almanac: AlmanacState = AlmanacState(),
+        rank: RankState = RankState()
     ) {
         self.worldTime = worldTime
         self.clock = clock
@@ -119,6 +127,8 @@ public struct GameState: Codable, Equatable, Sendable {
         self.estate = estate
         self.daily = daily
         self.forage = forage
+        self.almanac = almanac
+        self.rank = rank
     }
 
     /// Where the farmer is: in the truck, or on foot.
@@ -147,7 +157,9 @@ public struct GameState: Codable, Equatable, Sendable {
             store: StoreState(),
             estate: EstateState(),
             daily: DailyState(),
-            forage: ForageState()
+            forage: ForageState(),
+            almanac: AlmanacState(),
+            rank: RankState()
         )
     }
 }

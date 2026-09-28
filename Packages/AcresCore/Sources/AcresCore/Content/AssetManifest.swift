@@ -180,9 +180,11 @@ public enum AssetManifest {
         var result: [AssetSpec] = []
         result += building("building_farmhouse_t0", 5, 5, phase: 1, lights: true,
                            "The starting farmhouse: small run-down wooden house, faded paint, patched roof, one boarded window, sagging porch.")
-        result += building("building_farmhouse_t1", 5, 5, phase: 6, lights: true, "Repaired cozy cottage: fresh paint, flower boxes.")
-        result += building("building_farmhouse_t2", 6, 6, phase: 6, lights: true, "Two-story farmhouse with a wraparound porch.")
-        result += building("building_farmhouse_t3", 7, 7, phase: 6, lights: true, "Grand estate farmhouse, the reward of a thriving empire.")
+        // Renovations as the farm climbs the ranks (Phase 12): same footprint as the starter house.
+        result += building("building_farmhouse_t1", 5, 5, phase: 12, lights: true, "Repaired cozy cottage: new roof, fresh paint, flower boxes.")
+        result += building("building_farmhouse_t2", 5, 5, phase: 12, lights: true, "Farmhouse with a porch, shutters and a dormer window.")
+        result += building("building_farmhouse_t3", 5, 5, phase: 12, lights: true,
+                           "Grand farmhouse: green roof, two dormers, a golden weathervane, lanterns and flower beds.")
         result += building("building_barn_old", 5, 5.5, phase: 1, "Old weathered red barn: sagging roof, missing planks. Restorable.")
         result += building("building_barn", 5, 5.5, phase: 4, lights: true, "Restored red barn (cows, sheep, goats).")
         result += building("building_coop", 3, 3, phase: 4, "Chicken coop with a little ramp.")

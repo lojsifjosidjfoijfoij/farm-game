@@ -4,7 +4,8 @@ A cozy, top-down farming and business game for iPhone: a farmer's version of Big
 You start with a run-down farm, a beat-up pickup truck and one farmer, and grow it into an
 agricultural empire.
 
-**Status: phases 1–11 are done.** Next: the almanac, farm ranks and an ending.
+**Status: all twelve phases are done, and the game has an ending (farming goes on after it).** Next up is
+whatever playtesting says: balance, art, more content.
 
 | Phase | Scope | Status |
 |---|---|---|
@@ -19,6 +20,7 @@ agricultural empire.
 | 9 | Polish: daily chores and streaks, market specials, weather, seasons, sound, celebrations | ✅ |
 | 10 | More to do: nine new crops, workshops and artisan goods, the Valley Deli | ✅ |
 | 11 | The outdoors: fishing, foraging, goats on Goat Hill, a smokehouse and a drying rack | ✅ |
+| 12 | The long game: the almanac, farm ranks, farmhouse renovations and an ending | ✅ |
 
 ## Running it
 
@@ -36,6 +38,29 @@ Tests: press **⌘U** in Xcode (runs the simulation tests in `AcresCore`), or fr
 cd Packages/AcresCore
 swift test
 ```
+
+## Phase 12: what to test
+
+Your save carries over (format v12). On the first frame your almanac fills in from what's in
+storage and what you've caught, found and collected, and your farm gets the rank its net worth
+has earned (with a card).
+
+1. **The almanac** (phone → *Almanac*): everything you grow, catch, find in the wild or make, on
+   twelve themed pages (field crops, summer bounty, the orchard, the barnyard, pond life, lake
+   life, legends, the wilds, the pantry, the cellar, crafts). Unknown entries are "?". Each new
+   entry pops up a line ("📖 New in your almanac"). Fill a page and **Claim** its reward (coins
+   and XP); the phone gets a gold dot while a reward waits.
+2. **Farm ranks** (top of the Almanac tab): your **net worth** (coins, land, buildings, machines,
+   animals and goods, minus loans) moves the farm up: Run-down plot → Hobby farm (5,000) → Family
+   farm (15,000) → Thriving farm (40,000) → Valley estate (90,000) → Farming empire (160,000) →
+   **Valley's Finest Farm** (250,000). Ranks never drop, and each one gives XP and a card.
+3. **The farmhouse is renovated** as you climb: a new roof, fresh paint and flower boxes at Family
+   farm; a porch, shutters and a dormer at Valley estate; a grand house with a golden weathervane,
+   lanterns and flower beds at the top. (Same footprint, so nothing on the farm moves.)
+4. **The ending:** reaching the Valley's Finest Farm shows a finale card with your farm's story in
+   numbers (days, crops, fish, finds, goods, orders, almanac, best streak). Tap **Keep farming**:
+   everything carries on, and the Almanac tab can show the story again.
+5. The level-up card now lists the workshops each level unlocks.
 
 ## Phase 11: what to test
 

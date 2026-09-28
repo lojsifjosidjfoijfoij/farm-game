@@ -8,14 +8,20 @@ enum BuildingPainter {
     static func paint(_ spec: AssetSpec, rng: inout SeededRandom) -> UIImage? {
         let size = CGSize(width: spec.pixelWidth, height: spec.pixelHeight)
         switch spec.name {
-        case "building_farmhouse_t0": return farmhouse(size, rng: &rng)
-        case "building_farmhouse_t0_lights": return farmhouseLights(size)
+        case "building_farmhouse_t0": return farmhouse(size, tier: 0, rng: &rng)
+        case "building_farmhouse_t1": return farmhouse(size, tier: 1, rng: &rng)
+        case "building_farmhouse_t2": return farmhouse(size, tier: 2, rng: &rng)
+        case "building_farmhouse_t3": return farmhouse(size, tier: 3, rng: &rng)
+        case "building_farmhouse_t0_lights": return farmhouseLights(size, tier: 0)
+        case "building_farmhouse_t1_lights": return farmhouseLights(size, tier: 1)
+        case "building_farmhouse_t2_lights": return farmhouseLights(size, tier: 2)
+        case "building_farmhouse_t3_lights": return farmhouseLights(size, tier: 3)
         case "building_barn_old": return oldBarn(size, rng: &rng)
         default: return nil
         }
     }
 
-    // MARK: Farmhouse (starter, run-down)
+    // MARK: Farmhouse (run-down at first; renovated as the farm climbs the ranks)
 
     /// Shared geometry so the night-lights overlay lines up with the windows,
     /// and the scene knows where the chimney is. Fractions of the canvas,
@@ -31,13 +37,47 @@ enum BuildingPainter {
         static var chimneyTopUnit: CGPoint {
             CGPoint(x: chimney.midX, y: 1 - chimney.minY)
         }
+        /// Dormer windows on the front roof (tier 2 has one, tier 3 two).
+        static func dormers(_ tier: Int) -> [CGRect] {
+            switch tier {
+            case 2: [CGRect(x: 0.455, y: 0.47, width: 0.09, height: 0.075)]
+            case 3: [CGRect(x: 0.32, y: 0.47, width: 0.09, height: 0.075), CGRect(x: 0.59, y: 0.47, width: 0.09, height: 0.075)]
+            default: []
+            }
+        }
     }
 
-    static func farmhouse(_ size: CGSize, rng: inout SeededRandom) -> UIImage {
+    /// Colours by tier: run-down, repaired, two-story, grand.
+    private struct FarmhouseStyle {
+        var roofTop: UIColor, roofBottom: UIColor, shingle: UIColor
+        var wallTop: UIColor, wallBottom: UIColor, board: UIColor
+        var door: UIColor, shutters: UIColor?, trim: UIColor
+
+        static func tier(_ tier: Int) -> FarmhouseStyle {
+            switch tier {
+            case 0: FarmhouseStyle(roofTop: UIColor(hex: 0x8C5443), roofBottom: UIColor(hex: 0x7A4536), shingle: UIColor(hex: 0x875040),
+                                   wallTop: UIColor(hex: 0xB9A47F), wallBottom: UIColor(hex: 0xA38F6D), board: UIColor(hex: 0x6E5C43),
+                                   door: UIColor(hex: 0x7A5638), shutters: nil, trim: UIColor(hex: 0xE3D9C2))
+            case 1: FarmhouseStyle(roofTop: UIColor(hex: 0x8E4A3A), roofBottom: UIColor(hex: 0x7A3E30), shingle: UIColor(hex: 0x8A4636),
+                                   wallTop: UIColor(hex: 0xF0E7D2), wallBottom: UIColor(hex: 0xE2D6BC), board: UIColor(hex: 0xB8A888),
+                                   door: UIColor(hex: 0x4E7A4A), shutters: nil, trim: UIColor(hex: 0xFFFFFF))
+            case 2: FarmhouseStyle(roofTop: UIColor(hex: 0x66727E), roofBottom: UIColor(hex: 0x56616C), shingle: UIColor(hex: 0x606C78),
+                                   wallTop: UIColor(hex: 0xF4E4B4), wallBottom: UIColor(hex: 0xE6D39C), board: UIColor(hex: 0xC4B07A),
+                                   door: UIColor(hex: 0x3E5E8A), shutters: UIColor(hex: 0x4E6E9A), trim: UIColor(hex: 0xFFFFFF))
+            default: FarmhouseStyle(roofTop: UIColor(hex: 0x3E6450), roofBottom: UIColor(hex: 0x345444), shingle: UIColor(hex: 0x3A5E4A),
+                                    wallTop: UIColor(hex: 0xFAF6EE), wallBottom: UIColor(hex: 0xECE6DA), board: UIColor(hex: 0xCFC6B4),
+                                    door: UIColor(hex: 0x9A3A2E), shutters: UIColor(hex: 0x3E6E4E), trim: UIColor(hex: 0xE8C45A))
+            }
+        }
+    }
+
+    static func farmhouse(_ size: CGSize, tier: Int, rng: inout SeededRandom) -> UIImage {
         let w = size.width, h = size.height
         func r(_ rect: CGRect) -> CGRect { CGRect(x: rect.minX * w, y: rect.minY * h, width: rect.width * w, height: rect.height * h) }
         let wall = r(FarmhouseLayout.wall)
         let ink = UIColor(hex: 0x2E2419).withAlpha(0.55)
+        let style = FarmhouseStyle.tier(tier)
+        let rundown = tier == 0
 
         return Canvas.image(size) { ctx in
             // Roof: back slope (thin, darker) and front slope (big), seen from above.
@@ -71,9 +111,9 @@ enum BuildingPainter {
             ctx.fill(CGRect(x: chimney.minX - 4, y: chimney.minY - 5, width: chimney.width + 8, height: 9))
 
             Paint.outline(ctx, back, ink, width: 3)
-            Paint.fill(ctx, back, top: UIColor(hex: 0x5E3A30), bottom: UIColor(hex: 0x6E4436))
+            Paint.fill(ctx, back, top: style.roofBottom.shaded(-0.2), bottom: style.roofBottom.shaded(-0.12))
             Paint.outline(ctx, front, ink, width: 3)
-            Paint.fill(ctx, front, top: UIColor(hex: 0x8C5443), bottom: UIColor(hex: 0x7A4536))
+            Paint.fill(ctx, front, top: style.roofTop, bottom: style.roofBottom)
             // Shingle rows with a few missing ones and a tarp patch.
             Paint.clipped(ctx, to: front) {
                 var row = 0
@@ -83,7 +123,7 @@ enum BuildingPainter {
                     var x = wall.minX - 30 + offset
                     while x < wall.maxX + 30 {
                         let tile = CGRect(x: x, y: y, width: 24, height: 14)
-                        let color = rng.chance(0.04) ? UIColor(hex: 0x3A2620) : rng.vary(UIColor(hex: 0x875040), 0.06)
+                        let color = rundown && rng.chance(0.04) ? UIColor(hex: 0x3A2620) : rng.vary(style.shingle, rundown ? 0.06 : 0.03)
                         ctx.setFillColor(color.cgColor)
                         ctx.fill(tile.insetBy(dx: 1, dy: 1))
                         x += 26
@@ -93,36 +133,60 @@ enum BuildingPainter {
                     y += 15
                     row += 1
                 }
-                // Tarp patch: the roof leaks.
+                // Tarp patch: the roof leaks (until the farm does well).
+                if rundown {
                 let tarp = Paint.polygon([
                     CGPoint(x: wall.minX + w * 0.12, y: ridgeY + 22), CGPoint(x: wall.minX + w * 0.27, y: ridgeY + 16),
                     CGPoint(x: wall.minX + w * 0.29, y: ridgeY + 70), CGPoint(x: wall.minX + w * 0.1, y: ridgeY + 76),
                 ])
                 Paint.fill(ctx, tarp, top: UIColor(hex: 0x6F8FA0), bottom: UIColor(hex: 0x557585))
                 Paint.outline(ctx, tarp, UIColor(hex: 0x33444D).withAlpha(0.6), width: 2)
+                }
                 // Light from the upper left.
                 Paint.softSpot(ctx, CGPoint(x: wall.minX, y: ridgeY), w * 0.4, UIColor(hex: 0xFFF1D6).withAlpha(0.18))
+            }
+            // Dormer windows poke out of the roof (tiers 2 and 3).
+            for dormer in FarmhouseLayout.dormers(tier).map(r) {
+                let gable = Paint.polygon([CGPoint(x: dormer.minX - 8, y: dormer.minY + 2), CGPoint(x: dormer.midX, y: dormer.minY - dormer.height * 0.6),
+                                           CGPoint(x: dormer.maxX + 8, y: dormer.minY + 2)])
+                let face = Paint.roundedRect(dormer.insetBy(dx: -4, dy: -2), 2)
+                Paint.outline(ctx, face, ink, width: 2.5)
+                Paint.fill(ctx, face, top: style.wallTop, bottom: style.wallBottom)
+                window(ctx, dormer.insetBy(dx: 4, dy: 4), trim: style.trim)
+                Paint.outline(ctx, gable, ink, width: 2.5)
+                Paint.fill(ctx, gable, top: style.roofTop.shaded(0.08), bottom: style.roofTop)
+            }
+            if tier == 3 {
+                // A golden weathervane on the ridge.
+                let base = CGPoint(x: w * 0.5, y: ridgeY - 2)
+                Paint.stroke(ctx, from: base, to: CGPoint(x: base.x, y: base.y - 44), bend: 0, width: 4, color: UIColor(hex: 0x6E5A2E))
+                Paint.fill(ctx, Paint.polygon([CGPoint(x: base.x - 26, y: base.y - 36), CGPoint(x: base.x + 18, y: base.y - 36),
+                                               CGPoint(x: base.x + 30, y: base.y - 42), CGPoint(x: base.x + 18, y: base.y - 48),
+                                               CGPoint(x: base.x - 26, y: base.y - 48)]), top: UIColor(hex: 0xF2D26A), bottom: UIColor(hex: 0xC99A2E))
+                Paint.dab(ctx, CGPoint(x: base.x, y: base.y - 46), 5, 5, UIColor(hex: 0xE8C45A))
             }
             // Eave shadow on the wall.
             let wallPath = Paint.roundedRect(wall, 2)
             Paint.outline(ctx, wallPath, ink, width: 3)
-            Paint.fill(ctx, wallPath, top: UIColor(hex: 0xB9A47F), bottom: UIColor(hex: 0xA38F6D))
+            Paint.fill(ctx, wallPath, top: style.wallTop, bottom: style.wallBottom)
             Paint.clipped(ctx, to: wallPath) {
                 // Vertical siding boards.
                 var x = wall.minX + 8
-                ctx.setStrokeColor(UIColor(hex: 0x6E5C43).withAlpha(0.45).cgColor)
+                ctx.setStrokeColor(style.board.withAlpha(0.45).cgColor)
                 ctx.setLineWidth(2)
                 while x < wall.maxX {
-                    ctx.move(to: CGPoint(x: x, y: wall.minY)); ctx.addLine(to: CGPoint(x: x + rng.cg(-1...1), y: wall.maxY))
+                    ctx.move(to: CGPoint(x: x, y: wall.minY)); ctx.addLine(to: CGPoint(x: x + (rundown ? rng.cg(-1...1) : 0), y: wall.maxY))
                     x += 20
                 }
                 ctx.strokePath()
-                // Peeling paint and grime near the ground.
-                for _ in 0..<40 {
-                    let p = rng.point(in: wall)
-                    Paint.dab(ctx, p, rng.cg(3...9), rng.cg(2...5), UIColor(hex: 0x8C6E4B).withAlpha(0.35))
+                // Peeling paint and grime near the ground (only while run-down).
+                if rundown {
+                    for _ in 0..<40 {
+                        let p = rng.point(in: wall)
+                        Paint.dab(ctx, p, rng.cg(3...9), rng.cg(2...5), UIColor(hex: 0x8C6E4B).withAlpha(0.35))
+                    }
                 }
-                ctx.drawLinearGradient(Paint.gradient([UIColor.black.withAlpha(0), UIColor(hex: 0x3B2E1E).withAlpha(0.35)]),
+                ctx.drawLinearGradient(Paint.gradient([UIColor.black.withAlpha(0), UIColor(hex: 0x3B2E1E).withAlpha(rundown ? 0.35 : 0.15)]),
                                        start: CGPoint(x: 0, y: wall.maxY - 40), end: CGPoint(x: 0, y: wall.maxY), options: [])
                 ctx.drawLinearGradient(Paint.gradient([UIColor.black.withAlpha(0.3), UIColor.black.withAlpha(0)]),
                                        start: CGPoint(x: 0, y: wall.minY), end: CGPoint(x: 0, y: wall.minY + 26), options: [])
@@ -138,17 +202,61 @@ enum BuildingPainter {
             // Door with a little step.
             let door = r(FarmhouseLayout.door)
             let doorPath = Paint.roundedRect(door, 3)
-            Paint.fill(ctx, doorPath, top: UIColor(hex: 0x7A5638), bottom: UIColor(hex: 0x5E412A))
-            Paint.outline(ctx, doorPath, UIColor(hex: 0xE3D9C2), width: 5)
+            Paint.fill(ctx, doorPath, top: style.door, bottom: style.door.shaded(-0.2))
+            Paint.outline(ctx, doorPath, rundown ? UIColor(hex: 0xE3D9C2) : style.trim, width: 5)
             Paint.dab(ctx, CGPoint(x: door.maxX - 10, y: door.midY + 6), 3, 3, UIColor(hex: 0xD8B25A))
             ctx.setFillColor(UIColor(hex: 0x9D968A).cgColor)
             ctx.fill(CGRect(x: door.minX - 12, y: door.maxY - 4, width: door.width + 24, height: 10))
 
-            // Windows: left intact, right boarded up.
-            window(ctx, r(FarmhouseLayout.leftWindow))
+            // Windows: left intact, right boarded up (fixed once the farm does well).
+            let left = r(FarmhouseLayout.leftWindow)
             let right = r(FarmhouseLayout.rightWindow)
-            window(ctx, right)
-            for k in 0..<2 {
+            for pane in [left, right] {
+                if let shutters = style.shutters {
+                    for side in [pane.minX - pane.width * 0.42, pane.maxX + 2] {
+                        let shutter = Paint.roundedRect(CGRect(x: side, y: pane.minY - 2, width: pane.width * 0.4, height: pane.height + 4), 2)
+                        Paint.fill(ctx, shutter, top: shutters.shaded(0.08), bottom: shutters.shaded(-0.1))
+                        Paint.outline(ctx, shutter, ink, width: 1.5)
+                    }
+                }
+                window(ctx, pane, trim: rundown ? UIColor(hex: 0xE3D9C2) : style.trim)
+                if !rundown {
+                    // Flower boxes.
+                    let box = CGRect(x: pane.minX - 4, y: pane.maxY + 2, width: pane.width + 8, height: 9)
+                    Paint.fill(ctx, Paint.roundedRect(box, 2), UIColor(hex: 0x8A5A3A))
+                    for k in 0..<5 {
+                        let x = box.minX + 5 + CGFloat(k) * (box.width - 10) / 4
+                        Paint.dab(ctx, CGPoint(x: x, y: box.minY - 2), 3.5, 3.5, k % 2 == 0 ? UIColor(hex: 0xE0504A) : UIColor(hex: 0xF2A0C0))
+                    }
+                }
+            }
+            if tier >= 2 {
+                // A porch: a little roof along the front and posts.
+                let porch = Paint.polygon([CGPoint(x: wall.minX - 16, y: wall.minY + 30), CGPoint(x: wall.maxX + 16, y: wall.minY + 30),
+                                           CGPoint(x: wall.maxX + 8, y: wall.minY + 12), CGPoint(x: wall.minX - 8, y: wall.minY + 12)])
+                Paint.outline(ctx, porch, ink, width: 2.5)
+                Paint.fill(ctx, porch, top: style.roofTop.shaded(0.1), bottom: style.roofBottom)
+                for x in [wall.minX - 10, door.minX - 8, door.maxX + 8, wall.maxX + 10] {
+                    Paint.stroke(ctx, from: CGPoint(x: x, y: wall.minY + 30), to: CGPoint(x: x, y: wall.maxY + 2), bend: 0, width: 6, color: ink)
+                    Paint.stroke(ctx, from: CGPoint(x: x, y: wall.minY + 30), to: CGPoint(x: x, y: wall.maxY + 2), bend: 0, width: 4, color: style.trim)
+                }
+                ctx.setFillColor(UIColor(hex: 0xA8845A).cgColor)
+                ctx.fill(CGRect(x: wall.minX - 18, y: wall.maxY - 2, width: wall.width + 36, height: 8))
+            }
+            if tier == 3 {
+                // Lanterns by the door and flower beds.
+                for x in [door.minX - 9, door.maxX + 9] {
+                    Paint.dab(ctx, CGPoint(x: x, y: door.minY + 18), 5, 7, UIColor(hex: 0xF6D57A))
+                    Paint.outline(ctx, Paint.roundedRect(CGRect(x: x - 5, y: door.minY + 11, width: 10, height: 14), 2), ink, width: 1.5)
+                }
+                for _ in 0..<24 {
+                    let p = CGPoint(x: rng.cg((wall.minX - 10)...(wall.maxX + 10)), y: wall.maxY + rng.cg(6...12))
+                    guard abs(p.x - door.midX) > door.width else { continue }
+                    Paint.dab(ctx, p, 4, 3, UIColor(hex: 0x5E8A3E))
+                    Paint.dab(ctx, CGPoint(x: p.x, y: p.y - 2), 2.2, 2.2, [UIColor(hex: 0xE0504A), UIColor(hex: 0xF2C84A), UIColor(hex: 0xB07AD8)][Int(rng.nextUnit() * 3) % 3])
+                }
+            }
+            for k in 0..<(rundown ? 2 : 0) {
                 let y = right.minY + right.height * (0.3 + 0.4 * CGFloat(k))
                 let board = Paint.polygon([
                     CGPoint(x: right.minX - 8, y: y - 6 + CGFloat(k) * 6), CGPoint(x: right.maxX + 8, y: y - 10 + CGFloat(k) * 10),
@@ -160,15 +268,15 @@ enum BuildingPainter {
         }
     }
 
-    private static func window(_ ctx: CGContext, _ rect: CGRect) {
+    private static func window(_ ctx: CGContext, _ rect: CGRect, trim: UIColor = UIColor(hex: 0xE3D9C2)) {
         let glass = Paint.roundedRect(rect, 2)
         Paint.fill(ctx, glass, top: UIColor(hex: 0x4B5A66), bottom: UIColor(hex: 0x303B44))
         Paint.clipped(ctx, to: glass) {
             ctx.setFillColor(UIColor.white.withAlpha(0.18).cgColor)
             ctx.fill(CGRect(x: rect.minX + rect.width * 0.15, y: rect.minY, width: rect.width * 0.18, height: rect.height))
         }
-        Paint.outline(ctx, glass, UIColor(hex: 0xE3D9C2), width: 6)
-        ctx.setStrokeColor(UIColor(hex: 0xE3D9C2).cgColor)
+        Paint.outline(ctx, glass, trim, width: 6)
+        ctx.setStrokeColor(trim.cgColor)
         ctx.setLineWidth(3)
         ctx.move(to: CGPoint(x: rect.midX, y: rect.minY)); ctx.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
         ctx.move(to: CGPoint(x: rect.minX, y: rect.midY)); ctx.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
@@ -176,12 +284,15 @@ enum BuildingPainter {
     }
 
     /// Night overlay: warm light in the windows (drawn additively by the scene).
-    static func farmhouseLights(_ size: CGSize) -> UIImage {
+    static func farmhouseLights(_ size: CGSize, tier: Int) -> UIImage {
         let w = size.width, h = size.height
         func r(_ rect: CGRect) -> CGRect { CGRect(x: rect.minX * w, y: rect.minY * h, width: rect.width * w, height: rect.height * h) }
         return Canvas.image(size) { ctx in
             let warm = UIColor(hex: 0xFFC766)
-            for (rect, strength) in [(r(FarmhouseLayout.leftWindow), CGFloat(1)), (r(FarmhouseLayout.rightWindow), CGFloat(0.45))] {
+            // The boarded-up window only glows through the cracks.
+            var windows = [(r(FarmhouseLayout.leftWindow), CGFloat(1)), (r(FarmhouseLayout.rightWindow), CGFloat(tier == 0 ? 0.45 : 1))]
+            windows += FarmhouseLayout.dormers(tier).map { (r($0).insetBy(dx: 4, dy: 4), CGFloat(0.9)) }
+            for (rect, strength) in windows {
                 Paint.softSpot(ctx, CGPoint(x: rect.midX, y: rect.midY), rect.width * 1.3, warm.withAlpha(0.35 * strength))
                 ctx.setFillColor(warm.withAlpha(0.85 * strength).cgColor)
                 ctx.fill(rect.insetBy(dx: 3, dy: 3))

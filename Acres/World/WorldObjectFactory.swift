@@ -87,6 +87,9 @@ struct WorldObjectFactory {
     /// Chimney tops in unit sprite coordinates (origin bottom-left).
     private static let chimneys: [String: CGPoint] = [
         "building_farmhouse_t0": BuildingPainter.FarmhouseLayout.chimneyTopUnit,
+        "building_farmhouse_t1": BuildingPainter.FarmhouseLayout.chimneyTopUnit,
+        "building_farmhouse_t2": BuildingPainter.FarmhouseLayout.chimneyTopUnit,
+        "building_farmhouse_t3": BuildingPainter.FarmhouseLayout.chimneyTopUnit,
     ]
 
     private func makeSmoke(at position: CGPoint) -> SKEmitterNode {

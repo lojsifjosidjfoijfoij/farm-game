@@ -26,6 +26,10 @@ public enum SimEvent: Equatable, Sendable {
     case weeklyBills(week: Int, total: Int)
     /// A shelf in your shop sold its last item.
     case shelfSoldOut(itemID: String)
+    /// Something new for the almanac.
+    case discovered(String)
+    /// The farm moved up to a new rank (the last one is the finale).
+    case rankUp(Int)
 }
 
 /// How a stretch of time is being simulated.
@@ -93,6 +97,8 @@ public struct Simulation: Sendable {
         BusinessSystem(),
         StoreSystem(),
         WorkerSystem(),
+        AlmanacSystem(),
+        RankSystem(),
     ]
 
     public init(

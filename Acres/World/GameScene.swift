@@ -313,6 +313,8 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         let season = game.season
         let snow = season == .winter ? (game.weather == .snow ? 0.7 : 0.3) : 0
         terrain?.setSeason(season, snowCover: snow)
+        // The farmhouse is renovated as the farm climbs the ranks.
+        if chunks?.farmhouseTier != game.farmhouseTier { chunks?.farmhouseTier = game.farmhouseTier }
         if chunks?.season != season {
             chunks?.season = season
             trees?.season = season
