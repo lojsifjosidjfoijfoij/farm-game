@@ -1,8 +1,9 @@
 import SwiftUI
 import AcresCore
 
-// The game's look: chunky rounded type, glossy "candy" buttons that press
-// down, warm wood and paper, gold ribbons. One place, so every screen matches.
+// The look of menus, cards and celebrations: chunky rounded type, glossy
+// "candy" buttons that press down, warm paper, gold ribbons. (The in-game
+// HUD has its own slimmer look: `HUD`.)
 
 extension Theme {
     static let wood = Color(red: 0.62, green: 0.42, blue: 0.24)
@@ -68,7 +69,7 @@ enum CandyTint {
     }
 }
 
-/// A glossy, raised button that sinks onto its lip when pressed.
+/// A glossy, raised button that sinks onto its lip when pressed (menus and celebrations).
 struct CandyButtonStyle: ButtonStyle {
     var tint: CandyTint = .green
     var cornerRadius: CGFloat = 14
@@ -107,71 +108,7 @@ struct CandyButtonStyle: ButtonStyle {
     }
 }
 
-/// A round wooden token: a wooden rim around a cream face.
-struct TokenBackground: View {
-    var body: some View {
-        GeometryReader { proxy in
-            let rim = min(proxy.size.width, proxy.size.height) * 0.09
-            ZStack {
-                Circle().fill(Theme.woodDark).offset(y: 3)
-                Circle().fill(LinearGradient(colors: [Theme.woodLight, Theme.wood], startPoint: .top, endPoint: .bottom))
-                Circle().fill(LinearGradient(colors: [Theme.cream, Theme.parchment], startPoint: .top, endPoint: .bottom))
-                    .padding(rim)
-                Circle().strokeBorder(Color.white.opacity(0.7), lineWidth: 1.5).padding(rim + 1)
-                Circle().strokeBorder(Theme.woodDark, lineWidth: 2)
-            }
-        }
-        .shadow(color: .black.opacity(0.25), radius: 5, x: 0, y: 3)
-    }
-}
-
-/// A round wooden token button (bed, map, debug) that presses in.
-struct TokenButtonStyle: ButtonStyle {
-    var size: CGFloat = 54
-
-    func makeBody(configuration: Configuration) -> some View {
-        let pressed = configuration.isPressed
-        return configuration.label
-            .frame(width: size, height: size)
-            .background(TokenBackground())
-            .offset(y: pressed ? 2 : 0)
-            .scaleEffect(pressed ? 0.94 : 1)
-            .animation(.spring(response: 0.18, dampingFraction: 0.6), value: pressed)
-    }
-}
-
 // MARK: - Surfaces
-
-/// A warm plank of wood with a little grain (the tool belt, headers).
-struct WoodPlank: View {
-    var cornerRadius: CGFloat = 20
-
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(LinearGradient(colors: [Theme.woodLight, Theme.wood, Theme.woodDark.opacity(0.95)],
-                                     startPoint: .top, endPoint: .bottom))
-            // Grain.
-            VStack(spacing: 7) {
-                ForEach(0..<5, id: \.self) { row in
-                    Capsule()
-                        .fill(Theme.woodDark.opacity(row % 2 == 0 ? 0.16 : 0.1))
-                        .frame(height: 1.5)
-                        .padding(.leading, CGFloat(row * 13 % 40))
-                        .padding(.trailing, CGFloat(row * 29 % 50))
-                }
-            }
-            .padding(.vertical, 8)
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.28), lineWidth: 1.5)
-                .padding(2)
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .strokeBorder(Theme.woodDark, lineWidth: 2)
-        }
-        .shadow(color: .black.opacity(0.3), radius: 6, x: 0, y: 4)
-    }
-}
 
 /// The paper that menus are written on: warm, with softly darker edges.
 struct PaperBackground: View {
@@ -308,58 +245,19 @@ struct Sunburst: View {
     }
 }
 
-/// A glossy progress bar in a sunken track (XP, energy).
-struct XPBar: View {
-    let fraction: Double
-    var top: Color = Color(red: 0.6, green: 0.86, blue: 0.3)
-    var bottom: Color = Color(red: 0.32, green: 0.62, blue: 0.16)
-
-    var body: some View {
-        GeometryReader { proxy in
-            let width = proxy.size.width * CGFloat(max(0, min(1, fraction)))
-            ZStack(alignment: .leading) {
-                Capsule().fill(Theme.woodDark.opacity(0.35))
-                Capsule().strokeBorder(Theme.woodDark.opacity(0.35), lineWidth: 1)
-                Capsule()
-                    .fill(LinearGradient(colors: [top, bottom], startPoint: .top, endPoint: .bottom))
-                    .frame(width: max(proxy.size.height, width))
-                    .opacity(fraction > 0.001 ? 1 : 0)
-                Capsule()
-                    .fill(Color.white.opacity(0.35))
-                    .frame(width: max(0, width - proxy.size.height * 0.6), height: proxy.size.height * 0.28)
-                    .offset(x: proxy.size.height * 0.3, y: -proxy.size.height * 0.2)
-                    .opacity(fraction > 0.05 ? 1 : 0)
-            }
-            .animation(.easeOut(duration: 0.5), value: fraction)
-        }
-    }
-}
-
-/// The big message that drops in at the top: cream paper with a gold rim.
+/// The message that drops in at the top of the HUD: slim dark slate, white type.
 struct BannerView: View {
     let text: String
 
     var body: some View {
         Text(text)
-            .font(Theme.title(16))
-            .foregroundStyle(Theme.ink)
+            .font(HUD.font(14))
+            .foregroundStyle(HUD.text)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, 18)
-            .padding(.vertical, 10)
-            .background(
-                ZStack {
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .fill(LinearGradient(colors: [Theme.cream, Theme.parchment], startPoint: .top, endPoint: .bottom))
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.9), lineWidth: 1.5)
-                        .padding(3)
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .strokeBorder(LinearGradient(colors: [Theme.goldLight, Theme.goldDark], startPoint: .top, endPoint: .bottom),
-                                      lineWidth: 3)
-                }
-                .shadow(color: .black.opacity(0.28), radius: 8, x: 0, y: 4)
-            )
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .background(RoundedRectangle(cornerRadius: 15, style: .continuous).fill(HUD.panelStrong))
     }
 }
 
@@ -369,15 +267,14 @@ struct MentorPortrait: View {
 
     var body: some View {
         ZStack {
-            Circle().fill(LinearGradient(colors: [Theme.sky, Theme.skyDeep], startPoint: .top, endPoint: .bottom))
+            Circle().fill(Color(red: 0.5, green: 0.71, blue: 0.85))
             Image(uiImage: AssetCatalog.shared.uiImage("ui_portrait_mentor"))
                 .resizable()
                 .scaledToFit()
                 .clipShape(Circle())
-            Circle().strokeBorder(LinearGradient(colors: [Theme.goldLight, Theme.goldDark], startPoint: .top, endPoint: .bottom),
-                                  lineWidth: size * 0.07)
+            Circle().strokeBorder(Color.white, lineWidth: max(2, size * 0.045))
         }
         .frame(width: size, height: size)
-        .shadow(color: .black.opacity(0.25), radius: 3, x: 0, y: 2)
+        .shadow(color: .black.opacity(0.3), radius: 3, x: 0, y: 2)
     }
 }

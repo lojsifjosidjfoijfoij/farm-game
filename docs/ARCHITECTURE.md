@@ -344,11 +344,15 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
 - **Draw order** (`ZLayer`): ground → flat things/shadows → standing objects → day/night grade
   (a multiply overlay) → the screen-edge vignette (`fx_vignette`, on the camera) → additive night
   lights (windows) → debug.
-- **HUD look** (`UI/GameStyle.swift`): one design system for every screen. Candy buttons
-  (`CandyButtonStyle`) press down onto a darker lip; round buttons are wooden tokens; the tool
-  belt is a wooden plank; menus sit on paper (`PaperBackground`); celebrations share
-  `RewardCard` (sunburst, ribbon title, gold-rimmed paper). Everything is drawn in SwiftUI, so it
-  stays sharp at any size, and real art can replace pieces later.
+- **HUD look** (`UI/HUDStyle.swift`, enum `HUD`): slim see-through slate (`HUD.panel`),
+  white rounded numbers with a thin dark edge (`hudOutline()`), icons overlapping the ends of
+  their bars (`HUDMeter`), round buttons (`HUDRoundButtonStyle`) and one orange pill style for
+  the main action (`HUDPillButtonStyle`). The design lives on the *Acres HUD* canvas in Claude
+  (board "C2"); change it there first, then here.
+- **Menus and celebrations** (`UI/GameStyle.swift`): candy buttons (`CandyButtonStyle`) press
+  down onto a darker lip; menus sit on paper (`PaperBackground`); celebrations share
+  `RewardCard` (sunburst, ribbon title, gold-rimmed paper). Everything is drawn in SwiftUI, so
+  it stays sharp at any size, and real art can replace pieces later.
 - **Day/night:** `DayNightCurve` (core, tested) gives a tint and a night-light strength per hour.
 - **Frame rate:** capped at 60 fps (also on ProMotion screens) for battery life and consistent
   behavior.

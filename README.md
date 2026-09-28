@@ -60,11 +60,16 @@ Your save carries over (same format, v13). To see it all from the start: basket 
    tour of your fields. The thing to tap pulses (tool, bed, goal, phone, drive button); the
    world shows a ring or an arrow. Doing a step early counts (e.g. harvesting skips ahead).
    *Skip tutorial* ends it.
-3. **The look:** glossy buttons that press down, wooden tokens for the round buttons, a wooden
-   tool belt with a gold coin under the tool in hand, a gold star for your level with a glossy
-   XP bar, cream panels with gold rims, paper behind every menu, softly darker screen edges.
-   Level ups, new ranks and the ending get rays of light, a ribbon and confetti; the welcome
-   back card and the weekly report match. Going to bed shows the moon.
+3. **The HUD** (designed together on the *Acres HUD* canvas in Claude, board "C2"): slim,
+   see-through dark slate so the farm shows through, white rounded numbers with a thin dark
+   edge, and one orange accent. Top left: your level in a gold star over the XP bar, then the
+   goal and today's chores (they turn orange when a reward waits). Top right: coins, energy,
+   the clock (and fuel). Bottom: Drive on the left, the tools on a slim tray in the middle (the
+   one in hand rises onto an orange disc), and bed, **phone** (moved here) and basket on the
+   right. Tom's card is dark too, with his portrait over its corner.
+4. **Everything else:** paper behind every menu and softly darker screen edges. Level ups, new
+   ranks and the ending get rays of light, a ribbon and confetti; the welcome back card and the
+   weekly report match. Going to bed shows the moon.
 
 ## A simpler start: what to test
 

@@ -66,35 +66,25 @@ enum Theme {
     }
 }
 
-/// The cream "pill" used by HUD elements: a soft gradient, a bright inner
-/// edge and a warm brown rim, floating on a shadow.
+/// The slim see-through slate chip behind HUD elements (see `HUD`).
 struct HUDPanel: ViewModifier {
-    var cornerRadius: CGFloat = 14
+    var cornerRadius: CGFloat = 12
+    var strong = false
 
     func body(content: Content) -> some View {
         content
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
             .background(
-                ZStack {
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .fill(LinearGradient(colors: [Theme.cream, Theme.parchment.opacity(0.97)], startPoint: .top, endPoint: .bottom))
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.8), lineWidth: 1.5)
-                        .padding(1.5)
-                }
-                .shadow(color: .black.opacity(0.22), radius: 6, x: 0, y: 3)
-            )
-            .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(Theme.wood.opacity(0.55), lineWidth: 1.5)
+                    .fill(strong ? HUD.panelStrong : HUD.panel)
             )
     }
 }
 
 extension View {
-    func hudPanel(cornerRadius: CGFloat = 14) -> some View {
-        modifier(HUDPanel(cornerRadius: cornerRadius))
+    func hudPanel(cornerRadius: CGFloat = 12, strong: Bool = false) -> some View {
+        modifier(HUDPanel(cornerRadius: cornerRadius, strong: strong))
     }
 }
 
