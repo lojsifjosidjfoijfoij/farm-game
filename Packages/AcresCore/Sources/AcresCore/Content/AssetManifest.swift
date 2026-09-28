@@ -81,7 +81,7 @@ public enum AssetManifest {
     // MARK: - Crops
 
     static let crops: [AssetSpec] = CropCatalog.all.flatMap { crop -> [AssetSpec] in
-        let tall = crop.id == "corn"
+        let tall = crop.id == "corn" || crop.id == "sunflower"
         return crop.stageNotes.enumerated().map { stage, text in
             .sprite("crop_\(crop.id)_stage\(stage)", .crop, tiles: 1, tall ? 2 : 1.25, anchorY: 0.1,
                     phase: 2, family: "crop_\(crop.id)",

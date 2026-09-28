@@ -34,7 +34,7 @@ procedurally in code.
 |---|---:|---:|
 | Terrain (tileable ground textures) | 11 | 5 |
 | Fields | 4 | 0 |
-| Crops | 30 | 0 |
+| Crops | 75 | 0 |
 | Trees | 40 | 4 |
 | Nature props | 14 | 10 |
 | Buildings | 56 | 3 |
@@ -42,10 +42,10 @@ procedurally in code.
 | Vehicles | 116 | 1 |
 | Characters | 123 | 0 |
 | Animals | 70 | 0 |
-| Item icons | 39 | 0 |
+| Item icons | 57 | 0 |
 | Effects & particles | 33 | 4 |
 | User interface | 33 | 15 |
-| **Total** | **602** | **52** |
+| **Total** | **665** | **52** |
 | Audio files | 58 | 0 |
 
 ## Terrain (tileable ground textures)
@@ -107,6 +107,51 @@ procedurally in code.
 | `crop_pumpkin_stage2` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Pumpkin, stage 2 of 4: a young vine with big lobed leaves. One tile of plants standing on the soil tile. |
 | `crop_pumpkin_stage3` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Pumpkin, stage 3 of 4: vine with a small green pumpkin. One tile of plants standing on the soil tile. |
 | `crop_pumpkin_stage4` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Pumpkin, stage 4 of 4: vine with a big ribbed orange pumpkin. One tile of plants standing on the soil tile. |
+| `crop_lettuce_stage0` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Lettuce, stage 0 of 4: sown soil. One tile of plants standing on the soil tile. |
+| `crop_lettuce_stage1` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Lettuce, stage 1 of 4: tiny round seedlings. One tile of plants standing on the soil tile. |
+| `crop_lettuce_stage2` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Lettuce, stage 2 of 4: a small loose rosette. One tile of plants standing on the soil tile. |
+| `crop_lettuce_stage3` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Lettuce, stage 3 of 4: a full soft rosette. One tile of plants standing on the soil tile. |
+| `crop_lettuce_stage4` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Lettuce, stage 4 of 4: a big crisp lettuce head. One tile of plants standing on the soil tile. |
+| `crop_onion_stage0` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Onion, stage 0 of 4: sown soil. One tile of plants standing on the soil tile. |
+| `crop_onion_stage1` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Onion, stage 1 of 4: thin green shoots. One tile of plants standing on the soil tile. |
+| `crop_onion_stage2` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Onion, stage 2 of 4: a clump of hollow leaves. One tile of plants standing on the soil tile. |
+| `crop_onion_stage3` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Onion, stage 3 of 4: tall leaves, bulb swelling. One tile of plants standing on the soil tile. |
+| `crop_onion_stage4` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Onion, stage 4 of 4: flopped leaves over golden onion bulbs. One tile of plants standing on the soil tile. |
+| `crop_kale_stage0` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Kale, stage 0 of 4: sown soil. One tile of plants standing on the soil tile. |
+| `crop_kale_stage1` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Kale, stage 1 of 4: small frilly seedlings. One tile of plants standing on the soil tile. |
+| `crop_kale_stage2` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Kale, stage 2 of 4: a low frilly plant. One tile of plants standing on the soil tile. |
+| `crop_kale_stage3` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Kale, stage 3 of 4: tall curly blue-green leaves. One tile of plants standing on the soil tile. |
+| `crop_kale_stage4` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Kale, stage 4 of 4: a lush frosty-green kale plant. One tile of plants standing on the soil tile. |
+| `crop_tomato_stage0` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Tomato, stage 0 of 4: sown soil. One tile of plants standing on the soil tile. |
+| `crop_tomato_stage1` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Tomato, stage 1 of 4: a small seedling. One tile of plants standing on the soil tile. |
+| `crop_tomato_stage2` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Tomato, stage 2 of 4: a young plant tied to a cane. One tile of plants standing on the soil tile. |
+| `crop_tomato_stage3` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Tomato, stage 3 of 4: a leafy plant with yellow flowers. One tile of plants standing on the soil tile. |
+| `crop_tomato_stage4` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Tomato, stage 4 of 4: a staked plant hung with ripe red tomatoes. One tile of plants standing on the soil tile. |
+| `crop_garlic_stage0` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Garlic, stage 0 of 4: sown soil. One tile of plants standing on the soil tile. |
+| `crop_garlic_stage1` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Garlic, stage 1 of 4: thin green shoots. One tile of plants standing on the soil tile. |
+| `crop_garlic_stage2` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Garlic, stage 2 of 4: flat green leaves. One tile of plants standing on the soil tile. |
+| `crop_garlic_stage3` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Garlic, stage 3 of 4: tall leaves with a curling scape. One tile of plants standing on the soil tile. |
+| `crop_garlic_stage4` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Garlic, stage 4 of 4: dry leaves over plump white bulbs. One tile of plants standing on the soil tile. |
+| `crop_sunflower_stage0` | 128 × 256 | 1 × 2 | 0.1 | 2 | Sunflower, stage 0 of 4: sown soil. One tile of plants standing on the soil tile. |
+| `crop_sunflower_stage1` | 128 × 256 | 1 × 2 | 0.1 | 2 | Sunflower, stage 1 of 4: two broad seed leaves. One tile of plants standing on the soil tile. |
+| `crop_sunflower_stage2` | 128 × 256 | 1 × 2 | 0.1 | 2 | Sunflower, stage 2 of 4: a knee-high stem. One tile of plants standing on the soil tile. |
+| `crop_sunflower_stage3` | 128 × 256 | 1 × 2 | 0.1 | 2 | Sunflower, stage 3 of 4: a tall stem with a green bud. One tile of plants standing on the soil tile. |
+| `crop_sunflower_stage4` | 128 × 256 | 1 × 2 | 0.1 | 2 | Sunflower, stage 4 of 4: a tall sunflower with a big golden head. One tile of plants standing on the soil tile. |
+| `crop_blueberry_stage0` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Blueberry, stage 0 of 4: sown soil. One tile of plants standing on the soil tile. |
+| `crop_blueberry_stage1` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Blueberry, stage 1 of 4: a twig with a few leaves. One tile of plants standing on the soil tile. |
+| `crop_blueberry_stage2` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Blueberry, stage 2 of 4: a small round bush. One tile of plants standing on the soil tile. |
+| `crop_blueberry_stage3` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Blueberry, stage 3 of 4: a bush with white bell flowers. One tile of plants standing on the soil tile. |
+| `crop_blueberry_stage4` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Blueberry, stage 4 of 4: a bush covered in dusty blue berries. One tile of plants standing on the soil tile. |
+| `crop_cabbage_stage0` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Cabbage, stage 0 of 4: sown soil. One tile of plants standing on the soil tile. |
+| `crop_cabbage_stage1` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Cabbage, stage 1 of 4: small round seedlings. One tile of plants standing on the soil tile. |
+| `crop_cabbage_stage2` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Cabbage, stage 2 of 4: a spreading rosette. One tile of plants standing on the soil tile. |
+| `crop_cabbage_stage3` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Cabbage, stage 3 of 4: a rosette cupping a young head. One tile of plants standing on the soil tile. |
+| `crop_cabbage_stage4` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Cabbage, stage 4 of 4: a big firm pale-green cabbage. One tile of plants standing on the soil tile. |
+| `crop_melon_stage0` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Melon, stage 0 of 4: sown soil. One tile of plants standing on the soil tile. |
+| `crop_melon_stage1` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Melon, stage 1 of 4: two round seed leaves. One tile of plants standing on the soil tile. |
+| `crop_melon_stage2` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Melon, stage 2 of 4: a young vine. One tile of plants standing on the soil tile. |
+| `crop_melon_stage3` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Melon, stage 3 of 4: a vine with a small striped melon. One tile of plants standing on the soil tile. |
+| `crop_melon_stage4` | 128 × 160 | 1 × 1.25 | 0.1 | 2 | Melon, stage 4 of 4: a vine with a big ripe striped melon. One tile of plants standing on the soil tile. |
 
 ## Trees
 
@@ -506,6 +551,24 @@ procedurally in code.
 | `item_seeds_corn` | 132 × 132 | UI | — | 2 | Paper seed packet with a picture of corn on it. |
 | `item_pumpkin` | 132 × 132 | UI | — | 2 | A round orange pumpkin with a curly stem. Inventory icon. |
 | `item_seeds_pumpkin` | 132 × 132 | UI | — | 2 | Paper seed packet with a picture of pumpkins on it. |
+| `item_lettuce` | 132 × 132 | UI | — | 2 | A crisp green lettuce head. Inventory icon. |
+| `item_seeds_lettuce` | 132 × 132 | UI | — | 2 | Paper seed packet with a picture of lettuce on it. |
+| `item_onion` | 132 × 132 | UI | — | 2 | Two golden onions with papery skins. Inventory icon. |
+| `item_seeds_onion` | 132 × 132 | UI | — | 2 | Paper seed packet with a picture of onions on it. |
+| `item_kale` | 132 × 132 | UI | — | 2 | A bunch of curly dark-green kale. Inventory icon. |
+| `item_seeds_kale` | 132 × 132 | UI | — | 2 | Paper seed packet with a picture of kale on it. |
+| `item_tomato` | 132 × 132 | UI | — | 2 | Two ripe red tomatoes. Inventory icon. |
+| `item_seeds_tomato` | 132 × 132 | UI | — | 2 | Paper seed packet with a picture of tomatoes on it. |
+| `item_garlic` | 132 × 132 | UI | — | 2 | A plump white garlic bulb. Inventory icon. |
+| `item_seeds_garlic` | 132 × 132 | UI | — | 2 | Paper seed packet with a picture of garlic on it. |
+| `item_sunflower` | 132 × 132 | UI | — | 2 | A sunflower head, bright petals around dark seeds. Inventory icon. |
+| `item_seeds_sunflower` | 132 × 132 | UI | — | 2 | Paper seed packet with a picture of sunflowers on it. |
+| `item_blueberry` | 132 × 132 | UI | — | 2 | A cluster of dusty blue blueberries. Inventory icon. |
+| `item_seeds_blueberry` | 132 × 132 | UI | — | 2 | Paper seed packet with a picture of blueberries on it. |
+| `item_cabbage` | 132 × 132 | UI | — | 2 | A round pale-green cabbage. Inventory icon. |
+| `item_seeds_cabbage` | 132 × 132 | UI | — | 2 | Paper seed packet with a picture of cabbages on it. |
+| `item_melon` | 132 × 132 | UI | — | 2 | A striped green melon with a juicy slice. Inventory icon. |
+| `item_seeds_melon` | 132 × 132 | UI | — | 2 | Paper seed packet with a picture of melons on it. |
 | `item_egg` | 132 × 132 | UI | — | 4 | Brown egg, inventory icon. |
 | `item_milk` | 132 × 132 | UI | — | 4 | Glass bottle of milk, inventory icon. |
 | `item_wool` | 132 × 132 | UI | — | 4 | Ball of cream wool, inventory icon. |

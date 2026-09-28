@@ -331,6 +331,19 @@ final class FarmingTests: XCTestCase {
                        .failure(.noSeeds(cropID: "carrot")))
     }
 
+    func testEverySeasonHasCropsToPlant() {
+        for season in Season.allCases {
+            let crops = CropCatalog.all.filter { $0.canBePlanted(in: season) }
+            XCTAssertGreaterThanOrEqual(crops.count, 3, "\(season.name) needs crops")
+            XCTAssertTrue(crops.contains { $0.unlockLevel <= 3 }, "\(season.name) has an early crop")
+        }
+        XCTAssertEqual(Set(CropCatalog.all.map(\.id)).count, CropCatalog.all.count)
+        for crop in CropCatalog.all {
+            XCTAssertEqual(crop.stageNotes.count, CropDefinition.stageCount, crop.id)
+            XCTAssertLessThan(crop.seedCost, crop.sellPrice.lowerBound * crop.yield.lowerBound, "\(crop.id) pays back its seed")
+        }
+    }
+
     func testPlantableSeedsFollowSeasonAndPouch() {
         let sim = newSim()
         let farming = Farming(map: map, balance: sim.balance)

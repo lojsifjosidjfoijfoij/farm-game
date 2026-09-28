@@ -28,7 +28,7 @@ enum CropPainter {
         case "strawberry": berryRed
         case "corn": cornYellow
         case "pumpkin": pumpkinOrange
-        default: leafGreen
+        default: ExtraCropPainter.color(of: crop) ?? leafGreen
         }
     }
 
@@ -54,7 +54,7 @@ enum CropPainter {
             case "strawberry": strawberry(ctx, foot, stage, rng: &rng)
             case "corn": corn(ctx, foot, stage, rng: &rng)
             case "pumpkin": pumpkin(ctx, foot, stage, rng: &rng)
-            default: break
+            default: _ = ExtraCropPainter.stage(crop, ctx, foot, stage, rng: &rng)
             }
         }
     }
@@ -502,7 +502,7 @@ enum CropPainter {
             pumpkinBody(ctx, center: CGPoint(x: c.x, y: c.y + 6 * s), rx: 40 * s, ry: 31 * s)
             leaf(ctx, CGPoint(x: c.x + 4 * s, y: c.y - 26 * s), angle: -0.3, length: 22 * s, width: 7 * s, color: leafGreen)
         default:
-            break
+            _ = ExtraCropPainter.produce(ctx, crop, in: rect, rng: &rng)
         }
     }
 

@@ -19,9 +19,10 @@ public struct ClientDefinition: Sendable, Hashable, Identifiable {
 public enum ClientCatalog {
     public static let all: [ClientDefinition] = [
         ClientDefinition(id: "rusty_spoon", name: "The Rusty Spoon", kind: "Restaurant", zone: HomeValleyMap.restaurantZone,
-                         wants: ["carrot", "potato", "corn", "pumpkin", "egg", "milk", "truffle"], opens: 7, closes: 22),
+                         wants: ["carrot", "potato", "corn", "pumpkin", "egg", "milk", "truffle", "lettuce", "onion", "tomato",
+                                 "garlic", "cabbage"], opens: 7, closes: 22),
         ClientDefinition(id: "hansens_bakery", name: "Hansen's Bakery", kind: "Bakery", zone: HomeValleyMap.bakeryZone,
-                         wants: ["wheat", "egg", "milk", "apple", "cherry", "strawberry"], opens: 5, closes: 17),
+                         wants: ["wheat", "egg", "milk", "apple", "cherry", "strawberry", "blueberry", "sunflower"], opens: 5, closes: 17),
         ClientDefinition(id: "lumber_yard", name: "North Woods Lumber", kind: "Lumber yard", zone: HomeValleyMap.lumberYardZone,
                          wants: ["log"], opens: 7, closes: 18),
     ]
