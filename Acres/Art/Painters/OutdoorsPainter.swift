@@ -13,6 +13,11 @@ enum OutdoorsPainter {
         case "nature_lily_pads": return lilyPads(size, rng: &rng)
         case "fx_bobber": return Canvas.image(size) { ctx in bobber(ctx, CGPoint(x: size.width / 2, y: size.height / 2), size.width / 100) }
         case "fx_exclaim": return exclaim(size)
+        case "fx_water_ripple": return Canvas.image(size) { ctx in
+            let ring = CGPath(ellipseIn: CGRect(x: size.width * 0.08, y: size.height * 0.12, width: size.width * 0.84,
+                                                height: size.height * 0.76), transform: nil)
+            Paint.outline(ctx, ring, UIColor.white.withAlpha(0.75), width: max(2, size.height * 0.08))
+        }
         default: break
         }
         guard spec.name.hasPrefix("item_") else { return nil }
