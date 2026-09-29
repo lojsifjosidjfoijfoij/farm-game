@@ -45,6 +45,11 @@ final class ChunkManager {
     var season: Season = .summer {
         didSet { if season != oldValue { unloadAll() } }
     }
+    /// Brush over land the farm can't use yet (see `WildLand`). Changing it
+    /// (a level up, land bought) reloads the chunks.
+    var wildLand: WildLand = .none {
+        didSet { if wildLand != oldValue { unloadAll() } }
+    }
 
     /// Chunks within this margin (in chunks) outside the screen are loaded early…
     private let loadMargin: CGFloat = 0.5
@@ -157,8 +162,47 @@ final class ChunkManager {
             for light in nodes.lights { light.alpha = lightIntensity }
             chunk.lights += nodes.lights
         }
+        addBrush(to: chunk, coord)
         loaded[coord] = chunk
         updateBorder(chunk, coord)
+    }
+
+    /// Thick brush on land the farm can't use yet: bushes, long grass, rocks,
+    /// stumps and young trees, one or two per tile and the same on every
+    /// visit. No shadows, to keep the node count down: it's a dense tangle.
+    private func addBrush(to chunk: LoadedChunk, _ coord: ChunkCoord) {
+        let rect = map.rect(of: coord)
+        for y in Int(rect.minY)..<Int(rect.maxY) {
+            for x in Int(rect.minX)..<Int(rect.maxX) {
+                let tile = TileCoord(x, y)
+                guard wildLand.contains(tile), !map.isBlocked(tile), isTileCleared?(tile) != true else { continue }
+                let ground = map.terrain(at: tile)
+                guard ground == .grass || ground == .dirt else { continue }
+                var rng = SeededRandom(seed: SeededRandom.stableHash("brush") &+ UInt64(y &* 4099 &+ x))
+                for (kind, variant) in Self.brush(&rng) {
+                    let spot = Vec2(Double(x) + 0.2 + rng.nextUnit() * 0.6, Double(y) + 0.15 + rng.nextUnit() * 0.7)
+                    guard let nodes = factory.makeNodes(for: MapObject(kind: kind, position: spot, variant: variant), season: season)
+                    else { continue }
+                    (nodes.isFlat ? flatLayer : objectLayer).addChild(nodes.main)
+                    chunk.nodes.append(nodes.main)
+                }
+            }
+        }
+    }
+
+    /// What grows on one tile of brush.
+    private static func brush(_ rng: inout SeededRandom) -> [(String, Int)] {
+        let roll = rng.nextUnit()
+        let variant = Int(rng.nextUnit() * 3)
+        switch roll {
+        case ..<0.3: return [(roll < 0.15 ? "nature_bush_a" : "nature_bush_b", variant)]
+        case ..<0.5: return [("nature_bush_a", variant), ("nature_grass_tuft_b", variant)]
+        case ..<0.68: return [("nature_grass_tuft_a", variant), ("nature_grass_tuft_b", variant)]
+        case ..<0.76: return [("nature_rock_small", variant), ("nature_grass_tuft_a", variant)]
+        case ..<0.82: return [("tree_stump", variant)]
+        case ..<0.92: return [(roll < 0.87 ? "tree_oak_young" : "tree_birch_young", variant)]
+        default: return [("nature_bush_b", variant), ("nature_flowers_white", variant)]
+        }
     }
 
     private func unload(_ coord: ChunkCoord) {

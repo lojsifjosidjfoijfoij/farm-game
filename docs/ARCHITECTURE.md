@@ -286,6 +286,14 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   finds and the rod until then; the app hides the phone, chores, tools, phone tabs and shop rows
   (showing only what's open now or next level). Orders and chores still run underneath, so the
   first orders are waiting when the phone appears.
+- **Brush** (`WildLand`, core, derived from level and land, nothing saved): a new farm is a
+  clearing (house, barn, yard, the first field) in thick brush. `WildLand.homePatches` clear at
+  levels 2–4 (each home field lies in a patch that clears at the field's level); land for sale is
+  brush until bought; owned fields and old farmland are always clear. Brush is an obstacle
+  (`Obstacles`, `Pathfinder`, `TruckPhysics` take a `wild:`), `groundProblem` answers
+  `.overgrown`, and wild finds skip it. `ChunkManager` draws it per chunk (deterministic bushes,
+  long grass, rocks, stumps and young trees, no shadows) from `GameController.drawnWildLand`, and
+  the scene puffs dust where it clears.
 - **The farm grows with you** (presentation only, no save change): pens below their level are
   drawn as overgrowth and ignore taps (`PenDefinition.isShown`, `RanchRenderer`); field outlines
   and FOR SALE signs for fields and land appear only from their level (`EstateRenderer`, which
@@ -343,12 +351,13 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   immediately; nearby ones trickle in one per frame; far ones unload (with hysteresis). The map can
   grow large without more nodes on screen.
 - **Pixel art** (`Art/PixelArt.swift`): placeholders are painted at 128 px per tile, then shrunk
-  exactly 4× (32 px per tile) with hard alpha edges (soft effects keep a few alpha steps), a
+  8× in the world (16 px per tile) and 4× for UI images, with hard alpha edges (soft effects keep a
+  few alpha steps), a dark one-pixel outline around standing sprites and item icons, a
   saturation and contrast boost and a stepped palette. Textures use nearest-neighbour filtering;
-  SwiftUI shows catalog images with `.interpolation(.none)`. `PixelArt.shrink` sets the pixel size.
+  SwiftUI shows catalog images with `.interpolation(.none)`. `PixelArt.worldShrink` sets the pixel size.
 - **Terrain:** one sprite per chunk. Its texture is a tiny splat map (dirt/gravel/asphalt
   weights). A fragment shader blends seamless detail textures and pushes the edges through noise,
-  so borders look organic rather than tiled; it snaps to the same 32-per-tile pixel grid. One draw
+  so borders look organic rather than tiled; it snaps to the same 16-per-tile pixel grid. One draw
   call per chunk.
 - **Draw order** (`ZLayer`): ground → flat things/shadows → standing objects → day/night grade
   (a multiply overlay) → the screen-edge vignette (`fx_vignette`, on the camera) → additive night
@@ -372,7 +381,7 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
    and art notes. `docs/ASSETS.md` is generated from it (`swift run acres-tools assets`), and a
    test fails if the doc is stale.
 2. `AssetCatalog.texture(name)` looks for real art in `Assets.xcassets` (used as is: deliver pixel
-   art at 32 px per tile), then a procedural placeholder (`PlaceholderPainter`, put on the pixel
+   art at 16 px per tile), then a procedural placeholder (`PlaceholderPainter`, put on the pixel
    grid by `PixelArt`), then shows a magenta checkerboard.
 3. Sprites are sized from the manifest, not from the image, so art at any resolution drops in.
 

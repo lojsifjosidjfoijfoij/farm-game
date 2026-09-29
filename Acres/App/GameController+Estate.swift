@@ -18,6 +18,7 @@ extension GameController {
     // MARK: Fields
 
     static let notAFieldMessage = "Crops only grow in your fields (the marked patches). More fields are on your phone → Farm."
+    static let overgrownMessage = "Thick brush. It clears back as your farm grows: more room comes with levels, and land you buy."
 
     /// Fields on your land that aren't yours yet (to buy now or later).
     var fieldsForSale: [FieldDefinition] { estateRules.fieldsForSale(simulation.state) }

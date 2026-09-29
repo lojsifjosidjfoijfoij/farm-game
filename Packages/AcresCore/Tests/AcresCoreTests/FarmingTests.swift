@@ -43,7 +43,8 @@ final class FarmingTests: XCTestCase {
         let starter = FieldCatalog.field(FieldCatalog.starterID)!
         XCTAssertEqual(sim.state.ownedFields, [starter.id], "a new farm has one small field")
         XCTAssertEqual(plowableTiles(1000, in: sim).count, starter.tileCount, "and that's all the farmland there is")
-        XCTAssertEqual(sim.work(.plow, at: TileCoord(36, 36), on: map).outcome, .failed(.notAField), "grass next to it")
+        XCTAssertEqual(sim.work(.plow, at: TileCoord(31, 30), on: map).outcome, .failed(.notAField), "the yard next to it")
+        XCTAssertEqual(sim.work(.plow, at: TileCoord(36, 32), on: map).outcome, .failed(.overgrown), "brush beyond it")
         XCTAssertEqual(sim.work(.plow, at: starter.tiles[0], on: map).outcome, .plowed)
     }
 

@@ -8,9 +8,9 @@ public enum Pathfinder {
     /// The first waypoint is the first step away from `start`; the last is `goal`
     /// (or the nearest reachable spot next to it).
     public static func path(on map: WorldMap, woodland: Woodland = Woodland(), built: Set<TileCoord> = [],
-                            from start: Vec2, to goal: Vec2) -> [Vec2]? {
+                            wild: WildLand = .none, from start: Vec2, to goal: Vec2) -> [Vec2]? {
         let width = map.width, height = map.height
-        let obstacles = Obstacles(map: map, woodland: woodland, built: built)
+        let obstacles = Obstacles(map: map, woodland: woodland, built: built, wild: wild)
         func index(_ t: TileCoord) -> Int { t.y * width + t.x }
         func passable(_ t: TileCoord) -> Bool { map.isInside(t) && !obstacles.isBlocked(t) }
 

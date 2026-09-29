@@ -16,7 +16,7 @@ struct Destination: Identifiable, Equatable {
 
 extension GameController {
     var physics: TruckPhysics {
-        TruckPhysics(map: map, tuning: balance.driving, woodland: simulation.state.woodland, built: builtTiles)
+        TruckPhysics(map: map, tuning: balance.driving, woodland: simulation.state.woodland, built: builtTiles, wild: wildLand)
     }
     var truckState: TruckState { simulation.state.truck }
     var truckSurface: Terrain { physics.surface(at: simulation.state.truck.position) }
@@ -63,6 +63,20 @@ extension GameController {
         Sound.play(.door, volume: 0.8)
     }
 
+    /// Old saves: the farmer or the truck may stand where brush grows now
+    /// (the home fields moved). Put them back in the yard.
+    func rescueFromBrush() {
+        let wild = wildLand
+        simulation.modify { state in
+            if wild.contains(TileCoord(containing: state.truck.position)) {
+                state.truck.position = HomeValleyMap.truckParkingSpot
+            }
+            if !state.farmer.inTruck, wild.contains(TileCoord(containing: state.farmer.position)) {
+                state.farmer.position = HomeValleyMap.farmhouseDoor
+            }
+        }
+    }
+
     /// A free spot next to the truck for the farmer to step out onto.
     private func exitSpot() -> Vec2 {
         let truck = simulation.state.truck
@@ -83,7 +97,7 @@ extension GameController {
     /// Plans a route to a spot and lets the autopilot take the wheel.
     func driveTo(_ target: Vec2) {
         guard isDriving else { return }
-        guard let path = Pathfinder.path(on: map, woodland: simulation.state.woodland, built: builtTiles,
+        guard let path = Pathfinder.path(on: map, woodland: simulation.state.woodland, built: builtTiles, wild: wildLand,
                                          from: simulation.state.truck.position, to: target) else {
             showMessage("Can't find a way there.")
             return

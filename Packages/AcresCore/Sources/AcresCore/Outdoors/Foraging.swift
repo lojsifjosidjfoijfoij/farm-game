@@ -116,10 +116,12 @@ public struct Foraging: Sendable {
         let season = state.clock.date(daysPerSeason: balance.daysPerSeason).season
         let picked = state.forage.picked(on: day)
         let obstacles = EstateLayout.blockedTiles(state.estate)
+        let wild = WildLand(state: state)  // nothing turns up in thick brush
         return Self.spawns(day: day, season: season, count: count(in: season)).filter { spawn in
             let tile = TileCoord(containing: spawn.position)
             return !picked.contains(spawn.id) && state.plots[tile] == nil && state.woodland.trees[tile] == nil
                 && !state.estate.isOccupied(tile) && !obstacles.contains(tile) && !state.isFarmland(tile)
+                && !wild.contains(tile)
         }
     }
 

@@ -154,6 +154,12 @@ extension GameController {
             }
             return
         }
+        // Brush: say what it is (it clears as the farm grows).
+        if wildLand.contains(tile) {
+            showMessage(Self.overgrownMessage)
+            onFeedback?(.refused(tile))
+            return
+        }
         // Nothing to do there: just walk over (and forget the lined-up jobs).
         let obstacles = Obstacles(map: map, state: state)
         guard !obstacles.isBlocked(tile) else { return }
@@ -223,6 +229,7 @@ extension GameController {
         switch failure {
         case .notYourLand: text = "This land isn't yours (yet)."
         case .cannotPlowHere: text = "Can't plow here."
+        case .overgrown: text = Self.overgrownMessage
         case .notAField: text = Self.notAFieldMessage
         case .alreadyPlowed: text = state.plots[tile]?.crop == nil ? "Already plowed. Pick the seed bag to plant it." : nil
         case .notPlowed: text = kind == .plant ? "Plow it first: pick the hoe." : "Nothing planted here."
@@ -419,7 +426,8 @@ extension GameController {
         } else if from.distance(to: job.spot) < 2.5 {
             farmerPath = [job.spot]
             farmerActivity = .walking
-        } else if var path = Pathfinder.path(on: map, woodland: simulation.state.woodland, built: builtTiles, from: from, to: job.spot) {
+        } else if var path = Pathfinder.path(on: map, woodland: simulation.state.woodland, built: builtTiles, wild: wildLand,
+                                                  from: from, to: job.spot) {
             if let last = path.indices.last { path[last] = job.spot }
             farmerPath = path
             farmerActivity = .walking

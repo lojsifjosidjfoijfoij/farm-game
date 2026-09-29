@@ -27,18 +27,20 @@ public struct FieldDefinition: Sendable, Hashable, Identifiable {
 }
 
 public enum FieldCatalog {
-    /// The field every farm starts with, by the old overgrown patch east of the yard.
+    /// The field every farm starts with, right by the yard (next to the barn and the truck).
     public static let starterID = "home_1"
 
     public static let all: [FieldDefinition] = [
-        // The home farm, inside the fence.
-        FieldDefinition(id: "home_1", name: "Starter field", area: TileRect(minX: 37, minY: 32, maxX: 42, maxY: 35),
+        // The home farm, inside the fence: one small field by the yard to start, then more as
+        // the brush around it clears (see `WildLand`). Laid out close together so the farm
+        // feels small and grows outward.
+        FieldDefinition(id: "home_1", name: "Starter field", area: TileRect(minX: 28, minY: 31, maxX: 33, maxY: 34),
                         propertyID: "home_farm", price: 0, unlockLevel: 1),
-        FieldDefinition(id: "home_2", name: "Old field", area: TileRect(minX: 37, minY: 35, maxX: 42, maxY: 38),
+        FieldDefinition(id: "home_2", name: "Old field", area: TileRect(minX: 34, minY: 31, maxX: 39, maxY: 34),
                         propertyID: "home_farm", price: 250, unlockLevel: 2),
-        FieldDefinition(id: "home_3", name: "Fence field", area: TileRect(minX: 42, minY: 32, maxX: 45, maxY: 38),
+        FieldDefinition(id: "home_3", name: "Barn field", area: TileRect(minX: 35, minY: 35, maxX: 41, maxY: 38),
                         propertyID: "home_farm", price: 600, unlockLevel: 3),
-        FieldDefinition(id: "home_4", name: "Long field", area: TileRect(minX: 35, minY: 29, maxX: 45, maxY: 32),
+        FieldDefinition(id: "home_4", name: "Long field", area: TileRect(minX: 40, minY: 29, maxX: 45, maxY: 35),
                         propertyID: "home_farm", price: 1_200, unlockLevel: 4),
         // East Meadow.
         FieldDefinition(id: "meadow_1", name: "Meadow field", area: TileRect(minX: 50, minY: 31, maxX: 55, maxY: 36),

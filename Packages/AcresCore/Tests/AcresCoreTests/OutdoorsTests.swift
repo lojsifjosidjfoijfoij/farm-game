@@ -135,6 +135,7 @@ final class OutdoorsTests: XCTestCase {
 
     func testPickingAFind() {
         var game = sim(season: .spring)
+        game.modify { $0.ownedProperties = PropertyCatalog.all.map(\.id) }  // no brush anywhere
         let forage = Foraging(balance: balance)
         let today = forage.today(game.state)
         XCTAssertEqual(today.count, balance.forageCount)
@@ -149,6 +150,14 @@ final class OutdoorsTests: XCTestCase {
         // Tomorrow brings new finds.
         game.modify { $0.clock = GameClock(dayIndex: $0.clock.dayIndex + 1, hour: 8) }
         XCTAssertEqual(forage.today(game.state).count, balance.forageCount)
+    }
+
+    func testFindsDontTurnUpInBrush() {
+        let game = sim(season: .autumn)  // just the home farm: land for sale is overgrown
+        let wild = WildLand(state: game.state)
+        let today = Foraging(balance: balance).today(game.state)
+        XCTAssertFalse(today.isEmpty)
+        XCTAssertTrue(today.allSatisfy { !wild.contains(TileCoord(containing: $0.position)) })
     }
 
     func testFindsDontGrowOnFields() {

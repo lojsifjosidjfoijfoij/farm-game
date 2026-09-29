@@ -27,6 +27,8 @@ public enum FarmFailure: Error, Equatable, Sendable {
     /// Out of energy: time to sleep.
     case tooTired
     case cannotPlowHere
+    /// Thick brush: it clears as the farm grows (see `WildLand`).
+    case overgrown
     /// Outside the farm's fields (crops only grow in fields).
     case notAField
     case alreadyPlowed
@@ -101,6 +103,7 @@ public struct Farming: Sendable {
     public func groundProblem(at tile: TileCoord, in state: GameState, checkReach: Bool = true) -> FarmFailure? {
         if let problem = accessProblem(at: tile, in: state, checkReach: checkReach) { return problem }
         if state.plots[tile] != nil { return .alreadyPlowed }
+        if WildLand(state: state).contains(tile) { return .overgrown }
         if Obstacles(map: map, state: state).isBlocked(tile) { return .cannotPlowHere }
         switch map.terrain(at: tile) {
         case .grass, .dirt: break

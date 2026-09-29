@@ -110,6 +110,51 @@ final class EstateTests: XCTestCase {
         XCTAssertEqual(sim.estate(on: map) { try $0.buyField("west_1", state: &$1) }, .failure(.notYourLand), "not their land yet")
     }
 
+    func testANewFarmIsASmallClearingInTheBrush() {
+        let state = GameState.newGame(seed: 1)
+        let wild = WildLand(state: state)
+        // Everything a new farmer needs is clear...
+        for spot in [HomeValleyMap.farmhouseDoor, HomeValleyMap.truckParkingSpot, state.farmer.position, state.truck.position] {
+            XCTAssertFalse(wild.contains(TileCoord(containing: spot)), "\(spot)")
+        }
+        XCTAssertFalse(FieldCatalog.field(FieldCatalog.starterID)!.tiles.contains(where: wild.contains))
+        // ...and most of the fenced farm is brush.
+        let fenced = HomeValleyMap.homeFarmArea
+        var clear = 0, total = 0
+        for y in Int(fenced.minY)..<Int(fenced.maxY) {
+            for x in Int(fenced.minX)..<Int(fenced.maxX) {
+                total += 1
+                if !wild.contains(TileCoord(x, y)) { clear += 1 }
+            }
+        }
+        XCTAssertLessThan(Double(clear) / Double(total), 0.6)
+        // The truck still gets out to the village.
+        let market = ShopCatalog.first(.market)!.zone.center
+        XCTAssertNotNil(Pathfinder.path(on: HomeValleyMap.map, woodland: state.woodland, wild: wild,
+                                        from: HomeValleyMap.truckParkingSpot, to: market))
+        // Each home field's brush clears at the field's own level.
+        for field in FieldCatalog.all where field.propertyID == PropertyCatalog.homeFarm.id {
+            let now = WildLand(level: field.unlockLevel, ownedProperties: [PropertyCatalog.homeFarm.id])
+            XCTAssertFalse(field.tiles.contains(where: now.contains), field.id)
+            if field.unlockLevel > 1 {
+                let before = WildLand(level: field.unlockLevel - 1, ownedProperties: [PropertyCatalog.homeFarm.id])
+                XCTAssertTrue(field.tiles.allSatisfy(before.contains), field.id)
+            }
+        }
+        for (i, a) in WildLand.homePatches.enumerated() {
+            for b in WildLand.homePatches[(i + 1)...] {
+                XCTAssertFalse(a.area.intersects(b.area) && a.area.insetBy(0.01).intersects(b.area.insetBy(0.01)), "patches overlap")
+            }
+        }
+        // Land for sale is brush until it's yours.
+        let meadow = FieldCatalog.field("meadow_1")!.tiles[0]
+        XCTAssertTrue(WildLand(level: 20, ownedProperties: ["home_farm"]).contains(meadow))
+        XCTAssertFalse(WildLand(level: 20, ownedProperties: ["home_farm", "east_meadow"]).contains(meadow))
+        // Brush can't be built on.
+        XCTAssertEqual(Farming(map: HomeValleyMap.map, balance: .standard).groundProblem(at: TileCoord(36, 32), in: state, checkReach: false),
+                       .overgrown)
+    }
+
     func testFieldsLieOnTheirLandOnClearGround() {
         var state = GameState.newGame(seed: 1)
         state.ownedProperties = PropertyCatalog.all.map(\.id)

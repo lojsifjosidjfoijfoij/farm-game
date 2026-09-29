@@ -122,6 +122,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         chunkManager.isMapTreeHidden = { [weak self] tile in
             self?.game.simulation.state.woodland.hiddenMapTrees.contains(tile) ?? false
         }
+        chunkManager.wildLand = game.drawnWildLand
         chunks = chunkManager
         fields = FieldRenderer(assets: assets, flatLayer: flatLayer, objectLayer: objectLayer)
         trees = TreeRenderer(assets: assets, flatLayer: flatLayer, objectLayer: objectLayer)
@@ -322,6 +323,25 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         }
     }
 
+    /// Brush that just cleared (a level up, land bought) goes in clouds of dust.
+    private func brushCleared(from old: WildLand, to new: WildLand) {
+        guard let camera = cameraController else { return }
+        let visible = World.tileRect(camera.visibleRect)
+        var puffs = 0
+        for y in Int(visible.minY)...Int(visible.maxY) {
+            for x in Int(visible.minX)...Int(visible.maxX) where (x + y) % 2 == 0 && puffs < 60 {
+                let tile = TileCoord(x, y)
+                guard old.contains(tile), !new.contains(tile) else { continue }
+                FieldEffects.plowed(at: tile, in: effectsLayer, assets: assets)
+                puffs += 1
+            }
+        }
+        if puffs > 0 {
+            Sound.play(.chop, volume: 0.6)
+            Haptics.thump()
+        }
+    }
+
     /// Seasons change the leaves and the grass; snow lies in winter.
     private func updateSeason() {
         let season = game.season
@@ -329,6 +349,13 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         terrain?.setSeason(season, snowCover: snow)
         // The farmhouse is renovated as the farm climbs the ranks.
         if chunks?.farmhouseTier != game.farmhouseTier { chunks?.farmhouseTier = game.farmhouseTier }
+        // The brush clears back as the farm grows.
+        let wild = game.drawnWildLand
+        if let chunks, chunks.wildLand != wild {
+            let old = chunks.wildLand
+            chunks.wildLand = wild
+            brushCleared(from: old, to: wild)
+        }
         if chunks?.season != season {
             chunks?.season = season
             trees?.season = season

@@ -22,16 +22,16 @@ public enum AssetDocs {
           and the *front* (south-facing) side of things standing on it. Roofs are visible from above.
         - **Light:** from the upper left. Soft contact shadows are added by the game, so **do not
           paint ground shadows** into standing sprites (small self-shadows are fine).
-        - **Style:** indie pixel art with small pixels: **32 px per tile** (one tile ≈ one crop
-          plot), crisp hard edges (no anti-aliased fringe; transparency is on or off, except soft
-          effects like shadows and smoke), darker outlines where shapes need separation. Warm and
-          cozy, not bouncy or childish.
+        - **Style:** indie pixel art: **16 px per tile** (one tile ≈ one crop plot), crisp hard
+          edges (no anti-aliased fringe; transparency is on or off, except soft effects like
+          shadows and smoke), and a dark one-pixel outline around things that stand in the world.
+          Warm and cozy, not bouncy or childish. Inventory icons: about 33 px for a 44 pt icon.
         - **Palette:** saturated and punchy: fresh greens, golden wheat, warm browns, clear blues, from
           a limited set of colors per asset. The game tints the whole world for time of day and season.
-        - **Format:** PNG with transparency, sRGB, drawn at 32 px per tile. The game scales art with
+        - **Format:** PNG with transparency, sRGB, drawn at 16 px per tile. The game scales art with
           nearest-neighbour (no smoothing), so pixels stay square. The pixel sizes listed below are
           what the placeholder painters paint at (\(Int(AssetSpec.pixelsPerTile)) px per tile), which
-          the game then shrinks 4× onto the pixel grid: divide them by 4 for pixel art.
+          the game then shrinks onto the pixel grid: divide world sizes by 8 and UI sizes by 4.
         - **Anchor:** the *foot point* (where the object touches the ground) sits horizontally
           centered, at the listed fraction of the height from the bottom edge.
         - **Directions:** unless noted, animals face left (mirrored in code). Vehicles have 16

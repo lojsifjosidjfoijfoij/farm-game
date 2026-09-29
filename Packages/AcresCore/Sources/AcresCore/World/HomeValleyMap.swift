@@ -61,8 +61,9 @@ public enum HomeValleyMap {
     /// Where the truck waits on a new game (tile units).
     public static let truckParkingSpot = Vec2(26.2, 30.2)
 
-    /// A pleasant spot to point the camera at when there is nothing better.
-    public static let farmCenter = Vec2(26, 32.5)
+    /// A pleasant spot to point the camera at when there is nothing better:
+    /// the yard, with the house, the barn, the truck and the first field in view.
+    public static let farmCenter = Vec2(25.5, 33.5)
 
     /// The fenced fields of the home farm. (Since Phase 4 the farm also owns
     /// the backyard with the pens and the woodlot behind it; see `PropertyCatalog`.)
@@ -149,6 +150,8 @@ public enum HomeValleyMap {
         buildBusinesses(&b)
         // Phase 11.
         buildOutdoors(&b)
+        // The home fields moved next to the yard: keep their ground clear.
+        clearHomeFields(&b)
 
         return b.build(name: "Home Valley")
     }
@@ -352,6 +355,14 @@ public enum HomeValleyMap {
         }
         b.paintPath(.dirt, through: [Vec2(55.6, 50.3), Vec2(52.5, 50.4), Vec2(49.6, 50.3)], width: 1.4, roughness: 0.25)
         if let pen = PenCatalog.pen("goat_pen") { b.paintRect(.dirt, pen.area.insetBy(0.8)) }
+    }
+
+    /// No stray rocks, bushes or tufts on the home farm's fields.
+    private static func clearHomeFields(_ b: inout MapBuilder) {
+        let fields = FieldCatalog.all.filter { $0.propertyID == "home_farm" }.map { $0.area.insetBy(-0.4) }
+        b.removeObjects { object, _ in
+            (object.kind.hasPrefix("nature_") || object.kind.hasPrefix("tree_")) && fields.contains { $0.contains(object.position) }
+        }
     }
 
     /// An old wooden fence around the home farm, with gaps and broken rails.

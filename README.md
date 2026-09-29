@@ -47,6 +47,22 @@ cd Packages/AcresCore
 swift test
 ```
 
+## A cramped start and chunky pixels: what to test
+
+Your save carries over (same format, v13), but the home fields have moved next to the yard; for
+the real feel: basket → *Settings* → *From the beginning* → *Start a new farm…*.
+
+1. **A cramped start:** a new farm is a small clearing in thick brush: the house, the old barn, the
+   truck and one field right beside the yard, all on one screen. Brush fills the rest of the fence,
+   the backyard and all the land you don't own. You can't walk, drive or build in it; tapping it
+   says so. It clears back in stages as you level up (level 2: the west fence, the backyard with the
+   coop, the room for field 2; level 3: beside the barn for field 3; level 4: the far corner for
+   field 4), in clouds of dust, and land you buy comes cleared. Wild finds never turn up in brush.
+   You can't zoom out as far any more either.
+2. **Chunkier pixels:** the world is now 16 pixels per tile (twice as big as before), so the pixel
+   art shows at the normal zoom. Trees, buildings, animals, crops and item icons get a crisp dark
+   one-pixel outline. Icons in the menus are a little finer (so they stay readable).
+
 ## Pixel art, a small start, and the truck: what to test
 
 Your save carries over (same format, v13). For the full effect: basket → *Settings* → *From the

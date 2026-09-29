@@ -282,7 +282,7 @@ final class TreeTests: XCTestCase {
         XCTAssertEqual(sim.trade { try $0.buySaplings("apple", count: 1, state: &$1) }, .success(apple.saplingCost))
         sim.goHome()
 
-        let tile = TileCoord(40, 33)
+        let tile = TileCoord(30, 32)  // in the starter field
         XCTAssertEqual(sim.work(.plant(speciesID: "apple"), at: tile, on: map).outcome, .failed(.notPlowed))
         XCTAssertEqual(sim.work(.plow, at: tile, on: map).outcome, .plowed)
         XCTAssertEqual(sim.work(.plant(speciesID: "apple"), at: tile, on: map).outcome, .planted(speciesID: "apple"))

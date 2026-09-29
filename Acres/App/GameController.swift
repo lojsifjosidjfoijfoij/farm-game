@@ -246,6 +246,14 @@ final class GameController {
     var truckCapacity: Int { simulation.state.truckCapacity(simulation.balance) }
     /// Tiles under the farm's own buildings (for routes and the truck).
     var builtTiles: Set<TileCoord> { EstateLayout.blockedTiles(simulation.state.estate) }
+    /// Brush over land the farm can't use yet: it blocks the farmer and the truck.
+    var wildLand: WildLand { WildLand(state: simulation.state) }
+    /// The brush as drawn: changes only with the level and land, not with every
+    /// plowed plot (the scene skips brush on farmland by itself).
+    var drawnWildLand: WildLand {
+        let state = simulation.state
+        return WildLand(level: state.progress.level, ownedProperties: state.ownedProperties, ownedFields: state.ownedFields)
+    }
 
     // MARK: Lifecycle
 
@@ -315,6 +323,7 @@ final class GameController {
         alert = pendingAlert
         selectedSeed = presentation.selectedSeed
         tutorial = simulation.state.tutorial
+        rescueFromBrush()
         refreshDisplay()
         refreshInventory()
         refreshTruck()
@@ -532,6 +541,7 @@ final class GameController {
         case .tooFar: return isDriving ? "Tap the truck to get out first." : nil
         case .tooTired: return "Your farmer is exhausted. Time for bed!"
         case .cannotPlowHere: return "Can't plow here."
+        case .overgrown: return Self.overgrownMessage
         case .notAField: return Self.notAFieldMessage
         case .noSeeds(let crop): return "No \(CropCatalog.crop(crop)?.name.lowercased() ?? crop) seeds left."
         case .outOfSeason(let crop, let season):
@@ -575,6 +585,9 @@ final class GameController {
         case .tooFar?, .tooTired?:
             return TileInspection(target: .tile(tile), title: "Your land", detail: "Pick the hoe, then tap or drag to plow.",
                                   icon: nil, symbol: "square.dashed")
+        case .overgrown?:
+            return TileInspection(target: .tile(tile), title: "Thick brush", detail: Self.overgrownMessage,
+                                  icon: nil, symbol: "leaf.arrow.triangle.circlepath")
         case .notAField?:
             return fieldInspection(tile)
                 ?? TileInspection(target: .tile(tile), title: "Grass", detail: "Crops only grow in your fields (the marked patches).",
@@ -767,6 +780,7 @@ final class GameController {
         var result: [String] = Feature.allCases.filter { $0.unlockLevel == level }.map(\.title)
         let fields = FieldCatalog.all.filter { $0.unlockLevel == level && $0.propertyID == PropertyCatalog.homeFarm.id }
         if !fields.isEmpty { result.append(fields.count == 1 ? "a new field for sale on your farm" : "new fields for sale on your farm") }
+        if !WildLand.patches(clearingAt: level).isEmpty { result.append("more room: the brush on your farm clears back") }
         result += PenCatalog.all.filter { $0.unlockLevel == level }.map { "fix up the \($0.name.lowercased())" }
         result += AnimalCatalog.all.filter { $0.unlockLevel == level }.map { $0.plural }
         result += CropCatalog.all.filter { $0.unlockLevel == level }.map { "\($0.name.lowercased()) seeds" }

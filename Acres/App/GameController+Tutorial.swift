@@ -190,14 +190,14 @@ extension GameController {
         let state = simulation.state
         switch tutorial.step {
         case .plow:
-            // A free spot in the first field, close to the yard.
+            // A free spot in the first field, on the side nearest the house.
             let area = HomeValleyMap.homeFarmArea
             var best: (TileCoord, Double)?
             for y in Int(area.minY)..<Int(area.maxY) {
                 for x in Int(area.minX)..<Int(area.maxX) {
                     let tile = TileCoord(x, y)
                     guard farming.plowProblem(at: tile, in: state, checkReach: false) == nil else { continue }
-                    let d = tile.center.distance(to: Vec2(34.5, 32.5))
+                    let d = tile.center.distance(to: Vec2(27, 32.5))
                     if best == nil || d < best!.1 { best = (tile, d) }
                 }
             }

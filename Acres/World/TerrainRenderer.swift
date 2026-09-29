@@ -31,8 +31,8 @@ final class TerrainRenderer {
             SKUniform(name: "u_variation", texture: assets.texture("terrain_variation")),
             // Must be a whole number so the pattern continues across chunk edges.
             SKUniform(name: "u_detail_repeat", float: Float(WorldMap.chunkSize / Self.detailTiles)),
-            // The pixel-art grid: art pixels across one chunk (32 per tile).
-            SKUniform(name: "u_pixels", float: Float(Double(WorldMap.chunkSize) * AssetSpec.pixelsPerTile / Double(PixelArt.shrink))),
+            // The pixel-art grid: art pixels across one chunk (16 per tile).
+            SKUniform(name: "u_pixels", float: Float(Double(WorldMap.chunkSize) * PixelArt.pixelsPerTile)),
             grassTint,
             snow,
         ]

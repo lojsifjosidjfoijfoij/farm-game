@@ -29,7 +29,7 @@ final class CameraController {
     // How many tiles fit across the screen's short side (its height, held
     // sideways) at the zoom limits.
     static let closestTilesAcross: CGFloat = 5.5
-    static let farthestTilesAcross: CGFloat = 20
+    static let farthestTilesAcross: CGFloat = 14
     static let defaultTilesAcross: CGFloat = 9
 
     private var velocity = CGVector.zero      // inertia, world points / s
