@@ -1,19 +1,21 @@
 import SpriteKit
 import AcresCore
 
-/// Draws the ground: one sprite per chunk, blended on the GPU from tileable
-/// detail textures (grass, dirt, gravel, asphalt), on the pixel-art grid.
+/// Draws the ground: one sprite per chunk, from tileable pixel-art textures
+/// (grass, dirt, gravel, asphalt) on the pixel-art grid.
 ///
 /// Each chunk sprite's own texture is a tiny "splat map" (4 texels per tile)
 /// saying how much dirt / gravel / asphalt is where (red / green / blue).
-/// The shader mixes the detail textures with those weights and pushes the
-/// edges through noise, so borders look organic and painted instead of
-/// tile-shaped. Cheap: one draw call and a 64×64 texture per chunk.
+/// The shader picks one texture per pixel, never a blend (blends are the
+/// in-between colours that make pixel art look blurry), with ragged edges
+/// pushed through noise, a darker rim on the path side and grass tufts
+/// poking over it. Cheap: one draw call and a 64×64 texture per chunk.
 @MainActor
 final class TerrainRenderer {
     static let texelsPerTile = 4
-    /// Tiles covered by one repeat of a detail texture (see the manifest).
-    static let detailTiles = 4
+    /// Tiles covered by one repeat of a detail texture (see the manifest): a
+    /// whole chunk, so the pattern doesn't visibly repeat on screen.
+    static let detailTiles = 16
 
     private let shader: SKShader
     private var splatCache: [ChunkCoord: SKTexture] = [:]
@@ -95,37 +97,48 @@ final class TerrainRenderer {
     /// Built-ins: u_texture (the splat map), v_tex_coord (0…1 across the chunk).
     static let shaderSource = """
     void main() {
-        // Snap to the pixel-art grid, so the ground (edges and all) is made of
-        // the same crisp pixels as everything standing on it.
+        // Snap to the pixel-art grid; the detail textures have exactly one
+        // texel per art pixel, so every pixel is a texel, crisp.
         vec2 uv = (floor(v_tex_coord * u_pixels) + 0.5) / u_pixels;
-        vec2 d1 = fract(uv * u_detail_repeat);
-        vec2 d2 = fract(uv * (u_detail_repeat - 1.0) + vec2(0.37, 0.61));
-
+        vec2 d = fract(uv * u_detail_repeat);
         vec3 splat = texture2D(u_texture, uv).rgb;
         float large = texture2D(u_variation, uv).r;
-        float medium = texture2D(u_variation, d1).g;
+        float medium = texture2D(u_variation, fract(uv * 4.0)).g;
 
-        // Two scales of each texture, mixed by large-scale noise, hide repetition.
-        vec3 grass = mix(texture2D(u_grass, d1).rgb, texture2D(u_grass, d2).rgb, large) * u_grass_tint;
-        vec3 dirt = mix(texture2D(u_dirt, d1).rgb, texture2D(u_dirt, d2).rgb, large);
-        vec3 gravel = texture2D(u_gravel, d1).rgb;
-        vec3 asphalt = texture2D(u_asphalt, d1).rgb;
+        // Half the meadow uses the grass texture shifted by half, to break up repeats.
+        vec2 dg = large > 0.5 ? fract(d + vec2(0.5, 0.5)) : d;
+        vec3 grass = texture2D(u_grass, dg).rgb;
+        float tuft = dot(grass, vec3(0.299, 0.587, 0.114));
+        grass *= u_grass_tint;
+        // Sunny and shady patches, in flat steps rather than gradients.
+        grass *= large > 0.66 ? 1.05 : (large < 0.3 ? 0.94 : 1.0);
 
-        // Noisy thresholds turn soft blurry weights into organic, painted edges.
+        // Ragged edges: noise pushes each border in and out.
         float edge = (large - 0.5) * 0.45 + (medium - 0.5) * 0.35;
-        float wDirt = smoothstep(0.32, 0.68, splat.r + edge);
-        float wGravel = smoothstep(0.36, 0.64, splat.g + edge * 0.6);
-        float wAsphalt = smoothstep(0.44, 0.56, splat.b + edge * 0.15);
+        float tDirt = splat.r + edge - 0.5;
+        float tGravel = splat.g + edge * 0.6 - 0.5;
+        float tAsphalt = splat.b + edge * 0.15 - 0.5;
 
         vec3 color = grass;
-        color = mix(color, dirt, wDirt);
-        color = mix(color, gravel, wGravel);
-        color = mix(color, asphalt, wAsphalt);
-        // Gentle large-scale light variation, like cloud-dappled fields.
-        color *= 0.93 + 0.14 * large;
-        // Snow settles on grass and soil first, patchy at the edges.
-        float snowy = clamp(u_snow * (0.7 + 0.6 * medium) - wAsphalt * 0.6 - wGravel * 0.3, 0.0, 1.0);
-        color = mix(color, vec3(0.93, 0.95, 0.99), snowy);
+        if (tDirt > 0.0) {
+            // A darker rim along the path, with bright grass tufts poking over it.
+            bool poke = tDirt < 0.05 && tuft > 0.62;
+            float rim = tDirt < 0.03 ? 0.72 : (tDirt < 0.065 ? 0.86 : 1.0);
+            color = poke ? grass : texture2D(u_dirt, d).rgb * rim;
+        } else if (tDirt > -0.03) {
+            color = grass * 0.84;  // the grass just beside the path, a touch shaded
+        }
+        if (tGravel > 0.0) {
+            color = texture2D(u_gravel, d).rgb * (tGravel < 0.04 ? 0.8 : 1.0);
+        }
+        if (tAsphalt > 0.0) {
+            color = texture2D(u_asphalt, d).rgb * (tAsphalt < 0.03 ? 0.82 : 1.0);
+        }
+        // Snow settles on grass and soil first, in patches at the edges.
+        float snowy = u_snow * (0.7 + 0.6 * medium) - (tAsphalt > 0.0 ? 0.6 : 0.0) - (tGravel > 0.0 ? 0.3 : 0.0);
+        if (snowy > 0.5) {
+            color = medium > 0.55 ? vec3(0.95, 0.96, 1.0) : vec3(0.86, 0.9, 0.97);
+        }
         gl_FragColor = vec4(color, 1.0);
     }
     """

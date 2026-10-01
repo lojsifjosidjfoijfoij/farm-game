@@ -56,13 +56,13 @@ procedurally in code.
 
 | Name | Pixels | World size (tiles) | Anchor | Phase | Description |
 |---|---|---|---|---:|---|
-| `terrain_grass` | 512 × 512 | 4 × 4 | — | 1 | Summer meadow grass seen from above: short soft blades, painterly dabs, low contrast so objects read clearly. Must tile seamlessly. *(seamless)* |
+| `terrain_grass` | 2048 × 2048 | 16 × 16 | — | 1 | Summer meadow grass seen from above, pixel art: tufts, clover, leafy weeds, scattered tiny flowers and a few daisy patches; sunny and shady patches in flat steps. One chunk (16 × 16 tiles), so it doesn't visibly repeat. Seamless. *(seamless)* |
 | `terrain_grass_spring` | 512 × 512 | 4 × 4 | — | 7 | Spring grass: fresher yellow-green, a few tiny white/yellow flower specks. Seamless. *(seamless)* |
 | `terrain_grass_autumn` | 512 × 512 | 4 × 4 | — | 7 | Autumn grass: olive and ochre, a few fallen leaves. Seamless. *(seamless)* |
 | `terrain_snow` | 512 × 512 | 4 × 4 | — | 7 | Winter snow cover: soft blue-white with gentle drifts and sparkle. Seamless. *(seamless)* |
-| `terrain_dirt` | 512 × 512 | 4 × 4 | — | 1 | Packed farmyard earth: warm brown, small pebbles, faint tracks. Seamless. *(seamless)* |
-| `terrain_gravel` | 512 × 512 | 4 × 4 | — | 1 | Country gravel road: beige-grey stones on dusty ground. Seamless. *(seamless)* |
-| `terrain_asphalt` | 512 × 512 | 4 × 4 | — | 1 | Old county asphalt: dark warm grey, fine grain, a few hairline cracks. No markings. Seamless. *(seamless)* |
+| `terrain_dirt` | 2048 × 2048 | 16 × 16 | — | 1 | Packed farmyard earth, pixel art: warm tan speckle, small pebbles, a few damper patches. Seamless. *(seamless)* |
+| `terrain_gravel` | 2048 × 2048 | 16 × 16 | — | 1 | Country gravel road: beige-grey stones on dusty ground. Seamless. *(seamless)* |
+| `terrain_asphalt` | 2048 × 2048 | 16 × 16 | — | 1 | Old county asphalt: dark warm grey, fine grain, a few hairline cracks. No markings. Seamless. *(seamless)* |
 | `terrain_sand` | 512 × 512 | 4 × 4 | — | 3 | Lake and harbor sand: pale warm beige, ripples. Seamless. *(seamless)* |
 | `terrain_water` | 512 × 512 | 4 × 4 | — | 3 | Calm lake water: muted blue-green, soft painted highlights. Seamless. *(seamless)* |
 | `terrain_variation` | 256 × 256 | 16 × 16 | — | 1 | Technical texture, not visible art: red = large soft blotches, green = medium noise, both greyscale and seamless. Breaks up visible tiling. *(seamless)* |
