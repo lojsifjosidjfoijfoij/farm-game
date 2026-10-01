@@ -47,6 +47,22 @@ cd Packages/AcresCore
 swift test
 ```
 
+## Real art from Blender, batch 1: what to test
+
+The first screen of a new farm now uses real sprites, modelled and rendered in Blender (see
+[`art/blender/README.md`](art/blender/README.md)) instead of the drawn placeholders. Everything else
+is still placeholder art, so the two styles mix for now.
+
+1. **The yard:** the run-down farmhouse (blue walls, orange roof, boarded window, sagging porch;
+   chimney smoke comes out of the new chimney, and the windows still glow at night) and the old
+   red barn.
+2. **Nature:** oaks (they change with the seasons), young oaks and birches, bushes, rocks, stumps
+   and grass tufts, so the brush round the farm is the new art too.
+3. **The field:** plowed and watered soil and wheat in all five stages.
+4. **Props:** the well, hay bales, crates, the log pile, the mailbox and the wooden fence.
+5. **The truck:** faded teal, from 16 directions. Drive it in circles to see it turn; load it
+   up at the market to see the crates and sacks in the bed.
+
 ## A cramped start and chunky pixels: what to test
 
 Your save carries over (same format, v13), but the home fields have moved next to the yard; for
@@ -517,6 +533,7 @@ Packages/AcresCore/         Pure Swift simulation (no UIKit/SpriteKit), plus uni
   Save/                     Versioned save files, migrations, file store
   World/                    Map data, the Home Valley map
   Content/                  Crops, items, properties, asset and audio manifests
+art/blender/                Blender models (Python) that render the real sprites into the catalog
 docs/
   ARCHITECTURE.md           How it fits together, and the design decisions made so far
   ASSETS.md                 Every asset the game needs (generated)
@@ -527,6 +544,8 @@ docs/
 - **Numbers:** `Packages/AcresCore/Sources/AcresCore/Balance/Balance.swift`.
 - **Art:** drop a PNG named exactly like an entry in [`docs/ASSETS.md`](docs/ASSETS.md) into
   `Acres/Resources/Assets.xcassets/Art/`. It replaces the placeholder with no code changes.
+  The sprites made in Blender are re-rendered with `python3 art/blender/render.py` (see
+  [`art/blender/README.md`](art/blender/README.md)).
 - **The map:** `Packages/AcresCore/Sources/AcresCore/World/HomeValleyMap.swift`.
   `swift run acres-tools map-dump` in `Packages/AcresCore` prints it as text.
 

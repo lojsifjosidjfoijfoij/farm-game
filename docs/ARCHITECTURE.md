@@ -384,6 +384,15 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
    art at 16 px per tile), then a procedural placeholder (`PlaceholderPainter`, put on the pixel
    grid by `PixelArt`), then shows a magenta checkerboard.
 3. Sprites are sized from the manifest, not from the image, so art at any resolution drops in.
+4. Real art is modelled in Blender from Python (`art/blender/`): one model function per sprite,
+   rendered with a fixed orthographic camera at a 40° pitch, flat toon light in three bands, then
+   shrunk to 16 px per tile with the same colour punch, palette steps and outline as
+   `PixelArt`, so rendered and drawn sprites sit together. Size and anchor come from
+   `docs/ASSETS.md`, so a render always fits its slot. Overlays (night lights, truck loads) are
+   rendered with the rest of the model as a holdout, so they line up. The scripts are dev
+   tooling (the `bpy` module, Pillow, NumPy); the app itself stays dependency-free, and the PNGs
+   are committed so building the app never needs Blender. Points the game attaches effects to
+   (the farmhouse chimney's smoke) come from the model (`screen_point`), not the placeholder layout.
 
 ## Input model (Phase 5)
 

@@ -86,7 +86,8 @@ struct WorldObjectFactory {
 
     /// Chimney tops in unit sprite coordinates (origin bottom-left).
     private static let chimneys: [String: CGPoint] = [
-        "building_farmhouse_t0": BuildingPainter.FarmhouseLayout.chimneyTopUnit,
+        // Rendered in Blender: screen_point(FARMHOUSE_CHIMNEY_TOP) in art/blender.
+        "building_farmhouse_t0": CGPoint(x: 0.77, y: 0.896),
         "building_farmhouse_t1": BuildingPainter.FarmhouseLayout.chimneyTopUnit,
         "building_farmhouse_t2": BuildingPainter.FarmhouseLayout.chimneyTopUnit,
         "building_farmhouse_t3": BuildingPainter.FarmhouseLayout.chimneyTopUnit,

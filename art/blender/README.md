@@ -1,0 +1,62 @@
+# Blender art
+
+The game's real sprites are modelled in Blender, from Python, and rendered straight into the
+asset catalog (`Acres/Resources/Assets.xcassets/Art/`). There's nothing to open in Blender by hand:
+each sprite is a small function in `models.py`, and `render.py` turns it into pixel art.
+
+## Re-rendering
+
+You need Python 3.11 and Blender's Python module (no Blender app needed):
+
+```sh
+pip install "bpy==4.5.*" pillow numpy
+python3 art/blender/render.py                         # everything
+python3 art/blender/render.py building_barn_old       # one sprite
+python3 art/blender/render.py vehicle_truck_old       # every name starting with this
+```
+
+It takes about 20 seconds for the lot, on the CPU. The PNGs go into the catalog (each with its
+`Contents.json`), and a copy of each goes into `art/blender/.renders/preview/` (git-ignored).
+
+To see them together:
+
+```sh
+python3 art/blender/mockup.py first_screen.png        # a hand-placed farm yard, shown 4×
+python3 art/blender/preview.py sheet.png prop_well prop_crate   # a contact sheet
+```
+
+## How a sprite is made
+
+- **Size and anchor** come from `docs/ASSETS.md` (generated from `AssetManifest`), so a render
+  always fits the slot the game gives it: 16 pixels per tile, the anchor on the foot point.
+- **Camera:** orthographic, looking down at 40°, the same for every sprite. 1 Blender unit is one
+  tile; x is east, y is north (away from the camera), z is up, and the foot point is the origin.
+  Only the south faces show, so the depth of a thing shows at sin 40°.
+- **Light:** a sun from the upper left (west faces bright, south faces a step darker, east faces
+  darkest), plus a little sky light. The compositor squeezes it into three flat bands, so shading
+  is toon-like rather than smooth.
+- **Pixel pass** (`acres_art.pixelize`): rendered 4× too big, shrunk by averaging, hard-edged
+  alpha, the same saturation/contrast punch as the game's drawn art (`PixelArt.swift`), 16 steps
+  per colour channel, and a dark one-pixel outline.
+- **Overlays** (night lights, the truck's loads) are rendered with everything else in the scene
+  turned into a holdout, so the overlay lines up with the sprite and is hidden where the sprite
+  is in front of it.
+
+## Adding a sprite
+
+1. Make sure the name is in `AssetManifest` (and so in `docs/ASSETS.md`).
+2. Write a model function in `models.py` out of the helpers in `acres_art.py` (`box`, `cyl`,
+   `stick`, `blob`, `prism`, `mat`). Keep the palette constants at the top of `models.py`.
+3. Register it in `ASSETS` in `render.py`, render it, and look at it with `preview.py` and
+   `mockup.py`.
+
+The game picks the PNG up by name instead of the placeholder; no code changes. If a sprite has
+something the game points at (the farmhouse chimney's smoke), the point is in
+`WorldObjectFactory.swift`, worked out with `acres_art.screen_point`.
+
+## Done so far
+
+Batch 1, the first screen: the run-down farmhouse (and its night lights), the old barn, oaks in
+four seasons, young oak and birch, bushes, rocks, stump, grass tufts, wheat in all five stages,
+plowed and watered soil, well, hay bale, crate, log pile, mailbox, the wooden fence and the truck
+in 16 directions with both loads.
