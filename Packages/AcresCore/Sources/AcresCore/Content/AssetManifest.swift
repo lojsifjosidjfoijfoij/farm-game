@@ -185,7 +185,7 @@ public enum AssetManifest {
         result += building("building_farmhouse_t2", 5, 5, phase: 12, lights: true, "Farmhouse with a porch, shutters and a dormer window.")
         result += building("building_farmhouse_t3", 5, 5, phase: 12, lights: true,
                            "Grand farmhouse: green roof, two dormers, a golden weathervane, lanterns and flower beds.")
-        result += building("building_barn_old", 5, 5.5, phase: 1, "Old weathered red barn: sagging roof, missing planks. Restorable.")
+        result += building("building_barn_old", 5, 5.5, phase: 1, "Old weathered red barn: gambrel roof with white trim, faded paint, a hayloft door and a small window. Restorable.")
         result += building("building_barn", 5, 5.5, phase: 4, lights: true, "Restored red barn (cows, sheep, goats).")
         result += building("building_coop", 3, 3, phase: 4, "Chicken coop with a little ramp.")
         result += building("building_pigsty", 3, 2.5, phase: 4, "Pigsty: low shed with a muddy yard.")

@@ -14,7 +14,7 @@ from PIL import Image, ImageDraw
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
-from render import frame  # noqa: E402  (sprite sizes from docs/ASSETS.md)
+from frames import frame  # noqa: E402  (sprite sizes from docs/ASSETS.md)
 
 CATALOG = os.path.join(HERE, "..", "..", "Acres", "Resources", "Assets.xcassets", "Art")
 PX = 16

@@ -11,27 +11,11 @@ import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-import re  # noqa: E402
-
 import acres_art as art  # noqa: E402
+from frames import frame  # noqa: E402,F401  (live.py uses render.frame too)
 import models  # noqa: E402
 
 PREVIEW = os.path.join(os.path.dirname(__file__), ".renders", "preview")
-
-
-
-def frame(name):
-    """(tiles_w, tiles_h, anchor_y) of a sprite, from docs/ASSETS.md (made from
-    the game's asset manifest), so renders always match what the game expects."""
-    doc = os.path.join(art.REPO, "docs", "ASSETS.md")
-    family = re.sub(r"_dir\d\d$", "_dir00", name)  # direction sets are one row
-    with open(doc) as f:
-        for line in f:
-            m = re.match(r"\| `%s`[^|]*\| [^|]+ \| ([\d.]+) × ([\d.]+) \| ([\d.]+|—) \|" % re.escape(family), line)
-            if m:
-                anchor = 0.5 if m.group(3) == "—" else float(m.group(3))
-                return float(m.group(1)), float(m.group(2)), anchor
-    raise KeyError(f"{name} is not in docs/ASSETS.md")
 
 
 FLAT = {"outline": False, "top_down": True}

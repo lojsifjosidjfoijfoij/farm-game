@@ -232,7 +232,7 @@ procedurally in code.
 | `building_farmhouse_t2_lights` | 640 × 640 | 5 × 5 | — | 12 | Night overlay for building_farmhouse_t2: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
 | `building_farmhouse_t3` | 640 × 640 | 5 × 5 | 0.06 | 12 | Grand farmhouse: green roof, two dormers, a golden weathervane, lanterns and flower beds. |
 | `building_farmhouse_t3_lights` | 640 × 640 | 5 × 5 | — | 12 | Night overlay for building_farmhouse_t3: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
-| `building_barn_old` | 640 × 704 | 5 × 5.5 | 0.06 | 1 | Old weathered red barn: sagging roof, missing planks. Restorable. |
+| `building_barn_old` | 640 × 704 | 5 × 5.5 | 0.06 | 1 | Old weathered red barn: gambrel roof with white trim, faded paint, a hayloft door and a small window. Restorable. |
 | `building_barn` | 640 × 704 | 5 × 5.5 | 0.06 | 4 | Restored red barn (cows, sheep, goats). |
 | `building_barn_lights` | 640 × 704 | 5 × 5.5 | — | 4 | Night overlay for building_barn: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
 | `building_coop` | 384 × 384 | 3 × 3 | 0.06 | 4 | Chicken coop with a little ramp. |

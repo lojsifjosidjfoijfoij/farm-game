@@ -24,11 +24,11 @@ uv run --python 3.11 --with "bpy==4.5.*" --with pillow --with numpy python art/b
 It takes about 20 seconds for the lot, on the CPU. The PNGs go into the catalog (each with its
 `Contents.json`), and a copy of each goes into `art/blender/.renders/preview/` (git-ignored).
 
-To see them together:
+To see them together (these two need only Pillow and NumPy, not Blender):
 
 ```sh
-python3 art/blender/mockup.py first_screen.png        # a hand-placed farm yard, shown 4×
-python3 art/blender/preview.py sheet.png prop_well prop_crate   # a contact sheet
+uv run --with pillow --with numpy python art/blender/mockup.py first_screen.png   # a hand-placed farm yard, shown 4×
+uv run --with pillow --with numpy python art/blender/preview.py sheet.png prop_well prop_crate   # a contact sheet
 ```
 
 ## Working live in the Blender app
