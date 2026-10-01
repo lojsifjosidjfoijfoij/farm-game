@@ -96,17 +96,10 @@ final class TreeRenderer {
             let width = CGFloat(max(spec.shadowWidth, 0.6)) * World.tileSize
             treeNodes.shadow.size = CGSize(width: width, height: width * 0.42)
             treeNodes.shadow.position = CGPoint(x: sprite.position.x + width * 0.08, y: sprite.position.y - width * 0.03)
-            sprite.removeAction(forKey: "sway")
             if tree.stage != .stump {
-                let angle: CGFloat = tree.stage == .sapling ? 0.05 : 0.015
-                let half = 1.8
-                let right = SKAction.rotate(toAngle: -angle, duration: half)
-                right.timingMode = .easeInEaseOut
-                let left = SKAction.rotate(toAngle: angle, duration: half)
-                left.timingMode = .easeInEaseOut
-                sprite.run(.repeatForever(.sequence([right, left])), withKey: "sway")
+                WindSway.apply(tree.stage == .sapling ? WindSway.sapling : WindSway.tree, to: sprite, seed: sprite.position)
             } else {
-                sprite.zRotation = 0
+                WindSway.stop(sprite)
             }
             if animated {
                 // "It grew!" pop.

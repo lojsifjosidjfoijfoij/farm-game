@@ -355,6 +355,12 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   few alpha steps), a dark one-pixel outline around standing sprites and item icons, a
   saturation and contrast boost and a stepped palette. Textures use nearest-neighbour filtering;
   SwiftUI shows catalog images with `.interpolation(.none)`. `PixelArt.worldShrink` sets the pixel size.
+- **Breeze** (`World/WindSway.swift`): trees, bushes, grass tufts and flowers sway through one
+  shared fragment shader. The trunk (a share of the sprite from the bottom) stays still and each
+  row above leans sideways by a whole number of texels, more towards the top, so pixels stay crisp
+  squares. Each sprite passes its own numbers as shader attributes (lean, still share, speed,
+  phase from its position), so neighbours sway out of step; the lean is set in tiles, so it looks
+  the same at any pixel size. It replaced rotating the whole sprite, which smeared the pixels.
 - **Terrain:** one sprite per chunk. Its texture is a tiny splat map (dirt/gravel/asphalt
   weights). A fragment shader blends seamless detail textures and pushes the edges through noise,
   so borders look organic rather than tiled; it snaps to the same 16-per-tile pixel grid. One draw

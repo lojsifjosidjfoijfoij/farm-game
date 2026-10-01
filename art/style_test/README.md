@@ -20,7 +20,12 @@ mkdir -p art/style_test/fonts && curl -L -o art/style_test/fonts/Fredoka.ttf \
 uv run --with pillow --with numpy python art/style_test/final.py [reference.png]
 ```
 
-The pictures land in `art/style_test/.out/`.
+The pictures land in `art/style_test/.out/`. `animate.py` makes a looping GIF of the day scene
+with the game's breeze (the same whole-texel lean as `Acres/World/WindSway.swift`).
+
+v2 sprites are crisp: the render is shrunk by giving each pixel the most common colour among its
+samples, from a small palette picked per sprite (octree, so small accents like glass and flowers
+survive), rather than averaging, which blurred every edge.
 
 - `scene.py`: the ground (grass, tufts, clover, flowers, a dirt path with
   pebbles), shadows, the objects back to front, and the night (a blue tint,

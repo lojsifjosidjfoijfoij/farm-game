@@ -303,7 +303,7 @@ def draw(size, scale, selected="hoe", night=False):
     big = img.resize((W * scale, H * scale), Image.NEAREST)
     dd = ImageDraw.Draw(big)
     for (x, y, text, pt) in texts:
-        font = ImageFont.truetype(FONT, pt)
+        font = ImageFont.truetype(FONT, int(round(pt * scale / 3)))
         try:
             font.set_variation_by_name("SemiBold")
         except Exception:

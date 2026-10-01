@@ -233,9 +233,48 @@ def shadow_mask(objects):
     return np.asarray(mask, np.float32) / 255
 
 
-def place(canvas, name, x, y):
+# The game's breeze (Acres/World/WindSway.swift): (top lean in texels, still share, speed).
+# Lean in tiles at the top, so texels = lean × pixels per tile.
+SWAY = {"tree": (0.1 * PX, 0.3, 2 * np.pi / 4.8), "sapling": (0.08 * PX, 0.15, 2 * np.pi / 2.4),
+        "bush": (0.06 * PX, 0.25, 2 * np.pi / 4.8), "plant": (0.06 * PX, 0.0, 2 * np.pi / 2.4)}
+
+
+def sway_kind(name):
+    if name.startswith("tree_") and name != "tree_stump":
+        return "sapling" if name.endswith("_young") else "tree"
+    if name.startswith("nature_bush"):
+        return "bush"
+    if name.startswith(("nature_grass_tuft", "nature_flowers")):
+        return "plant"
+    return None
+
+
+def swayed(img, kind, t, phase):
+    """The same whole-texel lean as the game's shader, rows pushed sideways."""
+    texels, root, speed = SWAY[kind]
+    a = np.asarray(img).copy()
+    h = a.shape[0]
+    wind = np.sin(t * speed + phase) * 0.75 + np.sin(t * speed * 2 + phase * 1.7) * 0.25
+    out = np.zeros_like(a)
+    for row in range(h):
+        v = 1 - (row + 0.5) / h
+        k = min(1.0, max(0.0, (v - root) / max(0.001, 1 - root)))
+        shift = int(np.floor(wind * texels * k ** 1.5 + 0.5))
+        if shift > 0:
+            out[row, shift:] = a[row, :-shift]
+        elif shift < 0:
+            out[row, :shift] = a[row, -shift:]
+        else:
+            out[row] = a[row]
+    return Image.fromarray(out, "RGBA")
+
+
+def place(canvas, name, x, y, t=None):
     tw, th, anchor = frame(name)
     img = sprite(name)
+    kind = sway_kind(name)
+    if t is not None and kind is not None:
+        img = swayed(img, kind, t, x * 2.0 + y * 1.1)
     w, h = img.size
     fx, fy = to_px(x, y)
     canvas.alpha_composite(img, (int(round(fx - w / 2)), int(round(fy - h * (1 - anchor)))))
@@ -250,13 +289,13 @@ def glow_layer(objects):
     return np.asarray(layer, np.float32) / 255
 
 
-def compose(ground, objects, night=False, pools=(), fireflies=0, seed=5):
+def compose(ground, objects, night=False, pools=(), fireflies=0, seed=5, t=None):
     img = ground.copy()
     sh = shadow_mask(objects)
     img *= (1 - 0.34 * sh)[..., None]
     canvas = Image.fromarray(np.clip(img, 0, 255).astype(np.uint8), "RGB").convert("RGBA")
     for name, x, y in sorted(objects, key=lambda o: (-o[2], "_load" in o[0])):
-        place(canvas, name, x, y)
+        place(canvas, name, x, y, t)
     day = np.asarray(canvas, np.float32)[..., :3]
     if not night:
         return day

@@ -540,8 +540,11 @@ def pixelize(path, size, outline=True, soft=False):
     rgb_premult = (arr[..., :3] * arr[..., 3:4]).sum(axis=(1, 3))
     weight = arr[..., 3].sum(axis=(1, 3))[..., None]
     rgb = np.where(weight > 0, rgb_premult / np.maximum(weight, 1e-6), 0)
-    rgb = punch(rgb)
-    rgb = np.round(np.clip(rgb, 0, 1) * LEVELS) / LEVELS
+    if STYLE == "v2" and not soft:
+        rgb = _crisp(arr, h, w)
+    else:
+        rgb = punch(rgb)
+        rgb = np.round(np.clip(rgb, 0, 1) * LEVELS) / LEVELS
     if soft:
         a = np.round(alpha * 4) / 4
     else:
@@ -550,6 +553,34 @@ def pixelize(path, size, outline=True, soft=False):
     if outline and not soft:
         out = _outline(out)
     return Image.fromarray((out * 255 + 0.5).astype(np.uint8), "RGBA")
+
+
+def _crisp(arr, h, w, colours=48):
+    """v2: no averaging. Each pixel takes the most common colour among its
+    samples, from a small palette picked for the sprite, so edges stay hard
+    and there are no in-between colours (averaging is what blurs)."""
+    from PIL import Image
+
+    s = SUPERSAMPLE
+    samples = arr.reshape(h * s, w * s, 4)
+    opaque = samples[..., 3] > 0.5
+    rgb8 = (np.clip(punch(samples[..., :3]), 0, 1) * 255 + 0.5).astype(np.uint8)
+    pts = rgb8[opaque]
+    if len(pts) == 0:
+        return np.zeros((h, w, 3), np.float32)
+    # Octree keeps small but distinct colours (a flower box, glass, hay)
+    # that a population-based palette would merge away.
+    fit = Image.fromarray(pts.reshape(1, -1, 3), "RGB").quantize(
+        colors=colours, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE)
+    palette = np.array(fit.getpalette()[: colours * 3], np.float32).reshape(-1, 3) / 255
+    n = len(palette)
+    idx = np.asarray(Image.fromarray(rgb8, "RGB").quantize(palette=fit, dither=Image.Dither.NONE)).astype(np.int64)
+    idx = np.where(opaque, np.minimum(idx, n - 1), n)  # transparent samples get their own bin
+    blocks = idx.reshape(h, s, w, s).transpose(0, 2, 1, 3).reshape(h, w, s * s)
+    counts = np.zeros((h, w, n + 1), np.int32)
+    for k in range(s * s):
+        counts += np.eye(n + 1, dtype=np.int32)[blocks[..., k]]
+    return palette[np.argmax(counts[..., :n], axis=-1)]
 
 
 def punch(rgb):

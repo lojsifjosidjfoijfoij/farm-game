@@ -18,10 +18,6 @@ struct ObjectNodes {
 struct WorldObjectFactory {
     let assets: AssetCatalog
 
-    /// Sway animations, shared between nodes (SKActions are reusable).
-    private static let treeSway = sway(angle: 0.012, period: 3.6)
-    private static let plantSway = sway(angle: 0.05, period: 2.2)
-
     func makeNodes(for object: MapObject, season: Season) -> ObjectNodes? {
         guard let name = AssetManifest.assetName(forObjectKind: object.kind, season: season),
               let spec = AssetManifest.spec(named: name) else { return nil }
@@ -74,9 +70,11 @@ struct WorldObjectFactory {
         }
 
         if object.kind.hasPrefix("tree_") && object.kind != "tree_stump" {
-            runSway(Self.treeSway, on: sprite, variant: object.variant)
+            WindSway.apply(object.kind.hasSuffix("_young") ? WindSway.sapling : WindSway.tree, to: sprite, seed: sprite.position)
+        } else if object.kind.hasPrefix("nature_bush") {
+            WindSway.apply(WindSway.bush, to: sprite, seed: sprite.position)
         } else if object.kind.hasPrefix("nature_grass_tuft") || object.kind.hasPrefix("nature_flowers") {
-            runSway(Self.plantSway, on: sprite, variant: object.variant)
+            WindSway.apply(WindSway.plant, to: sprite, seed: sprite.position)
         }
 
         return ObjectNodes(main: sprite, isFlat: isFlat, shadow: shadow, lights: lights)
@@ -120,18 +118,4 @@ struct WorldObjectFactory {
         return emitter
     }
 
-    private func runSway(_ action: SKAction, on node: SKNode, variant: Int) {
-        // Offset each plant's phase so they don't sway in lockstep.
-        let offset = Double(abs(Int(node.position.x * 7 + node.position.y * 13)) % 1000) / 1000 * 3
-        node.run(.sequence([.wait(forDuration: offset), action]))
-    }
-
-    private static func sway(angle: CGFloat, period: TimeInterval) -> SKAction {
-        let half = period / 2
-        let right = SKAction.rotate(toAngle: -angle, duration: half)
-        right.timingMode = .easeInEaseOut
-        let left = SKAction.rotate(toAngle: angle, duration: half)
-        left.timingMode = .easeInEaseOut
-        return .repeatForever(.sequence([right, left]))
-    }
 }

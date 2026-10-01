@@ -47,6 +47,13 @@ cd Packages/AcresCore
 swift test
 ```
 
+## A breeze in the trees: what to test
+
+Trees, bushes, grass tufts and flowers now sway gently: the trunk stays still and the crown leans
+a pixel or two, more at the top, and neighbours sway out of step, so the wind seems to move
+through them. Pixels stay crisp while they move (the old sway tilted the whole sprite, which you
+could hardly see and which smeared the pixels). Chopped trees still fall over as before.
+
 ## Real art from Blender, batch 1: what to test
 
 The first screen of a new farm now uses real sprites, modelled and rendered in Blender (see
