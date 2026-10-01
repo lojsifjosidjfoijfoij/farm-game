@@ -43,7 +43,9 @@ import sys; sys.path.insert(0, "/path/to/farm-game/art/blender")
 import live; live.show("building_barn_old")
 ```
 
-That looks through the game's camera with flat material colours; orbit with the middle mouse
+This works in Blender 4.5 and 5.x. Rendering the sprites always uses Blender 4.5 (the `uv`
+command above, separate from the app), because the compositor's Python API changed in 5.0.
+`live.show` looks through the game's camera with flat material colours; orbit with the middle mouse
 button (or two fingers on a trackpad) to look around, and press numpad 0 to get back to the
 camera. Change the model in `models.py`, call `live.show` again, and when it's right, write the
 sprite with `render.py` from the command line as above. Leave the add-on's asset libraries and

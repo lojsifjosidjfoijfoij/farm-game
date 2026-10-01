@@ -70,7 +70,8 @@ def reset(samples=24):
     sun = bpy.data.objects.new("sun", sun_data)
     sun.rotation_euler = (-TO_LIGHT).to_track_quat("-Z", "Y").to_euler()
     scene.collection.objects.link(sun)
-    _toon_compositor(scene)
+    if bpy.app.background:  # rendering; the Blender app (live) only looks at the model
+        _toon_compositor(scene)
     return scene
 
 
@@ -90,6 +91,9 @@ def _empty_scene():
 def _toon_compositor(scene, bands=3, floor=0.35):
     """Light in a few flat bands: albedo × quantized(direct + indirect light),
     squeezed into [floor, 1] so shadow sides stay colourful, not muddy."""
+    if bpy.app.version >= (5, 0, 0):
+        raise RuntimeError("Sprites are rendered with Blender 4.5 (its compositor API changed in 5.0): "
+                           'uv run --python 3.11 --with "bpy==4.5.*" --with pillow --with numpy python art/blender/render.py')
     layer = scene.view_layers[0]
     layer.use_pass_diffuse_color = True
     layer.use_pass_diffuse_direct = True
