@@ -1,6 +1,6 @@
 """The models, one function per asset (1 unit = 1 tile, foot point at the origin,
 x east, y north = away from the camera, z up). Kept deliberately low-poly:
-at 16 px per tile a whole house is about 80 pixels wide."""
+at 32 px per tile a whole house is about 160 pixels wide."""
 
 import math
 

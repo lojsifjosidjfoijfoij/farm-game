@@ -4,7 +4,7 @@ Every asset is a small Python function that builds a low-poly model (1 Blender
 unit = 1 game tile, x east, y north, z up, the object's foot point at the
 origin). This module renders it from the game's camera straight into the frame
 the game expects (size and anchor from docs/ASSETS.md), with flat "toon" light
-bands, then turns the render into pixel art: 16 px per tile, hard edges, a
+bands, then turns the render into pixel art: 32 px per tile, hard edges, a
 limited palette and a dark one-pixel outline. The result is written into the
 app's asset catalog, where the game picks it up by name.
 
@@ -21,9 +21,9 @@ import numpy as np
 from mathutils import Vector
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-# "v2" is the richer look being tried out (32 px per tile, cool shadows, warm
-# light); its renders go to a separate folder until it's chosen.
-STYLE = os.environ.get("ACRES_ART_STYLE", "v1")
+# "v2" is the game's look: 32 px per tile, cool shadows, warm light, textured
+# surfaces, crisp edges. "v1" (16 px per tile, flatter) is kept for comparison.
+STYLE = os.environ.get("ACRES_ART_STYLE", "v2")
 CATALOG = os.environ.get("ACRES_ART_CATALOG") or os.path.join(REPO, "Acres", "Resources", "Assets.xcassets", "Art")
 
 PX_PER_TILE = int(os.environ.get("ACRES_PX_PER_TILE") or (32 if STYLE == "v2" else 16))

@@ -18,20 +18,22 @@ public enum AssetDocs {
 
         ## Art direction
 
-        - **Camera:** top-down 3/4 view, looking down at about 60–70°. We see the ground from above
+        - **Camera:** top-down 3/4 view, looking down at 40° from the horizon (the Blender camera). We see the ground from above
           and the *front* (south-facing) side of things standing on it. Roofs are visible from above.
         - **Light:** from the upper left. Soft contact shadows are added by the game, so **do not
           paint ground shadows** into standing sprites (small self-shadows are fine).
-        - **Style:** indie pixel art: **16 px per tile** (one tile ≈ one crop plot), crisp hard
+        - **Style:** indie pixel art: **32 px per tile** (one tile ≈ one crop plot), crisp hard
           edges (no anti-aliased fringe; transparency is on or off, except soft effects like
           shadows and smoke), and a dark one-pixel outline around things that stand in the world.
           Warm and cozy, not bouncy or childish. Inventory icons: about 33 px for a 44 pt icon.
-        - **Palette:** saturated and punchy: fresh greens, golden wheat, warm browns, clear blues, from
-          a limited set of colors per asset. The game tints the whole world for time of day and season.
-        - **Format:** PNG with transparency, sRGB, drawn at 16 px per tile. The game scales art with
+        - **Palette:** rich but natural: fresh greens, golden wheat, warm browns, clear blues, from
+          a limited set of colors per asset; shadows lean cool, lit faces warm. Textured surfaces
+          (boards in varied tones, shingles, leafy clusters). The game tints the world for time of
+          day and season.
+        - **Format:** PNG with transparency, sRGB, drawn at 32 px per tile. The game scales art with
           nearest-neighbour (no smoothing), so pixels stay square. The pixel sizes listed below are
           what the placeholder painters paint at (\(Int(AssetSpec.pixelsPerTile)) px per tile), which
-          the game then shrinks onto the pixel grid: divide world sizes by 8 and UI sizes by 4.
+          the game then shrinks onto the pixel grid: divide world and UI sizes by 4.
         - **Anchor:** the *foot point* (where the object touches the ground) sits horizontally
           centered, at the listed fraction of the height from the bottom edge.
         - **Directions:** unless noted, animals face left (mirrored in code). Vehicles have 16

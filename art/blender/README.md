@@ -54,7 +54,7 @@ AI model generation off: those bring in other people's models, in other styles.
 ## How a sprite is made
 
 - **Size and anchor** come from `docs/ASSETS.md` (generated from `AssetManifest`), so a render
-  always fits the slot the game gives it: 16 pixels per tile, the anchor on the foot point.
+  always fits the slot the game gives it: 32 pixels per tile, the anchor on the foot point.
 - **Camera:** orthographic, looking down at 40°, the same for every sprite. 1 Blender unit is one
   tile; x is east, y is north (away from the camera), z is up, and the foot point is the origin.
   Only the south faces show, so the depth of a thing shows at sin 40°.
@@ -87,9 +87,11 @@ four seasons, young oak and birch, bushes, rocks, stump, grass tufts, wheat in a
 plowed and watered soil, well, hay bale, crate, log pile, mailbox, the wooden fence and the truck
 in 16 directions with both loads.
 
-## A richer look (v2, being tried)
+## The look (v2)
 
-`ACRES_ART_STYLE=v2` renders at 32 px per tile with cool shadows, warm light, varied boards and
-shingles, grain and leafy clusters, into a separate folder. It's on trial in a mock screen; see
-[`art/style_test/README.md`](../style_test/README.md). Without the switch, renders are unchanged.
-The pine and the lamp post are modelled for that test and haven't been rendered into the game yet.
+Renders are the v2 look by default: 32 px per tile, light bands tinted from cool shadow to warm
+light, boards and shingles in varied tones, grain, leafy clusters, and a crisp shrink (each pixel
+the most common colour of its samples, from a palette picked per sprite). `ACRES_ART_STYLE=v1`
+gives the older, flatter 16 px look for comparison (write it somewhere else with
+`ACRES_ART_CATALOG`). The mock screen it was agreed on is in
+[`art/style_test/README.md`](../style_test/README.md).

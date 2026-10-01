@@ -351,7 +351,7 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   immediately; nearby ones trickle in one per frame; far ones unload (with hysteresis). The map can
   grow large without more nodes on screen.
 - **Pixel art** (`Art/PixelArt.swift`): placeholders are painted at 128 px per tile, then shrunk
-  8× in the world (16 px per tile) and 4× for UI images, with hard alpha edges (soft effects keep a
+  4× (32 px per tile, the Blender art's grid) for the world and for UI images, with hard alpha edges (soft effects keep a
   few alpha steps), a dark one-pixel outline around standing sprites and item icons, a
   saturation and contrast boost and a stepped palette. Textures use nearest-neighbour filtering;
   SwiftUI shows catalog images with `.interpolation(.none)`. `PixelArt.worldShrink` sets the pixel size.
@@ -363,7 +363,7 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   the same at any pixel size. It replaced rotating the whole sprite, which smeared the pixels.
 - **Terrain:** one sprite per chunk. Its texture is a tiny splat map (dirt/gravel/asphalt
   weights). A fragment shader blends seamless detail textures and pushes the edges through noise,
-  so borders look organic rather than tiled; it snaps to the same 16-per-tile pixel grid. One draw
+  so borders look organic rather than tiled; it snaps to the same 32-per-tile pixel grid. One draw
   call per chunk.
 - **Draw order** (`ZLayer`): ground → flat things/shadows → standing objects → day/night grade
   (a multiply overlay) → the screen-edge vignette (`fx_vignette`, on the camera) → additive night
@@ -387,12 +387,14 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
    and art notes. `docs/ASSETS.md` is generated from it (`swift run acres-tools assets`), and a
    test fails if the doc is stale.
 2. `AssetCatalog.texture(name)` looks for real art in `Assets.xcassets` (used as is: deliver pixel
-   art at 16 px per tile), then a procedural placeholder (`PlaceholderPainter`, put on the pixel
+   art at 32 px per tile), then a procedural placeholder (`PlaceholderPainter`, put on the pixel
    grid by `PixelArt`), then shows a magenta checkerboard.
 3. Sprites are sized from the manifest, not from the image, so art at any resolution drops in.
 4. Real art is modelled in Blender from Python (`art/blender/`): one model function per sprite,
-   rendered with a fixed orthographic camera at a 40° pitch, flat toon light in three bands, then
-   shrunk to 16 px per tile with the same colour punch, palette steps and outline as
+   rendered with a fixed orthographic camera at a 40° pitch, toon light in flat bands tinted from
+   cool shadow to warm light, textured surfaces (varied boards, shingles, leafy clusters), then
+   shrunk to 32 px per tile (each pixel the most common colour of its samples, so edges stay
+   crisp) with the same colour punch and outline as
    `PixelArt`, so rendered and drawn sprites sit together. Size and anchor come from
    `docs/ASSETS.md`, so a render always fits its slot. Overlays (night lights, truck loads) are
    rendered with the rest of the model as a holdout, so they line up. The scripts are dev

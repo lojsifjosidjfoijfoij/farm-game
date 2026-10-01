@@ -2,9 +2,8 @@ import UIKit
 import AcresCore
 
 /// The pixel-art look. The placeholder painters still paint every picture at
-/// full size (128 px per tile); here it is shrunk onto a coarse pixel grid:
-/// 16 pixels per tile in the world, so pixels are plainly visible at the
-/// normal zoom. Colours get punchier and step into a limited palette, edges
+/// full size (128 px per tile); here it is shrunk onto the pixel grid the
+/// Blender art uses: 32 pixels per tile in the world. Colours get punchier and step into a limited palette, edges
 /// go hard (no soft anti-aliased fringe), things that stand in the world get
 /// a crisp dark one-pixel outline, and textures are drawn with
 /// nearest-neighbour scaling so every art pixel stays a sharp square.
@@ -13,15 +12,16 @@ import AcresCore
 /// nearest-neighbour scaling, so pixel art stays sharp).
 enum PixelArt {
     /// How many times smaller than the painted picture, in the world:
-    /// 128 px per tile → 16. Bigger is chunkier.
-    static let worldShrink = 8
+    /// 128 px per tile → 32, the same grid as the Blender art. Bigger is chunkier.
+    static let worldShrink = 4
     /// Menu and HUD pictures (item icons, Tom) are a little finer, so they read at icon size.
     static let uiShrink = 4
     /// Art pixels per world tile (the ground shader snaps to the same grid).
     static var pixelsPerTile: Double { AssetSpec.pixelsPerTile / Double(worldShrink) }
-    /// Colour punch around each pixel's brightness (1 = unchanged).
-    static let saturation: CGFloat = 1.35
-    static let contrast: CGFloat = 1.08
+    /// Colour punch around each pixel's brightness (1 = unchanged); the same
+    /// as the Blender art's, so drawn and rendered sprites sit together.
+    static let saturation: CGFloat = 1.15
+    static let contrast: CGFloat = 1.05
     /// Steps per colour channel: a limited palette.
     static let levels: CGFloat = 16
     /// How dark the outline is, relative to the colour it wraps.

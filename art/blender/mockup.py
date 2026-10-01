@@ -1,6 +1,6 @@
 """A mock of the first screen, built from the rendered sprites in the asset
 catalog, to judge how they sit together before trying them in the game.
-It's a hand-placed scene (not the real map), one tile = 16 px, shown 4×.
+It's a hand-placed scene (not the real map), one tile = 32 px, shown 4×.
 
     python3 art/blender/mockup.py out.png
 """
@@ -17,7 +17,7 @@ sys.path.insert(0, HERE)
 from frames import frame  # noqa: E402  (sprite sizes from docs/ASSETS.md)
 
 CATALOG = os.path.join(HERE, "..", "..", "Acres", "Resources", "Assets.xcassets", "Art")
-PX = 16
+PX = 32
 TILES_W, TILES_H = 22, 12
 
 GRASS = [(98, 166, 52), (88, 152, 46), (112, 180, 60)]
