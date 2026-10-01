@@ -8,7 +8,8 @@ bands, then turns the render into pixel art: 16 px per tile, hard edges, a
 limited palette and a dark one-pixel outline. The result is written into the
 app's asset catalog, where the game picks it up by name.
 
-Needs Blender as a Python module:  pip install "bpy==4.5.*"
+Needs Blender as a Python module:  pip install "bpy==4.5.*"  (and Pillow)
+The models also load in the Blender app itself, for looking at live: see live.py.
 """
 
 import json
@@ -18,7 +19,6 @@ import os
 import bpy
 import numpy as np
 from mathutils import Vector
-from PIL import Image
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 CATALOG = os.path.join(REPO, "Acres", "Resources", "Assets.xcassets", "Art")
@@ -40,7 +40,7 @@ CONTRAST = 1.08
 # --------------------------------------------------------------------------- scene
 
 def reset(samples=24):
-    bpy.ops.wm.read_factory_settings(use_empty=True)
+    _empty_scene()
     _materials.clear()
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
@@ -72,6 +72,19 @@ def reset(samples=24):
     scene.collection.objects.link(sun)
     _toon_compositor(scene)
     return scene
+
+
+def _empty_scene():
+    """Headless: a factory-fresh empty file. In the Blender app (driven live),
+    only the scene's contents go: a factory reset there would also switch off
+    the add-on that connects Claude to Blender."""
+    if bpy.app.background:
+        bpy.ops.wm.read_factory_settings(use_empty=True)
+        return
+    for data in (bpy.data.objects, bpy.data.meshes, bpy.data.curves, bpy.data.materials,
+                 bpy.data.lights, bpy.data.cameras, bpy.data.worlds):
+        for block in list(data):
+            data.remove(block)
 
 
 def _toon_compositor(scene, bands=3, floor=0.35):
@@ -151,6 +164,7 @@ def mat(name, rgb, noise=0.0, emit=None, noise_scale=6.0, lines=None):
     bsdf.inputs["Roughness"].default_value = 1.0
     bsdf.inputs["Specular IOR Level"].default_value = 0.0
     linear = tuple(_to_linear(c) for c in rgb)
+    m.diffuse_color = (*linear, 1)  # what the app's solid view shows
     colour = None  # output socket of the base colour, if not a constant
     if noise > 0:
         tex = nodes.new("ShaderNodeTexNoise")
@@ -363,6 +377,8 @@ def render(name, size, outline=True, soft=False, top_down=False, preview_dir=Non
 
 def pixelize(path, size, outline=True, soft=False):
     """Supersampled render → pixel art: box-shrink, hard alpha, palette, outline."""
+    from PIL import Image  # not in the Blender app's own Python; only needed here
+
     big = Image.open(path).convert("RGBA")
     arr = np.asarray(big).astype(np.float32) / 255.0
     # Average colour weighted by coverage, per output pixel.

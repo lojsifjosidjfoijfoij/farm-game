@@ -15,6 +15,12 @@ python3 art/blender/render.py building_barn_old       # one sprite
 python3 art/blender/render.py vehicle_truck_old       # every name starting with this
 ```
 
+With [uv](https://docs.astral.sh/uv/) there's nothing to install by hand (bpy 4.5 needs Python 3.11):
+
+```sh
+uv run --python 3.11 --with "bpy==4.5.*" --with pillow --with numpy python art/blender/render.py
+```
+
 It takes about 20 seconds for the lot, on the CPU. The PNGs go into the catalog (each with its
 `Contents.json`), and a copy of each goes into `art/blender/.renders/preview/` (git-ignored).
 
@@ -24,6 +30,24 @@ To see them together:
 python3 art/blender/mockup.py first_screen.png        # a hand-placed farm yard, shown 4×
 python3 art/blender/preview.py sheet.png prop_well prop_crate   # a contact sheet
 ```
+
+## Working live in the Blender app
+
+With the [MCP for Blender](https://github.com/ahujasid/blender-mcp) add-on connected (its
+sidebar tab says "Connected on port 9876") and `claude mcp add blender uvx mcp-for-blender` done,
+a Claude session on the same Mac can load any model into the open Blender window to look at
+together, in a new empty file (it clears the scene):
+
+```python
+import sys; sys.path.insert(0, "/path/to/farm-game/art/blender")
+import live; live.show("building_barn_old")
+```
+
+That looks through the game's camera with flat material colours; orbit with the middle mouse
+button (or two fingers on a trackpad) to look around, and press numpad 0 to get back to the
+camera. Change the model in `models.py`, call `live.show` again, and when it's right, write the
+sprite with `render.py` from the command line as above. Leave the add-on's asset libraries and
+AI model generation off: those bring in other people's models, in other styles.
 
 ## How a sprite is made
 
