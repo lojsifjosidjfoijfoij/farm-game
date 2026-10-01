@@ -4,6 +4,9 @@ at 16 px per tile a whole house is about 80 pixels wide."""
 
 import math
 
+import bmesh
+import bpy
+
 from acres_art import blob, box, cyl, empty, hexrgb, holdout, mat, prism, stick
 
 # A small shared palette: saturated, warm.
@@ -46,6 +49,64 @@ def roof_slopes(span, rise, length, eave_z, centre_y, material, overhang=0.22, t
         else:
             box((slope_len, length, thick), (side * offset, centre_y, z - thick / 2), material,
                 rot=(0, side * phi, 0))
+
+
+def gambrel_segments(width, knee_x, knee_z, rise, eave_z, overhang=0.22):
+    """The two pitches of a gambrel roof on the +x side, as (angle, centre x,
+    centre z, length): a steep one from the eave up to the knee, then a shallow
+    one up to the ridge. Mirror in x for the other side. Each piece is grown a
+    little at both ends so the eave overhangs and the joins have no seam."""
+    half = width / 2
+    out = []
+    for (x0, z0), (x1, z1), grow, inner in (
+        ((half, 0.0), (knee_x, knee_z), overhang, 0.05),
+        ((knee_x, knee_z), (0.0, rise), 0.0, 0.06),
+    ):
+        phi = math.atan2(z1 - z0, x0 - x1)
+        run = math.hypot(x0 - x1, z1 - z0) + grow + inner
+        shift = (grow - inner) / 2          # net push towards the lower end
+        cx = (x0 + x1) / 2 + math.cos(phi) * shift
+        cz = eave_z + (z0 + z1) / 2 - math.sin(phi) * shift
+        out.append((phi, cx, cz, run))
+    return out
+
+
+def gambrel_gable(width, depth, knee_x, knee_z, rise, at, material):
+    """The end wall under a gambrel roof: a five-sided prism running north-south
+    (bottom centre at `at`), its section going eave, knee, ridge, knee, eave."""
+    half = width / 2
+    section = [(-half, 0.0), (half, 0.0), (knee_x, knee_z), (0.0, rise), (-knee_x, knee_z)]
+    d = depth / 2
+    verts = []
+    for x, z in section:
+        verts += [(x, -d, z), (x, d, z)]
+    n = len(section)
+    faces = [(i * 2, ((i + 1) % n) * 2, ((i + 1) % n) * 2 + 1, i * 2 + 1) for i in range(n)]
+    faces.append(tuple(i * 2 for i in range(n)))
+    faces.append(tuple(i * 2 + 1 for i in range(n - 1, -1, -1)))
+
+    mesh = bpy.data.meshes.new("gambrel")
+    mesh.from_pydata(verts, [], faces)
+    obj = bpy.data.objects.new("gambrel", mesh)
+    obj.location = at
+    bpy.context.scene.collection.objects.link(obj)
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(mesh)
+    bm.free()
+    for poly in mesh.polygons:
+        poly.use_smooth = False
+    mesh.materials.append(material)
+    return obj
+
+
+def gambrel_slopes(width, knee_x, knee_z, rise, length, eave_z, centre_y, material,
+                   overhang=0.22, thick=0.1):
+    """The four roof slabs of a gambrel roof whose ridge runs north-south."""
+    for phi, cx, cz, run in gambrel_segments(width, knee_x, knee_z, rise, eave_z, overhang):
+        for side in (-1, 1):
+            box((run, length, thick), (side * cx, centre_y, cz), material, rot=(0, side * phi, 0))
 
 
 def farmhouse_t0(night=False):
@@ -100,42 +161,56 @@ FARMHOUSE_CHIMNEY_TOP = (1.35, 0.7 + 1.75, 3.4)
 
 
 def barn_old():
-    """Old weathered red barn, gable to the front: big double doors with X
-    braces, a hayloft door with hay, a dark roof, a missing plank."""
+    """Old weathered red barn, gambrel roof with its end to the front: big
+    white-framed double doors with X braces, a wide hayloft door with hay
+    poking out, white trim down the roof edges and a small window."""
     red = mat("barn_red", RED, noise=0.1, noise_scale=16, lines=("x", 0.3, 0.04, 0.72))
     trim = mat("barn_trim", TRIM)
     roof = mat("barn_roof", ROOF_GREY, noise=0.1, noise_scale=8, lines=("x", 0.24, 0.05, 0.72))
-    dark = mat("barn_gap", hexrgb("2a1d17"))
     door = mat("barn_door", RED_DARK, noise=0.06, noise_scale=16, lines=("x", 0.2, 0.03, 0.75))
     hay = mat("barn_hay", HAY, noise=0.25, noise_scale=30)
+    glass = mat("barn_glass", GLASS)
 
+    width = 3.6
     front = 0.4
-    depth = 3.8
-    box((3.6, depth, 1.5), (0, front + depth / 2, 0), red)
-    # The gable wall: a triangle on top of the front (and back) wall.
-    prism(depth, 3.6, 1.3, (0, front + depth / 2, 1.5), red, rot=(0, 0, math.pi / 2))
-    roof_slopes(span=3.6, rise=1.3, length=depth + 0.3, eave_z=1.5, centre_y=front + depth / 2, material=roof, along="y")
+    depth = 2.4          # shallow, so the roof takes up little of the sprite
+    wall = 1.5
+    knee_x, knee_z, rise = 1.15, 0.78, 1.3      # where the roof bends, and the ridge
+    mid = front + depth / 2
+
+    box((width, depth, wall), (0, mid, 0), red)
+    gambrel_gable(width, depth, knee_x, knee_z, rise, (0, mid, wall), red)
+    gambrel_slopes(width, knee_x, knee_z, rise, depth + 0.3, wall, mid, roof)
     for x in (-1.8, 1.8):
-        box((0.12, 0.1, 1.5), (x, front - 0.04, 0), trim)
-    # Double doors with a white frame and X braces.
+        box((0.12, 0.1, wall), (x, front - 0.04, 0), trim)
+    # White trim down both roof edges on the front, following the bend.
+    for phi, cx, cz, run in gambrel_segments(width, knee_x, knee_z, rise, wall, overhang=0.26):
+        for side in (-1, 1):
+            box((run, 0.08, 0.1), (side * cx, front - 0.05, cz), trim, rot=(0, side * phi, 0))
+    # Double doors: a white frame all round, a centre post and X braces.
     box((1.6, 0.05, 1.2), (0, front - 0.02, 0), door)
-    box((1.74, 0.06, 0.09), (0, front - 0.04, 1.2), trim)
-    for x in (-0.82, 0, 0.82):
-        box((0.09, 0.06, 1.2), (x, front - 0.04, 0), trim)
+    box((1.78, 0.06, 0.1), (0, front - 0.04, 1.2), trim)
+    for x in (-0.84, 0, 0.84):
+        box((0.1, 0.06, 1.2), (x, front - 0.04, 0), trim)
     for cx in (-0.41, 0.41):
         for angle in (34, -34):
             box((0.07, 0.04, 1.38), (cx, front - 0.06, -0.09), trim, rot=(0, math.radians(angle), 0))
-    # Hayloft door in the gable, with hay poking out.
-    box((0.62, 0.05, 0.5), (0, front - 0.02, 1.62), door)
-    box((0.76, 0.06, 0.07), (0, front - 0.04, 2.12), trim)
-    box((0.5, 0.2, 0.1), (0, front - 0.1, 1.62), hay)
-    # White trim boards along the gable edges.
-    phi = math.atan2(1.3, 1.8)
-    for side in (-1, 1):
-        box((math.hypot(1.8, 1.3) + 0.2, 0.08, 0.1), (side * 0.9, front - 0.05, 1.5 + 0.65 - 0.05), trim,
-            rot=(0, side * phi, 0))
-    # A missing plank.
-    box((0.13, 0.04, 0.85), (1.35, front - 0.03, 0.3), dark)
+    # Hayloft door, wide and white-framed, with hay spilling out.
+    loft_w, loft_h, loft_z = 0.94, 0.8, 1.6
+    box((loft_w, 0.05, loft_h), (0, front - 0.02, loft_z), door)
+    for z in (loft_z - 0.07, loft_z + loft_h):
+        box((loft_w + 0.18, 0.06, 0.07), (0, front - 0.04, z), trim)
+    for x in (-(loft_w + 0.09) / 2, (loft_w + 0.09) / 2):
+        box((0.09, 0.06, loft_h + 0.07), (x, front - 0.04, loft_z - 0.07), trim)
+    box((0.66, 0.2, 0.12), (0, front - 0.1, loft_z + 0.06), hay)
+    # A small window on the right, framed to match.
+    win_x, win_w, win_h, win_z = 1.3, 0.6, 0.38, 0.78
+    box((win_w, 0.04, win_h), (win_x, front - 0.02, win_z), glass)
+    box((0.06, 0.05, win_h), (win_x, front - 0.04, win_z), trim)
+    for z in (win_z - 0.06, win_z + win_h):
+        box((win_w + 0.12, 0.05, 0.06), (win_x, front - 0.04, z), trim)
+    for x in (win_x - (win_w + 0.06) / 2, win_x + (win_w + 0.06) / 2):
+        box((0.06, 0.05, win_h + 0.06), (x, front - 0.04, win_z - 0.06), trim)
 
 
 # ----------------------------------------------------------------------- nature

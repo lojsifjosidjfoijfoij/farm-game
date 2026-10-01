@@ -20,7 +20,7 @@ public enum ObjectFootprint {
         case "building_farmhouse_t0":
             return TileRect(minX: p.x - 2.3, minY: p.y - 0.2, maxX: p.x + 2.3, maxY: p.y + 3.4)
         case "building_barn_old":
-            return TileRect(minX: p.x - 2.0, minY: p.y - 0.2, maxX: p.x + 2.0, maxY: p.y + 4.2)
+            return TileRect(minX: p.x - 2.0, minY: p.y - 0.2, maxX: p.x + 2.0, maxY: p.y + 2.8)
         case "nature_pond_small":
             return TileRect(minX: p.x - 1.6, minY: p.y - 1.1, maxX: p.x + 1.6, maxY: p.y + 1.1)
         case "nature_lake":
