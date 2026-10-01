@@ -245,7 +245,7 @@ struct Sunburst: View {
     }
 }
 
-/// The message that drops in at the top of the HUD: slim dark slate, white type.
+/// The message that drops in at the top of the HUD: paper in a wooden frame, ink type.
 struct BannerView: View {
     let text: String
 
@@ -255,9 +255,7 @@ struct BannerView: View {
             .foregroundStyle(HUD.text)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 7)
-            .background(RoundedRectangle(cornerRadius: 15, style: .continuous).fill(HUD.panelStrong))
+            .hudPanel(horizontal: 16, vertical: 10)
     }
 }
 

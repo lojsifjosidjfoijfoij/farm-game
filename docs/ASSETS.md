@@ -48,8 +48,8 @@ procedurally in code.
 | Animals | 70 | 0 |
 | Item icons | 107 | 0 |
 | Effects & particles | 36 | 4 |
-| User interface | 35 | 15 |
-| **Total** | **741** | **52** |
+| User interface | 45 | 15 |
+| **Total** | **751** | **52** |
 | Audio files | 58 | 0 |
 
 ## Terrain (tileable ground textures)
@@ -752,6 +752,16 @@ procedurally in code.
 | `ui_joystick_knob` | 192 × 192 | UI | — | 3 | Joystick knob. |
 | `ui_panel_parchment` | 288 × 288 | UI | — | 1 | 9-slice panel: warm parchment with a subtle hand-drawn border (slice 32 pt). |
 | `ui_button_primary` | 288 × 144 | UI | — | 1 | 9-slice button: warm green, soft bevel (slice 20 pt). |
+| `ui_hud_panel` | 240 × 120 | UI | — | 13 | HUD panel, 9-slice: a slim wooden frame (dark outline, two rows of board lit top-left, an inner line) around paper. Fixed border 5 art px (10 pt); edges and middle tile. |
+| `ui_hud_wood` | 240 × 144 | UI | — | 13 | HUD board, 9-slice: the same wooden frame around planks (the tool tray). Fixed border 10 pt; tiles. |
+| `ui_hud_slot` | 96 × 96 | UI | — | 13 | Tool-belt slot, 9-slice: paper with a dark edge. Fixed border 6 pt. |
+| `ui_hud_slot_selected` | 96 × 96 | UI | — | 13 | The tool in hand: a lighter slot with an orange edge. Fixed border 6 pt. |
+| `ui_hud_button` | 144 × 120 | UI | — | 13 | Main HUD button, 9-slice: an orange painted board, notched corners, lit top edge, darker bottom it presses into. Fixed border 12 pt. |
+| `ui_hud_button_quiet` | 144 × 120 | UI | — | 13 | The same board in plain brown, for buttons that can't be used yet (a closed shop). |
+| `ui_icon_seeds` | 72 × 72 | UI | — | 13 | Seed pouch with a sprout on it (the seeds tool when no packet is chosen). |
+| `ui_icon_weather_cloudy` | 72 × 72 | UI | — | 13 | Cloud (the clock on a grey day). |
+| `ui_icon_weather_rain` | 72 × 72 | UI | — | 13 | Cloud with rain. |
+| `ui_icon_weather_snow` | 72 × 72 | UI | — | 13 | Cloud with snow. |
 
 ## Audio
 

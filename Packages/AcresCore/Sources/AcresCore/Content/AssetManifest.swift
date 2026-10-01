@@ -522,5 +522,18 @@ public enum AssetManifest {
         .ui("ui_joystick_knob", points: 64, 64, phase: 3, "Joystick knob."),
         .ui("ui_panel_parchment", points: 96, 96, phase: 1, "9-slice panel: warm parchment with a subtle hand-drawn border (slice 32 pt)."),
         .ui("ui_button_primary", points: 96, 48, phase: 1, "9-slice button: warm green, soft bevel (slice 20 pt)."),
+        // The wood-and-paper HUD (pixel art at 2 pt per art pixel; art/hud/make_hud.py).
+        .ui("ui_hud_panel", points: 80, 40, phase: 13,
+            "HUD panel, 9-slice: a slim wooden frame (dark outline, two rows of board lit top-left, an inner line) around paper. Fixed border 5 art px (10 pt); edges and middle tile."),
+        .ui("ui_hud_wood", points: 80, 48, phase: 13, "HUD board, 9-slice: the same wooden frame around planks (the tool tray). Fixed border 10 pt; tiles."),
+        .ui("ui_hud_slot", points: 32, 32, phase: 13, "Tool-belt slot, 9-slice: paper with a dark edge. Fixed border 6 pt."),
+        .ui("ui_hud_slot_selected", points: 32, 32, phase: 13, "The tool in hand: a lighter slot with an orange edge. Fixed border 6 pt."),
+        .ui("ui_hud_button", points: 48, 40, phase: 13,
+            "Main HUD button, 9-slice: an orange painted board, notched corners, lit top edge, darker bottom it presses into. Fixed border 12 pt."),
+        .ui("ui_hud_button_quiet", points: 48, 40, phase: 13, "The same board in plain brown, for buttons that can't be used yet (a closed shop)."),
+        .ui("ui_icon_seeds", points: 24, 24, phase: 13, "Seed pouch with a sprout on it (the seeds tool when no packet is chosen)."),
+        .ui("ui_icon_weather_cloudy", points: 24, 24, phase: 13, "Cloud (the clock on a grey day)."),
+        .ui("ui_icon_weather_rain", points: 24, 24, phase: 13, "Cloud with rain."),
+        .ui("ui_icon_weather_snow", points: 24, 24, phase: 13, "Cloud with snow."),
     ]
 }

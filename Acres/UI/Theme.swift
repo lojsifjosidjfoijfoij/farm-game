@@ -66,28 +66,6 @@ enum Theme {
     }
 }
 
-/// The slim see-through slate chip behind HUD elements (see `HUD`).
-struct HUDPanel: ViewModifier {
-    var cornerRadius: CGFloat = 12
-    var strong = false
-
-    func body(content: Content) -> some View {
-        content
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(strong ? HUD.panelStrong : HUD.panel)
-            )
-    }
-}
-
-extension View {
-    func hudPanel(cornerRadius: CGFloat = 12, strong: Bool = false) -> some View {
-        modifier(HUDPanel(cornerRadius: cornerRadius, strong: strong))
-    }
-}
-
 /// An image that uses real art from the asset catalog when present, and an
 /// SF Symbol placeholder otherwise.
 struct GameIcon: View {
@@ -99,6 +77,7 @@ struct GameIcon: View {
     var body: some View {
         if UIImage(named: asset) != nil {
             Image(asset)
+                .interpolation(.none)  // pixel art: crisp pixels
                 .resizable()
                 .scaledToFit()
                 .frame(width: size, height: size)

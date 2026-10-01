@@ -47,6 +47,27 @@ cd Packages/AcresCore
 swift test
 ```
 
+## The new look: what to test
+
+The whole game is moving to the look agreed on the mock (`art/style_test`): richer pixel art at
+32 pixels per tile. Done so far:
+
+1. **Sharper, richer art:** every Blender sprite (farmhouse, barn, trees, bushes, rocks, wheat,
+   props, the truck) is re-rendered at 32 pixels per tile with cool shadows, warm light, boards
+   and shingles in varied tones and leafy trees, and crisp edges. New: pines (all four seasons) and
+   the iron lamp post. Everything else (the farmer, animals, the village, other crops) is still
+   drawn art, now on the same pixel grid; it gets converted next, in batches.
+2. **The ground:** pixel-art grass with tufts, clover and flowers; dirt paths with pebbles, ragged
+   edges, a darker rim and grass poking over it; gravel and asphalt roads. No blur anywhere, and
+   the pattern doesn't visibly repeat.
+3. **Night:** bluer, with warm pools of light on the ground around lamp posts, the farmhouse and
+   lit buildings, and fireflies over the meadow on dry nights (not in winter).
+4. **The HUD in wood and paper:** one panel top left with the level, coins and energy (and fuel
+   when it matters), the goal and today's chores under it, the clock top right, a wooden tool tray
+   with paper slots (the tool in hand lifts in an orange-edged slot), paper buttons for the phone,
+   basket and bed, orange board buttons for places, and Tom's card on paper. New font: Fredoka.
+   The shop, phone and other menus keep their current look for now.
+
 ## A breeze in the trees: what to test
 
 Trees, bushes, grass tufts and flowers now sway gently: the trunk stays still and the crown leans
