@@ -61,6 +61,12 @@ struct WorldObjectFactory {
             glow.zPosition = ZLayer.nightLightOffset
             sprite.addChild(glow)
             lights.append(glow)
+            // Light spilling onto the ground around it.
+            if let pool = NightLight.pool(for: object.kind) {
+                let node = NightLight.makePool(pool)
+                sprite.addChild(node)
+                lights.append(node)
+            }
         }
 
         if let chimney = Self.chimneys[name] {

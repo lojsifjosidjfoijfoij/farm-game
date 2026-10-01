@@ -40,17 +40,17 @@ public enum DayNightCurve {
     /// Keyframes in wall-clock hours; the curve wraps around midnight.
     static let keys: [Key] = [
         // Nights stay fairly bright: the cycle is only for looks, never in the way.
-        Key(hour: 0.0, tint: RGB(0.52, 0.57, 0.78), lights: 1),     // night
-        Key(hour: 4.5, tint: RGB(0.53, 0.58, 0.78), lights: 1),
-        Key(hour: 5.6, tint: RGB(0.68, 0.64, 0.78), lights: 0.8),   // first light
+        Key(hour: 0.0, tint: RGB(0.45, 0.53, 0.84), lights: 1),     // night: blue, with warm lights
+        Key(hour: 4.5, tint: RGB(0.46, 0.54, 0.84), lights: 1),
+        Key(hour: 5.6, tint: RGB(0.64, 0.62, 0.8), lights: 0.8),    // first light
         Key(hour: 6.5, tint: RGB(0.95, 0.80, 0.74), lights: 0.2),   // dawn blush
         Key(hour: 8.0, tint: RGB(1.00, 0.94, 0.84), lights: 0),     // warm morning
         Key(hour: 11.0, tint: RGB(1.00, 1.00, 0.98), lights: 0),    // bright noon
         Key(hour: 15.5, tint: RGB(1.00, 0.98, 0.93), lights: 0),
         Key(hour: 18.0, tint: RGB(1.00, 0.83, 0.64), lights: 0.05), // golden hour
         Key(hour: 19.3, tint: RGB(0.86, 0.60, 0.60), lights: 0.5),  // sunset
-        Key(hour: 20.5, tint: RGB(0.6, 0.6, 0.8), lights: 0.95),    // blue hour
-        Key(hour: 22.0, tint: RGB(0.53, 0.57, 0.78), lights: 1),
+        Key(hour: 20.5, tint: RGB(0.56, 0.58, 0.84), lights: 0.95), // blue hour
+        Key(hour: 22.0, tint: RGB(0.46, 0.53, 0.84), lights: 1),
     ]
 
     public static func lighting(atHour hour: Double) -> Lighting {

@@ -44,6 +44,9 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     private var gestures: [UIGestureRecognizer] = []
     private var lastUpdateTime: TimeInterval?
     private var lastLightingHour: Double = -1
+    /// Fireflies over the meadow on clear nights, and how many (0…1).
+    private var fireflies: SKEmitterNode?
+    private var fireflyAmount: CGFloat = 0
     private var presentationTimer: TimeInterval = 0
     private var fieldSyncTimer: TimeInterval = 0
     private var syncedFarmRevision = -1
@@ -101,6 +104,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         vignette.texture = assets.texture("fx_vignette")
         vignette.zPosition = ZLayer.lightingOverlay + 1
         cameraNode.addChild(vignette)
+        fireflies = NightLight.makeFireflies(in: objectLayer)
         resizeOverlay()
 
         // Warm the texture cache so the first frames don't hitch.
@@ -247,6 +251,9 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         }
         camera.update(dt: dt)
         chunks?.update(visibleRect: camera.visibleRect)
+        if let fireflies {
+            NightLight.setFireflies(fireflies, amount: fireflyAmount, over: camera.visibleRect)
+        }
         ranch?.update(dt: dt)
         store?.update(store: game.storeState, hour: game.hour, dt: dt)
         estate?.update(game: game, dt: dt)
@@ -385,6 +392,9 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
                                      blue: CGFloat(light.tint.b * sky.b), alpha: 1)
         chunks?.setLightIntensity(CGFloat(light.nightLights))
         ranch?.nightLevel = CGFloat(light.nightLights)
+        // Fireflies come out once it's properly dark, on dry nights, not in winter.
+        let dry = game.weather == .sunny || game.weather == .cloudy
+        fireflyAmount = dry && game.season != .winter ? CGFloat(max(0, light.nightLights - 0.5) * 2) : 0
     }
 
     // MARK: Input

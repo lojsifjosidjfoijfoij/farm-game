@@ -355,6 +355,11 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   few alpha steps), a dark one-pixel outline around standing sprites and item icons, a
   saturation and contrast boost and a stepped palette. Textures use nearest-neighbour filtering;
   SwiftUI shows catalog images with `.interpolation(.none)`. `PixelArt.worldShrink` sets the pixel size.
+- **Night light** (`World/NightLight.swift`): the night grade is a cool blue multiply; above it,
+  glowing things add warm light. Lamp posts, the farmhouse and lit buildings cast a pool of light
+  on the ground (a warm radial texture in flat rings, additive, faded in with the night like the
+  window glows), and fireflies (a particle emitter in the object layer, kept over the visible area)
+  drift and blink on dry nights outside winter.
 - **Breeze** (`World/WindSway.swift`): trees, bushes, grass tufts and flowers sway through one
   shared fragment shader. The trunk (a share of the sprite from the bottom) stays still and each
   row above leans sideways by a whole number of texels, more towards the top, so pixels stay crisp
