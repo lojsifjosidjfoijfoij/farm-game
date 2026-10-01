@@ -181,15 +181,23 @@ def oak(season="summer", s=1.0, seed=3):
     if season == "winter":
         snow = mat("snow", SNOW)
         twig = mat("twig", hexrgb("6a4630"))
-        branches = [(-0.9, 1.0), (0.95, 0.95), (-0.35, 1.45), (0.4, 1.4), (0.0, 1.6), (-1.1, 0.45), (1.1, 0.5)]
-        for k, (dx, dz) in enumerate(branches):
-            base = (0, 0, 1.25 * s)
-            tip = (dx * s, 0.05 * (k % 3 - 1), (1.25 + dz) * s)
-            stick(base, tip, 0.07 * s, twig, verts=5, tip_radius=0.02 * s)
-            mid = ((base[0] + tip[0]) * 0.6, tip[1], (base[2] + tip[2]) * 0.55 + 0.05)
-            blob(0.12 * s, (tip[0], tip[1], tip[2] - 0.05), snow, squash=(1.5, 1, 0.45), seed=seed + k)
-            stick(mid, (mid[0] + 0.3 * (1 if dx >= 0 else -1), mid[1], mid[2] + 0.35), 0.03, twig, verts=4, tip_radius=0.01)
-        blob(0.28 * s, (0, 0.02, 1.32 * s), snow, squash=(1.5, 1.1, 0.35), seed=seed)
+        # Limbs fan out from the top of the trunk and fork twice, filling
+        # roughly the same round crown as the leafy seasons.
+        def limb(base, angle, length, radius, depth, k):
+            a = math.radians(angle)
+            tip = (base[0] + math.sin(a) * length, base[1] + 0.04 * ((k % 3) - 1), base[2] + math.cos(a) * length)
+            stick(base, tip, radius, bark if depth == 0 else twig, verts=5, tip_radius=radius * 0.6)
+            if depth < 2:
+                fork = tuple(b + (t - b) * 0.7 for b, t in zip(base, tip))
+                for j, turn in enumerate((-18, 20)):
+                    limb(fork if depth == 0 else tip, angle + turn, length * (0.62 if depth == 0 else 0.5),
+                         radius * 0.62, depth + 1, k * 3 + j)
+            elif abs(angle) > 30 and k % 2 == 0:
+                # Snow lies along the flatter twigs.
+                blob(0.075 * s, (tip[0], tip[1], tip[2] + 0.03), snow, squash=(1.8, 1, 0.45), seed=seed + k)
+        for k, angle in enumerate((-46, -24, -6, 10, 28, 48)):
+            limb((0, 0, 1.4 * s), angle, 1.05 * s, 0.1 * s, 0, k)
+        blob(0.22 * s, (0, 0.02, 1.5 * s), snow, squash=(1.5, 1.1, 0.35), seed=seed)
         return
     _canopy((0, 0.1, 2.1 * s), 1.15 * s, LEAVES[season], seed)
 
