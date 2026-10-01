@@ -21,9 +21,12 @@ import numpy as np
 from mathutils import Vector
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-CATALOG = os.path.join(REPO, "Acres", "Resources", "Assets.xcassets", "Art")
+# "v2" is the richer look being tried out (32 px per tile, cool shadows, warm
+# light); its renders go to a separate folder until it's chosen.
+STYLE = os.environ.get("ACRES_ART_STYLE", "v1")
+CATALOG = os.environ.get("ACRES_ART_CATALOG") or os.path.join(REPO, "Acres", "Resources", "Assets.xcassets", "Art")
 
-PX_PER_TILE = 16
+PX_PER_TILE = int(os.environ.get("ACRES_PX_PER_TILE") or (32 if STYLE == "v2" else 16))
 # The game's 3/4 view: looking down this far from the horizon. Ground depth
 # shows at sin(PITCH), heights at cos(PITCH).
 PITCH = math.radians(40)
@@ -33,8 +36,10 @@ TO_LIGHT = Vector((-0.6, -0.4, 0.75)).normalized()
 SUPERSAMPLE = 4
 LEVELS = 16          # steps per colour channel
 OUTLINE_SHADE = 0.3  # outline colour = this × the colour it wraps
-SATURATION = 1.35    # same punch as the game's drawn art (PixelArt.swift)
-CONTRAST = 1.08
+# v2 light bands (linear multipliers), darkest first.
+V2_BANDS = [(0.30, 0.33, 0.52), (0.50, 0.53, 0.72), (0.80, 0.80, 0.88), (1.0, 0.96, 0.86)]
+SATURATION = 1.15 if STYLE == "v2" else 1.35    # v1: the same punch as the game's drawn art (PixelArt.swift)
+CONTRAST = 1.05 if STYLE == "v2" else 1.08
 
 
 # --------------------------------------------------------------------------- scene
@@ -135,7 +140,20 @@ def _toon_compositor(scene, bands=3, floor=0.35):
     shade.blend_type = "MULTIPLY"
     shade.inputs[0].default_value = 1
     tree.links.new(rl.outputs["DiffCol"], shade.inputs[1])
-    tree.links.new(lift.outputs[0], shade.inputs[2])
+    if STYLE == "v2":
+        # Each band its own tint, the way pixel artists shade: shadows cool
+        # and bluish, lit faces warm.
+        ramp = tree.nodes.new("CompositorNodeValToRGB")
+        ramp.color_ramp.interpolation = "CONSTANT"
+        els = ramp.color_ramp.elements
+        els[0].position, els[0].color = 0.0, (*V2_BANDS[0], 1)
+        els[1].position, els[1].color = 0.84, (*V2_BANDS[3], 1)
+        for position, colour in ((0.17, V2_BANDS[1]), (0.5, V2_BANDS[2])):
+            els.new(position).color = (*colour, 1)
+        tree.links.new(high.outputs[0], ramp.inputs[0])
+        tree.links.new(ramp.outputs[0], shade.inputs[2])
+    else:
+        tree.links.new(lift.outputs[0], shade.inputs[2])
     glow = tree.nodes.new("CompositorNodeMixRGB")
     glow.blend_type = "ADD"
     glow.inputs[0].default_value = 1
@@ -154,11 +172,17 @@ def _toon_compositor(scene, bands=3, floor=0.35):
 _materials = {}
 
 
-def mat(name, rgb, noise=0.0, emit=None, noise_scale=6.0, lines=None):
+def mat(name, rgb, noise=0.0, emit=None, noise_scale=6.0, lines=None, tiles=None, leaves=None, grain=None):
     """A flat diffuse colour (sRGB 0…1), optionally speckled, optionally with
     crisp dark lines (boards, shingles: `lines` = (axis, period, width, shade)
-    in object units), optionally glowing."""
-    key = (name, tuple(rgb), noise, emit, lines)
+    in object units), optionally glowing.
+
+    The v2 look adds texture a pixel artist would draw: every board or tile a
+    slightly different tone, flecks of grain, and leafy clusters.
+    `tiles` = (u_axis, v_axis, width, height, stagger, gap, shade) lays out
+    staggered tiles (shingles, stones; gap may be (between tiles, between rows)); `leaves` = clusters per tile;
+    `grain` = how much fleck. In v1 these are ignored."""
+    key = (name, tuple(rgb), noise, emit, lines, tiles, leaves, grain)
     if key in _materials:
         return _materials[key]
     m = bpy.data.materials.new(name)
@@ -169,6 +193,8 @@ def mat(name, rgb, noise=0.0, emit=None, noise_scale=6.0, lines=None):
     bsdf.inputs["Specular IOR Level"].default_value = 0.0
     linear = tuple(_to_linear(c) for c in rgb)
     m.diffuse_color = (*linear, 1)  # what the app's solid view shows
+    v2 = STYLE == "v2"
+    g = _Nodes(nodes, links)
     colour = None  # output socket of the base colour, if not a constant
     if noise > 0:
         tex = nodes.new("ShaderNodeTexNoise")
@@ -179,7 +205,19 @@ def mat(name, rgb, noise=0.0, emit=None, noise_scale=6.0, lines=None):
         ramp.color_ramp.elements[1].color = (*[min(1, c * (1 + noise)) for c in linear], 1)
         links.new(tex.outputs["Fac"], ramp.inputs["Fac"])
         colour = ramp.outputs["Color"]
-    if lines is not None:
+    base = colour if colour is not None else g.rgb(linear)
+    if v2 and leaves:
+        colour = g.leaves(base, leaves)
+    elif v2 and (lines is not None or tiles is not None):
+        if tiles is not None:
+            u, v, w, h, stagger, gap, shade = tiles
+        else:  # boards along one axis, unbroken the other way
+            axis, period, width, shade = lines
+            u, v, w, h, stagger, gap = axis, ("z" if axis != "z" else "x"), period, 1000.0, 0.0, width
+        is_gap, rnd = g.cells(u, v, w, h, stagger, gap)
+        toned = g.scale(base, g.math("ADD", 0.9, g.math("MULTIPLY", rnd, 0.2)))
+        colour = g.mix(is_gap, toned, g.rgb([c * shade for c in linear]))
+    elif lines is not None:
         axis, period, width, shade = lines
         coords = nodes.new("ShaderNodeTexCoord")
         split = nodes.new("ShaderNodeSeparateXYZ")
@@ -204,6 +242,8 @@ def mat(name, rgb, noise=0.0, emit=None, noise_scale=6.0, lines=None):
             mix.inputs["Color1"].default_value = (*linear, 1)
         mix.inputs["Color2"].default_value = (*[c * shade for c in linear], 1)
         colour = mix.outputs["Color"]
+    if v2 and grain:
+        colour = g.grain(colour if colour is not None else base, grain)
     if colour is not None:
         links.new(colour, bsdf.inputs["Base Color"])
     else:
@@ -213,6 +253,113 @@ def mat(name, rgb, noise=0.0, emit=None, noise_scale=6.0, lines=None):
         bsdf.inputs["Emission Strength"].default_value = 1.0
     _materials[key] = m
     return m
+
+
+class _Nodes:
+    """Small helpers for wiring shader nodes."""
+
+    def __init__(self, nodes, links):
+        self.nodes, self.links = nodes, links
+        self._split = None
+
+    def _feed(self, socket, value):
+        if isinstance(value, (int, float)):
+            socket.default_value = value
+        else:
+            self.links.new(value, socket)
+
+    def math(self, op, a, b=None):
+        n = self.nodes.new("ShaderNodeMath")
+        n.operation = op
+        self._feed(n.inputs[0], a)
+        if b is not None:
+            self._feed(n.inputs[1], b)
+        return n.outputs[0]
+
+    def rgb(self, linear):
+        n = self.nodes.new("ShaderNodeRGB")
+        n.outputs[0].default_value = (*linear, 1)
+        return n.outputs[0]
+
+    def axis(self, name):
+        if self._split is None:
+            coords = self.nodes.new("ShaderNodeTexCoord")
+            self._split = self.nodes.new("ShaderNodeSeparateXYZ")
+            self.links.new(coords.outputs["Object"], self._split.inputs[0])
+        return self._split.outputs["XYZ".index(name.upper())]
+
+    def scale(self, colour, factor):
+        n = self.nodes.new("ShaderNodeVectorMath")
+        n.operation = "SCALE"
+        self.links.new(colour, n.inputs[0])
+        self._feed(n.inputs["Scale"], factor)
+        return n.outputs["Vector"]
+
+    def mix(self, fac, a, b):
+        n = self.nodes.new("ShaderNodeMixRGB")
+        n.blend_type = "MIX"
+        self._feed(n.inputs["Fac"], fac)
+        self.links.new(a, n.inputs["Color1"])
+        self.links.new(b, n.inputs["Color2"])
+        return n.outputs["Color"]
+
+    def random(self, a, b, seed=0.0):
+        vec = self.nodes.new("ShaderNodeCombineXYZ")
+        self._feed(vec.inputs[0], a)
+        self._feed(vec.inputs[1], b)
+        vec.inputs[2].default_value = seed
+        noise = self.nodes.new("ShaderNodeTexWhiteNoise")
+        noise.noise_dimensions = "3D"
+        self.links.new(vec.outputs[0], noise.inputs["Vector"])
+        return noise.outputs["Value"]
+
+    def cells(self, u, v, w, h, stagger, gap):
+        """(is it a gap?, a random 0…1 per cell) for tiles w × h on axes u, v."""
+        vv = self.math("DIVIDE", self.axis(v), h)
+        row = self.math("FLOOR", vv)
+        shift = self.math("MULTIPLY", self.math("FLOORED_MODULO", row, 2.0), stagger)
+        uu = self.math("ADD", self.math("DIVIDE", self.axis(u), w), shift)
+        col = self.math("FLOOR", uu)
+        gap_side, gap_row = gap if isinstance(gap, tuple) else (gap, gap)
+        gap_u = self.math("LESS_THAN", self.math("FRACT", uu), gap_side / w)
+        gap_v = self.math("LESS_THAN", self.math("FRACT", vv), gap_row / h)
+        return self.math("MAXIMUM", gap_u, gap_v), self.random(col, row)
+
+    def leaves(self, base, per_tile):
+        """Leafy clusters: each a lit centre fading to a dark gap, in a few flat steps."""
+        vor = self.nodes.new("ShaderNodeTexVoronoi")
+        vor.voronoi_dimensions = "3D"
+        vor.inputs["Scale"].default_value = per_tile
+        coords = self.nodes.new("ShaderNodeTexCoord")
+        self.links.new(coords.outputs["Object"], vor.inputs["Vector"])
+        ramp = self.nodes.new("ShaderNodeValToRGB")
+        ramp.color_ramp.interpolation = "CONSTANT"
+        els = ramp.color_ramp.elements
+        els[0].position, els[0].color = 0.0, (1.0, 1.0, 1.0, 1)
+        els[1].position, els[1].color = 0.62, (0.46, 0.46, 0.46, 1)
+        els.new(0.32).color = (0.8, 0.8, 0.8, 1)
+        self.links.new(vor.outputs["Distance"], ramp.inputs["Fac"])
+        shaded = self.nodes.new("ShaderNodeMixRGB")
+        shaded.blend_type = "MULTIPLY"
+        shaded.inputs["Fac"].default_value = 1.0
+        self.links.new(base, shaded.inputs["Color1"])
+        self.links.new(ramp.outputs["Color"], shaded.inputs["Color2"])
+        # Each cluster a touch lighter or darker than its neighbours.
+        tone = self.math("ADD", 1.08, self.math("MULTIPLY", self._voronoi_random(vor), 0.22))
+        return self.scale(shaded.outputs["Color"], tone)
+
+    def _voronoi_random(self, vor):
+        bw = self.nodes.new("ShaderNodeRGBToBW")
+        self.links.new(vor.outputs["Color"], bw.inputs[0])
+        return bw.outputs[0]
+
+    def grain(self, colour, amount):
+        """Scattered one-pixel flecks, a little darker."""
+        noise = self.nodes.new("ShaderNodeTexNoise")
+        noise.inputs["Scale"].default_value = 70.0
+        noise.inputs["Detail"].default_value = 0.0
+        fleck = self.math("GREATER_THAN", noise.outputs["Fac"], 0.62)
+        return self.scale(colour, self.math("SUBTRACT", 1.0, self.math("MULTIPLY", fleck, amount)))
 
 
 def holdout():

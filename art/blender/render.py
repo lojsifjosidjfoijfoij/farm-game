@@ -15,7 +15,7 @@ import acres_art as art  # noqa: E402
 from frames import frame  # noqa: E402,F401  (live.py uses render.frame too)
 import models  # noqa: E402
 
-PREVIEW = os.path.join(os.path.dirname(__file__), ".renders", "preview")
+PREVIEW = os.environ.get("ACRES_ART_PREVIEW") or os.path.join(os.path.dirname(__file__), ".renders", "preview")
 
 
 FLAT = {"outline": False, "top_down": True}
@@ -27,6 +27,7 @@ ASSETS = {
     "building_farmhouse_t0_lights": (lambda: models.farmhouse_t0(night=True), GLOW),
     "building_barn_old": (models.barn_old, {}),
     **{f"tree_oak_{season}": ((lambda s=season: models.oak(s)), {}) for season in ("spring", "summer", "autumn", "winter")},
+    **{f"tree_pine_{season}": ((lambda s=season: models.pine(s)), {}) for season in ("spring", "summer", "autumn", "winter")},
     "tree_oak_young": (lambda: models.young_tree("oak"), {}),
     "tree_birch_young": (lambda: models.young_tree("birch"), {}),
     "nature_bush_a": (lambda: models.bush(wide=False), {}),
@@ -44,6 +45,8 @@ ASSETS = {
     "prop_crate": (models.crate, {}),
     "prop_log_pile": (models.log_pile, {}),
     "prop_mailbox": (models.mailbox, {}),
+    "prop_lamp_post": (models.lamp_post, {}),
+    "prop_lamp_post_lights": (lambda: models.lamp_post(night=True), GLOW),
     "prop_fence_wood_h": (lambda: models.fence("h"), {}),
     "prop_fence_wood_h_broken": (lambda: models.fence("broken"), {}),
     "prop_fence_wood_v": (lambda: models.fence("v"), {}),

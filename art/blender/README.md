@@ -86,3 +86,10 @@ Batch 1, the first screen: the run-down farmhouse (and its night lights), the ol
 four seasons, young oak and birch, bushes, rocks, stump, grass tufts, wheat in all five stages,
 plowed and watered soil, well, hay bale, crate, log pile, mailbox, the wooden fence and the truck
 in 16 directions with both loads.
+
+## A richer look (v2, being tried)
+
+`ACRES_ART_STYLE=v2` renders at 32 px per tile with cool shadows, warm light, varied boards and
+shingles, grain and leafy clusters, into a separate folder. It's on trial in a mock screen; see
+[`art/style_test/README.md`](../style_test/README.md). Without the switch, renders are unchanged.
+The pine and the lamp post are modelled for that test and haven't been rendered into the game yet.

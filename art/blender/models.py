@@ -115,11 +115,11 @@ def farmhouse_t0(night=False):
     H = holdout()
     walls = H if night else mat("fh_walls", PAINT_BLUE, noise=0.06, noise_scale=12, lines=("z", 0.2, 0.035, 0.78))
     trim = H if night else mat("fh_trim", TRIM)
-    roof = H if night else mat("fh_roof", SHINGLE, noise=0.1, noise_scale=8, lines=("y", 0.22, 0.05, 0.7))
+    roof = H if night else mat("fh_roof", SHINGLE, noise=0.1, noise_scale=8, lines=("y", 0.22, 0.05, 0.7), tiles=("x", "y", 0.2, 0.17, 0.5, (0.0, 0.05), 0.58))
     patch = H if night else mat("fh_patch", ROOF_GREY, lines=("y", 0.22, 0.05, 0.7))
-    wood = H if night else mat("fh_wood", WOOD, noise=0.1, lines=("x", 0.25, 0.04, 0.75))
+    wood = H if night else mat("fh_wood", WOOD, noise=0.1, lines=("x", 0.25, 0.04, 0.75), grain=0.12)
     plank = H if night else mat("fh_plank", WOOD_DARK)
-    brick = H if night else mat("fh_brick", STONE, noise=0.18, noise_scale=20, lines=("z", 0.2, 0.05, 0.72))
+    brick = H if night else mat("fh_brick", STONE, noise=0.18, noise_scale=20, lines=("z", 0.2, 0.05, 0.72), tiles=("x", "z", 0.22, 0.13, 0.5, 0.035, 0.68))
     window = mat("fh_glow", (0, 0, 0), emit=GLOW) if night else mat("fh_glass", GLASS)
     flowers = H if night else mat("fh_flowers", hexrgb("e8607a"), noise=0.3, noise_scale=40)
 
@@ -164,9 +164,10 @@ def barn_old():
     """Old weathered red barn, gambrel roof with its end to the front: big
     white-framed double doors with X braces, a wide hayloft door with hay
     poking out, white trim down the roof edges and a small window."""
-    red = mat("barn_red", RED, noise=0.1, noise_scale=16, lines=("x", 0.3, 0.04, 0.72))
+    red = mat("barn_red", RED, noise=0.1, noise_scale=16, lines=("x", 0.3, 0.04, 0.72), grain=0.1)
     trim = mat("barn_trim", TRIM)
-    roof = mat("barn_roof", ROOF_GREY, noise=0.1, noise_scale=8, lines=("x", 0.24, 0.05, 0.72))
+    roof = mat("barn_roof", ROOF_GREY, noise=0.1, noise_scale=8, lines=("x", 0.24, 0.05, 0.72),
+               tiles=("x", "y", 0.24, 1000.0, 0.0, 0.05, 0.62), grain=0.1)
     door = mat("barn_door", RED_DARK, noise=0.06, noise_scale=16, lines=("x", 0.2, 0.03, 0.75))
     hay = mat("barn_hay", HAY, noise=0.25, noise_scale=30)
     glass = mat("barn_glass", GLASS)
@@ -235,7 +236,7 @@ def _canopy(centre, radius, colours, seed, lumps=9, squash=0.85):
     """A round leafy crown: a big faceted ball with lumps over its top and
     sides, like a cauliflower, so the outline stays round."""
     cx, cy, cz = centre
-    leaves = [mat(f"leaf{i}", c, noise=0.16, noise_scale=7) for i, c in enumerate(colours)]
+    leaves = [mat(f"leaf{i}", c, noise=0.16, noise_scale=7, leaves=6.5) for i, c in enumerate(colours)]
     blob(radius * 0.9, (cx, cy, cz), leaves[0], squash=(1.1, 0.9, squash), subdiv=2, seed=seed, jitter=0.08)
     for k in range(lumps):
         theta = math.acos(1 - 1.25 * (k + 0.5) / lumps)       # from the top down to just below the middle
@@ -249,7 +250,7 @@ def _canopy(centre, radius, colours, seed, lumps=9, squash=0.85):
 
 def oak(season="summer", s=1.0, seed=3):
     """Broad round oak, thick trunk, layered canopy (bare with snow in winter)."""
-    bark = mat("bark", BARK, noise=0.15, noise_scale=12, lines=("z", 0.3, 0.04, 0.8))
+    bark = mat("bark", BARK, noise=0.15, noise_scale=12, lines=("z", 0.3, 0.04, 0.8), grain=0.15)
     stick((0, 0, 0), (0, 0, 1.55 * s), 0.22 * s, bark, verts=8, tip_radius=0.13 * s)
     for side in (-1, 1):  # roots
         stick((0, 0, 0.12), (side * 0.35 * s, -0.05, 0.0), 0.08 * s, bark, verts=5, tip_radius=0.03)
@@ -277,6 +278,38 @@ def oak(season="summer", s=1.0, seed=3):
     _canopy((0, 0.1, 2.1 * s), 1.15 * s, LEAVES[season], seed)
 
 
+PINE = {
+    "summer": [hexrgb("2e7a4c"), hexrgb("256a42"), hexrgb("3a8c58")],
+    "spring": [hexrgb("3f9455"), hexrgb("348548"), hexrgb("4ea862")],
+}
+
+
+def pine(season="summer", seed=7):
+    """Tall pine: stacked tiers, each with a ragged lower edge of branch tips."""
+    import bpy
+    import numpy as np
+
+    bark = mat("bark", BARK, noise=0.15, noise_scale=12, lines=("z", 0.3, 0.04, 0.8), grain=0.15)
+    stick((0, 0, 0), (0, 0, 1.0), 0.13, bark, verts=7, tip_radius=0.1)
+    colours = PINE.get(season, PINE["summer"])
+    needles = [mat(f"needles{i}", c, noise=0.12, noise_scale=8, leaves=9.0) for i, c in enumerate(colours)]
+    snow = mat("snow", SNOW) if season == "winter" else None
+    rng = np.random.default_rng(seed)
+    tiers = [(0.5, 0.95, 1.3), (1.2, 0.8, 1.2), (1.9, 0.64, 1.1), (2.6, 0.46, 1.0), (3.25, 0.28, 1.05)]
+    for k, (z, r, h) in enumerate(tiers):
+        bpy.ops.mesh.primitive_cone_add(vertices=16, radius1=r, radius2=0.0, depth=h, location=(0, 0, z + h / 2))
+        cone = bpy.context.object
+        for i, v in enumerate(cone.data.vertices):
+            if v.co.z < -h / 2 + 1e-4 and (v.co.x or v.co.y):   # the rim: alternate tips down and in
+                tip = i % 2 == 0
+                v.co.z -= (0.16 if tip else 0.0) + rng.uniform(0, 0.05)
+                v.co.x *= (1.0 if tip else 0.86) + rng.uniform(-0.05, 0.05)
+                v.co.y *= (1.0 if tip else 0.86) + rng.uniform(-0.05, 0.05)
+        cone.data.materials.append(needles[k % len(needles)])
+        if snow is not None:
+            blob(r * 0.55, (0, 0, z + h * 0.42), snow, squash=(1.2, 1.0, 0.35), seed=seed + k)
+
+
 def young_tree(kind="oak", seed=5):
     if kind == "birch":
         bark = mat("birch_bark", hexrgb("efeae0"), lines=("z", 0.2, 0.05, 0.25))
@@ -290,7 +323,7 @@ def young_tree(kind="oak", seed=5):
 
 def bush(wide=False, seed=11):
     colours = [hexrgb("3f8a2a"), hexrgb("357a24"), hexrgb("4f9c32")] if wide else [hexrgb("4f9e30"), hexrgb("438c2a"), hexrgb("62b03c")]
-    leaves = [mat(f"bush{i}", c, noise=0.2, noise_scale=8) for i, c in enumerate(colours)]
+    leaves = [mat(f"bush{i}", c, noise=0.2, noise_scale=8, leaves=8.0) for i, c in enumerate(colours)]
     if wide:
         for k, (x, z, r) in enumerate([(-0.3, 0.22, 0.3), (0.3, 0.22, 0.3), (0, 0.3, 0.36)]):
             blob(r, (x, 0.05, z), leaves[k % 3], squash=(1.2, 1, 0.75), seed=seed + k)
@@ -300,7 +333,7 @@ def bush(wide=False, seed=11):
 
 
 def rock(large=False, seed=21):
-    stone = mat("stone", STONE, noise=0.2, noise_scale=6)
+    stone = mat("stone", STONE, noise=0.2, noise_scale=6, grain=0.15)
     if large:
         blob(0.68, (0, 0.25, 0.42), stone, squash=(1.15, 0.9, 0.72), seed=seed, jitter=0.18)
         blob(0.38, (-0.15, 0.2, 0.8), mat("moss", hexrgb("6f9a3a"), noise=0.25, noise_scale=12),
@@ -368,13 +401,13 @@ def soil(wet=False):
 # ------------------------------------------------------------------------ props
 
 def well():
-    stone = mat("well_stone", STONE, noise=0.15, noise_scale=10, lines=("z", 0.16, 0.04, 0.72))
+    stone = mat("well_stone", STONE, noise=0.15, noise_scale=10, lines=("z", 0.16, 0.04, 0.72), tiles=("x", "z", 0.3, 0.16, 0.5, 0.04, 0.65))
     wood = mat("well_wood", WOOD, noise=0.1)
     cyl(0.6, 0.55, (0, 0.35, 0), stone, verts=12)
     cyl(0.45, 0.02, (0, 0.35, 0.55), mat("well_water", hexrgb("27465e")), verts=12)
     for x in (-0.55, 0.55):
         box((0.1, 0.1, 1.35), (x, 0.35, 0.3), wood)
-    prism(1.45, 0.9, 0.45, (0, 0.35, 1.62), mat("well_roof", SHINGLE, lines=("y", 0.15, 0.04, 0.7)))
+    prism(1.45, 0.9, 0.45, (0, 0.35, 1.62), mat("well_roof", SHINGLE, lines=("y", 0.15, 0.04, 0.7), tiles=("x", "y", 0.18, 0.15, 0.5, (0.0, 0.045), 0.58)))
     cyl(0.03, 1.1, (-0.55, 0.35, 1.25), wood, verts=6, rot=(0, math.radians(90), 0))
     cyl(0.13, 0.2, (0.1, 0.35, 0.75), mat("bucket", hexrgb("8a6a4a"), lines=("z", 0.07, 0.02, 0.7)), verts=8)
 
@@ -387,7 +420,7 @@ def hay_bale():
 
 
 def crate():
-    wood = mat("crate_wood", WOOD, noise=0.1, lines=("z", 0.15, 0.025, 0.78))
+    wood = mat("crate_wood", WOOD, noise=0.1, lines=("z", 0.15, 0.025, 0.78), grain=0.12)
     frame = mat("crate_frame", WOOD_DARK)
     box((0.58, 0.5, 0.55), (0, 0.22, 0), wood)
     for z in (0.0, 0.49):
@@ -406,6 +439,21 @@ def log_pile():
         stick((x, 0.0, z), (x, -0.015, z), 0.12, ends, verts=8)
 
 
+def lamp_post(night=False):
+    """An old iron street lamp: a square lantern on a post (the glass glows at night)."""
+    H = holdout()
+    iron = H if night else mat("iron", hexrgb("3b3a40"), noise=0.1, noise_scale=20)
+    glass = mat("lamp_glow", (0, 0, 0), emit=hexrgb("ffc46a")) if night else mat("lamp_glass", hexrgb("f6d58a"))
+    box((0.12, 0.12, 2.5), (0, 0, 0), iron)
+    box((0.22, 0.22, 0.08), (0, 0, 0), iron)
+    box((0.26, 0.26, 0.05), (0, 0, 2.5), iron)
+    box((0.2, 0.2, 0.3), (0, 0, 2.55), glass)
+    for x in (-0.1, 0.1):
+        for y in (-0.1, 0.1):
+            box((0.03, 0.03, 0.3), (x, y, 2.55), iron)
+    prism(0.3, 0.3, 0.14, (0, 0, 2.85), iron)
+
+
 def mailbox():
     wood = mat("post", FENCE_WOOD)
     box((0.08, 0.08, 0.8), (0, 0, 0), wood)
@@ -419,7 +467,7 @@ def fence(kind="h"):
     """Weathered wooden fence: "h" (one tile left-right, post on the left end),
     "broken" (a rail hanging), "v" (one tile running away from the camera),
     "post" (just the post)."""
-    wood = mat("fence", FENCE_WOOD, noise=0.15, noise_scale=10, lines=("x", 0.35, 0.03, 0.8))
+    wood = mat("fence", FENCE_WOOD, noise=0.15, noise_scale=10, lines=("x", 0.35, 0.03, 0.8), grain=0.12)
     post = mat("fence_post", hexrgb("7d6146"))
     if kind == "post":
         box((0.11, 0.11, 0.78), (0, 0, 0), post)
