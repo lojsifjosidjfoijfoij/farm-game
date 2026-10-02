@@ -10,7 +10,8 @@ import Foundation
 public struct Obstacles: Sendable {
     public let map: WorldMap
     public let woodland: Woodland
-    /// Tiles under the player's own buildings (storage shed, silos).
+    /// Tiles under the player's own buildings (storage shed, silos) and the
+    /// village projects.
     public let built: Set<TileCoord>
     public let wild: WildLand
 
@@ -22,7 +23,12 @@ public struct Obstacles: Sendable {
     }
 
     public init(map: WorldMap, state: GameState) {
-        self.init(map: map, woodland: state.woodland, built: EstateLayout.blockedTiles(state.estate), wild: WildLand(state: state))
+        self.init(map: map, woodland: state.woodland, built: Self.built(state), wild: WildLand(state: state))
+    }
+
+    /// What the farm and the village have built since the map was drawn.
+    public static func built(_ state: GameState) -> Set<TileCoord> {
+        EstateLayout.blockedTiles(state.estate).union(VillageLayout.blockedTiles(state))
     }
 
     public func isBlocked(_ tile: TileCoord) -> Bool {

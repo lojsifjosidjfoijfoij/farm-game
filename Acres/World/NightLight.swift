@@ -20,6 +20,9 @@ enum NightLight {
         if kind == "prop_lamp_post" {
             return Pool(radius: 3.2, strength: 0.55, offset: CGPoint(x: 0, y: -0.2))
         }
+        if kind == "prop_fair_lantern" {
+            return Pool(radius: 2.2, strength: 0.45, offset: CGPoint(x: 0.2, y: -0.2))
+        }
         if kind.hasPrefix("building_farmhouse") {
             return Pool(radius: 2.6, strength: 0.38, offset: CGPoint(x: 0.2, y: -0.4))
         }

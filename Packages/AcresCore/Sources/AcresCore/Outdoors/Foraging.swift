@@ -115,7 +115,7 @@ public struct Foraging: Sendable {
         let day = state.clock.dayIndex
         let season = state.clock.date(daysPerSeason: balance.daysPerSeason).season
         let picked = state.forage.picked(on: day)
-        let obstacles = EstateLayout.blockedTiles(state.estate)
+        let obstacles = Obstacles.built(state)
         let wild = WildLand(state: state)  // nothing turns up in thick brush
         return Self.spawns(day: day, season: season, count: count(in: season)).filter { spawn in
             let tile = TileCoord(containing: spawn.position)

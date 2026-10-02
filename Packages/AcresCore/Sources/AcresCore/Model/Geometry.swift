@@ -87,4 +87,17 @@ public struct TileRect: Codable, Hashable, Sendable {
     public func insetBy(_ d: Double) -> TileRect {
         TileRect(minX: minX + d, minY: minY + d, maxX: maxX - d, maxY: maxY - d)
     }
+
+    /// Every tile this rectangle overlaps (touching an edge doesn't count).
+    public var coveredTiles: Set<TileCoord> {
+        var tiles = Set<TileCoord>()
+        for y in Int(minY.rounded(.down))...Int((maxY - 0.001).rounded(.down)) {
+            for x in Int(minX.rounded(.down))...Int((maxX - 0.001).rounded(.down)) {
+                if intersects(TileRect(minX: Double(x), minY: Double(y), maxX: Double(x + 1), maxY: Double(y + 1))) {
+                    tiles.insert(TileCoord(x, y))
+                }
+            }
+        }
+        return tiles
+    }
 }

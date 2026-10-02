@@ -50,21 +50,32 @@ swift test
 
 ## A market that wants variety, and village projects: what to test
 
-1. **Selling lots of one thing lowers its price.** Each one you sell fetches a little less that
-   day: about half price after ~45 of one crop (fewer for costly goods like jam or cheese), and
-   never under 30%. Half the drop wears off each day. The *Sell* buttons show the real total,
-   and a "Plenty today" tag says when it's time to sell something else. Orders and your own
-   shop never lower market prices, so they're now the way to move big harvests.
-2. **New crops pay more.** Coins per tile per day now climb with the level a crop unlocks:
-   potatoes ~40, kale ~50, corn and garlic ~60, cabbage ~70, pumpkin ~85, melon ~100.
-   Strawberries, tomatoes and blueberries are a little less per day, but you plant them once.
-   Pickled onions, sauerkraut and sunflower oil went up to match.
-3. **Village projects** (journal → *Village*, from level 3): six projects from flower beds
-   (3,000 coins) to lighting the lighthouse (100,000). Give coins a bit at a time, send goods
-   from storage and your bag, then tap *Open it!*. Each one gives the farm something lasting:
-   more buyers, faster recovering prices, better-paying orders, higher prices.
-4. **Late goals:** finish village projects, make 300 goods, finish 40 orders, earn 100,000 at
-   the market. Your save carries over (format v16: a fresh market, no projects yet).
+1. **Selling a mountain of one thing lowers its price; a normal load barely does.** A starter
+   field of wheat sells at about 95%, a whole truckload of one crop at about 75%, and 25,000
+   coins of melons at once ends at the floor (30%). Three quarters of the drop wears off by the
+   next morning. The *Sell* buttons show what you'll really get, a "Plenty today" tag says when
+   to sell something else, and Arne mentions it once. Orders and your own shop never lower
+   market prices.
+2. **New crops pay more.** Coins per tile per day climb with the level a crop unlocks: potatoes
+   ~40, kale ~50, corn ~63, cabbage ~70, pumpkin ~85, melon ~107. Strawberries, tomatoes and
+   blueberries earn a little less per day, but you plant them once. Pickled onions, sauerkraut
+   and sunflower oil went up to match. (`swift run acres-tools economy` prints the whole sheet.)
+3. **Village projects** (journal → *Village*, from level 3; Arne tells you about them):
+   flowers along the street (3,000 coins), a post office, a market hall, the harvest fair, a
+   jetty on Willow Lake and the old windmill (100,000). Give coins a bit at a time and send goods
+   from storage, your bag or the truck, then tap *Open it!* for a celebration, XP and a lasting
+   perk: more buyers, prices that recover faster, better-paying orders, higher prices.
+4. **You see them in the village.** From the start, the old windmill's ruin stands on the hill
+   above the market square, with a track up to it. When a project opens, a "coming soon" sign
+   marks its spot. Once it's done it stands there: planters along the street, a red post office,
+   a timber market hall behind the stalls, a bandstand with bunting and lanterns on the meadow
+   by the lake path, a boathouse and rowboats on Willow Lake, and the windmill with its sails
+   turning. The lanterns and windows glow at night. Tap a sign or a building to open its page;
+   *Go and see it* on the celebration card takes the camera there.
+5. **Late goals:** finish village projects, make 300 goods, finish 40 orders, earn 100,000 at
+   the market. Giving to the village counts toward your farm's rank. Your save carries over
+   (format v16; anything given to the first week's "bridge", "harbor" or "lighthouse" moves to
+   the post office, the boathouse and the windmill).
 
 ## Your bag, and selling that works: what to test
 

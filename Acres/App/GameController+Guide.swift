@@ -337,6 +337,9 @@ extension GameController {
         case .chores:
             GuideMessage(text: "Every morning there'll be three little chores at the top. Do all three for a bonus, "
                          + "and keep it up for a streak.")
+        case .market:
+            GuideMessage(text: "A word about the market: bring a mountain of one thing and they'll pay a bit less for each. "
+                         + "Bring a bit of everything, and fill orders with the rest. The buyers are mostly back by morning.")
         case .axe:
             GuideMessage(text: "You've earned the axe. The trees in your woodlot give good logs.")
         case .coop:
@@ -354,6 +357,9 @@ extension GameController {
         case .almanac:
             GuideMessage(text: "There's an almanac in your journal now. Everything you grow, catch, find or make goes in it, "
                          + "and a full page pays a reward.")
+        case .village:
+            GuideMessage(text: "The village has plans it can't pay for alone: a post office, a market hall, even the old "
+                         + "windmill on the hill. I remember it turning when I was a boy. Have a look in your journal, under Village.")
         case .farmhand:
             GuideMessage(text: "You can hire a farmhand now. They water, harvest and see to the animals while you get on "
                          + "with other things. Journal, under Farm.")

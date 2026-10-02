@@ -152,6 +152,8 @@ public enum HomeValleyMap {
         buildOutdoors(&b)
         // The home fields moved next to the yard: keep their ground clear.
         clearHomeFields(&b)
+        // The village projects: room for what the farm helps build.
+        buildVillageSites(&b)
 
         return b.build(name: "Home Valley")
     }
@@ -355,6 +357,18 @@ public enum HomeValleyMap {
         }
         b.paintPath(.dirt, through: [Vec2(55.6, 50.3), Vec2(52.5, 50.4), Vec2(49.6, 50.3)], width: 1.4, roughness: 0.25)
         if let pen = PenCatalog.pen("goat_pen") { b.paintRect(.dirt, pen.area.insetBy(0.8)) }
+    }
+
+    /// Ground kept clear for the village projects (`VillageLayout`), and the
+    /// old track up to the windmill on the hill.
+    private static func buildVillageSites(_ b: inout MapBuilder) {
+        let sites = VillageLayout.sites
+        b.removeObjects { object, _ in
+            (object.kind.hasPrefix("tree_") || object.kind.hasPrefix("nature_")) && sites.contains { $0.contains(object.position) }
+        }
+        let mill = VillageLayout.windmillSpot
+        b.paintPath(.dirt, through: [Vec2(104.9, 30.9), Vec2(105.6, 34.0), Vec2(107.8, 36.6), Vec2(mill.x - 1.2, mill.y - 0.6)],
+                    width: 1.2, roughness: 0.3)
     }
 
     /// No stray rocks, bushes or tufts on the home farm's fields.

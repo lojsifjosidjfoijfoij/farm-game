@@ -10,11 +10,37 @@ struct VillageTabView: View {
         VStack(alignment: .leading, spacing: 14) {
             PaperNote(symbol: "building.columns.fill",
                       text: "The village has plans it can't pay for alone. Give coins and goods when you can spare them: "
-                        + "each finished project helps the whole valley, and your farm with it.")
-            ForEach(game.villageProjects) { project in
+                        + "each finished project goes up in the village, and helps your farm too.")
+            if !game.villageGifts.isEmpty { gifts }
+            ForEach(ordered) { project in
                 card(project)
             }
         }
+        .onDisappear { game.villageFocus = nil }
+    }
+
+    /// Open projects first (the one tapped in the world on top), finished ones after.
+    private var ordered: [VillageProject] {
+        let projects = game.villageProjects
+        let focus = projects.filter { $0.id == game.villageFocus }
+        let open = projects.filter { $0.id != game.villageFocus && !game.village.finished.contains($0.id) }
+        let done = projects.filter { $0.id != game.villageFocus && game.village.finished.contains($0.id) }
+        return focus + open + done
+    }
+
+    /// What the finished projects do for the farm, all together.
+    private var gifts: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("What the village gives back")
+                .font(Theme.title(17))
+            ForEach(game.villageGifts, id: \.self) { line in
+                IconLabel(line, symbol: "gift.fill")
+                    .font(Theme.label(13, weight: .semibold))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .foregroundStyle(Theme.ink)
+        .card()
     }
 
     @ViewBuilder
@@ -36,10 +62,12 @@ struct VillageTabView: View {
                 Spacer()
                 if finished { PaperTag(text: "Done", symbol: "checkmark.circle.fill", tint: Theme.leaf) }
             }
-            Text(project.blurb)
-                .font(Theme.label(13))
-                .foregroundStyle(Theme.inkSoft)
-                .fixedSize(horizontal: false, vertical: true)
+            if !finished {
+                Text(project.blurb)
+                    .font(Theme.label(13))
+                    .foregroundStyle(Theme.inkSoft)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             IconLabel(project.reward, symbol: "gift.fill")
                 .font(Theme.label(13, weight: .semibold))
                 .fixedSize(horizontal: false, vertical: true)
@@ -49,6 +77,12 @@ struct VillageTabView: View {
         }
         .foregroundStyle(Theme.ink)
         .card()
+        .overlay {
+            if project.id == game.villageFocus {
+                Rectangle().stroke(HUD.gold, lineWidth: HUD.pixel * 2)
+                    .allowsHitTesting(false)
+            }
+        }
         .opacity(locked ? 0.7 : 1)
     }
 

@@ -109,8 +109,9 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   farmer's **bag** (`FarmerState.bag`, 10 goods, filled from storage anywhere on the farm),
   then the **truck bed** (30) if the truck stands within `Goods.truckReach` (2 tiles) of the
   place. The rule is one place, so a place's button and its trades agree.
-  Prices drift daily inside each crop's range (`MarketPricing`, deterministic per day). Every
-  trade is a typed `TradeFailure` or success, applied atomically through `Simulation.trade`.
+  Prices drift daily inside each crop's range (`MarketPricing`, deterministic per day), and fall
+  as you sell (`Market`, see "The long game"). Every trade is a typed `TradeFailure` or success,
+  applied atomically through `Simulation.trade`.
 - **Arne** (`TutorialState`, saved; `GameController+Guide.swift`): not a tutorial but an old
   farmer at the side of the screen. He walks a whole first loop: plow → plow a row → plant →
   water → sleep → harvest → claim a goal → load → drive → sell → buy seeds → drive home →
@@ -328,6 +329,30 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   paints the four tiers from one layout (lights and the chimney line up). `RankUpCardView` and
   `FinaleCardView` show after any level-up card; the Almanac tab lives on the phone.
 
+## Supply, demand and the village
+
+- **The market fills up** (`Market`, `MarketState` in the save): each sale adds its coins' worth
+  (at the usual price) to the item's recent sales, and the next one fetches
+  `1 / (1 + recent / depth)` of the price, never below `Balance.marketPriceFloor` (30%).
+  `Balance.marketDepth` is per category (6,000 coins for crops). Three quarters of it wears off
+  each day (`marketRecoveryPerDay`, applied lazily from `MarketState.day`). Measured in coins so a
+  load of pumpkins weighs like a mountain of wheat worth the same. Orders and your own shop never
+  touch it. `Trading.quote` is what the sell buttons show; `swift run acres-tools economy` prints
+  the curve, the crop ladder and what there is to buy.
+- **The crop ladder:** later crops earn more per tile per day (`MarketAndVillageTests` checks the
+  best crop at each unlock level never drops).
+- **Village projects** (`Village`, `VillageWorks`, `VillageState` in the save): six projects from
+  level 3 to 8, each wanting coins and goods (from storage, the bag and the truck), given a bit at
+  a time, then opened for XP and lasting perks (`VillagePerks`: market depth, faster recovery,
+  higher prices, better orders). What's been given counts toward net worth, so giving never
+  costs a rank. Projects renamed before release keep their progress (`VillageState.renamed`).
+- **In the world** (`VillageLayout`, app `VillageRenderer`): each project has pieces that stand in
+  the village once it's open (post office, market hall, fair, boathouse with rowboats, the
+  windmill with its six sail frames turning), a "coming soon" sign while it's open, and the
+  windmill's ruin until then. The map keeps their `sites` clear and paints the track up to the
+  mill; their footprints join `Obstacles.built`. Tapping a sign or a building opens its page in
+  the journal (`VillageLayout.project(at:in:)`).
+
 ## Saves
 
 - File: `Application Support/Saves/farm.json` plus `farm.backup.json` (the previous save).
@@ -468,8 +493,8 @@ fingers move the camera. Plant jobs carry the packet that was in hand when they 
   be cached to disk or moved off the main thread.
 - Crop sprites use individual textures. Big fields may want a runtime texture atlas so SpriteKit
   can batch them (Phase 8 performance pass).
-- There is one market with one price per item per day. Contracts (Phase 6) and your own shop
-  (Phase 7) are the other ways to sell; the shop only sells while the game is open.
+- There is one market, with one price per item per day that falls as you sell. Contracts (Phase 6)
+  and your own shop (Phase 7) are the other ways to sell; the shop only sells while the game is open.
 - Animals are delivered straight to their pen; carrying them home in the truck could come later.
 - Old wooden fences don't block the truck (they run along tile edges); pens, trees and
   buildings do.

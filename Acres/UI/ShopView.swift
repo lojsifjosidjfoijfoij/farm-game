@@ -158,7 +158,7 @@ struct ShopView: View {
                 }
             }
             BigButton(title: "Sell everything", price: total, tint: .green) { game.sellAll() }
-            Text("Each one you sell fetches a little less today; the buyers come back over a few days. Orders and your own shop don't lower prices.")
+            Text("Bring a mountain of one thing and each one fetches a little less; the buyers are mostly back by morning. Orders and your own shop don't lower prices.")
                 .font(Theme.label(12))
                 .foregroundStyle(Theme.inkSoft)
                 .fixedSize(horizontal: false, vertical: true)

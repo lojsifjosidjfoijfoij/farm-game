@@ -318,3 +318,44 @@ struct FinaleCardView: View {
         }
     }
 }
+
+/// A village project opens: the whole village turns out, and the farm gets its perk.
+struct ProjectOpenedCardView: View {
+    let project: VillageProject
+    /// Called with true to go and see it.
+    let onClose: (Bool) -> Void
+    @State private var pop = false
+
+    var body: some View {
+        RewardCard(ribbon: "OPENED!", tint: .gold, confetti: 2) {
+            MenuIcon(symbol: "building.columns.fill", size: 48)
+                .rotationEffect(.degrees(pop ? 0 : -20))
+                .scaleEffect(pop ? 1 : 0.4)
+            Text("The whole village turned out for")
+                .font(Theme.label(14, weight: .semibold))
+                .foregroundStyle(Theme.inkSoft)
+            Text(project.name)
+                .font(Theme.display(26))
+                .foregroundStyle(Theme.ink)
+                .multilineTextAlignment(.center)
+            IconLabel(project.reward, symbol: "gift.fill")
+                .font(Theme.label(14, weight: .semibold))
+                .foregroundStyle(Theme.ink)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            Text("+\(project.xp) XP")
+                .font(Theme.number(15))
+                .foregroundStyle(Theme.leafDark)
+            RewardButton(title: "Go and see it") { onClose(true) }
+            Button("Later") {
+                Haptics.tap()
+                onClose(false)
+            }
+            .font(Theme.label(14, weight: .semibold))
+            .foregroundStyle(Theme.inkSoft)
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.5).delay(0.15)) { pop = true }
+        }
+    }
+}

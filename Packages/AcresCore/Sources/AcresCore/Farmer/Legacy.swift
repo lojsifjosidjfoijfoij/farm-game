@@ -185,6 +185,9 @@ public enum NetWorth {
         for shelf in state.store.shelves {
             if let item = shelf.itemID { total += value(of: [item: shelf.stock]) }
         }
+        // What the farm has given the village still counts: it's the farm's
+        // standing in the valley (so giving never costs you a rank).
+        total += Village.given(state)
         // Debts.
         total -= state.finance.loan?.balance ?? 0
         return total

@@ -168,6 +168,12 @@ final class GameController {
     /// The almanac and the farm's rank (copied when they change).
     var almanac = AlmanacState()
     var village = VillageState()
+    /// The project to show first on the Village page (tapped in the world).
+    var villageFocus: String?
+    /// A village project just opened: its celebration card.
+    var openedProject: VillageProject?
+    /// Somewhere the camera should glide to (read and cleared by the scene).
+    var cameraFocusRequest: Vec2?
     var rankIndex = 0
     /// What each coming level unlocks.
     var showsRoadmap = false
@@ -263,7 +269,7 @@ final class GameController {
     var storageCapacity: Int { simulation.state.storageCapacity(simulation.balance) }
     var truckCapacity: Int { simulation.state.truckCapacity(simulation.balance) }
     /// Tiles under the farm's own buildings (for routes and the truck).
-    var builtTiles: Set<TileCoord> { EstateLayout.blockedTiles(simulation.state.estate) }
+    var builtTiles: Set<TileCoord> { Obstacles.built(simulation.state) }
     /// Brush over land the farm can't use yet: it blocks the farmer and the truck.
     var wildLand: WildLand { WildLand(state: simulation.state) }
     /// The brush as drawn: changes only with the level and land, not with every

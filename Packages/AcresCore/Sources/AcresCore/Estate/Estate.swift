@@ -53,14 +53,7 @@ public enum EstateLayout {
         for building in standing(estate) {
             let object = MapObject(kind: building.kind, position: building.position)
             guard let rect = ObjectFootprint.rect(for: object) else { continue }
-            for y in Int(rect.minY.rounded(.down))...Int((rect.maxY - 0.001).rounded(.down)) {
-                for x in Int(rect.minX.rounded(.down))...Int((rect.maxX - 0.001).rounded(.down)) {
-                    let tile = TileCoord(x, y)
-                    if rect.intersects(TileRect(minX: Double(x), minY: Double(y), maxX: Double(x + 1), maxY: Double(y + 1))) {
-                        tiles.insert(tile)
-                    }
-                }
-            }
+            tiles.formUnion(rect.coveredTiles)
         }
         return tiles
     }

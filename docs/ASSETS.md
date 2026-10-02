@@ -41,15 +41,15 @@ procedurally in code.
 | Crops | 75 | 0 |
 | Trees | 40 | 4 |
 | Nature props | 15 | 10 |
-| Buildings | 59 | 3 |
-| Props | 44 | 10 |
+| Buildings | 76 | 3 |
+| Props | 50 | 10 |
 | Vehicles | 116 | 1 |
 | Characters | 129 | 0 |
 | Animals | 70 | 0 |
 | Item icons | 107 | 0 |
 | Effects & particles | 36 | 4 |
 | User interface | 93 | 15 |
-| **Total** | **809** | **52** |
+| **Total** | **832** | **52** |
 | Audio files | 58 | 0 |
 
 ## Terrain (tileable ground textures)
@@ -295,6 +295,23 @@ procedurally in code.
 | `building_farm_abandoned` | 768 × 768 | 6 × 6 | 0.06 | 6 | The old abandoned farmhouse, overgrown; a long-term restoration goal. |
 | `building_lighthouse` | 256 × 768 | 2 × 6 | 0.06 | 8 | Harbor lighthouse, white with a red band. |
 | `building_lighthouse_lights` | 256 × 768 | 2 × 6 | — | 8 | Night overlay for building_lighthouse: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
+| `building_post_office` | 461 × 538 | 3.6 × 4.2 | 0.06 | 14 | Little red post office: a posthorn sign, a yellow letterbox by the door, a bench under the window. |
+| `building_post_office_lights` | 461 × 538 | 3.6 × 4.2 | — | 14 | Night overlay for building_post_office: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
+| `building_market_hall` | 1152 × 666 | 9 × 5.2 | 0.06 | 14 | Open timber market hall: a long tiled roof on posts over stalls of produce, lanterns along the eaves. |
+| `building_market_hall_lights` | 1152 × 666 | 9 × 5.2 | — | 14 | Night overlay for building_market_hall: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
+| `building_bandstand` | 461 × 563 | 3.6 × 4.4 | 0.06 | 14 | White octagonal bandstand with a red roof, bunting and lanterns (the harvest fair). |
+| `building_bandstand_lights` | 461 × 563 | 3.6 × 4.4 | — | 14 | Night overlay for building_bandstand: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
+| `building_boathouse` | 896 × 563 | 7 × 4.4 | 0.06 | 14 | Wooden boathouse on the east shore (right part) with a plank jetty reaching west over the water (left part); a lantern at the jetty's end. |
+| `building_boathouse_lights` | 896 × 563 | 7 × 4.4 | — | 14 | Night overlay for building_boathouse: only the warm glow of lit windows on transparent background, pixel-aligned with the building. *(additive light)* |
+| `building_windmill_ruin` | 512 × 589 | 4 × 4.6 | 0.06 | 14 | The old windmill before it's rebuilt: a stone base and a bare timber tower, no cap, a broken sail on the ground. |
+| `building_windmill` | 819 × 845 | 6.4 × 6.6 | 0.06 | 14 | The rebuilt windmill (body and cap; the sails are separate frames): stone base, shingled octagonal tower, a gallery, a door and a little window. |
+| `building_windmill_lights` | 819 × 845 | 6.4 × 6.6 | — | 14 | Night overlay for building_windmill: the glowing window and door. *(additive light)* |
+| `building_windmill_sails_0` | 819 × 845 | 6.4 × 6.6 | 0.06 | 14 | The windmill's four sails, turned 0° (of the 90° they repeat after), aligned with building_windmill. |
+| `building_windmill_sails_1` | 819 × 845 | 6.4 × 6.6 | 0.06 | 14 | The windmill's four sails, turned 15° (of the 90° they repeat after), aligned with building_windmill. |
+| `building_windmill_sails_2` | 819 × 845 | 6.4 × 6.6 | 0.06 | 14 | The windmill's four sails, turned 30° (of the 90° they repeat after), aligned with building_windmill. |
+| `building_windmill_sails_3` | 819 × 845 | 6.4 × 6.6 | 0.06 | 14 | The windmill's four sails, turned 45° (of the 90° they repeat after), aligned with building_windmill. |
+| `building_windmill_sails_4` | 819 × 845 | 6.4 × 6.6 | 0.06 | 14 | The windmill's four sails, turned 60° (of the 90° they repeat after), aligned with building_windmill. |
+| `building_windmill_sails_5` | 819 × 845 | 6.4 × 6.6 | 0.06 | 14 | The windmill's four sails, turned 75° (of the 90° they repeat after), aligned with building_windmill. |
 
 ## Props
 
@@ -329,8 +346,14 @@ procedurally in code.
 | `prop_open_sign` | 115 × 141 | 0.9 × 1.1 | 0.05 | 7 | Chalkboard A-frame sign saying "OPEN" with a drawn carrot (your shop). |
 | `prop_gas_pump` | 102 × 205 | 0.8 × 1.6 | 0.05 | 3 | Vintage gas pump. |
 | `prop_market_goods` | 192 × 128 | 1.5 × 1 | 0.1 | 3 | Baskets and crates of produce for the market square. |
+| `prop_flower_planter` | 205 × 141 | 1.6 × 1.1 | 0.1 | 14 | Wooden planter box spilling over with flowers (variants mix the colours). |
+| `prop_fair_lantern` | 90 × 256 | 0.7 × 2 | 0.04 | 14 | A pole with a paper lantern and a flag (the fair). |
+| `prop_fair_lantern_lights` | 90 × 256 | 0.7 × 2 | — | 14 | Glow of the fair lantern, aligned with prop_fair_lantern. *(additive light)* |
+| `prop_bunting` | 410 × 230 | 3.2 × 1.8 | 0.05 | 14 | Two poles with a string of coloured flags between them. |
+| `prop_prize_table` | 256 × 179 | 2 × 1.4 | 0.1 | 14 | Trestle table with a cloth: a prize pumpkin with a rosette, jars of jam and a cheese. |
+| `prop_rowboat` | 230 × 128 | 1.8 × 1 | 0.2 | 14 | A little wooden rowing boat with oars, afloat. |
+| `prop_project_sign` | 128 × 179 | 1 × 1.4 | 0.05 | 14 | A village-project board on two legs: a drawing of the plan pinned up and a little red flag ("coming soon"). |
 | `prop_pier` | 256 × 768 | 2 × 6 | — | 3 | Wooden fishing pier seen from above. *(flat)* |
-| `prop_rowboat` | 256 × 128 | 2 × 1 | — | 3 | Small wooden rowboat on water. *(flat)* |
 | `prop_bridge_wood` | 384 × 512 | 3 × 4 | — | 3 | Wooden road bridge over a stream, seen from above. *(flat)* |
 | `prop_merchant_wagon` | 384 × 320 | 3 × 2.5 | 0.08 | 5 | The traveling merchant's colorful covered wagon. |
 | `prop_workshop_sawhorse` | 141 × 179 | 1.1 × 1.4 | 0.1 | 10 | Sawhorse standing on the farm: saws logs into planks. |

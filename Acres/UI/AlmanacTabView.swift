@@ -72,7 +72,7 @@ struct AlmanacTabView: View {
     private func nextText(_ next: FarmRank) -> String {
         let renovation = next.farmhouseTier > game.farmRank.farmhouseTier ? " The farmhouse gets a makeover." : ""
         return "Next: \(next.title) at \(next.netWorth.formatted()) coins.\(renovation) Net worth counts coins, land, buildings, "
-            + "machines, animals and goods, minus loans."
+            + "machines, animals, goods and what you've given the village, minus loans."
     }
 
     // MARK: Almanac

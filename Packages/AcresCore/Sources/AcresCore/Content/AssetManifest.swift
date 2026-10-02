@@ -234,6 +234,25 @@ public enum AssetManifest {
         result += building("building_cabin_lakeside", 4, 4, phase: 6, lights: true, "Lakeside log cabin with a small jetty.")
         result += building("building_farm_abandoned", 6, 6, phase: 6, "The old abandoned farmhouse, overgrown; a long-term restoration goal.")
         result += building("building_lighthouse", 2, 6, phase: 8, lights: true, "Harbor lighthouse, white with a red band.")
+        // The village projects (Phase 14): what the farm helps the village build.
+        result += building("building_post_office", 3.6, 4.2, phase: 14, lights: true,
+                           "Little red post office: a posthorn sign, a yellow letterbox by the door, a bench under the window.")
+        result += building("building_market_hall", 9, 5.2, phase: 14, lights: true,
+                           "Open timber market hall: a long tiled roof on posts over stalls of produce, lanterns along the eaves.")
+        result += building("building_bandstand", 3.6, 4.4, phase: 14, lights: true,
+                           "White octagonal bandstand with a red roof, bunting and lanterns (the harvest fair).")
+        result += building("building_boathouse", 7, 4.4, phase: 14, lights: true,
+                           "Wooden boathouse on the east shore (right part) with a plank jetty reaching west over the water (left part); a lantern at the jetty's end.")
+        result.append(.sprite("building_windmill_ruin", .building, tiles: 4, 4.6, anchorY: 0.06, shadow: 3.2, phase: 14,
+                              "The old windmill before it's rebuilt: a stone base and a bare timber tower, no cap, a broken sail on the ground."))
+        result.append(.sprite("building_windmill", .building, tiles: 6.4, 6.6, anchorY: 0.06, shadow: 3.2, phase: 14,
+                              "The rebuilt windmill (body and cap; the sails are separate frames): stone base, shingled octagonal tower, a gallery, a door and a little window."))
+        result.append(.sprite("building_windmill_lights", .building, tiles: 6.4, 6.6, layer: .light, anchorY: 0.06, phase: 14,
+                              "Night overlay for building_windmill: the glowing window and door."))
+        for n in 0..<6 {
+            result.append(.sprite("building_windmill_sails_\(n)", .building, tiles: 6.4, 6.6, anchorY: 0.06, phase: 14,
+                                  "The windmill's four sails, turned \(n * 15)° (of the 90° they repeat after), aligned with building_windmill."))
+        }
         return result
     }()
 
@@ -273,8 +292,19 @@ public enum AssetManifest {
         .sprite("prop_open_sign", .prop, tiles: 0.9, 1.1, anchorY: 0.05, shadow: 0.6, phase: 7, "Chalkboard A-frame sign saying \"OPEN\" with a drawn carrot (your shop)."),
         .sprite("prop_gas_pump", .prop, tiles: 0.8, 1.6, anchorY: 0.05, shadow: 0.7, phase: 3, "Vintage gas pump."),
         .sprite("prop_market_goods", .prop, tiles: 1.5, 1, anchorY: 0.1, shadow: 1.3, phase: 3, "Baskets and crates of produce for the market square."),
+        // The village projects (Phase 14).
+        .sprite("prop_flower_planter", .prop, tiles: 1.6, 1.1, anchorY: 0.1, shadow: 1.4, phase: 14,
+                "Wooden planter box spilling over with flowers (variants mix the colours)."),
+        .sprite("prop_fair_lantern", .prop, tiles: 0.7, 2.0, anchorY: 0.04, shadow: 0.5, phase: 14, "A pole with a paper lantern and a flag (the fair)."),
+        .sprite("prop_fair_lantern_lights", .prop, tiles: 0.7, 2.0, layer: .light, anchorY: 0.04, phase: 14,
+                "Glow of the fair lantern, aligned with prop_fair_lantern."),
+        .sprite("prop_bunting", .prop, tiles: 3.2, 1.8, anchorY: 0.05, shadow: 0.4, phase: 14, "Two poles with a string of coloured flags between them."),
+        .sprite("prop_prize_table", .prop, tiles: 2.0, 1.4, anchorY: 0.1, shadow: 1.8, phase: 14,
+                "Trestle table with a cloth: a prize pumpkin with a rosette, jars of jam and a cheese."),
+        .sprite("prop_rowboat", .prop, tiles: 1.8, 1.0, anchorY: 0.2, phase: 14, "A little wooden rowing boat with oars, afloat."),
+        .sprite("prop_project_sign", .prop, tiles: 1.0, 1.4, anchorY: 0.05, shadow: 0.6, phase: 14,
+                "A village-project board on two legs: a drawing of the plan pinned up and a little red flag (\"coming soon\")."),
         .sprite("prop_pier", .prop, tiles: 2, 6, layer: .flat, anchorY: 0.5, phase: 3, "Wooden fishing pier seen from above."),
-        .sprite("prop_rowboat", .prop, tiles: 2, 1, layer: .flat, anchorY: 0.5, phase: 3, "Small wooden rowboat on water."),
         .sprite("prop_bridge_wood", .prop, tiles: 3, 4, layer: .flat, anchorY: 0.5, phase: 3, "Wooden road bridge over a stream, seen from above."),
         .sprite("prop_merchant_wagon", .prop, tiles: 3, 2.5, anchorY: 0.08, shadow: 2.6, phase: 5, "The traveling merchant's colorful covered wagon."),
     ]

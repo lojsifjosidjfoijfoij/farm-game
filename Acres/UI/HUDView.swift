@@ -518,6 +518,10 @@ struct HUDView: View {
             Sound.play(.open, volume: 0.7)
             game.showsSeedPicker = false
             if !game.claimableAlmanacSets.isEmpty { game.businessTab = .almanac }  // a reward waits there
+            if let ready = game.readyVillageProject {  // everything's given: time to open it
+                game.businessTab = .village
+                game.villageFocus = ready.id
+            }
             game.showsBusiness = true
             game.advanceTutorial(.openedPhone)
         } label: {
@@ -536,7 +540,7 @@ struct HUDView: View {
                     .overlay(Rectangle().stroke(HUD.edge, lineWidth: HUD.pixel))
                     .offset(x: 3, y: -3)
                     .allowsHitTesting(false)
-            } else if !game.contractBoard.offers.isEmpty || !game.claimableAlmanacSets.isEmpty {
+            } else if !game.contractBoard.offers.isEmpty || !game.claimableAlmanacSets.isEmpty || game.readyVillageProject != nil {
                 Rectangle()
                     .fill(HUD.gold)
                     .frame(width: 10, height: 10)

@@ -683,13 +683,18 @@ enum SaveFixtures {
           "progress": 0, "step": 11,
           "told": ["chores", "axe", "coop", "workshop", "fishing", "foraging", "shop", "almanac", "farmhand", "farewell"]
         },
-        "village": { "finished": ["flower_beds"], "progress": { "bridge": { "coins": 2000, "goods": { "log": 10 } } } },
+        "village": { "finished": ["flower_beds"], "progress": { "post_office": { "coins": 2000, "goods": { "log": 10 } } } },
         "woodland": { "hiddenMapTrees": [], "trees": [] },
         "worldTime": 70000
       },
       "version": 16
     }
     """
+
+    /// Arne gone home, as old saves have him: told everything there was in v14.
+    static let retiredArne = TutorialState(step: .done, told: [
+        "chores", "axe", "coop", "workshop", "fishing", "foraging", "shop", "almanac", "farmhand", "farewell",
+    ])
 
     /// All fixtures, oldest first.
     static let all: [(version: Int, json: String)] = [(1, v1), (2, v2), (3, v3), (4, v4), (5, v5), (6, v6), (7, v7), (8, v8), (9, v9),
@@ -799,7 +804,7 @@ enum SaveFixtures {
             plots: FarmPlots(),
             inventory: Inventory(items: ["egg": 4, "log": 6, "sapling_apple": 1, "wheat": 3]),
             ownedProperties: ["home_farm"],
-            tutorial: .complete,
+            tutorial: retiredArne,
             ranch: Ranch(pens: [
                 "coop": PenState(isRepaired: true, waterUntil: 20_500, animals: [
                     AnimalState(id: 1, speciesID: "chicken", name: "Pip", age: 600, production: 45, happiness: 0.7),
@@ -837,7 +842,7 @@ enum SaveFixtures {
             plots: FarmPlots(),
             inventory: Inventory(items: ["wheat": 3]),
             ownedProperties: ["home_farm"],
-            tutorial: .complete,
+            tutorial: retiredArne,
             ranch: Ranch(pens: [
                 "coop": PenState(isRepaired: true, waterUntil: 20_500, animals: [
                     AnimalState(id: 1, speciesID: "chicken", name: "Pip", age: 600, production: 45, happiness: 0.7),
@@ -873,7 +878,7 @@ enum SaveFixtures {
             plots: FarmPlots(),
             inventory: Inventory(items: ["egg": 2]),
             ownedProperties: ["home_farm"],
-            tutorial: .complete,
+            tutorial: retiredArne,
             ranch: Ranch(),
             woodland: Woodland(),
             farmer: FarmerState(position: Vec2(129, 21), energy: 50, inTruck: true),
@@ -913,7 +918,7 @@ enum SaveFixtures {
             plots: FarmPlots(),
             inventory: Inventory(),
             ownedProperties: ["home_farm"],
-            tutorial: .complete,
+            tutorial: retiredArne,
             ranch: Ranch(),
             woodland: Woodland(),
             farmer: FarmerState(position: Vec2(73.5, 24.9), energy: 40, inTruck: true),
@@ -953,7 +958,7 @@ enum SaveFixtures {
             plots: FarmPlots(),
             inventory: Inventory(items: ["sprinkler": 1]),
             ownedProperties: ["east_meadow", "home_farm"],
-            tutorial: .complete,
+            tutorial: retiredArne,
             ranch: Ranch(),
             woodland: Woodland(),
             farmer: FarmerState(position: Vec2(21, 35.5), energy: 90, inTruck: false),
@@ -991,7 +996,7 @@ enum SaveFixtures {
             plots: FarmPlots(),
             inventory: Inventory(),
             ownedProperties: ["home_farm"],
-            tutorial: .complete,
+            tutorial: retiredArne,
             ranch: Ranch(),
             woodland: Woodland(),
             farmer: FarmerState(position: Vec2(21, 35.5), energy: 95, inTruck: false),
@@ -1030,7 +1035,7 @@ enum SaveFixtures {
             plots: FarmPlots(),
             inventory: Inventory(items: ["wheat": 8]),
             ownedProperties: ["home_farm"],
-            tutorial: .complete,
+            tutorial: retiredArne,
             ranch: Ranch(),
             woodland: Woodland(),
             farmer: FarmerState(position: Vec2(21, 35.5), energy: 95, inTruck: false),
@@ -1066,7 +1071,7 @@ enum SaveFixtures {
             plots: FarmPlots(),
             inventory: Inventory(items: ["wheat": 8]),
             ownedProperties: ["home_farm"],
-            tutorial: .complete,
+            tutorial: retiredArne,
             ranch: Ranch(),
             woodland: Woodland(),
             farmer: FarmerState(position: Vec2(21, 35.5), energy: 95, inTruck: false),
@@ -1106,7 +1111,7 @@ enum SaveFixtures {
             plots: FarmPlots(),
             inventory: Inventory(items: ["wheat": 8]),
             ownedProperties: ["home_farm"],
-            tutorial: .complete,
+            tutorial: retiredArne,
             ranch: Ranch(),
             woodland: Woodland(),
             farmer: FarmerState(position: Vec2(21, 35.5), energy: 95, inTruck: false),
@@ -1149,7 +1154,7 @@ enum SaveFixtures {
         var file = v15Migrated
         file.version = 16
         file.state.market = MarketState(day: 35, sold: ["wheat": 12.5])
-        file.state.village = VillageState(progress: ["bridge": ProjectProgress(coins: 2000, goods: ["log": 10])],
+        file.state.village = VillageState(progress: ["post_office": ProjectProgress(coins: 2000, goods: ["log": 10])],
                                           finished: ["flower_beds"])
         return file
     }()

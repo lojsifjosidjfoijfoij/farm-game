@@ -61,7 +61,7 @@ extension TutorialStep {
 /// Something new Arne drops by to mention after the first loop, once it has
 /// opened up. The last one is his goodbye. The raw values are saved.
 public enum GuideTopic: String, CaseIterable, Sendable {
-    case chores, axe, coop, workshop, fishing, foraging, shop, almanac, farmhand
+    case chores, market, axe, coop, workshop, fishing, foraging, shop, almanac, village, farmhand
     /// "That's everything I know." After this he's retired.
     case farewell
 
@@ -70,6 +70,10 @@ public enum GuideTopic: String, CaseIterable, Sendable {
         let level = state.progress.level
         switch self {
         case .chores: return state.has(.chores)
+        // Once a price has fallen from selling a lot (or by level 3 anyway).
+        case .market:
+            let market = Market(balance: balance)
+            return level >= 3 || state.market.sold.keys.contains { market.factor($0, in: state) < 0.85 }
         case .axe: return state.has(.axe)
         case .coop: return level >= (PenCatalog.pen("coop")?.unlockLevel ?? 2)
         case .workshop: return WorkshopCatalog.all.contains { $0.unlockLevel <= level }
@@ -77,6 +81,7 @@ public enum GuideTopic: String, CaseIterable, Sendable {
         case .foraging: return state.has(.foraging)
         case .shop: return level >= balance.storeUnlockLevel
         case .almanac: return state.has(.almanac)
+        case .village: return level >= (Village.all.first?.unlockLevel ?? 3)
         case .farmhand: return balance.workerUnlockLevels.first.map { level >= $0 } ?? false
         case .farewell: return true
         }
@@ -89,6 +94,7 @@ public enum GuideTopic: String, CaseIterable, Sendable {
         case .workshop: !state.estate.workshops.isEmpty
         case .shop: state.store.isRented
         case .farmhand: !state.estate.workers.isEmpty
+        case .village: !state.village.progress.isEmpty || !state.village.finished.isEmpty
         default: false
         }
     }

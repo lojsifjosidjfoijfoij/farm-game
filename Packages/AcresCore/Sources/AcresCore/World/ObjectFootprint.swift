@@ -27,6 +27,12 @@ public enum ObjectFootprint {
             return TileRect(minX: p.x - 4.6, minY: p.y - 2.4, maxX: p.x + 4.6, maxY: p.y + 2.4)
         case "prop_well":
             return TileRect(minX: p.x - 0.7, minY: p.y - 0.3, maxX: p.x + 0.7, maxY: p.y + 0.8)
+        case "building_windmill", "building_windmill_ruin":
+            // A round tower: the sails and cap overhang thin air.
+            return TileRect(minX: p.x - 1.4, minY: p.y - 0.2, maxX: p.x + 1.4, maxY: p.y + 2.2)
+        case "building_boathouse":
+            // The boathouse on the shore; its jetty reaches west over the water.
+            return TileRect(minX: p.x - 0.2, minY: p.y - 0.2, maxX: p.x + 3.4, maxY: p.y + 2.4)
         case "prop_log_pile":
             return TileRect(minX: p.x - 0.8, minY: p.y - 0.2, maxX: p.x + 0.8, maxY: p.y + 0.6)
         case let k where k.hasPrefix("building_"):

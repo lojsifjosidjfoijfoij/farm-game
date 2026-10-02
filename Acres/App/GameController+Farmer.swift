@@ -113,6 +113,10 @@ extension GameController {
             queueForageJob(find)
             return
         }
+        if let project = VillageLayout.project(at: spot, in: state) {
+            showVillageProject(project)
+            return
+        }
         // Soil first: a field tool on a field does only its own job.
         if let kind = tool.fieldAction, state.plots[tile] != nil {
             queueToolJob(kind, at: tile, reportProblems: true)

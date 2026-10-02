@@ -519,3 +519,397 @@ def reeds(seed=41):
         stick((x, y, 0), (x + lean, y, h), 0.022, blades[k % 2], verts=4, tip_radius=0.004)
         if k % 4 == 0:
             cyl(0.035, 0.16, (x + lean * 0.8, y, h * 0.8), head, verts=6)
+
+
+# ------------------------------------------------------------- village projects
+# What the farm helps the village build (journal → Village). Each stands on a
+# site the map keeps clear (VillageLayout in the game).
+
+def _pennant(at, w, h, material, lean=0.0):
+    """A small triangular flag facing the camera, hanging point-down from `at` (its top edge's middle)."""
+    import bpy
+    from acres_art import _finish
+    x, y, z = at
+    mesh = bpy.data.meshes.new("pennant")
+    mesh.from_pydata([(x - w / 2, y, z), (x + w / 2, y, z), (x + lean, y, z - h)], [], [(0, 1, 2)])
+    o = bpy.data.objects.new("pennant", mesh)
+    bpy.context.scene.collection.objects.link(o)
+    _finish(o, material, None)
+    o.modifiers.new("thick", "SOLIDIFY").thickness = 0.02
+    return o
+
+
+FLAG_COLOURS = ("d8402e", "f2c43a", "3f8acb", "f4f0e0", "6cba3c", "e8742e")
+
+
+def post_office(night=False):
+    """A little red post office: white trim, a slate roof, a yellow posthorn sign and a letterbox by the door."""
+    k = Kit("post_office", night, "b8432f", "boards", roof="4a5058", door="2f4a3a")
+    front = 0.6
+    mid = house_body(k, 3.0, 1.9, 1.8, front, rise=1.0, ridge="x")
+    door(k, -0.75, front, fanlight=False)
+    window(k, 0.6, 0.45, front, w=0.9, h=0.62)
+    chimney(k, 0.9, mid + 0.35, 2.3)
+    if night:
+        return
+    sign = _m("post_yellow", "f2c43a")
+    box((1.0, 0.08, 0.32), (-0.05, front - 0.06, 1.3), sign)
+    box((1.08, 0.07, 0.05), (-0.05, front - 0.05, 1.62), k.trim)
+    horn = _m("post_horn", "c8283a")
+    blob(0.1, (-0.35, front - 0.12, 1.46), horn, squash=(1.3, 0.4, 1), seed=3)
+    box((0.38, 0.09, 0.06), (-0.02, front - 0.12, 1.43), horn)
+    blob(0.06, (0.22, front - 0.12, 1.46), horn, squash=(0.8, 0.4, 1.4), seed=4)
+    # The letterbox on a post by the door, and a bench under the window.
+    box((0.08, 0.08, 0.75), (-1.35, front - 0.35, 0), k.dark)
+    box((0.34, 0.24, 0.34), (-1.35, front - 0.35, 0.72), sign, bevel=0.03)
+    box((0.2, 0.03, 0.04), (-1.35, front - 0.48, 0.92), k.dark)
+    box((0.1, 0.03, 0.1), (-1.35, front - 0.48, 0.8), horn)
+    wood = _m("po_bench", "a8743f", lines=("x", 0.2, 0.03, 0.8))
+    for x in (0.1, 1.0):
+        box((0.06, 0.3, 0.32), (x, front - 0.25, 0), k.dark)
+    box((1.05, 0.3, 0.06), (0.55, front - 0.25, 0.32), wood)
+    for j, c in enumerate(("e8607a", "f2c43a", "8a6ad8")):  # a pot of flowers on the step
+        blob(0.09, (-1.0 + j * 0.08, front - 0.2, 0.25 + (j % 2) * 0.05), _m("po_flower_" + c, c), seed=j)
+    cyl(0.12, 0.2, (-0.98, front - 0.2, 0), _m("po_pot", "b8603a"), verts=8)
+
+
+def market_hall(night=False):
+    """A long open timber hall behind the market square: a tiled roof on tall
+    posts, a boarded back wall, stalls of produce inside, lanterns under the
+    eaves and a little bell turret on the ridge."""
+    k = Kit("market_hall", night, "c8a06a", "boards", roof="a8503a", door="5a3a24")
+    front, depth, eave = 0.4, 1.8, 2.5
+    mid = front + depth / 2
+    back = front + depth
+    timber = k.solid("hall_timber", "7a4e2e", noise=0.1, lines=("z", 0.4, 0.02, 0.8))
+    box((8.2, depth, 0.06), (0, mid, 0), k.solid("hall_floor", "a7a39a", noise=0.1, noise_scale=10,
+                                                  tiles=("x", "y", 0.5, 0.4, 0.5, 0.03, 0.75)))
+    box((8.2, 0.16, eave), (0, back - 0.08, 0), k.walls)  # back wall
+    for x in (-4.0, 4.0):
+        box((0.16, depth, eave), (x, mid, 0), k.walls)  # end walls
+    for x in np.linspace(-3.9, 3.9, 7):
+        box((0.2, 0.2, eave), (x, front + 0.05, 0), timber)
+        if not night:
+            box((0.26, 0.26, 0.1), (x, front + 0.05, 0), _m("post_base", "8a8680"))
+            for side in (-1, 1):  # knee braces up to the beam
+                if abs(x + side * 0.35) < 4.0:
+                    stick((x, front + 0.05, eave - 0.6), (x + side * 0.4, front + 0.05, eave - 0.2), 0.04, timber, verts=4)
+    box((8.2, 0.24, 0.22), (0, front + 0.05, eave - 0.22), timber)  # the beam over the posts
+    roof_slopes(span=depth + 0.2, rise=1.0, length=8.7, eave_z=eave, centre_y=mid, material=k.roof, overhang=0.3)
+    for x in (-4.08, 4.08):
+        prism(depth + 0.2, 0.01, 1.0, (x, mid, eave), k.walls, rot=(0, 0, math.pi / 2))
+    # The bell turret on the ridge.
+    box((0.56, 0.56, 0.5), (0, mid, eave + 0.8), k.solid("turret", "f2e6c8", lines=("z", 0.18, 0.02, 0.85)))
+    box((0.26, 0.05, 0.28), (0, mid - 0.29, eave + 0.9), k.glass)
+    prism(0.76, 0.76, 0.42, (0, mid, eave + 1.3), k.roof)
+    stick((0, mid, eave + 1.72), (0, mid, eave + 2.05), 0.02, k.dark, verts=4)
+    # Lanterns hanging under the eave beam.
+    glow = k.glass if night else _m("lantern_glass", "f6d58a")
+    for x in (-2.6, 0.0, 2.6):
+        stick((x, front - 0.05, eave - 0.22), (x, front - 0.05, eave - 0.42), 0.012, k.dark, verts=4)
+        box((0.16, 0.16, 0.22), (x, front - 0.05, eave - 0.64), glow)
+        if not night:
+            prism(0.2, 0.2, 0.08, (x, front - 0.05, eave - 0.42), k.dark)
+    if night:
+        return
+    # Stalls along the back: counters of produce under striped cloths, slates of prices.
+    counter = _m("hall_counter", "c8a06a", lines=("x", 0.2, 0.03, 0.75))
+    for j, x in enumerate((-2.6, 0.0, 2.6)):
+        box((2.1, 0.55, 0.7), (x, back - 0.55, 0), counter)
+        _produce_crates(x, back - 0.62, 0.7)
+        colours = (("d8402e", "f4f0e0"), ("3f8a4a", "f4f0e0"), ("3f6a9a", "f4f0e0"))[j]
+        for t in range(8):
+            box((0.26, 0.04, 0.3), (x - 0.91 + t * 0.26, back - 0.15, 1.55), _m("hall_cloth_" + colours[t % 2], colours[t % 2]))
+    slate = _m("price_slate", "2f3a34")
+    for x in (-1.3, 1.3):
+        box((0.4, 0.05, 0.32), (x, back - 0.2, 0.95), slate)
+        box((0.26, 0.055, 0.04), (x, back - 0.21, 1.15), _m("chalk", "f2efe6"))
+    # Sacks of grain and a basket of apples at the front.
+    sack = _m("hall_sack", "c8a878", noise=0.12, noise_scale=14)
+    for j, x in enumerate((-3.45, -3.1)):
+        blob(0.2, (x, front + 0.45, 0.2), sack, squash=(1, 0.9, 1.25), seed=j)
+        cyl(0.06, 0.06, (x, front + 0.45, 0.42), _m("sack_tie", "8a6a48"), verts=6)
+    cyl(0.22, 0.24, (3.3, front + 0.5, 0), _m("hall_basket", "c89a5a", lines=("z", 0.05, 0.015, 0.8)), verts=10, radius2=0.26)
+    for t in range(5):
+        blob(0.07, (3.3 + math.cos(t * 1.3) * 0.1, front + 0.5 + math.sin(t * 1.3) * 0.06, 0.28), _m("hall_apple", "e0332a"), seed=t)
+
+
+def bandstand(night=False):
+    """The fair's bandstand: an octagonal white pavilion on a low base, a red roof, bunting and lanterns."""
+    k = Kit("bandstand", night, "f4f0e6", "boards", roof="c8402e", door="5a3a24")
+    cy = 1.35  # centre, north of the foot point so the front edge sits on it
+    base = k.solid("band_base", "d8d0c0", noise=0.1, noise_scale=10, tiles=("x", "z", 0.4, 0.2, 0.5, 0.03, 0.75))
+    cyl(1.4, 0.35, (0, cy, 0), base, verts=8, rot=(0, 0, math.pi / 8))
+    cyl(1.42, 0.05, (0, cy, 0.35), k.solid("band_floor", "b8875a", lines=("x", 0.15, 0.02, 0.8)), verts=8, rot=(0, 0, math.pi / 8))
+    box((0.7, 0.4, 0.12), (0, cy - 1.45, 0), base)  # a step
+    posts = [(math.cos(a) * 1.25, cy + math.sin(a) * 1.25) for a in (math.pi / 8 + j * math.pi / 4 for j in range(8))]
+    for x, y in posts:
+        box((0.1, 0.1, 1.5), (x, y, 0.4), k.walls)
+    for j in range(8):  # railings between the posts, except at the front opening
+        (x0, y0), (x1, y1) = posts[j], posts[(j + 1) % 8]
+        if y0 < cy - 1.0 and y1 < cy - 1.0:
+            continue
+        stick((x0, y0, 0.75), (x1, y1, 0.75), 0.03, k.walls, verts=4)
+        stick((x0, y0, 0.55), (x1, y1, 0.55), 0.02, k.walls, verts=4)
+    cyl(1.55, 0.12, (0, cy, 1.9), k.walls, verts=8, rot=(0, 0, math.pi / 8))  # the frieze
+    cyl(1.7, 0.95, (0, cy, 2.0), k.roof, verts=8, radius2=0.08, rot=(0, 0, math.pi / 8))
+    stick((0, cy, 2.9), (0, cy, 3.25), 0.03, k.dark, verts=4)
+    glow = k.glass if night else _m("band_lantern", "f6d58a")
+    for x, y in posts:
+        if y < cy:  # lanterns on the front posts
+            box((0.12, 0.12, 0.16), (x, y - 0.1, 1.62), glow)
+    if night:
+        return
+    _pennant((0, cy, 3.25), 0.22, 0.16, _m("band_flag", "f2c43a"), lean=0.06)
+    for j in range(len(posts)):  # bunting swags round the frieze
+        (x0, y0), (x1, y1) = posts[j], posts[(j + 1) % 8]
+        if y0 > cy + 0.3 and y1 > cy + 0.3:
+            continue
+        for t in (0.25, 0.5, 0.75):
+            x, y = x0 + (x1 - x0) * t, y0 + (y1 - y0) * t
+            sag = 0.12 * math.sin(t * math.pi)
+            _pennant((x, y - 0.08, 1.88 - sag), 0.14, 0.16, _m("bunting_" + FLAG_COLOURS[(j * 3 + int(t * 4)) % 6],
+                                                             FLAG_COLOURS[(j * 3 + int(t * 4)) % 6]))
+
+
+def fair_lantern(night=False):
+    """A pole with a red paper lantern on a bracket and a little flag on top."""
+    H = holdout()
+    pole = H if night else _m("fair_pole", "8a6a48", lines=("z", 0.4, 0.02, 0.8))
+    stick((0, 0, 0), (0, 0, 1.85), 0.04, pole, verts=6)
+    stick((0, 0, 1.6), (0.22, 0, 1.6), 0.02, pole, verts=4)
+    paper = _m("lantern_glow", "000000", emit=hexrgb("ffb070")) if night else _m("lantern_paper", "e0503a")
+    blob(0.12, (0.22, -0.02, 1.38), paper, squash=(1, 1, 1.25), subdiv=2, seed=1)
+    if night:
+        return
+    rim = _m("lantern_rim", "3b3a40")
+    cyl(0.07, 0.03, (0.22, -0.02, 1.52), rim, verts=8)
+    cyl(0.07, 0.03, (0.22, -0.02, 1.22), rim, verts=8)
+    box((0.22, 0.02, 0.14), (0.12, 0, 1.75), _m("fair_flag", "f2c43a"))
+
+
+def bunting():
+    """Two poles with a sagging string of coloured flags between them."""
+    pole = _m("bunting_pole", "8a6a48", lines=("z", 0.4, 0.02, 0.8))
+    for x in (-1.45, 1.45):
+        stick((x, 0, 0), (x, 0, 1.9), 0.04, pole, verts=6)
+        blob(0.05, (x, 0, 1.92), pole, seed=2)
+    n = 11
+    prev = None
+    for j in range(n + 1):
+        t = j / n
+        x = -1.45 + 2.9 * t
+        z = 1.82 - 0.38 * math.sin(t * math.pi)
+        if prev is not None:
+            stick(prev, (x, 0, z), 0.01, _m("bunting_string", "f4f0e0"), verts=4)
+        if 0 < j < n:
+            c = FLAG_COLOURS[j % 6]
+            _pennant((x, -0.02, z), 0.2, 0.24, _m("bunting_" + c, c), lean=0.02 * math.cos(j))
+        prev = (x, 0, z)
+
+
+def prize_table():
+    """A trestle table with a checked cloth: a prize pumpkin with a rosette, jam jars and a cheese."""
+    leg = _m("trestle", "8a6a48")
+    for x in (-0.7, 0.7):
+        for side in (-1, 1):
+            stick((x, 0.3 + side * 0.18, 0), (x, 0.3, 0.6), 0.03, leg, verts=4)
+    box((1.7, 0.66, 0.05), (0, 0.3, 0.6), _m("table_top", "c8a06a"))
+    cloth = _m("table_cloth", "f4f0e6", lines=("x", 0.16, 0.06, 0.82), tiles=("x", "z", 0.12, 0.12, 0.0, 0.05, 0.85))
+    box((1.74, 0.02, 0.3), (0, -0.04, 0.35), cloth)
+    pumpkin = _m("prize_pumpkin", "e8742e", lines=("x", 0.1, 0.02, 0.8))
+    blob(0.3, (-0.4, 0.35, 0.85), pumpkin, squash=(1.2, 1, 0.8), subdiv=2, seed=5)
+    stick((-0.4, 0.35, 1.07), (-0.36, 0.35, 1.18), 0.03, _m("pumpkin_stem", "5a7a2a"), verts=5)
+    rosette = _m("rosette", "3f6acb")
+    cyl(0.1, 0.03, (-0.4, 0.04, 0.82), rosette, verts=10, rot=(math.pi / 2, 0, 0))
+    for side in (-1, 1):
+        box((0.05, 0.02, 0.16), (-0.4 + side * 0.04, 0.03, 0.62), rosette, rot=(0, side * 0.3, 0))
+    blob(0.04, (-0.4, 0.0, 0.84), _m("rosette_middle", "f2c43a"), seed=1)
+    for j, c in enumerate(("c8283a", "6a3a9a", "f08a3a")):
+        cyl(0.07, 0.18, (0.15 + j * 0.17, 0.2, 0.65), _m("prize_jar_" + c, c), verts=8)
+        cyl(0.075, 0.04, (0.15 + j * 0.17, 0.2, 0.83), _m("prize_lid", "f4f0e0"), verts=8)
+    cyl(0.16, 0.12, (0.45, 0.45, 0.65), _m("prize_cheese", "f2c43a"), verts=12)
+
+
+def rowboat():
+    """A little wooden rowing boat afloat, seen from the side, oars shipped."""
+    hull = _m("boat_hull", "3f6a8a", lines=("z", 0.07, 0.015, 0.8))
+    inner = _m("boat_inner", "a0703f", lines=("x", 0.12, 0.02, 0.8))
+    blob(0.5, (0, 0.2, 0.05), hull, squash=(1.6, 0.62, 0.42), subdiv=2, seed=7, jitter=0.02)
+    blob(0.5, (0, 0.2, 0.15), inner, squash=(1.45, 0.5, 0.3), subdiv=2, seed=8, jitter=0.02)
+    box((0.08, 0.55, 0.05), (-0.2, 0.2, 0.2), inner)
+    box((0.08, 0.55, 0.05), (0.35, 0.2, 0.2), inner)
+    oar = _m("oar", "c8a06a")
+    stick((-0.6, 0.0, 0.25), (0.55, -0.12, 0.3), 0.025, oar, verts=4)
+    box((0.22, 0.03, 0.1), (0.62, -0.13, 0.28), oar, rot=(0, 0, -0.1))
+
+
+def _gable_roof_ns(x0, span, rise, length, eave_z, centre_y, material, overhang=0.22, thick=0.1):
+    """A gable roof whose ridge runs north-south over `x0` (the gable end faces the camera)."""
+    half = span / 2
+    phi = math.atan2(rise, half)
+    slope_len = math.hypot(half, rise) + overhang
+    down = overhang / 2
+    offset = half / 2 + math.cos(phi) * down
+    z = eave_z + rise / 2 - math.sin(phi) * down
+    for side in (-1, 1):
+        box((slope_len, length, thick), (x0 + side * offset, centre_y, z), material, rot=(0, side * phi, 0))
+
+
+def boathouse(night=False):
+    """The boathouse on Willow Lake's east shore (the right part of the sprite)
+    and its plank jetty reaching west over the water (the left part)."""
+    k = Kit("boathouse", night, "8a4a32", "boards", roof="5c6370", door="5a3a24")
+    x0, front, d = 1.65, 0.4, 2.4
+    mid = front + d / 2
+    box((3.0, d, 1.5), (x0, mid, 0), k.walls)
+    prism(d, 3.0, 1.0, (x0, mid, 1.5), k.walls, rot=(0, 0, math.pi / 2))
+    _gable_roof_ns(x0, span=3.0, rise=1.0, length=d + 0.35, eave_z=1.5, centre_y=mid, material=k.roof)
+    # The front gable: a wide boat door, a window above it, white trim.
+    box((1.5, 0.05, 1.2), (x0 - 0.3, front - 0.02, 0), k.solid("boat_door", "3a2a20", lines=("z", 0.15, 0.02, 0.8)))
+    for x in (x0 - 1.08, x0 + 0.48):
+        box((0.08, 0.07, 1.25), (x, front - 0.04, 0), k.trim)
+    box((1.64, 0.07, 0.08), (x0 - 0.3, front - 0.04, 1.2), k.trim)
+    window(k, x0 - 0.3, 1.6, front, w=0.45, h=0.38, sill=False)
+    window(k, x0 + 0.95, 0.55, front, w=0.45, h=0.45)
+    # The jetty: planks on posts, out over the water.
+    plank = k.solid("jetty_planks", "a8875a", lines=("x", 0.18, 0.03, 0.75))
+    post = k.solid("jetty_post", "5a3a24")
+    box((3.6, 0.7, 0.08), (-1.6, 0.85, 0.16), plank)
+    for x in np.linspace(-3.3, 0.0, 5):
+        for y in (0.52, 1.18):
+            box((0.1, 0.1, 0.45), (x, y, -0.25), post)
+    # The lantern on its post at the jetty's end.
+    stick((-3.25, 0.55, 0.2), (-3.25, 0.55, 1.15), 0.035, post, verts=5)
+    glow = k.glass if night else _m("jetty_lantern", "f6d58a")
+    box((0.16, 0.16, 0.2), (-3.25, 0.55, 1.15), glow)
+    if not night:
+        prism(0.2, 0.2, 0.08, (-3.25, 0.55, 1.35), k.dark)
+        rope = _m("rope", "c8a86a")
+        cyl(0.12, 0.06, (-2.2, 0.75, 0.24), rope, verts=10)
+        cyl(0.06, 0.07, (-2.2, 0.75, 0.24), _m("rope_hole", "8a6a48"), verts=8)
+        crate = _m("bh_crate", "a0703f", lines=("z", 0.1, 0.02, 0.78))
+        for j in range(2):  # two crates stacked by the door, and an oar leaning on the wall
+            box((0.3, 0.3, 0.28), (x0 + 1.15, front - 0.3, j * 0.28), crate)
+        stick((x0 - 1.3, front - 0.1, 0), (x0 - 1.15, front - 0.12, 1.3), 0.025, _m("oar", "c8a06a"), verts=4)
+
+
+def _windmill_body(k, stone, shingle, gallery):
+    cy = 1.25
+    cyl(1.3, 1.0, (0, cy, 0), stone, verts=8, rot=(0, 0, math.pi / 8))
+    cyl(1.6, 0.08, (0, cy, 1.0), gallery, verts=8, rot=(0, 0, math.pi / 8))
+    for j in range(16):  # the gallery rail's balusters
+        a = j * math.pi / 8
+        x, y = math.cos(a) * 1.52, cy + math.sin(a) * 1.52
+        if y < cy + 0.4:
+            box((0.04, 0.04, 0.38), (x, y, 1.08), gallery)
+    cyl(1.55, 0.04, (0, cy, 1.44), gallery, verts=16)
+    cyl(1.08, 3.0, (0, cy, 1.0), shingle, verts=8, radius2=0.72, rot=(0, 0, math.pi / 8))
+    blob(0.85, (0, cy, 4.05), k.roof, squash=(1, 1.05, 0.62), subdiv=2, seed=11, jitter=0.03)
+    cyl(0.82, 0.12, (0, cy, 3.95), k.trim, verts=12)
+    return cy
+
+
+def windmill(night=False, sails=None):
+    """The old windmill rebuilt: a stone base, a gallery, a shingled octagonal
+    tower and a domed cap. `sails` = frame 0…5 renders only the four sails,
+    turned 15° a frame, for the overlay the game animates."""
+    overlay = sails is not None
+    k = Kit("windmill", night or overlay, "efe6d2", "boards", roof="4a5058", door="5a3a24")
+    H = k.H
+    stone = H if (night or overlay) else _m("mill_stone", "a7a39a", noise=0.15, noise_scale=10,
+                                            tiles=("x", "z", 0.4, 0.24, 0.5, 0.04, 0.7))
+    shingle = H if (night or overlay) else _m("mill_shingle", "efe6d2", noise=0.06, tiles=("x", "z", 0.22, 0.18, 0.5, (0.0, 0.03), 0.8))
+    gallery = H if (night or overlay) else _m("mill_gallery", "7a4e2e")
+    cy = _windmill_body(k, stone, shingle, gallery)
+    front = cy - 1.3
+    if not overlay:
+        door(k, 0.0, front + 0.02, w=0.55, h=0.85)
+        window(k, 0.0, 2.15, cy - 1.0, w=0.32, h=0.38, sill=False, panes=False)
+        window(k, 0.0, 3.1, cy - 0.85, w=0.26, h=0.3, sill=False, panes=False)
+    hub = (0.0, cy - 1.05, 4.15)
+    # The windshaft's end, and the four sails (stock, a lattice of white cloth).
+    shaft = H if not overlay else _m("mill_hub", "3b3a40")
+    cyl(0.16, 0.25, (hub[0], hub[1], hub[2]), shaft, verts=8, rot=(math.pi / 2, 0, 0))
+    if not overlay:
+        return
+    stock = _m("sail_stock", "6b4526")
+    cloth = _m("sail_cloth", "f2ead8", lines=("x", 0.18, 0.03, 0.78), tiles=("x", "z", 0.18, 0.3, 0.0, 0.03, 0.78))
+    frame_m = _m("sail_frame", "8a5a3a")
+    y = hub[1] - 0.2
+    base_angle = math.radians(15 * sails + 20)
+    for j in range(4):
+        a = base_angle + j * math.pi / 2
+        ca, sa = math.cos(a), math.sin(a)
+        tip = (hub[0] + ca * 2.75, y, hub[2] + sa * 2.75)
+        stick((hub[0], y, hub[2]), tip, 0.05, stock, verts=4)
+        # The sail: a lattice panel on the trailing side of the stock.
+        r0, r1, w = 0.65, 2.65, 0.55
+        rm = (r0 + r1) / 2
+        nx, nz = -sa, ca  # perpendicular, in the sail's plane
+        cx, cz = hub[0] + ca * rm + nx * (w / 2 + 0.04), hub[2] + sa * rm + nz * (w / 2 + 0.04)
+        box((r1 - r0, 0.03, w), (cx, y + 0.02, cz - w / 2), cloth, rot=(0, -a, 0))
+        for r in np.linspace(r0, r1, 6):  # cross bars
+            p0 = (hub[0] + ca * r, y - 0.03, hub[2] + sa * r)
+            p1 = (p0[0] + nx * (w + 0.06), y - 0.03, p0[2] + nz * (w + 0.06))
+            stick(p0, p1, 0.015, frame_m, verts=4)
+        ex = (hub[0] + ca * r0 + nx * (w + 0.06), y - 0.03, hub[2] + sa * r0 + nz * (w + 0.06))
+        ey = (hub[0] + ca * r1 + nx * (w + 0.06), y - 0.03, hub[2] + sa * r1 + nz * (w + 0.06))
+        stick(ex, ey, 0.015, frame_m, verts=4)
+
+
+def windmill_ruin():
+    """The windmill as it's stood for forty years: the stone base, a bare timber
+    frame where the tower was, no cap, and a broken sail in the grass."""
+    stone = _m("mill_stone", "a7a39a", noise=0.15, noise_scale=10, tiles=("x", "z", 0.4, 0.24, 0.5, 0.04, 0.7))
+    old = _m("ruin_timber", "6b5a48", noise=0.15, noise_scale=12, lines=("z", 0.3, 0.02, 0.8))
+    cy = 1.25
+    cyl(1.3, 1.0, (0, cy, 0), stone, verts=8, rot=(0, 0, math.pi / 8))
+    box((0.5, 0.06, 0.75), (0, cy - 1.22, 0), _m("ruin_door", "3a2a20", lines=("z", 0.12, 0.02, 0.7)))
+    box((0.6, 0.08, 0.06), (0, cy - 1.24, 0.75), _m("ruin_lintel", "77736c"))
+    # A few of the tower's corner posts still stand, some leaning, one snapped.
+    for j, (a, top, lean) in enumerate(((0.4, 2.7, 0.0), (1.2, 2.2, 0.15), (2.0, 2.9, -0.05), (2.75, 1.5, 0.0),
+                                       (3.6, 2.6, 0.1), (4.4, 1.9, -0.12), (5.5, 2.8, 0.0))):
+        x, y = math.cos(a) * 1.0, cy + math.sin(a) * 1.0
+        stick((x, y, 1.0), (x * 0.75 + lean, cy + (y - cy) * 0.75, 1.0 + top), 0.06, old, verts=5)
+    stick((-0.9, cy - 0.5, 2.3), (0.8, cy - 0.6, 2.5), 0.05, old, verts=5)
+    stick((-0.6, cy + 0.7, 1.9), (0.7, cy + 0.6, 2.0), 0.05, old, verts=5)
+    # The fallen sail, half in the grass, and loose stones.
+    stick((-1.9, -0.2, 0.05), (-0.2, 0.25, 0.12), 0.05, _m("sail_stock", "6b4526"), verts=4)
+    box((1.1, 0.4, 0.03), (-1.0, -0.12, 0.08), _m("torn_sail", "c8bfa8", lines=("x", 0.18, 0.03, 0.75)), rot=(0, 0, 0.26))
+    for j, (x, y) in enumerate(((1.4, 0.0), (1.6, 0.35), (-1.5, 0.9), (0.9, -0.2))):
+        blob(0.13, (x, y, 0.06), stone, squash=(1.2, 1, 0.7), seed=j)
+    weeds = _m("ruin_weeds", "5a8a3a", noise=0.2, noise_scale=20, leaves=10.0)
+    for j, (x, y) in enumerate(((-1.2, cy - 1.0), (1.1, cy - 0.95), (0.4, cy - 1.25), (-0.5, cy - 1.3))):
+        blob(0.2, (x, y, 0.1), weeds, squash=(1.2, 0.8, 0.9), seed=20 + j)
+
+
+def flower_planter():
+    """A wooden planter box spilling over with flowers."""
+    wood = _m("planter_wood", "a0703f", lines=("x", 0.22, 0.03, 0.78), grain=0.1)
+    box((1.3, 0.45, 0.32), (0, 0.22, 0), wood)
+    box((1.38, 0.5, 0.05), (0, 0.22, 0.32), _m("planter_rim", "7a4e2e"))
+    leaf = _m("planter_leaf", "4f8a3a", noise=0.2, noise_scale=20, leaves=12.0)
+    for j in range(5):
+        blob(0.17, (-0.5 + j * 0.25, 0.22, 0.42), leaf, squash=(1.1, 0.9, 0.8), seed=30 + j)
+    colours = ("e8607a", "f2c43a", "f4f0e0", "8a6ad8", "e8742e")
+    for j in range(11):
+        c = colours[j % 5]
+        blob(0.06, (-0.58 + j * 0.115, 0.1 + (j % 3) * 0.08, 0.52 + (j % 2) * 0.06), _m("planter_" + c, c), seed=40 + j)
+
+
+def project_sign():
+    """A village-project board on two legs: the plan pinned up, and a little red flag."""
+    leg = _m("ps_leg", "8a6a48")
+    for x in (-0.32, 0.32):
+        stick((x, 0, 0), (x, 0, 1.0), 0.035, leg, verts=5)
+    box((0.8, 0.05, 0.5), (0, -0.04, 0.45), _m("ps_board", "c8a06a", lines=("z", 0.12, 0.02, 0.85)))
+    box((0.5, 0.03, 0.36), (-0.06, -0.08, 0.52), _m("ps_plan", "dfe8ef"))
+    plan_ink = _m("ps_ink", "3f6a9a")
+    box((0.3, 0.035, 0.03), (-0.06, -0.09, 0.78), plan_ink)
+    box((0.03, 0.035, 0.2), (-0.16, -0.09, 0.56), plan_ink)
+    box((0.2, 0.035, 0.03), (-0.06, -0.09, 0.62), plan_ink)
+    prism(0.3, 0.035, 0.12, (-0.06, -0.09, 0.78), plan_ink, rot=(math.pi / 2, 0, 0))
+    blob(0.03, (0.22, -0.09, 0.78), _m("ps_pin", "d8402e"), seed=1)
+    stick((0.36, 0, 1.0), (0.36, 0, 1.3), 0.015, leg, verts=4)
+    box((0.2, 0.02, 0.13), (0.47, 0, 1.15), _m("ps_flag", "d8402e"))

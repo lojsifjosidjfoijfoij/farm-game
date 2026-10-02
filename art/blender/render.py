@@ -104,6 +104,21 @@ ASSETS = {
     "prop_market_goods": (village.market_goods, {}),
     "nature_reeds": (village.reeds, {}),
     **{f"prop_workshop_{w}": ((lambda w=w: village.workshop(w)), {}) for w in village.WORKSHOPS},
+    # Village projects.
+    **{f"building_{n}": (f, {}) for n, f in (("post_office", village.post_office), ("market_hall", village.market_hall),
+                                             ("bandstand", village.bandstand), ("boathouse", village.boathouse),
+                                             ("windmill", village.windmill), ("windmill_ruin", village.windmill_ruin))},
+    **{f"building_{n}_lights": ((lambda f=f: f(night=True)), GLOW)
+       for n, f in (("post_office", village.post_office), ("market_hall", village.market_hall), ("bandstand", village.bandstand),
+                    ("boathouse", village.boathouse), ("windmill", village.windmill))},
+    **{f"building_windmill_sails_{n}": ((lambda n=n: village.windmill(sails=n)), {}) for n in range(6)},
+    "prop_flower_planter": (village.flower_planter, {}),
+    "prop_fair_lantern": (village.fair_lantern, {}),
+    "prop_fair_lantern_lights": (lambda: village.fair_lantern(night=True), GLOW),
+    "prop_bunting": (village.bunting, {}),
+    "prop_prize_table": (village.prize_table, {}),
+    "prop_rowboat": (village.rowboat, {}),
+    "prop_project_sign": (village.project_sign, {}),
     **{f"vehicle_truck_old_dir{d:02d}": ((lambda d=d: models.truck(d)), {}) for d in range(16)},
     **{f"vehicle_truck_old_load{n}_dir{d:02d}": ((lambda d=d, n=n: models.truck(d, load=n, overlay=True)), {})
        for n in (1, 2) for d in range(16)},

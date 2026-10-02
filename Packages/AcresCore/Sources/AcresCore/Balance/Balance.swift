@@ -130,10 +130,24 @@ public struct Balance: Sendable, Equatable {
     /// The market's special of the day pays this much more.
     public var marketSpecialBonus: Double = 0.5
 
-    /// Selling lots of one thing lowers its price, never below this share
-    /// (see `Market`), and the buyers come back by this share each day.
+    /// Selling lots of one thing lowers its price (see `Market`), never below
+    /// this share, and this share of the drop wears off each day.
     public var marketPriceFloor: Double = 0.3
-    public var marketRecoveryPerDay: Double = 0.5
+    public var marketRecoveryPerDay: Double = 0.75
+
+    /// Coins' worth of one item (at its usual price) the market takes before
+    /// its price has halved. A starter field of wheat (~600 coins) sells at
+    /// about 95%, a truckload of one crop at about 75%; a farm bringing
+    /// 25,000 coins of melons at once ends at the floor.
+    public func marketDepth(_ category: ItemCategory) -> Double {
+        switch category {
+        case .crop: 6_000
+        case .fruit, .animalProduct, .artisan: 4_500
+        case .fish: 3_500
+        case .wood, .forage: 3_000
+        case .feed, .seed, .sapling, .machine: 1_000_000
+        }
+    }
 
     // MARK: - Fishing and foraging (Phase 11)
 

@@ -29,6 +29,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     private var farmer: FarmerRenderer?
     private var store: StoreRenderer?
     private var estate: EstateRenderer?
+    private var village: VillageRenderer?
     private var outdoors: OutdoorsRenderer?
     private var terrain: TerrainRenderer?
     private var weather: WeatherRenderer?
@@ -147,6 +148,8 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         store = StoreRenderer(assets: assets, objectLayer: objectLayer, flatLayer: flatLayer)
         estate = EstateRenderer(assets: assets, objectLayer: objectLayer, flatLayer: flatLayer, effectsLayer: effectsLayer)
         estate?.sync(game: game, force: true)
+        village = VillageRenderer(assets: assets, objectLayer: objectLayer, flatLayer: flatLayer)
+        village?.sync(game: game, force: true)
         outdoors = OutdoorsRenderer(assets: assets, objectLayer: objectLayer, effectsLayer: effectsLayer)
         weather = WeatherRenderer(layer: effectsLayer, assets: assets)
         updateSeason()
@@ -202,6 +205,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         trees?.removeAll()
         ranch?.removeAll()
         estate?.sync(game: game, force: true)
+        village?.sync(game: game, force: true)
         if let camera = cameraController {
             if game.presentation.cameraCenter == nil {
                 camera.focus(on: World.point(HomeValleyMap.farmCenter), animated: true)
@@ -249,6 +253,11 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         } else if camera.isFollowing {
             camera.follow(nil)
         }
+        if let target = game.cameraFocusRequest {
+            game.cameraFocusRequest = nil
+            camera.follow(nil)
+            camera.focus(on: World.point(target), animated: true)
+        }
         camera.update(dt: dt)
         chunks?.update(visibleRect: camera.visibleRect)
         if let fireflies {
@@ -257,6 +266,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         ranch?.update(dt: dt)
         store?.update(store: game.storeState, hour: game.hour, dt: dt)
         estate?.update(game: game, dt: dt)
+        village?.update(dt: dt)
         outdoors?.update(game: game, dt: dt)
         updateSeason()
         weather?.update(weather: game.weather, visible: camera.visibleRect, dt: dt)
@@ -290,6 +300,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         }
         ranch?.sync(ranch: state.ranch, now: state.worldTime, inventory: state.inventory, level: state.progress.level)
         estate?.sync(game: game)
+        village?.sync(game: game)
         updateMarkers()
     }
 
@@ -391,6 +402,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         gradeOverlay.color = SKColor(red: CGFloat(light.tint.r * sky.r), green: CGFloat(light.tint.g * sky.g),
                                      blue: CGFloat(light.tint.b * sky.b), alpha: 1)
         chunks?.setLightIntensity(CGFloat(light.nightLights))
+        village?.setLightIntensity(CGFloat(light.nightLights))
         ranch?.nightLevel = CGFloat(light.nightLights)
         // Fireflies come out once it's properly dark, on dry nights, not in winter.
         let dry = game.weather == .sunny || game.weather == .cloudy

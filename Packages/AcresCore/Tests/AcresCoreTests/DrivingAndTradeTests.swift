@@ -327,7 +327,7 @@ final class TutorialTests: XCTestCase {
             heard.append(topic)
             state.tutorial.tell(topic)
         }
-        XCTAssertEqual(Array(heard.dropFirst(4)), [.fishing, .foraging, .almanac, .farmhand],
+        XCTAssertEqual(Array(heard.dropFirst(4)), [.market, .fishing, .foraging, .almanac, .village, .farmhand],
                        "the shop is skipped: the player rented it on their own")
         XCTAssertEqual(state.tutorial.nextTopic(in: state), .farewell)
         state.tutorial.tell(.farewell)
