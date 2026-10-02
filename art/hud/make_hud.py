@@ -106,6 +106,81 @@ def leather(w=42, h=18, seed=2):
     return img
 
 
+def paper_tile(n=48, seed=5):
+    """Plain paper that tiles seamlessly (menu backgrounds): fibres and specks, no gradient."""
+    img = Image.new("RGBA", (n, n), WOOD["paper"])
+    rng = np.random.default_rng(seed)
+    for _ in range(n * n // 14):
+        img.putpixel((int(rng.integers(0, n)), int(rng.integers(0, n))), WOOD["fibre"])
+    for _ in range(n * n // 90):
+        img.putpixel((int(rng.integers(0, n)), int(rng.integers(0, n))), hexc("e0cc9e"))
+    for _ in range(n // 6):  # a few short fibres
+        x, y = int(rng.integers(0, n)), int(rng.integers(0, n))
+        for k in range(int(rng.integers(2, 4))):
+            img.putpixel(((x + k) % n, y), hexc("e4d2a6"))
+    return img
+
+
+def card():
+    """A card on the menu paper: lighter paper, a thin ink-brown outline, a
+    lit top edge and a short drop below (border 4 px)."""
+    w, h = 24, 24
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    drop = (58, 36, 22, 90)
+    d.rectangle([2, h - 2, w - 2, h - 1], fill=drop)
+    d.rectangle([1, 0, w - 2, h - 3], fill=hexc("6a4a2e"))
+    d.rectangle([0, 1, w - 1, h - 4], fill=hexc("6a4a2e"))
+    d.rectangle([1, 1, w - 2, h - 4], fill=hexc("f8eed6"))
+    d.line([2, 1, w - 3, 1], fill=hexc("fffaf0"))
+    d.line([1, h - 4, w - 2, h - 4], fill=hexc("e6d6b0"))
+    return img
+
+
+def inset():
+    """A sunken panel of darker paper (lists inside a card): shadowed top-left, lit bottom-right."""
+    w, h = 16, 16
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    d.rectangle([1, 0, w - 2, h - 1], fill=hexc("c9b48a"))
+    d.rectangle([0, 1, w - 1, h - 2], fill=hexc("c9b48a"))
+    d.rectangle([1, 1, w - 2, h - 2], fill=hexc("e9d9b4"))
+    d.line([1, 1, w - 2, 1], fill=hexc("d4c196"))
+    d.line([1, 1, 1, h - 2], fill=hexc("d4c196"))
+    d.line([1, h - 2, w - 2, h - 2], fill=hexc("f6ead0"))
+    return img
+
+
+def ribbon(colour, light, dark):
+    """A cloth ribbon with notched ends (titles on cards and celebrations)."""
+    w, h = 40, 18
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    notch = 5
+    # The ends tuck behind: darker tails with a notch.
+    for side in (0, 1):
+        x0, x1 = (0, 9) if side == 0 else (w - 10, w - 1)
+        d.rectangle([x0, 3, x1, h - 1], fill=dark)
+        for y in range(3, h):
+            depth = notch - abs(y - (3 + h - 1) // 2) * notch // ((h - 3) // 2)
+            for k in range(max(0, depth)):
+                x = x0 + k if side == 0 else x1 - k
+                img.putpixel((x, y), (0, 0, 0, 0))
+    # The front band, outlined.
+    d.rectangle([5, 0, w - 6, h - 4], fill=WOOD["out"])
+    d.rectangle([6, 1, w - 7, h - 5], fill=colour)
+    d.line([6, 1, w - 7, 1], fill=light)
+    d.line([6, h - 5, w - 7, h - 5], fill=dark)
+    return img
+
+
+TINTS = {  # board and ribbon colours: (paint, lit edge, shade)
+    "green": ("5aa83a", "8fd45a", "3c7a26"), "gold": ("e8a92c", "ffd36a", "a8700c"),
+    "red": ("d84a3a", "f08070", "9a2a22"), "blue": ("4a90d8", "8cc4f2", "2a5a9a"),
+    "wood": ("a8743f", "cf9a5c", "6e4222"), "gray": ("9a948a", "bdb7ab", "6e695f"),
+}
+
+
 def slot(selected=False):
     """A paper slot for the tool belt; the chosen one has an orange edge."""
     img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
@@ -428,6 +503,11 @@ FRAMES = {
     "ui_hud_slot_selected": (lambda: slot(True), 3),
     "ui_hud_button": (lambda: board(hexc("e27a16"), hexc("f5a04a"), hexc("a8560c")), 6),
     "ui_hud_leather": (lambda: leather(), 5),
+    "ui_paper": (lambda: paper_tile(), 0),
+    "ui_card": (lambda: card(), 4),
+    "ui_inset": (lambda: inset(), 3),
+    **{f"ui_board_{name}": ((lambda c=c: board(hexc(c[0]), hexc(c[1]), hexc(c[2]))), 6) for name, c in TINTS.items()},
+    **{f"ui_ribbon_{name}": ((lambda c=c: ribbon(hexc(c[0]), hexc(c[1]), hexc(c[2]))), 9) for name, c in TINTS.items()},
     "ui_hud_button_quiet": (lambda: board(hexc("8a6a4e"), hexc("a8866a"), hexc("5e4632")), 6),
 }
 

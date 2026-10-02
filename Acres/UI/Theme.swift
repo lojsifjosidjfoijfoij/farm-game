@@ -2,8 +2,8 @@ import SwiftUI
 import UIKit
 import AcresCore
 
-/// Colors and fonts for the HUD and menus: warm parchment and ink, chunky
-/// rounded type. Friendly and readable. (Buttons, wood and ribbons: `GameStyle`.)
+/// Colours and fonts for the menus: paper and ink, and the HUD's Fredoka type
+/// (`HUD.font`). Friendly and readable. (Buttons, cards, ribbons: `GameStyle`.)
 enum Theme {
     static let parchment = Color(red: 0.965, green: 0.937, blue: 0.867)
     static let parchmentDark = Color(red: 0.91, green: 0.866, blue: 0.77)
@@ -17,15 +17,15 @@ enum Theme {
     static let danger = Color(red: 0.8, green: 0.3, blue: 0.25)
 
     static func number(_ size: CGFloat) -> Font {
-        .system(size: size, weight: .semibold, design: .rounded).monospacedDigit()
+        HUD.number(size)
     }
 
     static func label(_ size: CGFloat, weight: Font.Weight = .medium) -> Font {
-        .system(size: size, weight: weight, design: .rounded)
+        HUD.font(size, weight)
     }
 
     static func title(_ size: CGFloat) -> Font {
-        .system(size: size, weight: .bold, design: .rounded)
+        HUD.font(size, .black)
     }
 
     static func seasonSymbol(_ season: Season) -> String {
@@ -90,13 +90,13 @@ struct GameIcon: View {
     }
 }
 
-/// Placeholder coin drawn in SwiftUI (until `ui_icon_coin` art exists).
+/// The pixel coin (a drawn one if the art is missing).
 struct CoinIcon: View {
     var size: CGFloat = 22
 
     var body: some View {
         if UIImage(named: "ui_icon_coin") != nil {
-            Image("ui_icon_coin").resizable().scaledToFit().frame(width: size, height: size)
+            Image("ui_icon_coin").interpolation(.none).resizable().scaledToFit().frame(width: size, height: size)
         } else {
             ZStack {
                 Circle().fill(

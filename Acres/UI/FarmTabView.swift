@@ -381,7 +381,7 @@ struct ActionCapsule: View {
                 .minimumScaleFactor(0.8)
                 .frame(minHeight: 22)
         }
-        .buttonStyle(CandyButtonStyle(tint: enabled ? CandyTint.matching(tint) : .gray, cornerRadius: 12, lip: 3))
+        .buttonStyle(CandyButtonStyle(tint: enabled ? CandyTint.matching(tint) : .gray))
         .disabled(!enabled)
     }
 }

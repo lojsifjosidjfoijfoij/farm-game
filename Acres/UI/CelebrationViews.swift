@@ -79,20 +79,11 @@ struct RewardCard<Content: View>: View {
     }
 }
 
-/// Cream card paper with a bright inner edge and a gold rim.
+/// The card a celebration is written on: paper in a wooden frame.
 struct RewardPaper: View {
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .fill(LinearGradient(colors: [Theme.cream, Theme.parchment, Theme.parchmentDark], startPoint: .top, endPoint: .bottom))
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.9), lineWidth: 2)
-                .padding(5)
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .strokeBorder(LinearGradient(colors: [Theme.goldLight, Theme.goldDark], startPoint: .top, endPoint: .bottom),
-                              lineWidth: 4)
-        }
-        .shadow(color: .black.opacity(0.35), radius: 20, x: 0, y: 8)
+        PixelFrame(.panel)
+            .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 6)
     }
 }
 
@@ -111,7 +102,7 @@ struct RewardButton: View {
                 .frame(minWidth: 170)
                 .padding(.vertical, 2)
         }
-        .buttonStyle(CandyButtonStyle(tint: .green, cornerRadius: 18, lip: 5))
+        .buttonStyle(CandyButtonStyle(tint: .green))
         .padding(.top, 4)
     }
 }
@@ -143,8 +134,8 @@ struct LevelUpCardView: View {
                                 .font(.system(size: 13, weight: .bold))
                                 .foregroundStyle(.white)
                                 .frame(width: 24, height: 24)
-                                .background(Circle().fill(LinearGradient(colors: [CandyTint.green.top, CandyTint.green.bottom],
-                                                                         startPoint: .top, endPoint: .bottom)))
+                                .background(Rectangle().fill(HUD.xp))
+                                .overlay(Rectangle().stroke(HUD.edge, lineWidth: HUD.pixel))
                             Text(unlock.prefix(1).uppercased() + unlock.dropFirst())
                                 .font(Theme.label(15, weight: .semibold))
                                 .foregroundStyle(Theme.ink)
@@ -164,18 +155,6 @@ struct LevelUpCardView: View {
     }
 }
 
-/// A shallow, darker well inside a card (lists of unlocks, stats).
-struct InsetPanel: View {
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Theme.parchmentDark.opacity(0.7))
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(Theme.wood.opacity(0.3), lineWidth: 1.5)
-        }
-    }
-}
-
 /// Paper confetti falling once across the screen.
 struct Confetti: View {
     @State private var fall = false
@@ -187,10 +166,9 @@ struct Confetti: View {
             ForEach(0..<36, id: \.self) { i in
                 let x = CGFloat((i * 37) % 100) / 100 * proxy.size.width
                 let delay = Double((i * 13) % 10) / 20
-                RoundedRectangle(cornerRadius: 2)
+                Rectangle()  // square pixels, so they fall without smearing
                     .fill(Self.colors[i % Self.colors.count])
-                    .frame(width: 8, height: 12)
-                    .rotationEffect(.degrees(fall ? Double(180 + i * 40) : Double(i * 17)))
+                    .frame(width: 8, height: 8)
                     .position(x: x + (fall ? CGFloat((i % 7) - 3) * 14 : 0), y: fall ? proxy.size.height + 40 : -30)
                     .animation(.easeIn(duration: 2.2).delay(delay), value: fall)
             }
