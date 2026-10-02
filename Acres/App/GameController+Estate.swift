@@ -17,7 +17,7 @@ extension GameController {
 
     // MARK: Fields
 
-    static let notAFieldMessage = "Crops only grow in your fields (the marked patches). More fields are on your phone → Farm."
+    static let notAFieldMessage = "Crops only grow in your fields (the marked patches). More fields are in your farm journal → Farm."
     static let overgrownMessage = "Thick brush. It clears back as your farm grows: more room comes with levels, and land you buy."
 
     /// Fields on your land that aren't yours yet (to buy now or later).
@@ -201,7 +201,7 @@ extension GameController {
         case .notYourLand: "That isn't your land."
         case .cannotPlaceHere: "It needs a free patch of grass (not a field, tree or path)."
         case .tooFar: "Walk over there first."
-        case .noneInPouch: "You don't have one. Buy it on your phone (Farm)."
+        case .noneInPouch: "You don't have one. Buy it in your farm journal (Farm)."
         case .noSprinkler: "There's no sprinkler here."
         case .tooManyWorkers: "The farm has all the hands it can take."
         case .noSuchWorker: "That farmhand has left."
@@ -215,7 +215,7 @@ extension GameController {
         let level = property.unlockLevel > self.level ? " · from level \(property.unlockLevel)" : ""
         return TileInspection(target: .tile(tile), title: "For sale: \(property.name)",
                               detail: "\(property.blurb) \(price) coins\(level).", icon: nil, symbol: "signpost.right.fill",
-                              action: .showFarm, actionTitle: "See it on your phone")
+                              action: .showFarm, actionTitle: "See it in your journal")
     }
 
     func sprinklerInspection(_ tile: TileCoord) -> TileInspection {

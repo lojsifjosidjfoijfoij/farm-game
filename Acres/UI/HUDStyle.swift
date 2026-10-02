@@ -79,11 +79,12 @@ struct PixelFrame: View {
         case slotSelected = "ui_hud_slot_selected"
         case button = "ui_hud_button"
         case buttonQuiet = "ui_hud_button_quiet"
+        case leather = "ui_hud_leather"
 
         /// The fixed border, in art pixels (see `art/hud/make_hud.py`).
         var border: CGFloat {
             switch self {
-            case .panel, .wood: 5
+            case .panel, .wood, .leather: 5
             case .slot, .slotSelected: 3
             case .button, .buttonQuiet: 6
             }

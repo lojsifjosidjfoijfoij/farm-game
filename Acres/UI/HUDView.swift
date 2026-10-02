@@ -462,7 +462,7 @@ struct HUDView: View {
         .accessibilityLabel("Go to bed")
     }
 
-    /// The business phone: orders and money. The badge counts orders on.
+    /// The farm journal: orders, money, the farm and the almanac. The badge counts orders on.
     private var phoneButton: some View {
         let active = game.contractBoard.active
         let urgent = active.contains { game.daysLeft($0) <= 0 }
@@ -474,7 +474,7 @@ struct HUDView: View {
             game.showsBusiness = true
             game.advanceTutorial(.openedPhone)
         } label: {
-            GameIcon(asset: "ui_icon_phone", fallbackSymbol: "iphone.gen2", tint: HUD.text, size: HUD.iconSize)
+            GameIcon(asset: "ui_icon_journal", fallbackSymbol: "book.closed.fill", tint: HUD.text, size: HUD.iconSize)
         }
         .buttonStyle(HUDButtonStyle())
         .overlay(alignment: .topTrailing) {
@@ -499,7 +499,7 @@ struct HUDView: View {
             }
         }
         .pulsing(game.phoneNeedsAttention || game.tutorialFocus == .phoneButton)
-        .accessibilityLabel(active.isEmpty ? "Business phone" : "Business phone, \(active.count) orders on")
+        .accessibilityLabel(active.isEmpty ? "Farm journal" : "Farm journal, \(active.count) orders on")
     }
 
     private var inventoryButton: some View {

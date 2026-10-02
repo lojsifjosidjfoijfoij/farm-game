@@ -1,7 +1,7 @@
 import SwiftUI
 import AcresCore
 
-/// The phone's Farm tab: grow the farm. Fields, farmhands, machines,
+/// The farm journal's Farm tab: grow the farm. Fields, farmhands, machines,
 /// workshops, buildings and land, each with what it costs and what it needs.
 /// It opens up with the farmer: only what's here now or next level shows.
 struct FarmTabView: View {

@@ -75,7 +75,7 @@ extension GameController {
     func deliverToNearbyClient() {
         guard let client = nearbyClient else { return }
         guard contractBoard.active.contains(where: { $0.clientID == client.id }) else {
-            showMessage("No orders from \(client.name) right now. New orders come in every morning on your phone.")
+            showMessage("No orders from \(client.name) right now. New orders come in every morning (see your farm journal).")
             businessTab = .orders
             showsBusiness = true
             return

@@ -1,7 +1,7 @@
 import SwiftUI
 import AcresCore
 
-/// The phone's Almanac tab: the farm's rank in the valley (by net worth),
+/// The farm journal's Almanac tab: the farm's rank in the valley (by net worth),
 /// and the collection book of everything grown, caught, found and made,
 /// page by page, each with a reward when it's full.
 struct AlmanacTabView: View {

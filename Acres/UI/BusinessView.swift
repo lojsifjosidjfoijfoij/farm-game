@@ -1,46 +1,84 @@
 import SwiftUI
 import AcresCore
 
-/// The business phone: orders from clients, and the farm's money
-/// (this week's books, Monday's bills, the loan).
+/// The farm journal: orders from clients, the farm's money (this week's
+/// books, Monday's bills, the loan), the farm's plans and the almanac. A
+/// leather-bound book: a stitched leather band on top, paper tabs, pages.
 struct BusinessView: View {
     @Bindable var game: GameController
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                Picker("Tab", selection: $game.businessTab) {
-                    ForEach(game.businessTabs) { tab in
-                        Text(tab.rawValue).tag(tab)
+        VStack(spacing: 0) {
+            header
+            tabs
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    switch shownTab {
+                    case .orders: orders
+                    case .shop: shop
+                    case .farm: FarmTabView(game: game)
+                    case .money: money
+                    case .almanac: AlmanacTabView(game: game)
                     }
                 }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 14) {
-                        // (A tab that isn't open yet falls back to the orders.)
-                        switch game.businessTabs.contains(game.businessTab) ? game.businessTab : .orders {
-                        case .orders: orders
-                        case .shop: shop
-                        case .farm: FarmTabView(game: game)
-                        case .money: money
-                        case .almanac: AlmanacTabView(game: game)
-                        }
-                    }
-                    .padding(16)
-                }
-            }
-            .background(PaperBackground())
-            .navigationTitle("Business")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { game.showsBusiness = false }
-                }
+                .padding(16)
             }
         }
+        .background(PaperBackground().ignoresSafeArea())
+    }
+
+    /// A tab that isn't open yet falls back to the orders.
+    private var shownTab: BusinessTab {
+        game.businessTabs.contains(game.businessTab) ? game.businessTab : .orders
+    }
+
+    private var header: some View {
+        HStack(spacing: 10) {
+            HUDIcon(name: "ui_icon_journal")
+            Text("Farm journal")
+                .font(HUD.font(20, .black))
+                .foregroundStyle(Color(red: 0.98, green: 0.92, blue: 0.78))
+                .shadow(color: HUD.edge, radius: 0, x: 0, y: HUD.pixel)
+            Spacer()
+            Button {
+                game.showsBusiness = false
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 15, weight: .black))
+                    .foregroundStyle(HUD.text)
+            }
+            .buttonStyle(HUDButtonStyle(size: 40))
+            .accessibilityLabel("Close the journal")
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(PixelFrame(.leather))
+    }
+
+    /// Paper tabs along the top of the pages; the open one stands up a little.
+    private var tabs: some View {
+        HStack(spacing: 6) {
+            ForEach(game.businessTabs) { tab in
+                let selected = tab == shownTab
+                Button {
+                    game.businessTab = tab
+                    Haptics.selection()
+                } label: {
+                    Text(tab.rawValue)
+                        .font(HUD.font(14, selected ? .black : .heavy))
+                        .foregroundStyle(HUD.text)
+                        .padding(.horizontal, 14)
+                        .frame(height: 36)
+                        .background(PixelFrame(selected ? .slotSelected : .slot))
+                        .offset(y: selected ? -HUD.pixel : 0)
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(selected ? .isSelected : [])
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
     }
 
     // MARK: Orders
@@ -62,7 +100,7 @@ struct BusinessView: View {
 
         SectionTitle(title: "New orders", trailing: nil)
         if board.offers.isEmpty {
-            EmptyNote(symbol: "moon.stars", text: "No new orders today. Clients call in every morning.")
+            EmptyNote(symbol: "moon.stars", text: "No new orders today. Clients send word every morning.")
         } else {
             ForEach(board.offers) { contract in
                 ContractCard(game: game, contract: contract, isOffer: true)

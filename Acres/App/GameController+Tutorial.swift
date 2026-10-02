@@ -135,15 +135,15 @@ extension GameController {
                          body: isDriving ? "Home again! Tap the truck to get out, then plant your new seeds."
                              : "A field should never stand empty for long. Plant your new seeds.", button: nil)
         case .phone:
-            TutorialCard(title: "Your phone is ringing!",
-                         body: "Word travels fast: people in the village want to buy from you. Tap your phone.", button: nil)
+            TutorialCard(title: "Orders are coming in!",
+                         body: "Word travels fast: people in the village want to buy from you. Their orders are in your farm journal. Tap the journal.", button: nil)
         case .acceptOrder:
             TutorialCard(title: "Your first order",
                          body: "Orders pay better than the market. Accept one, then bring the goods to the customer before the deadline.",
                          button: nil)
         case .fieldsTour:
             TutorialCard(title: "Room to grow",
-                         body: "Crops only grow in fields. When you've saved up, buy your next field on the phone under Farm. More come up as you level up.",
+                         body: "Crops only grow in fields. When you've saved up, buy your next field in your farm journal, under Farm. More come up as you level up.",
                          button: "Got it")
         case .finished:
             TutorialCard(title: "You're a natural!",

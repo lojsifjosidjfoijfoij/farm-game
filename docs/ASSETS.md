@@ -48,8 +48,8 @@ procedurally in code.
 | Animals | 70 | 0 |
 | Item icons | 107 | 0 |
 | Effects & particles | 36 | 4 |
-| User interface | 45 | 15 |
-| **Total** | **761** | **52** |
+| User interface | 46 | 15 |
+| **Total** | **762** | **52** |
 | Audio files | 58 | 0 |
 
 ## Terrain (tileable ground textures)
@@ -754,7 +754,7 @@ procedurally in code.
 | `ui_icon_goals` | 96 × 96 | UI | — | 5 | Rolled-up checklist with a ribbon (goals). |
 | `ui_icon_bed` | 96 × 96 | UI | — | 5 | Cozy bed with a moon (go to bed). |
 | `ui_icon_contracts` | 96 × 96 | UI | — | 5 | Pinned note (contracts board). |
-| `ui_icon_phone` | 96 × 96 | UI | — | 6 | Chunky flip phone (business phone: orders and money). |
+| `ui_icon_journal` | 72 × 72 | UI | — | 6 | Leather-bound farm journal with a paper label and a red ribbon bookmark (orders, the accounts, farm plans, the almanac). |
 | `ui_icon_worker` | 96 × 96 | UI | — | 6 | Farmhand in a straw hat. |
 | `ui_icon_collection` | 96 × 96 | UI | — | 7 | Leather-bound book (collection). |
 | `ui_portrait_mentor` | 192 × 192 | UI | — | 13 | Tom, the old farmer who teaches you (tutorial card): head and shoulders, grey hair and beard, straw hat, green shirt, overalls. Transparent; the card puts it on a sky-blue disc. |
@@ -768,6 +768,7 @@ procedurally in code.
 | `ui_hud_slot_selected` | 96 × 96 | UI | — | 13 | The tool in hand: a lighter slot with an orange edge. Fixed border 6 pt. |
 | `ui_hud_button` | 144 × 120 | UI | — | 13 | Main HUD button, 9-slice: an orange painted board, notched corners, lit top edge, darker bottom it presses into. Fixed border 12 pt. |
 | `ui_hud_button_quiet` | 144 × 120 | UI | — | 13 | The same board in plain brown, for buttons that can't be used yet (a closed shop). |
+| `ui_hud_leather` | 252 × 108 | UI | — | 13 | The farm journal's cover band, 9-slice: brown leather with a little grain, a lit top edge and light stitching just inside the edge (repeats every 4 art px). Fixed border 10 pt. |
 | `ui_icon_seeds` | 72 × 72 | UI | — | 13 | Seed pouch with a sprout on it (the seeds tool when no packet is chosen). |
 | `ui_icon_weather_cloudy` | 72 × 72 | UI | — | 13 | Cloud (the clock on a grey day). |
 | `ui_icon_weather_rain` | 72 × 72 | UI | — | 13 | Cloud with rain. |

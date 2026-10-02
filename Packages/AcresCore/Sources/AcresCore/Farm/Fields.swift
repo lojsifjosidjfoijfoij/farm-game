@@ -105,7 +105,7 @@ public enum Feature: String, CaseIterable, Sendable {
     /// For the level-up card.
     public var title: String {
         switch self {
-        case .phone: "your phone: orders from the village"
+        case .phone: "your farm journal: orders from the village"
         case .chores: "daily chores with rewards"
         case .axe: "the axe (chop trees for logs)"
         case .foraging: "wild finds in the woods and meadows"

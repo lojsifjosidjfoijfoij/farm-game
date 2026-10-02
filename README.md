@@ -64,9 +64,15 @@ The whole game is moving to the look agreed on the mock (`art/style_test`): rich
    lit buildings, and fireflies over the meadow on dry nights (not in winter).
 4. **The HUD in wood and paper:** one panel top left with the level, coins and energy (and fuel
    when it matters), the goal and today's chores under it, the clock top right, a wooden tool tray
-   with paper slots (the tool in hand lifts in an orange-edged slot), paper buttons for the phone,
-   basket and bed, orange board buttons for places, and Tom's card on paper. New font: Fredoka.
-   The shop, phone and other menus keep their current look for now.
+   with paper slots (the tool in hand lifts in an orange-edged slot), paper buttons for the
+   journal, basket and bed, orange board buttons for places, and Tom's card on paper. New font:
+   Fredoka. The shop and other menus keep their current look for now.
+5. **The farm journal instead of the phone:** the same orders, money, farm and almanac, now in a
+   leather-bound journal (a stitched leather band on top, paper tabs, paper pages), with a journal
+   button on the HUD. Everything the game says about "your phone" now says the journal.
+6. **Detailed soil:** plowed fields are pixel art with furrows that run into long rows, clods,
+   pebbles and straw (watered soil darker with glints), three different tiles so a field isn't one
+   repeated square, and grass creeping over the field's borders.
 
 ## A breeze in the trees: what to test
 

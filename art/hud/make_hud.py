@@ -37,6 +37,7 @@ PAL = {
     "p": hexc("f3e6c4"), "t": hexc("c8a46a"), "T": hexc("8a6a3e"),
     "h": hexc("f0c090"), "H": hexc("c08a5a"),
     "c": hexc("f4f6fa"), "C": hexc("c4cede"), "x": hexc("8a8f98"),
+    "L": hexc("8a4a2a"), "M": hexc("5e2f1a"), "N": hexc("b06a3e"),
 }
 WOOD = {"out": hexc("3a2416"), "hi": hexc("d79a58"), "mid": hexc("b0723c"), "lo": hexc("8a5428"),
         "seam": hexc("6e4222"), "in": hexc("5a3a20"), "paper": hexc("f2e4c0"), "paper_sh": hexc("d8c69c"),
@@ -76,6 +77,32 @@ def frame(w, h, inner="paper", seams=(), seed=0):
                 d.line([4, y, w - 5, y], fill=WOOD["seam"])
             elif (y - 4) % 5 == 0:
                 d.line([4, y, w - 5, y], fill=WOOD["hi"])
+    return img
+
+
+def leather(w=42, h=18, seed=2):
+    """A leather band (the farm journal's cover): an outline, a lit top edge,
+    a little grain, and light stitching just inside the edge (2 on, 2 off,
+    so it repeats cleanly when the band stretches)."""
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    d.rectangle([1, 0, w - 2, h - 1], fill=WOOD["out"])
+    d.rectangle([0, 1, w - 1, h - 2], fill=WOOD["out"])
+    d.rectangle([1, 1, w - 2, h - 2], fill=PAL["L"])
+    d.line([2, 1, w - 3, 1], fill=PAL["N"])
+    d.line([2, h - 2, w - 3, h - 2], fill=PAL["M"])
+    rng = np.random.default_rng(seed)
+    for _ in range(w * h // 9):
+        img.putpixel((int(rng.integers(2, w - 2)), int(rng.integers(2, h - 2))), PAL["M"])
+    stitch = hexc("d8b47a")
+    for x in range(3, w - 3):
+        if (x - 3) % 4 < 2:
+            img.putpixel((x, 3), stitch)
+            img.putpixel((x, h - 4), stitch)
+    for y in range(3, h - 3):
+        if (y - 3) % 4 < 2:
+            img.putpixel((3, y), stitch)
+            img.putpixel((w - 4, y), stitch)
     return img
 
 
@@ -216,17 +243,19 @@ kwWwWwWwWwwk
 ..kwwwwwwk..
 ..kkkkkkkk..
 """,
-    "ui_icon_phone": """
-..kkkkkk..
-.kddddddk.
-.kdBBBBdk.
-.kdBbbBdk.
-.kdBbbBdk.
-.kdBBBBdk.
-.kddddddk.
-.kddSSddk.
-.kddddddk.
-..kkkkkk..
+    "ui_icon_journal": """
+.kkkkkkkkkk.
+kMLLLLLLLLNk
+kMLNNNNNNLLk
+kMLNppppNLLk
+kMLNpTTpNLLk
+kMLNppppNLLk
+kMLNNNNNNLLk
+kMLLLLLLLLLk
+kMLLLLLLLLLk
+kMpppppppppk
+.kkkkkkrkkk.
+.......rr...
 """,
     "ui_icon_bed": """
 kk..........
@@ -398,6 +427,7 @@ FRAMES = {
     "ui_hud_slot": (lambda: slot(False), 3),
     "ui_hud_slot_selected": (lambda: slot(True), 3),
     "ui_hud_button": (lambda: board(hexc("e27a16"), hexc("f5a04a"), hexc("a8560c")), 6),
+    "ui_hud_leather": (lambda: leather(), 5),
     "ui_hud_button_quiet": (lambda: board(hexc("8a6a4e"), hexc("a8866a"), hexc("5e4632")), 6),
 }
 
