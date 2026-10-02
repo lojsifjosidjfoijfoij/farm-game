@@ -33,6 +33,8 @@ extension GameController {
     var dailyBonus: Int { routine.bonus(simulation.state) }
 
     func claimChore(_ counter: String) {
+        // Take the routine out first: nothing inside `modify` may read `simulation`.
+        let routine = self.routine
         guard let claim = simulation.modify({ routine.claim(counter, state: &$0) }) else { return }
         Haptics.success()
         Sound.play(.coin)
@@ -42,6 +44,7 @@ extension GameController {
     }
 
     func claimDailyBonus() {
+        let routine = self.routine
         guard let coins = simulation.modify({ routine.claimBonus(state: &$0) }) else { return }
         Haptics.success()
         Sound.play(.achievement)

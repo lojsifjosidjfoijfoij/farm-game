@@ -264,7 +264,10 @@ final class GameController {
     @ObservationIgnored var moneyShown = false
     @ObservationIgnored var moneyFloatTimers: [UUID: TimeInterval] = [:]
 
-    var balance: Balance { simulation.balance }
+    /// The rules. Kept apart from `simulation` (which is built with them) so
+    /// code running inside `simulation.modify { }` can read them: Swift stops
+    /// the app if `simulation` is read while it's being changed.
+    let balance = Balance.standard
     var farming: Farming { Farming(map: map, balance: simulation.balance) }
     var storageCapacity: Int { simulation.state.storageCapacity(simulation.balance) }
     var truckCapacity: Int { simulation.state.truckCapacity(simulation.balance) }
@@ -305,11 +308,11 @@ final class GameController {
 
         switch saveSystem?.load() ?? .noSave {
         case .noSave:
-            simulation = Simulation(state: .newGame(seed: UInt64.random(in: 1...UInt64.max)))
+            simulation = Simulation(state: .newGame(seed: UInt64.random(in: 1...UInt64.max), balance: balance), balance: balance)
             presentation = PresentationState()
 
         case .loaded(let file, let fromBackup):
-            var sim = Simulation(state: file.state)
+            var sim = Simulation(state: file.state, balance: balance)
             report = OfflineCatchUp.run(&sim, lastSeen: file.savedAt, now: now)
             simulation = sim
             presentation = file.presentation
@@ -321,7 +324,7 @@ final class GameController {
             }
 
         case .failed(let error):
-            simulation = Simulation(state: .newGame(seed: UInt64.random(in: 1...UInt64.max)))
+            simulation = Simulation(state: .newGame(seed: UInt64.random(in: 1...UInt64.max), balance: balance), balance: balance)
             presentation = PresentationState()
             switch error {
             case .newerVersion:
@@ -1027,7 +1030,7 @@ final class GameController {
     /// day one, with the tutorial. (Settings, and the debug panel.)
     func startNewFarm() {
         if savingEnabled { try? saveSystem?.store.deleteAll() }
-        simulation = Simulation(state: .newGame(seed: UInt64.random(in: 1...UInt64.max)))
+        simulation = Simulation(state: .newGame(seed: UInt64.random(in: 1...UInt64.max), balance: balance), balance: balance)
         presentation = PresentationState()
         selectedSeed = nil
         lastSave = nil
