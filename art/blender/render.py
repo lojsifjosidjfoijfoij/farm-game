@@ -14,6 +14,8 @@ sys.path.insert(0, os.path.dirname(__file__))
 import acres_art as art  # noqa: E402
 from frames import frame  # noqa: E402,F401  (live.py uses render.frame too)
 import models  # noqa: E402
+import models_farm as farm  # noqa: E402
+import models_people as people  # noqa: E402
 
 PREVIEW = os.environ.get("ACRES_ART_PREVIEW") or os.path.join(os.path.dirname(__file__), ".renders", "preview")
 
@@ -49,6 +51,40 @@ ASSETS = {
     "prop_fence_wood_h_broken": (lambda: models.fence("broken"), {}),
     "prop_fence_wood_v": (lambda: models.fence("v"), {}),
     "prop_fence_wood_post": (lambda: models.fence("post"), {}),
+    **{f"crop_{c}_stage{k}": ((lambda c=c, k=k: farm.crop(c, k)), {} if k else {"outline": False})
+       for c in farm.CROPS for k in range(5)},
+    **{f"tree_birch_{s}": ((lambda s=s: farm.birch(s)), {}) for s in farm.SEASONS},
+    **{f"tree_maple_{s}": ((lambda s=s: farm.maple(s)), {}) for s in farm.SEASONS},
+    **{f"tree_{k}_{s}": ((lambda k=k, s=s: farm.fruit_tree(k, s)), {}) for k in ("apple", "cherry") for s in farm.SEASONS},
+    **{f"tree_{k}_fruit": ((lambda k=k: farm.fruit_tree(k, overlay=True)), {}) for k in ("apple", "cherry")},
+    "tree_pine_young": (farm.young_pine, {}),
+    "tree_maple_young": (lambda: farm.maple(young=True), {}),
+    "tree_apple_young": (lambda: farm.fruit_tree("apple", young=True), {}),
+    "tree_cherry_young": (lambda: farm.fruit_tree("cherry", young=True), {}),
+    **{f"tree_{k}_sapling": ((lambda k=k: farm.sapling(k)), {}) for k in ("oak", "birch", "pine", "maple", "apple", "cherry")},
+    "tree_felled": (farm.felled, {}),
+    **{f"building_farmhouse_t{t}": ((lambda t=t: farm.farmhouse(t)), {}) for t in (1, 2, 3)},
+    **{f"building_farmhouse_t{t}_lights": ((lambda t=t: farm.farmhouse(t, night=True)), GLOW) for t in (1, 2, 3)},
+    "building_coop": (farm.coop, {}),
+    "building_storage_shed": (farm.storage_shed, {}),
+    "building_silo": (farm.silo, {}),
+    **{f"building_{k}": ((lambda k=k: farm._shelter(k)), {}) for k in ("pigsty", "sheep_shelter", "goat_shed")},
+    "prop_sign_for_sale": (lambda: farm.sign("for_sale"), {}),
+    "prop_sign_repair": (lambda: farm.sign("repair"), {}),
+    "prop_sprinkler": (farm.sprinkler, {}),
+    "prop_sprinkler_pro": (lambda: farm.sprinkler(pro=True), {}),
+    "prop_water_trough": (farm.water_trough, {}),
+    "prop_water_trough_empty": (lambda: farm.water_trough(full=False), {}),
+    "prop_feeder": (farm.feeder, {}),
+    "prop_bench": (farm.bench, {}),
+    "prop_signpost": (farm.signpost, {}),
+    **{f"nature_flowers_{c}": ((lambda c=c: farm.flowers(c)), {}) for c in ("yellow", "white", "purple")},
+    **{f"character_farmer_{f}_{p}": ((lambda f=f, p=p: people.person("farmer", f, p)), {})
+       for f in ("down", "up", "side") for p in people.FARMER_POSES},
+    **{f"character_worker{n}_{f}_{p}": ((lambda n=n, f=f, p=p: people.person(f"worker{n}", f, p)), {})
+       for n in (1, 2, 3) for f in ("down", "up", "side") for p in people.WORKER_POSES},
+    **{f"character_villager{n}_{f}_{p}": ((lambda n=n, f=f, p=p: people.person(f"villager{n}", f, p)), {})
+       for n in (1, 2, 3) for f in ("down", "up", "side") for p in people.VILLAGER_POSES},
     **{f"vehicle_truck_old_dir{d:02d}": ((lambda d=d: models.truck(d)), {}) for d in range(16)},
     **{f"vehicle_truck_old_load{n}_dir{d:02d}": ((lambda d=d, n=n: models.truck(d, load=n, overlay=True)), {})
        for n in (1, 2) for d in range(16)},

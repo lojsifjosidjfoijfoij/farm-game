@@ -90,11 +90,12 @@ struct WorldObjectFactory {
 
     /// Chimney tops in unit sprite coordinates (origin bottom-left).
     private static let chimneys: [String: CGPoint] = [
-        // Rendered in Blender: screen_point(FARMHOUSE_CHIMNEY_TOP) in art/blender.
+        // Rendered in Blender: screen_point(FARMHOUSE_CHIMNEY_TOP) in art/blender (every
+        // tier keeps the same chimney).
         "building_farmhouse_t0": CGPoint(x: 0.77, y: 0.896),
-        "building_farmhouse_t1": BuildingPainter.FarmhouseLayout.chimneyTopUnit,
-        "building_farmhouse_t2": BuildingPainter.FarmhouseLayout.chimneyTopUnit,
-        "building_farmhouse_t3": BuildingPainter.FarmhouseLayout.chimneyTopUnit,
+        "building_farmhouse_t1": CGPoint(x: 0.77, y: 0.896),
+        "building_farmhouse_t2": CGPoint(x: 0.77, y: 0.896),
+        "building_farmhouse_t3": CGPoint(x: 0.77, y: 0.896),
     ]
 
     private func makeSmoke(at position: CGPoint) -> SKEmitterNode {

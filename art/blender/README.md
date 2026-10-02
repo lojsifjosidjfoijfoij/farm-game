@@ -71,8 +71,13 @@ AI model generation off: those bring in other people's models, in other styles.
 ## Adding a sprite
 
 1. Make sure the name is in `AssetManifest` (and so in `docs/ASSETS.md`).
-2. Write a model function in `models.py` out of the helpers in `acres_art.py` (`box`, `cyl`,
-   `stick`, `blob`, `prism`, `mat`). Keep the palette constants at the top of `models.py`.
+2. Write a model function out of the helpers in `acres_art.py` (`box`, `cyl`, `stick`, `blob`,
+   `prism`, `mat`): `models.py` has the first batch (farmhouse, barn, oak, pine, props, truck),
+   `models_farm.py` the crops (one function per crop, stages 0–4), the other trees (all seasons,
+   young, saplings, fruit overlays), the farmhouse tiers, farm buildings and props, and
+   `models_people.py` one adjustable figure for the farmer, farmhands and villagers (`LOOKS`
+   for clothes and hair, `POSES` for hands and feet per frame, built facing the camera and
+   turned for "up" and "side").
 3. Register it in `ASSETS` in `render.py`, render it, and look at it with `preview.py` and
    `mockup.py`.
 
