@@ -27,6 +27,7 @@ struct BusinessView: View {
                         case .farm: FarmTabView(game: game) { confirm = $0 }
                         case .money: money
                         case .almanac: AlmanacTabView(game: game)
+                        case .village: VillageTabView(game: game)
                         }
                     }
                     .padding(16)

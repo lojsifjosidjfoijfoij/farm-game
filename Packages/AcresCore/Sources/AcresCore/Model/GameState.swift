@@ -83,6 +83,10 @@ public struct GameState: Codable, Equatable, Sendable {
 
     /// IDs from `FieldCatalog` the farm has cleared for farming, sorted. (v13)
     public var ownedFields: [String]
+    /// What the market bought lately (prices fall as you sell).
+    public var market: MarketState
+    /// Village projects the farm has given to.
+    public var village: VillageState
 
     public init(
         worldTime: TimeInterval,
@@ -108,7 +112,9 @@ public struct GameState: Codable, Equatable, Sendable {
         forage: ForageState = ForageState(),
         almanac: AlmanacState = AlmanacState(),
         rank: RankState = RankState(),
-        ownedFields: [String] = [FieldCatalog.starterID]
+        ownedFields: [String] = [FieldCatalog.starterID],
+        market: MarketState = MarketState(),
+        village: VillageState = VillageState()
     ) {
         self.worldTime = worldTime
         self.clock = clock
@@ -134,6 +140,8 @@ public struct GameState: Codable, Equatable, Sendable {
         self.almanac = almanac
         self.rank = rank
         self.ownedFields = ownedFields
+        self.market = market
+        self.village = village
     }
 
     /// Where the farmer is: in the truck, or on foot.

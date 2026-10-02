@@ -184,7 +184,7 @@ public struct Contracts: Sendable {
             value += Int(unit * Double(amount))
         }
         guard !items.isEmpty else { return nil }
-        let bonus = balance.contractBonus + reputation / 250
+        let bonus = balance.contractBonus + reputation / 250 + Village.perks(state).contractBonus
         let reward = Int((Double(value) * (1 + bonus) / 5).rounded()) * 5
         let today = state.clock.dayIndex
         let days = 2 + Int(state.rng.nextUnit() * 3)  // 2…4 days

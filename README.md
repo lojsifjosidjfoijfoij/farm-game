@@ -48,6 +48,24 @@ cd Packages/AcresCore
 swift test
 ```
 
+## A market that wants variety, and village projects: what to test
+
+1. **Selling lots of one thing lowers its price.** Each one you sell fetches a little less that
+   day: about half price after ~45 of one crop (fewer for costly goods like jam or cheese), and
+   never under 30%. Half the drop wears off each day. The *Sell* buttons show the real total,
+   and a "Plenty today" tag says when it's time to sell something else. Orders and your own
+   shop never lower market prices, so they're now the way to move big harvests.
+2. **New crops pay more.** Coins per tile per day now climb with the level a crop unlocks:
+   potatoes ~40, kale ~50, corn and garlic ~60, cabbage ~70, pumpkin ~85, melon ~100.
+   Strawberries, tomatoes and blueberries are a little less per day, but you plant them once.
+   Pickled onions, sauerkraut and sunflower oil went up to match.
+3. **Village projects** (journal → *Village*, from level 3): six projects from flower beds
+   (3,000 coins) to lighting the lighthouse (100,000). Give coins a bit at a time, send goods
+   from storage and your bag, then tap *Open it!*. Each one gives the farm something lasting:
+   more buyers, faster recovering prices, better-paying orders, higher prices.
+4. **Late goals:** finish village projects, make 300 goods, finish 40 orders, earn 100,000 at
+   the market. Your save carries over (format v16: a fresh market, no projects yet).
+
 ## Your bag, and selling that works: what to test
 
 1. **Selling at the stops works wherever the button shows.** The market, client and shop

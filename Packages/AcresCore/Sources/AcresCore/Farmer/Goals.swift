@@ -45,6 +45,7 @@ public enum GoalCounter {
     public static let casts = "casts"
     public static let fishCaught = "fishCaught"
     public static let foraged = "foraged"
+    public static let projectsFinished = "projectsFinished"
     /// Fish of one kind caught.
     public static func caught(_ fish: String) -> String { "caught:\(fish)" }
     /// Wild finds of one kind picked.
@@ -147,6 +148,18 @@ public enum GoalCatalog {
                        requirement: .count(GoalCounter.collected("truffle"), 5), coins: 500, xp: 50),
         GoalDefinition(id: "money25k", title: "Farming empire", detail: "Have 25,000 coins.",
                        requirement: .money(25_000), coins: 1_500, xp: 100),
+        GoalDefinition(id: "village1", title: "Good neighbour", detail: "Finish a village project (journal → Village).",
+                       requirement: .count(GoalCounter.projectsFinished, 1), coins: 500, xp: 60),
+        GoalDefinition(id: "crafted300", title: "Master artisan", detail: "Make 300 goods in your workshops.",
+                       requirement: .count(GoalCounter.crafted, 300), coins: 2_000, xp: 120),
+        GoalDefinition(id: "contract40", title: "The county's supplier", detail: "Finish 40 orders.",
+                       requirement: .count(GoalCounter.contractsCompleted, 40), coins: 2_500, xp: 150),
+        GoalDefinition(id: "village3", title: "Pillar of the village", detail: "Finish three village projects.",
+                       requirement: .count(GoalCounter.projectsFinished, 3), coins: 3_000, xp: 200),
+        GoalDefinition(id: "sales100k", title: "Known at every stall", detail: "Earn 100,000 coins at the market.",
+                       requirement: .count(GoalCounter.coinsFromSales, 100_000), coins: 5_000, xp: 250),
+        GoalDefinition(id: "village6", title: "Light on the point", detail: "Finish every village project, lighthouse and all.",
+                       requirement: .count(GoalCounter.projectsFinished, 6), coins: 10_000, xp: 500),
     ]
 
     public static func goal(_ id: String) -> GoalDefinition? { all.first { $0.id == id } }

@@ -130,6 +130,11 @@ public struct Balance: Sendable, Equatable {
     /// The market's special of the day pays this much more.
     public var marketSpecialBonus: Double = 0.5
 
+    /// Selling lots of one thing lowers its price, never below this share
+    /// (see `Market`), and the buyers come back by this share each day.
+    public var marketPriceFloor: Double = 0.3
+    public var marketRecoveryPerDay: Double = 0.5
+
     // MARK: - Fishing and foraging (Phase 11)
 
     /// How far from the water the farmer can cast (tiles).

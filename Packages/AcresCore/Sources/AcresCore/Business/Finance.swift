@@ -36,6 +36,7 @@ public enum LedgerCategory {
     public static let land = "Land"
     public static let buildings = "Buildings"
     public static let machines = "Machines"
+    public static let village = "Village projects"
 }
 
 /// A bank loan, paid back in equal weekly instalments.

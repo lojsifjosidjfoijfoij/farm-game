@@ -7,6 +7,7 @@ enum BusinessTab: String, CaseIterable, Identifiable {
     case shop = "Shop"
     case farm = "Farm"
     case money = "Money"
+    case village = "Village"
     case almanac = "Almanac"
     var id: String { rawValue }
 }
@@ -36,6 +37,7 @@ extension GameController {
         if ownedLand != state.ownedProperties { ownedLand = state.ownedProperties }
         if ownedFields != state.ownedFields { ownedFields = state.ownedFields }
         if almanac != state.almanac { almanac = state.almanac }
+        if village != state.village { village = state.village }
         if rankIndex != state.rank.rank { rankIndex = state.rank.rank }
     }
 

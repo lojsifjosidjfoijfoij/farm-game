@@ -90,9 +90,9 @@ public enum WorkshopCatalog {
             id: "pickling_crock", name: "Pickling crock", plural: "pickling crocks", price: 1_800, unlockLevel: 4,
             blurb: "Slowly pickles vegetables.", recipes: [
                 Recipe(id: "pickled_onions", name: "Pickled onions", plural: "jars of pickled onions", inputs: ["onion": 5],
-                       amount: 1, hours: 10, xp: 4, value: 110...130, category: .artisan),
+                       amount: 1, hours: 10, xp: 4, value: 160...190, category: .artisan),
                 Recipe(id: "sauerkraut", name: "Sauerkraut", plural: "jars of sauerkraut", inputs: ["cabbage": 2],
-                       amount: 1, hours: 12, xp: 5, value: 190...230, category: .artisan),
+                       amount: 1, hours: 12, xp: 5, value: 400...460, category: .artisan),
             ], isAutomatic: false, holds: 0),
         WorkshopDefinition(
             id: "cheese_press", name: "Cheese press", plural: "cheese presses", price: 2_500, unlockLevel: 4,
@@ -116,7 +116,7 @@ public enum WorkshopCatalog {
             id: "oil_press", name: "Oil press", plural: "oil presses", price: 2_500, unlockLevel: 5,
             blurb: "Presses sunflowers into golden oil.", recipes: [
                 Recipe(id: "sunflower_oil", name: "Sunflower oil", plural: "bottles of sunflower oil", inputs: ["sunflower": 2],
-                       amount: 1, hours: 8, xp: 5, value: 230...280, category: .artisan),
+                       amount: 1, hours: 8, xp: 5, value: 340...400, category: .artisan),
             ], isAutomatic: false, holds: 0),
         WorkshopDefinition(
             id: "loom", name: "Loom", plural: "looms", price: 3_500, unlockLevel: 6,

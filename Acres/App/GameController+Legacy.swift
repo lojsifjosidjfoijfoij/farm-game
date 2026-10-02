@@ -88,6 +88,7 @@ extension GameController {
             case .orders, .money, .farm: true
             case .shop: level >= balance.storeUnlockLevel
             case .almanac: has(.almanac)
+            case .village: level >= (Village.all.first?.unlockLevel ?? 1)
             }
         }
     }

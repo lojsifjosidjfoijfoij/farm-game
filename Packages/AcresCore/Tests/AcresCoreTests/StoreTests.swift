@@ -171,7 +171,7 @@ final class StoreTests: XCTestCase {
         XCTAssertEqual(sim.state.store.shelves[0].priceFactor, balance.storePriceFactorRange.upperBound)
         _ = sim.store { try $0.setPrice(shelf: 0, factor: 0.1, state: &$1) }
         XCTAssertEqual(sim.state.store.shelves[0].priceFactor, balance.storePriceFactorRange.lowerBound)
-        XCTAssertEqual(keeping.unitPrice("pumpkin", factor: 1), 320, "the middle of 280…360")
+        XCTAssertEqual(keeping.unitPrice("pumpkin", factor: 1), 395, "the middle of 360…430")
         XCTAssertEqual(keeping.unitPrice("wheat", factor: 0.6), 7, "12 × 0.6")
     }
 

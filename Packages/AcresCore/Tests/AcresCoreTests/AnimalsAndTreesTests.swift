@@ -380,7 +380,7 @@ final class Phase4WorldTests: XCTestCase {
 
         sim.visit(HomeValleyMap.marketZone)
         let trading = Trading(balance: sim.balance)
-        let expected = 3 * trading.price(of: "egg", in: sim.state)! + 4 * trading.price(of: "log", in: sim.state)!
+        let expected = trading.quote("egg", count: 3, in: sim.state) + trading.quote("log", count: 4, in: sim.state)
         XCTAssertEqual(sim.trade { try $0.sellAll(state: &$1) }, .success(expected))
         XCTAssertNil(trading.price(of: "animal_feed", in: sim.state))
         XCTAssertNil(trading.price(of: "seeds_wheat", in: sim.state))

@@ -24,9 +24,19 @@ extension GameController {
     /// Today's market special (pays extra).
     func isMarketSpecial(_ itemID: String) -> Bool { trading.isSpecial(itemID, in: simulation.state) }
 
-    /// Today's market price for anything the market buys.
+    /// What the next one fetches at the market today (lower after selling a lot of it).
     func price(of itemID: String) -> Int {
-        trading.price(of: itemID, in: simulation.state) ?? 0
+        trading.currentPrice(of: itemID, in: simulation.state) ?? 0
+    }
+
+    /// What selling `count` fetches now, each one a little less than the last.
+    func quote(_ itemID: String, count: Int) -> Int {
+        trading.quote(itemID, count: count, in: simulation.state)
+    }
+
+    /// Whether the market has had plenty of this today (the price has dropped).
+    func marketIsFull(_ itemID: String) -> Bool {
+        Market(balance: balance).factor(itemID, in: simulation.state) < 0.85
     }
 
     var fullTankCost: Int { trading.fullTankCost(simulation.state) }

@@ -151,13 +151,17 @@ struct ShopView: View {
             priceBoard
         } else {
             let goods = onHand
-            let total = cargo.reduce(0) { $0 + game.price(of: $1.id) * (goods[$1.id] ?? 0) }
+            let total = cargo.reduce(0) { $0 + game.quote($1.id, count: goods[$1.id] ?? 0) }
             VStack(spacing: 10) {
                 ForEach(cargo) { item in
                     marketRow(item)
                 }
             }
             BigButton(title: "Sell everything", price: total, tint: .green) { game.sellAll() }
+            Text("Each one you sell fetches a little less today; the buyers come back over a few days. Orders and your own shop don't lower prices.")
+                .font(Theme.label(12))
+                .foregroundStyle(Theme.inkSoft)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -171,10 +175,11 @@ struct ShopView: View {
                 .font(Theme.label(16, weight: .semibold))
             PriceTag(price: price, range: item.value)
             if game.isMarketSpecial(item.id) { SpecialBadge() }
+            if game.marketIsFull(item.id) { PaperTag(text: "Plenty today", symbol: "arrow.down.circle.fill", tint: Theme.inkSoft) }
         } actions: {
             PriceButton(title: "1", price: price, enabled: true) { game.sell(item.id, count: 1) }
             if count > 1 {
-                PriceButton(title: "All", price: price * count, enabled: true) { game.sell(item.id, count: count) }
+                PriceButton(title: "All", price: game.quote(item.id, count: count), enabled: true) { game.sell(item.id, count: count) }
             }
         }
     }

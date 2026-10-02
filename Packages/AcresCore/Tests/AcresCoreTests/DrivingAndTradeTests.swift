@@ -174,8 +174,8 @@ final class TradingTests: XCTestCase {
             state.farmer.bag.add("carrot", 3)
             state.truck.cargo.add("wheat", 5)  // left at the farm
         }
-        let price = Trading(balance: .standard).price(of: "carrot", in: market.state)!
-        XCTAssertEqual(market.trade { try $0.sellAll(state: &$1) }, .success(price * 3), "the bag sells; the far truck doesn't")
+        let earned = Trading(balance: .standard).quote("carrot", count: 3, in: market.state)
+        XCTAssertEqual(market.trade { try $0.sellAll(state: &$1) }, .success(earned), "the bag sells; the far truck doesn't")
         XCTAssertEqual(market.state.farmer.bagCount, 0)
         XCTAssertEqual(market.state.truck.cargo.count("wheat"), 5)
         XCTAssertEqual(market.trade { try $0.sell("wheat", count: 1, state: &$1) }, .failure(.truckNotHere(.market)),

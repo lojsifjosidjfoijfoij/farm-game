@@ -122,9 +122,22 @@ public struct Trading: Sendable {
     /// Today's price for anything the market buys.
     public func price(of itemID: String, in state: GameState) -> Int? {
         guard let item = ItemCatalog.item(itemID), item.category.isSellable else { return nil }
-        let price = MarketPricing.price(of: item, day: today(state))
+        let perks = Village.perks(state)
+        let price = Int((Double(MarketPricing.price(of: item, day: today(state))) * perks.marketPrices).rounded())
         guard isSpecial(itemID, in: state) else { return price }
         return Int((Double(price) * (1 + balance.marketSpecialBonus)).rounded())
+    }
+
+    /// The price of the next one sold today, after what the market already bought.
+    public func currentPrice(of itemID: String, in state: GameState) -> Int? {
+        guard let base = price(of: itemID, in: state) else { return nil }
+        return Market(balance: balance).quote(itemID, count: 1, unitPrice: base, in: state)
+    }
+
+    /// What selling `count` would earn right now (each one a little less).
+    public func quote(_ itemID: String, count: Int, in state: GameState) -> Int {
+        guard let base = price(of: itemID, in: state) else { return 0 }
+        return Market(balance: balance).quote(itemID, count: count, unitPrice: base, in: state)
     }
 
     /// Today's market special pays extra.
@@ -226,7 +239,8 @@ public struct Trading: Sendable {
             throw Goods.truckHasThemButIsFar([itemID], near: shop.zone, in: state) ? .truckNotHere(.market) : .nothingToSell
         }
         Goods.take(itemID, amount, near: shop.zone, from: &state)
-        let earned = unitPrice * amount
+        let earned = Market(balance: balance).quote(itemID, count: amount, unitPrice: unitPrice, in: state)
+        Market(balance: balance).record(itemID, count: amount, in: &state)
         state.money += earned
         state.finance.earn(earned, LedgerCategory.marketSales)
         state.goals.add(GoalCounter.coinsFromSales, earned)

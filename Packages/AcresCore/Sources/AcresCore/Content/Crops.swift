@@ -101,7 +101,7 @@ public enum CropCatalog {
             produceNotes: "Two fresh carrots with green tops."),
         CropDefinition(
             id: "potato", name: "Potato", plural: "potatoes", seasons: [.spring, .summer],
-            growthSeconds: GameTime.days(2), seedCost: 15, sellPrice: 32...42, yield: 3...5, xp: 5, unlockLevel: 1,
+            growthSeconds: GameTime.days(2), seedCost: 15, sellPrice: 20...28, yield: 3...5, xp: 5, unlockLevel: 1,
             stageNotes: [
                 "a small mound with a seed potato",
                 "a few round leaves breaking the soil",
@@ -112,7 +112,7 @@ public enum CropCatalog {
             produceNotes: "Three earthy potatoes."),
         CropDefinition(
             id: "strawberry", name: "Strawberry", plural: "strawberries", seasons: [.spring, .summer],
-            growthSeconds: GameTime.days(3), regrowSeconds: GameTime.days(1.5), seedCost: 40, sellPrice: 16...22, yield: 4...6, xp: 4, unlockLevel: 3,
+            growthSeconds: GameTime.days(3), regrowSeconds: GameTime.days(1.5), seedCost: 40, sellPrice: 13...19, yield: 4...6, xp: 4, unlockLevel: 3,
             stageNotes: [
                 "sown soil",
                 "tiny three-part leaves",
@@ -134,7 +134,7 @@ public enum CropCatalog {
             produceNotes: "An ear of corn with the husk pulled back."),
         CropDefinition(
             id: "pumpkin", name: "Pumpkin", plural: "pumpkins", seasons: [.autumn],
-            growthSeconds: GameTime.days(6), seedCost: 80, sellPrice: 280...360, yield: 1...2, xp: 20, unlockLevel: 6,
+            growthSeconds: GameTime.days(6), seedCost: 80, sellPrice: 360...430, yield: 1...2, xp: 20, unlockLevel: 6,
             stageNotes: [
                 "sown soil",
                 "two round seed leaves",
@@ -147,56 +147,56 @@ public enum CropCatalog {
         // --- More crops (after Phase 9): something to plant in every season. ---
         CropDefinition(
             id: "lettuce", name: "Lettuce", plural: "lettuce", seasons: [.spring, .autumn],
-            growthSeconds: GameTime.days(1), seedCost: 6, sellPrice: 20...26, yield: 1...2, xp: 2, unlockLevel: 2,
+            growthSeconds: GameTime.days(1), seedCost: 6, sellPrice: 27...35, yield: 1...2, xp: 2, unlockLevel: 2,
             stageNotes: ["sown soil", "tiny round seedlings", "a small loose rosette", "a full soft rosette", "a big crisp lettuce head"],
             produceNotes: "A crisp green lettuce head."),
         CropDefinition(
             id: "onion", name: "Onion", plural: "onions", seasons: [.spring, .autumn],
-            growthSeconds: GameTime.days(2), seedCost: 12, sellPrice: 14...18, yield: 3...5, xp: 3, unlockLevel: 2,
+            growthSeconds: GameTime.days(2), seedCost: 12, sellPrice: 21...27, yield: 3...5, xp: 3, unlockLevel: 2,
             stageNotes: ["sown soil", "thin green shoots", "a clump of hollow leaves", "tall leaves, bulb swelling",
                          "flopped leaves over golden onion bulbs"],
             produceNotes: "Two golden onions with papery skins."),
         CropDefinition(
             id: "kale", name: "Kale", plural: "kale", seasons: [.winter, .spring],
-            growthSeconds: GameTime.days(2), seedCost: 20, sellPrice: 34...44, yield: 2...3, xp: 4, unlockLevel: 3,
+            growthSeconds: GameTime.days(2), seedCost: 20, sellPrice: 42...54, yield: 2...3, xp: 4, unlockLevel: 3,
             stageNotes: ["sown soil", "small frilly seedlings", "a low frilly plant", "tall curly blue-green leaves",
                          "a lush frosty-green kale plant"],
             produceNotes: "A bunch of curly dark-green kale."),
         CropDefinition(
             id: "tomato", name: "Tomato", plural: "tomatoes", seasons: [.summer],
-            growthSeconds: GameTime.days(3), regrowSeconds: GameTime.days(1), seedCost: 45, sellPrice: 18...24, yield: 3...5, xp: 4,
+            growthSeconds: GameTime.days(3), regrowSeconds: GameTime.days(1), seedCost: 30, sellPrice: 12...17, yield: 3...5, xp: 4,
             unlockLevel: 3,
             stageNotes: ["sown soil", "a small seedling", "a young plant tied to a cane", "a leafy plant with yellow flowers",
                          "a staked plant hung with ripe red tomatoes"],
             produceNotes: "Two ripe red tomatoes."),
         CropDefinition(
             id: "garlic", name: "Garlic", plural: "garlic", seasons: [.autumn, .winter],
-            growthSeconds: GameTime.days(3), seedCost: 25, sellPrice: 26...34, yield: 3...4, xp: 4, unlockLevel: 4,
+            growthSeconds: GameTime.days(3), seedCost: 25, sellPrice: 52...64, yield: 3...4, xp: 4, unlockLevel: 4,
             stageNotes: ["sown soil", "thin green shoots", "flat green leaves", "tall leaves with a curling scape",
                          "dry leaves over plump white bulbs"],
             produceNotes: "A plump white garlic bulb."),
         CropDefinition(
             id: "sunflower", name: "Sunflower", plural: "sunflowers", seasons: [.summer],
-            growthSeconds: GameTime.days(3), seedCost: 25, sellPrice: 70...90, yield: 1...2, xp: 5, unlockLevel: 4,
+            growthSeconds: GameTime.days(3), seedCost: 25, sellPrice: 125...150, yield: 1...2, xp: 5, unlockLevel: 4,
             stageNotes: ["sown soil", "two broad seed leaves", "a knee-high stem", "a tall stem with a green bud",
                          "a tall sunflower with a big golden head"],
             produceNotes: "A sunflower head, bright petals around dark seeds."),
         CropDefinition(
             id: "blueberry", name: "Blueberry", plural: "blueberries", seasons: [.summer],
-            growthSeconds: GameTime.days(4), regrowSeconds: GameTime.days(1.5), seedCost: 70, sellPrice: 20...26, yield: 5...8,
+            growthSeconds: GameTime.days(4), regrowSeconds: GameTime.days(1.5), seedCost: 50, sellPrice: 12...17, yield: 5...8,
             xp: 5, unlockLevel: 5,
             stageNotes: ["sown soil", "a twig with a few leaves", "a small round bush", "a bush with white bell flowers",
                          "a bush covered in dusty blue berries"],
             produceNotes: "A cluster of dusty blue blueberries."),
         CropDefinition(
             id: "cabbage", name: "Cabbage", plural: "cabbages", seasons: [.autumn, .winter],
-            growthSeconds: GameTime.days(3), seedCost: 30, sellPrice: 60...80, yield: 1...2, xp: 5, unlockLevel: 5,
+            growthSeconds: GameTime.days(3), seedCost: 30, sellPrice: 145...175, yield: 1...2, xp: 5, unlockLevel: 5,
             stageNotes: ["sown soil", "small round seedlings", "a spreading rosette", "a rosette cupping a young head",
                          "a big firm pale-green cabbage"],
             produceNotes: "A round pale-green cabbage."),
         CropDefinition(
             id: "melon", name: "Melon", plural: "melons", seasons: [.summer],
-            growthSeconds: GameTime.days(5), seedCost: 90, sellPrice: 200...260, yield: 1...2, xp: 12, unlockLevel: 7,
+            growthSeconds: GameTime.days(5), seedCost: 90, sellPrice: 380...450, yield: 1...2, xp: 12, unlockLevel: 7,
             stageNotes: ["sown soil", "two round seed leaves", "a young vine", "a vine with a small striped melon",
                          "a vine with a big ripe striped melon"],
             produceNotes: "A striped green melon with a juicy slice."),

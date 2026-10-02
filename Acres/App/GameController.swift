@@ -167,6 +167,7 @@ final class GameController {
     var rankUpCard: RankUpCard?
     /// The almanac and the farm's rank (copied when they change).
     var almanac = AlmanacState()
+    var village = VillageState()
     var rankIndex = 0
     /// What each coming level unlocks.
     var showsRoadmap = false
