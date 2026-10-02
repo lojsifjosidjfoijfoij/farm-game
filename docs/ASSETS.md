@@ -48,8 +48,8 @@ procedurally in code.
 | Animals | 70 | 0 |
 | Item icons | 107 | 0 |
 | Effects & particles | 36 | 4 |
-| User interface | 46 | 15 |
-| **Total** | **762** | **52** |
+| User interface | 47 | 15 |
+| **Total** | **763** | **52** |
 | Audio files | 58 | 0 |
 
 ## Terrain (tileable ground textures)
@@ -768,6 +768,7 @@ procedurally in code.
 | `ui_hud_slot_selected` | 96 × 96 | UI | — | 13 | The tool in hand: a lighter slot with an orange edge. Fixed border 6 pt. |
 | `ui_hud_button` | 144 × 120 | UI | — | 13 | Main HUD button, 9-slice: an orange painted board, notched corners, lit top edge, darker bottom it presses into. Fixed border 12 pt. |
 | `ui_hud_button_quiet` | 144 × 120 | UI | — | 13 | The same board in plain brown, for buttons that can't be used yet (a closed shop). |
+| `ui_title_scene` | 2880 × 1440 | UI | — | 13 | The title screen: the farm on a calm evening, 480 × 240 art pixels shown at 2 pt each (a starry sky with a crescent moon, pine-lined hills, the farmhouse with warm windows, a lamp, the barn, a wheat field). Made by art/title/make_title.py; the screen animates stars, smoke and fireflies on top. |
 | `ui_hud_leather` | 252 × 108 | UI | — | 13 | The farm journal's cover band, 9-slice: brown leather with a little grain, a lit top edge and light stitching just inside the edge (repeats every 4 art px). Fixed border 10 pt. |
 | `ui_icon_seeds` | 72 × 72 | UI | — | 13 | Seed pouch with a sprout on it (the seeds tool when no packet is chosen). |
 | `ui_icon_weather_cloudy` | 72 × 72 | UI | — | 13 | Cloud (the clock on a grey day). |

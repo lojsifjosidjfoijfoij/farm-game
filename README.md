@@ -73,6 +73,11 @@ The whole game is moving to the look agreed on the mock (`art/style_test`): rich
 6. **Detailed soil:** plowed fields are pixel art with furrows that run into long rows, clods,
    pebbles and straw (watered soil darker with glints), three different tiles so a field isn't one
    repeated square, and grass creeping over the field's borders.
+7. **A cosy evening title screen:** the farm at dusk in pixel art (a starry sky and crescent moon,
+   pine-lined hills, warm windows, a lamp on the path, the wheat field), with stars twinkling,
+   smoke curling from the chimney and fireflies drifting over the meadow; "Acres" in warm cream
+   and a softly breathing "Tap to play". The launch screen before it is the same night blue, so
+   the game no longer flashes white when it opens.
 
 ## A breeze in the trees: what to test
 
