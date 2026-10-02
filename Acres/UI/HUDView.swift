@@ -10,6 +10,8 @@ import AcresCore
 /// touch targets, two thumbs.
 struct HUDView: View {
     @Bindable var game: GameController
+    /// The map's list of places, open above the map button while driving.
+    @State private var showsMap = false
 
     /// How wide the things in the middle may get, so the corners stay clear.
     static let centerWidth: CGFloat = 440
@@ -110,8 +112,7 @@ struct HUDView: View {
 
             if let hint = game.fishingHint {
                 HStack(spacing: 8) {
-                    Image(systemName: "fish.fill")
-                        .foregroundStyle(Color(red: 0.29, green: 0.56, blue: 0.85))
+                    MenuIcon(symbol: "fish.fill")
                     Text(hint)
                         .font(HUD.font(14))
                         .foregroundStyle(HUD.text)
@@ -277,9 +278,7 @@ struct HUDView: View {
             Haptics.tap()
         } label: {
             HStack(spacing: 6) {
-                Image(systemName: claimable ? "gift.fill" : "flag.fill")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(claimable ? .white : HUD.accent)
+                MenuIcon(symbol: claimable ? "gift.fill" : "flag.fill", size: 12)
                 if claimable {
                     Text("Goal done! Claim")
                         .font(HUD.font(12.5, .black))
@@ -314,17 +313,13 @@ struct HUDView: View {
             Haptics.tap()
         } label: {
             HStack(spacing: 6) {
-                Image(systemName: claimable ? "gift.fill" : "checklist")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(claimable ? .white : HUD.xp)
+                MenuIcon(symbol: claimable ? "gift.fill" : "checklist", size: 12)
                 Text(claimable ? "Chore done! Claim" : "Today \(done)/\(game.todaysChores.count)")
                     .font(HUD.font(12.5, claimable ? .black : .heavy))
                     .foregroundStyle(claimable ? .white : HUD.text)
                 if game.dailyState.streak > 0 {
                     HStack(spacing: 2) {
-                        Image(systemName: "flame.fill")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(claimable ? .white : Color(red: 0.95, green: 0.6, blue: 0.27))
+                        MenuIcon(symbol: "flame.fill", size: 12)
                         Text("\(game.dailyState.streak)")
                             .font(HUD.font(12.5))
                             .foregroundStyle(claimable ? .white : HUD.text)
@@ -346,9 +341,7 @@ struct HUDView: View {
     /// "5 jobs lined up · Stop".
     private var jobChip: some View {
         HStack(spacing: 10) {
-            Image(systemName: "hammer.fill")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(HUD.textSoft)
+            MenuIcon(symbol: "hammer.fill")
             Text(game.jobCount == 1 ? "1 job lined up" : "\(game.jobCount) jobs lined up")
                 .font(HUD.font(14))
                 .foregroundStyle(HUD.text)
@@ -421,8 +414,7 @@ struct HUDView: View {
     /// What the big button for the place the truck is at says.
     private func placeLabel(_ title: String, symbol: String) -> some View {
         HStack(spacing: 9) {
-            Image(systemName: symbol)
-                .font(.system(size: 18, weight: .bold))
+            MenuIcon(symbol: symbol, tint: .white)
             Text(title)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
@@ -434,19 +426,54 @@ struct HUDView: View {
 
     /// The GPS: pick a place and the truck drives there.
     private var mapMenu: some View {
-        Menu {
-            ForEach(game.destinations) { destination in
-                Button {
-                    game.drive(to: destination)
-                } label: {
-                    Label(destination.menuTitle, systemImage: destination.symbol)
-                }
-            }
+        Button {
+            showsMap.toggle()
+            Haptics.tap()
         } label: {
             GameIcon(asset: "ui_icon_map", fallbackSymbol: "map.fill", tint: HUD.text, size: HUD.iconSize)
                 .frame(width: 52, height: 52)
-                .background(PixelFrame(.panel))
+                .background(PixelFrame(showsMap ? .slotSelected : .panel))
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Map")
+        // The places, on paper above the button (not the system's pop-up menu).
+        .overlay(alignment: .bottomLeading) {
+            if showsMap {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Drive to…")
+                        .font(HUD.font(13, .black))
+                        .foregroundStyle(HUD.textSoft)
+                        .padding(.horizontal, 8)
+                        .padding(.bottom, 2)
+                    ForEach(game.destinations) { destination in
+                        Button {
+                            showsMap = false
+                            game.drive(to: destination)
+                        } label: {
+                            HStack(spacing: 8) {
+                                MenuIcon(symbol: destination.symbol)
+                                Text(destination.menuTitle)
+                                    .font(HUD.font(15, .heavy))
+                                    .foregroundStyle(HUD.text)
+                                    .lineLimit(1)
+                                Spacer(minLength: 0)
+                            }
+                            .padding(.horizontal, 8)
+                            .frame(height: 36)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 10)
+                .frame(width: 260)
+                .background(PixelFrame(.panel))
+                .offset(y: -60)
+                .transition(.scale(scale: 0.9, anchor: .bottomLeading).combined(with: .opacity))
+            }
+        }
+        .onDisappear { showsMap = false }
         .pulsing(game.tutorial.step == .drive)
         .accessibilityLabel("Map: drive somewhere")
     }
@@ -611,9 +638,7 @@ struct InspectionCard: View {
                 if let icon = inspection.icon {
                     ItemIcon(name: icon, size: 40)
                 } else {
-                    Image(systemName: inspection.symbol)
-                        .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(HUD.xp)
+                    MenuIcon(symbol: inspection.symbol, size: 36, tint: HUD.xp)
                         .frame(width: 40, height: 40)
                 }
                 VStack(alignment: .leading, spacing: 2) {

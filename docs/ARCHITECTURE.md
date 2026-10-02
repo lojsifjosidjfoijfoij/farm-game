@@ -389,10 +389,19 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   so any cropping takes sky. What moves is drawn over it in a `TimelineView` + `Canvas` on the same
   pixel grid: twinkling stars, chimney smoke, fireflies. The launch screen (`Acres-Info.plist`,
   merged with the generated Info.plist) is the sky's night blue (`LaunchBackground`).
-- **Menus and celebrations** (`UI/GameStyle.swift`): candy buttons (`CandyButtonStyle`) press
-  down onto a darker lip; menus sit on paper (`PaperBackground`); celebrations share
-  `RewardCard` (sunburst, ribbon title, gold-rimmed paper). Everything is drawn in SwiftUI, so
-  it stays sharp at any size, and real art can replace pieces later.
+- **Menus and celebrations** (`UI/GameStyle.swift`): the HUD's pixel art carried into every
+  sheet, with no stock iOS chrome. `MenuSheet` is every menu's frame (a leather band with an
+  icon, the title, an optional accessory such as `HeaderCoins`, and a close button, over tiled
+  `PaperBackground`); pages are built from `card()` (9-slice `ui_card`), `InsetPanel`,
+  `PageHeading`, `PaperNote` (empty lists), `PaperTag` (small labels like "Level 4"), `PixelRule`,
+  `HUDBar`, `PaperTabs` (tabs and segmented choices), `PaperToggleStyle` (switches) and
+  `paperConfirm` (an "are you sure?" card; `ConfirmRequest` lets a page ask over the whole sheet;
+  with no cancel button it is the launch-time save notice). Buttons are painted boards
+  (`CandyButtonStyle`, `ui_board_*`) or paper slots (`SlotButtonStyle`); both press down a pixel.
+  Pictures in menus are `MenuIcon`, which maps the SF symbol names the game uses (shops, clients,
+  tile inspections, worker jobs) to 12-pixel icons from `art/hud/make_hud.py` and falls back to
+  the symbol in ink. Celebrations share `RewardCard` (sunburst, ribbon title, paper). Only the
+  debug panel (debug builds) keeps the system look.
 - **Day/night:** `DayNightCurve` (core, tested) gives a tint and a night-light strength per hour.
 - **Frame rate:** capped at 60 fps (also on ProMotion screens) for battery life and consistent
   behavior.

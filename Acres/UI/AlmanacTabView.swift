@@ -24,9 +24,7 @@ struct AlmanacTabView: View {
         let worth = game.netWorth
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
-                Image(systemName: rank.id == FarmRanks.finale.id ? "trophy.fill" : "rosette")
-                    .font(.system(size: 26, weight: .semibold))
-                    .foregroundStyle(Theme.gold)
+                MenuIcon(symbol: rank.id == FarmRanks.finale.id ? "trophy.fill" : "rosette", size: 36)
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Farm rank")
                         .font(Theme.label(12, weight: .semibold))
@@ -44,14 +42,14 @@ struct AlmanacTabView: View {
                 Text("Net worth")
                     .font(Theme.label(13, weight: .semibold))
                 Spacer()
-                CoinIcon(size: 15)
+                CoinIcon(size: 24)
                 Text(worth.formatted())
                     .font(Theme.number(16))
             }
             if let next = game.nextFarmRank {
                 let span = Double(max(1, next.netWorth - rank.netWorth))
-                ProgressView(value: min(1, max(0, Double(worth - rank.netWorth) / span)), total: 1)
-                    .tint(Theme.gold)
+                HUDBar(fraction: min(1, max(0, Double(worth - rank.netWorth) / span)), color: HUD.gold)
+                    .frame(height: 12)
                 Text(nextText(next))
                     .font(Theme.label(12))
                     .foregroundStyle(Theme.inkSoft)
@@ -61,11 +59,10 @@ struct AlmanacTabView: View {
                     game.showsBusiness = false
                     game.rankUpCard = RankUpCard(rank: FarmRanks.finale, renovated: false)
                 } label: {
-                    Label("See your farm's story", systemImage: "book.closed.fill")
-                        .font(Theme.label(14, weight: .semibold))
-                        .foregroundStyle(Theme.leafDark)
+                    IconLabel("See your farm's story", symbol: "book.closed.fill")
+                        .font(Theme.display(15))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(CandyButtonStyle(tint: .gold))
             }
         }
         .foregroundStyle(Theme.ink)
@@ -91,8 +88,8 @@ struct AlmanacTabView: View {
                     .font(Theme.label(12))
                     .foregroundStyle(Theme.inkSoft)
             }
-            ProgressView(value: Double(found), total: Double(max(1, Almanac.entries.count)))
-                .tint(Theme.leaf)
+            HUDBar(fraction: Double(found) / Double(max(1, Almanac.entries.count)))
+                .frame(height: 12)
             Text("Everything you grow, catch, find in the wild or make goes in here. Fill a page for a reward.")
                 .font(Theme.label(12))
                 .foregroundStyle(Theme.inkSoft)
@@ -118,9 +115,7 @@ struct AlmanacTabView: View {
                 }
                 Spacer(minLength: 4)
                 if claimed {
-                    Label("Done", systemImage: "checkmark.seal.fill")
-                        .font(Theme.label(12, weight: .semibold))
-                        .foregroundStyle(Theme.leafDark)
+                    PaperTag(text: "Done", symbol: "checkmark.seal.fill", tint: Theme.leafDark)
                 } else if complete {
                     ActionCapsule(title: "Claim", enabled: true, tint: Theme.gold) { game.claimAlmanacSet(set.id) }
                 }
@@ -141,8 +136,11 @@ struct AlmanacTabView: View {
     private func entry(_ item: String) -> some View {
         let known = game.almanac.has(item)
         return ZStack {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(known ? Theme.parchmentDark.opacity(0.5) : Theme.parchmentDark.opacity(0.9))
+            if known {
+                PixelFrame(.slot)
+            } else {
+                InsetPanel()
+            }
             ItemIcon(name: "item_\(item)", size: 36)
                 .opacity(known ? 1 : 0.12)
             if !known {

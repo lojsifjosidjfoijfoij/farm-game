@@ -66,7 +66,7 @@ The whole game is moving to the look agreed on the mock (`art/style_test`): rich
    when it matters), the goal and today's chores under it, the clock top right, a wooden tool tray
    with paper slots (the tool in hand lifts in an orange-edged slot), paper buttons for the
    journal, basket and bed, orange board buttons for places, and Tom's card on paper. New font:
-   Fredoka. The shop and other menus keep their current look for now.
+   Fredoka.
 5. **The farm journal instead of the phone:** the same orders, money, farm and almanac, now in a
    leather-bound journal (a stitched leather band on top, paper tabs, paper pages), with a journal
    button on the HUD. Everything the game says about "your phone" now says the journal.
@@ -78,6 +78,14 @@ The whole game is moving to the look agreed on the mock (`art/style_test`): rich
    smoke curling from the chimney and fireflies drifting over the meadow; "Acres" in warm cream
    and a softly breathing "Tap to play". The launch screen before it is the same night blue, so
    the game no longer flashes white when it opens.
+8. **Every menu in wood and paper:** storage, settings, the seed shop, market, gas station,
+   livestock market and bank, your own shop, workshops, goals and chores, the level roadmap, the
+   journal's tabs, welcome back and every celebration share one look: a stitched leather band
+   with the title and a paper X, paper pages, cards with an ink-brown edge, painted board buttons,
+   paper price buttons, pixel bars, wooden on/off switches and "are you sure?" on a paper card.
+   No stock iOS bars, lists, switches, segmented controls or pop-up menus left (the map's list of
+   places is on paper too). 37 new pixel icons (padlock, gift, shopfront, bank, hammer,
+   trophy, crate, hen, fish, the seasons and more) replace the system symbols.
 
 ## A breeze in the trees: what to test
 

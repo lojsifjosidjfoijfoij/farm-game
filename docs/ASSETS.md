@@ -48,8 +48,8 @@ procedurally in code.
 | Animals | 70 | 0 |
 | Item icons | 107 | 0 |
 | Effects & particles | 36 | 4 |
-| User interface | 62 | 15 |
-| **Total** | **778** | **52** |
+| User interface | 91 | 15 |
+| **Total** | **807** | **52** |
 | Audio files | 58 | 0 |
 
 ## Terrain (tileable ground textures)
@@ -730,16 +730,16 @@ procedurally in code.
 | `ui_app_icon` | 1024 × 1024 | UI | — | 1 | App icon: the little farm at golden hour, truck in front. No transparency. |
 | `ui_icon_coin` | 72 × 72 | UI | — | 1 | Gold coin, HUD money counter. |
 | `ui_icon_level` | 72 × 72 | UI | — | 1 | Wheat-ear badge for the farmer level. |
-| `ui_icon_season_spring` | 72 × 72 | UI | — | 1 | Blossom. |
+| `ui_icon_season_spring` | 72 × 72 | UI | — | 1 | Pink blossom. |
 | `ui_icon_season_summer` | 72 × 72 | UI | — | 1 | Sun. |
-| `ui_icon_season_autumn` | 72 × 72 | UI | — | 1 | Maple leaf. |
+| `ui_icon_season_autumn` | 72 × 72 | UI | — | 1 | Orange autumn leaf. |
 | `ui_icon_season_winter` | 72 × 72 | UI | — | 1 | Snowflake. |
 | `ui_icon_time_morning` | 60 × 60 | UI | — | 1 | Sunrise. |
 | `ui_icon_time_day` | 60 × 60 | UI | — | 1 | Sun. |
 | `ui_icon_time_evening` | 60 × 60 | UI | — | 1 | Sunset. |
 | `ui_icon_time_night` | 60 × 60 | UI | — | 1 | Moon. |
 | `ui_icon_inventory` | 96 × 96 | UI | — | 1 | Woven basket (inventory button). |
-| `ui_icon_settings` | 84 × 84 | UI | — | 1 | Gear. |
+| `ui_icon_settings` | 72 × 72 | UI | — | 1 | Steel gear (settings). |
 | `ui_icon_hoe` | 96 × 96 | UI | — | 2 | Hoe (plow action). |
 | `ui_icon_watering_can` | 96 × 96 | UI | — | 2 | Watering can. |
 | `ui_icon_basket` | 96 × 96 | UI | — | 2 | Harvest basket. |
@@ -749,13 +749,13 @@ procedurally in code.
 | `ui_icon_rod` | 96 × 96 | UI | — | 11 | Bamboo fishing rod with a red and white bobber. |
 | `ui_icon_map` | 96 × 96 | UI | — | 3 | Folded map. |
 | `ui_icon_fuel` | 72 × 72 | UI | — | 3 | Jerry can (fuel gauge). |
-| `ui_icon_truck` | 96 × 96 | UI | — | 3 | Pickup truck (drive button). |
+| `ui_icon_truck` | 72 × 72 | UI | — | 3 | Red pickup truck, side on (the truck, its bed). |
 | `ui_icon_energy` | 72 × 72 | UI | — | 5 | Little sun / lightning badge for the farmer's energy. |
-| `ui_icon_goals` | 96 × 96 | UI | — | 5 | Rolled-up checklist with a ribbon (goals). |
+| `ui_icon_goals` | 72 × 72 | UI | — | 5 | Clipboard with a checklist (goals and chores). |
 | `ui_icon_bed` | 96 × 96 | UI | — | 5 | Cozy bed with a moon (go to bed). |
 | `ui_icon_contracts` | 96 × 96 | UI | — | 5 | Pinned note (contracts board). |
 | `ui_icon_journal` | 72 × 72 | UI | — | 6 | Leather-bound farm journal with a paper label and a red ribbon bookmark (orders, the accounts, farm plans, the almanac). |
-| `ui_icon_worker` | 96 × 96 | UI | — | 6 | Farmhand in a straw hat. |
+| `ui_icon_worker` | 72 × 72 | UI | — | 6 | Farmhand in a straw hat. |
 | `ui_icon_collection` | 96 × 96 | UI | — | 7 | Leather-bound book (collection). |
 | `ui_portrait_mentor` | 192 × 192 | UI | — | 13 | Tom, the old farmer who teaches you (tutorial card): head and shoulders, grey hair and beard, straw hat, green shirt, overalls. Transparent; the card puts it on a sky-blue disc. |
 | `ui_joystick_base` | 420 × 420 | UI | — | 3 | Joystick ring, soft translucent. |
@@ -789,6 +789,35 @@ procedurally in code.
 | `ui_icon_weather_cloudy` | 72 × 72 | UI | — | 13 | Cloud (the clock on a grey day). |
 | `ui_icon_weather_rain` | 72 × 72 | UI | — | 13 | Cloud with rain. |
 | `ui_icon_weather_snow` | 72 × 72 | UI | — | 13 | Cloud with snow. |
+| `ui_icon_close` | 72 × 72 | UI | — | 13 | A cream paper X with a dark edge (close a menu). |
+| `ui_icon_lock` | 72 × 72 | UI | — | 13 | Gold padlock (not unlocked yet). |
+| `ui_icon_unlock` | 72 × 72 | UI | — | 13 | Open padlock (just unlocked). |
+| `ui_icon_check` | 72 × 72 | UI | — | 13 | Green round badge with a white check (done, owned). |
+| `ui_icon_gift` | 72 × 72 | UI | — | 13 | Red parcel with a gold ribbon and bow (a reward to claim). |
+| `ui_icon_shop` | 72 × 72 | UI | — | 13 | Little shopfront with a red-and-white awning (shops, your own shop). |
+| `ui_icon_bank` | 72 × 72 | UI | — | 13 | Stone bank with three columns (the bank, loans). |
+| `ui_icon_hammer` | 72 × 72 | UI | — | 13 | Hammer (workshops). |
+| `ui_icon_trophy` | 72 × 72 | UI | — | 13 | Gold cup (the last farm rank). |
+| `ui_icon_rosette` | 72 × 72 | UI | — | 13 | Gold medal on blue and red ribbons (farm ranks). |
+| `ui_icon_house` | 72 × 72 | UI | — | 13 | Farmhouse with a red roof (home, the farmhouse). |
+| `ui_icon_crate` | 72 × 72 | UI | — | 13 | Wooden crate with a brace (storage, cargo, orders). |
+| `ui_icon_leaf` | 72 × 72 | UI | — | 13 | Green leaf (crops, the seed shop). |
+| `ui_icon_tree` | 72 × 72 | UI | — | 13 | Round tree (orchards, the lumber yard). |
+| `ui_icon_drop` | 72 × 72 | UI | — | 13 | Water drop (sprinklers, rain). |
+| `ui_icon_heart` | 72 × 72 | UI | — | 13 | Red heart (animals that grew up). |
+| `ui_icon_bill` | 72 × 72 | UI | — | 13 | A bill: paper with lines and a red stamp (Monday's bills). |
+| `ui_icon_signpost` | 72 × 72 | UI | — | 13 | Wooden signpost in grass (land for sale). |
+| `ui_icon_field` | 72 × 72 | UI | — | 13 | Field of soil rows with sprouts (fields). |
+| `ui_icon_flame` | 72 × 72 | UI | — | 13 | Flame (the chores streak). |
+| `ui_icon_fish` | 72 × 72 | UI | — | 13 | Blue fish (Willow Lake, fishing). |
+| `ui_icon_bowl` | 72 × 72 | UI | — | 13 | Steaming bowl of soup (the Rusty Spoon, feeding). |
+| `ui_icon_bread` | 72 × 72 | UI | — | 13 | Loaf of bread (the bakery). |
+| `ui_icon_hen` | 72 × 72 | UI | — | 13 | White hen with a red comb (animals, the livestock shop). |
+| `ui_icon_clock` | 72 × 72 | UI | — | 13 | Paper clock face (deadlines, time passing). |
+| `ui_icon_sparkle` | 72 × 72 | UI | — | 13 | Gold sparkles (something new). |
+| `ui_icon_note` | 72 × 72 | UI | — | 13 | Two blue beamed music notes (sound effects). |
+| `ui_icon_arrow_up` | 72 × 72 | UI | — | 13 | Green badge with a white up arrow (load, prices up). |
+| `ui_icon_arrow_down` | 72 × 72 | UI | — | 13 | Orange badge with a white down arrow (unload, prices down). |
 
 ## Audio
 

@@ -22,9 +22,7 @@ struct RootView: View {
                     .ignoresSafeArea()
                     .allowsHitTesting(true)
                 VStack(spacing: 6) {
-                    Image(systemName: "moon.stars.fill")
-                        .font(.system(size: 54, weight: .bold))
-                        .foregroundStyle(LinearGradient(colors: [Theme.goldLight, Theme.gold], startPoint: .top, endPoint: .bottom))
+                    HUDIcon(name: "ui_icon_time_night", size: 72)
                         .shadow(color: Theme.goldLight.opacity(0.6), radius: 16, x: 0, y: 0)
                     OutlinedTitle(text: "Zzz…", size: 38, outline: Color(red: 0.1, green: 0.12, blue: 0.3))
                 }
@@ -133,14 +131,9 @@ struct RootView: View {
             ShopView(game: game, shop: shop)
                 .presentationDetents([.medium, .large])
         }
-        .alert(
-            game.alert?.title ?? "",
-            isPresented: Binding(get: { game.alert != nil }, set: { if !$0 { game.alert = nil } }),
-            presenting: game.alert
-        ) { _ in
-            Button("OK", role: .cancel) {}
-        } message: { alert in
-            Text(alert.message)
-        }
+        // Save trouble at launch, on a paper card over everything (the title screen too).
+        .paperConfirm(game.alert?.title ?? "",
+                      isPresented: Binding(get: { game.alert != nil }, set: { if !$0 { game.alert = nil } }),
+                      message: game.alert?.message, confirmTitle: "OK", cancelTitle: nil) {}
     }
 }

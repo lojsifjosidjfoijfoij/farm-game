@@ -130,12 +130,7 @@ struct LevelUpCardView: View {
                         .foregroundStyle(Theme.wood)
                     ForEach(card.unlocks, id: \.self) { unlock in
                         HStack(spacing: 8) {
-                            Image(systemName: "lock.open.fill")
-                                .font(.system(size: 13, weight: .bold))
-                                .foregroundStyle(.white)
-                                .frame(width: 24, height: 24)
-                                .background(Rectangle().fill(HUD.xp))
-                                .overlay(Rectangle().stroke(HUD.edge, lineWidth: HUD.pixel))
+                            MenuIcon(symbol: "lock.open.fill")
                             Text(unlock.prefix(1).uppercased() + unlock.dropFirst())
                                 .font(Theme.label(15, weight: .semibold))
                                 .foregroundStyle(Theme.ink)
@@ -183,14 +178,17 @@ struct LevelRoadmapView: View {
     let game: GameController
 
     var body: some View {
-        NavigationStack {
+        MenuSheet(title: "What's next", icon: "ui_icon_level", onClose: { game.showsRoadmap = false }) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Level \(game.level)")
-                            .font(Theme.title(24))
-                        ProgressView(value: game.levelProgress)
-                            .tint(Theme.leaf)
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 10) {
+                            StarBadge(level: game.level, size: 36)
+                            Text("Level \(game.level)")
+                                .font(Theme.title(24))
+                        }
+                        HUDBar(fraction: game.levelProgress)
+                            .frame(height: 12)
                         Text("\(game.xpToNextLevel) XP to level \(game.level + 1). XP comes from harvests, animals, orders, goals and chores.")
                             .font(Theme.label(13))
                             .foregroundStyle(Theme.inkSoft)
@@ -200,11 +198,8 @@ struct LevelRoadmapView: View {
                     .card()
                     ForEach(game.roadmap) { step in
                         HStack(alignment: .top, spacing: 12) {
-                            Text("\(step.level)")
-                                .font(Theme.number(18))
-                                .foregroundStyle(.white)
-                                .frame(width: 36, height: 36)
-                                .background(Circle().fill(step.level == game.level + 1 ? Theme.gold : Theme.inkSoft))
+                            StarBadge(level: step.level, size: 36)
+                                .opacity(step.level == game.level + 1 ? 1 : 0.6)
                             VStack(alignment: .leading, spacing: 3) {
                                 ForEach(step.unlocks, id: \.self) { unlock in
                                     Text(unlock.prefix(1).uppercased() + unlock.dropFirst())
@@ -213,19 +208,14 @@ struct LevelRoadmapView: View {
                                 }
                             }
                             Spacer()
+                            if step.level == game.level + 1 {
+                                PaperTag(text: "Next", symbol: "sparkles", tint: Theme.goldDark)
+                            }
                         }
                         .card()
                     }
                 }
                 .padding(16)
-            }
-            .background(PaperBackground())
-            .navigationTitle("What's next")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { game.showsRoadmap = false }
-                }
             }
         }
     }
@@ -240,10 +230,7 @@ struct RankUpCardView: View {
 
     var body: some View {
         RewardCard(ribbon: "NEW RANK!", tint: .green) {
-            Image(systemName: card.renovated ? "house.fill" : "rosette")
-                .font(.system(size: 44, weight: .bold))
-                .foregroundStyle(LinearGradient(colors: [Theme.goldLight, Theme.goldDark], startPoint: .top, endPoint: .bottom))
-                .shadow(color: Theme.goldDark.opacity(0.6), radius: 0, x: 0, y: 2)
+            MenuIcon(symbol: card.renovated ? "house.fill" : "rosette", size: 48)
                 .rotationEffect(.degrees(pop ? 0 : -30))
                 .scaleEffect(pop ? 1 : 0.4)
             Text("Your farm is now")
@@ -259,7 +246,7 @@ struct RankUpCardView: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             if card.renovated {
-                Label("Go and see the farmhouse!", systemImage: "sparkles")
+                IconLabel("Go and see the farmhouse!", symbol: "sparkles")
                     .font(Theme.label(14, weight: .bold))
                     .foregroundStyle(Theme.leafDark)
             }
@@ -286,10 +273,7 @@ struct FinaleCardView: View {
 
     var body: some View {
         RewardCard(ribbon: "THE VALLEY'S FINEST FARM", confetti: 2) {
-            Image(systemName: "trophy.fill")
-                .font(.system(size: 50, weight: .bold))
-                .foregroundStyle(LinearGradient(colors: [Theme.goldLight, Theme.goldDark], startPoint: .top, endPoint: .bottom))
-                .shadow(color: Theme.goldDark.opacity(0.6), radius: 0, x: 0, y: 2)
+            MenuIcon(symbol: "trophy.fill", size: 48)
                 .scaleEffect(pop ? 1 : 0.4)
             Text("From a leaky roof and a field of weeds to the pride of the valley. The farmhouse has never looked better.")
                 .font(Theme.label(14))
@@ -323,9 +307,7 @@ struct FinaleCardView: View {
 
     private func statRow(_ symbol: String, _ title: String, _ value: String) -> some View {
         HStack(spacing: 10) {
-            Image(systemName: symbol)
-                .foregroundStyle(Theme.leafDark)
-                .frame(width: 22)
+            MenuIcon(symbol: symbol)
             Text(title)
                 .font(Theme.label(14))
                 .foregroundStyle(Theme.ink)

@@ -9,17 +9,15 @@ struct WorkshopView: View {
     let sheet: WorkshopSheet
 
     var body: some View {
-        NavigationStack {
+        MenuSheet(title: game.workshopSnapshot?.definition?.name ?? "Workshop", icon: "ui_icon_hammer",
+                  onClose: { game.closeWorkshop() }) {
             ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 12) {
                     if let workshop = game.workshopSnapshot, let definition = workshop.definition {
                         header(definition)
                         status(workshop, definition)
                         if !definition.isAutomatic {
-                            Text("Recipes")
-                                .font(Theme.title(18))
-                                .foregroundStyle(Theme.ink)
-                                .padding(.top, 4)
+                            PageHeading(title: "Recipes")
                             ForEach(definition.recipes) { recipe in
                                 recipeRow(recipe, workshop: workshop)
                             }
@@ -28,14 +26,6 @@ struct WorkshopView: View {
                     }
                 }
                 .padding(16)
-            }
-            .background(PaperBackground())
-            .navigationTitle(game.workshopSnapshot?.definition?.name ?? "Workshop")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { game.closeWorkshop() }
-                }
             }
         }
     }
@@ -83,8 +73,8 @@ struct WorkshopView: View {
                                 .foregroundStyle(Theme.inkSoft)
                         }
                     }
-                    ProgressView(value: full ? 1 : min(1, workshop.progress / max(1, recipe.seconds)), total: 1)
-                        .tint(full ? Theme.gold : Theme.leaf)
+                    HUDBar(fraction: full ? 1 : min(1, workshop.progress / max(1, recipe.seconds)), color: full ? HUD.gold : HUD.xp)
+                        .frame(height: 12)
                 }
             } else if workshop.ready == 0 {
                 Text("Idle. Pick a recipe below: the goods come out of storage.")
@@ -147,7 +137,7 @@ struct WorkshopView: View {
         }
         .padding(.horizontal, 7)
         .padding(.vertical, 4)
-        .background(Capsule().fill(Theme.parchmentDark))
+        .background(InsetPanel())
     }
 
     // MARK: Pick up
@@ -159,11 +149,10 @@ struct WorkshopView: View {
             Button {
                 game.pickUpWorkshop()
             } label: {
-                Label("Pick it up (to move it)", systemImage: "arrow.up.bin")
-                    .font(Theme.label(13, weight: .semibold))
-                    .foregroundStyle(Theme.inkSoft)
+                IconLabel("Pick it up (to move it)", symbol: "arrow.up.bin")
+                    .font(Theme.display(14))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(CandyButtonStyle(tint: .wood))
             .padding(.top, 4)
         }
     }

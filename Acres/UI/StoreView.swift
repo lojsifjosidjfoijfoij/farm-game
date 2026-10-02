@@ -10,26 +10,21 @@ struct StoreView: View {
     private var state: StoreState { game.storeState }
 
     var body: some View {
-        NavigationStack {
+        MenuSheet(title: state.isRented ? "Your shop" : store.name, icon: "ui_icon_shop",
+                  onClose: { game.showsStore = false }) {
+            HeaderCoins(amount: game.money)
+        } content: {
             ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 12) {
                     if state.isRented { rented } else { forRent }
                 }
                 .padding(16)
             }
-            .background(PaperBackground())
-            .navigationTitle(state.isRented ? "Your shop" : store.name)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { game.showsStore = false }
-                }
-            }
-            .confirmationDialog("Give up the shop?", isPresented: $confirmsEndLease, titleVisibility: .visible) {
-                Button("Give it up", role: .destructive) { game.endLease() }
-            } message: {
-                Text("No more rent from next Monday. You can rent it again later.")
-            }
+        }
+        .paperConfirm("Give up the shop?", isPresented: $confirmsEndLease,
+                      message: "No more rent from next Monday. You can rent it again later.",
+                      confirmTitle: "Give it up", destructive: true) {
+            game.endLease()
         }
     }
 
@@ -40,9 +35,7 @@ struct StoreView: View {
         let first = game.firstRent
         return VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 12) {
-                Image(systemName: "storefront.fill")
-                    .font(.system(size: 30, weight: .semibold))
-                    .foregroundStyle(Theme.leafDark)
+                MenuIcon(symbol: "storefront.fill", size: 48)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("For rent")
                         .font(Theme.title(20))
@@ -66,11 +59,9 @@ struct StoreView: View {
             .card()
 
             if locked {
-                Label("The landlord rents to farmers of level \(game.balance.storeUnlockLevel) and up.", systemImage: "lock.fill")
-                    .font(Theme.label(14, weight: .semibold))
-                    .foregroundStyle(Theme.inkSoft)
+                PaperNote(symbol: "lock.fill", text: "The landlord rents to farmers of level \(game.balance.storeUnlockLevel) and up.")
             } else {
-                BigButton(title: "Rent the shop", price: first, tint: game.money >= first ? Theme.leafDark : Color.gray) {
+                BigButton(title: "Rent the shop", price: first, tint: game.money >= first ? .green : .gray) {
                     game.rentStore()
                 }
                 .disabled(game.money < first)
@@ -101,51 +92,44 @@ struct StoreView: View {
         let truckHere = game.storekeeping.truckIsHere(game.simulation.state)
         let goods = truckGoods
         if !truckHere {
-            EmptyNote(symbol: "truck.pickup.side", text: "Park the truck in front of the shop to stock the shelves or take goods back.")
+            PaperNote(symbol: "truck.pickup.side", text: "Park the truck in front of the shop to stock the shelves or take goods back.")
         } else if goods.isEmpty {
-            EmptyNote(symbol: "shippingbox", text: "Nothing to sell on the truck. Load your harvest at the farm and bring it here.")
+            PaperNote(symbol: "shippingbox", text: "Nothing to sell on the truck. Load your harvest at the farm and bring it here.")
         } else {
             let total = goods.reduce(0) { $0 + (game.cargoItems[$1.id] ?? 0) }
             Button { game.stockAll() } label: {
                 HStack {
-                    Image(systemName: "tray.and.arrow.down.fill")
+                    MenuIcon(symbol: "tray.and.arrow.down.fill")
                     Text("Stock everything from the truck")
-                        .font(Theme.label(17, weight: .semibold))
+                        .font(Theme.display(17))
                     Spacer()
                     Text("\(total)")
                         .font(Theme.number(17))
                 }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 14)
-                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.leafDark))
+                .padding(.horizontal, 4)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(CandyButtonStyle(tint: .green))
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(goods) { item in
                         Button { game.stock(item.id) } label: {
                             HStack(spacing: 6) {
-                                ItemIcon(name: item.icon, size: 26)
+                                ItemIcon(name: item.icon, size: 24)
                                 Text("×\(game.cargoItems[item.id] ?? 0)")
                                     .font(Theme.number(13))
                                     .foregroundStyle(Theme.ink)
                             }
-                            .padding(.horizontal, 10)
+                            .padding(.horizontal, 6)
                             .padding(.vertical, 6)
-                            .background(Capsule().fill(Theme.parchmentDark.opacity(0.7)))
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(SlotButtonStyle())
                         .accessibilityLabel("Stock \(item.name)")
                     }
                 }
             }
         }
 
-        Text("Shelves")
-            .font(Theme.title(19))
-            .foregroundStyle(Theme.ink)
-            .padding(.top, 4)
+        PageHeading(title: "Shelves")
         ForEach(Array(state.shelves.enumerated()), id: \.offset) { index, shelf in
             ShelfCard(game: game, shelf: shelf, index: index, editable: true, truckHere: truckHere)
         }
@@ -156,8 +140,8 @@ struct StoreView: View {
 
         if state.totalStock == 0 {
             Button("Give up the shop…") { confirmsEndLease = true }
-                .font(Theme.label(14, weight: .semibold))
-                .foregroundStyle(Theme.danger)
+                .font(Theme.display(14))
+                .buttonStyle(CandyButtonStyle(tint: .red))
                 .padding(.top, 8)
         }
     }
@@ -178,9 +162,7 @@ struct StoreTakings: View {
         let today = game.storeState.today
         let week = game.finance.thisWeek.income[LedgerCategory.shopSales] ?? 0
         HStack(spacing: 12) {
-            Image(systemName: open ? "door.left.hand.open" : "door.left.hand.closed")
-                .font(.system(size: 24, weight: .semibold))
-                .foregroundStyle(open ? Theme.leafDark : Theme.inkSoft)
+            MenuIcon(symbol: open ? "door.left.hand.open" : "door.left.hand.closed")
             VStack(alignment: .leading, spacing: 3) {
                 Text(open ? "Open until \(store.closes):00" : "Closed · opens \(String(format: "%02d", store.opens)):00")
                     .font(Theme.label(15, weight: .semibold))
@@ -227,13 +209,13 @@ struct ShelfCard: View {
                                 .font(Theme.number(13))
                                 .foregroundStyle(shelf.stock > 0 ? Theme.inkSoft : Theme.danger)
                         }
-                        ProgressView(value: Double(shelf.stock), total: Double(capacity))
-                            .tint(shelf.stock > 4 ? Theme.leaf : Theme.danger)
+                        HUDBar(fraction: Double(shelf.stock) / Double(max(1, capacity)), color: shelf.stock > 4 ? HUD.xp : HUD.danger)
+                            .frame(height: 10)
                     }
                 }
                 HStack(spacing: 8) {
                     if editable {
-                        stepButton("minus", enabled: shelf.priceFactor > game.balance.storePriceFactorRange.lowerBound + 1e-6) {
+                        stepButton("−", enabled: shelf.priceFactor > game.balance.storePriceFactorRange.lowerBound + 1e-6) {
                             game.adjustPrice(shelf: index, by: -1)
                         }
                     }
@@ -246,7 +228,7 @@ struct ShelfCard: View {
                             .foregroundStyle(Theme.inkSoft)
                     }
                     if editable {
-                        stepButton("plus", enabled: shelf.priceFactor < game.balance.storePriceFactorRange.upperBound - 1e-6) {
+                        stepButton("+", enabled: shelf.priceFactor < game.balance.storePriceFactorRange.upperBound - 1e-6) {
                             game.adjustPrice(shelf: index, by: 1)
                         }
                     }
@@ -256,8 +238,11 @@ struct ShelfCard: View {
                         .foregroundStyle(Theme.inkSoft)
                     if editable && truckHere && shelf.stock > 0 {
                         Button("Take back") { game.takeBack(shelf: index) }
-                            .font(Theme.label(12, weight: .semibold))
-                            .foregroundStyle(Theme.inkSoft)
+                            .font(Theme.label(12, weight: .bold))
+                            .foregroundStyle(Theme.ink)
+                            .padding(.horizontal, 6)
+                            .frame(height: 30)
+                            .buttonStyle(SlotButtonStyle())
                     }
                 }
                 .foregroundStyle(Theme.ink)
@@ -266,9 +251,7 @@ struct ShelfCard: View {
             .card()
         } else {
             HStack(spacing: 10) {
-                Image(systemName: "square.dashed")
-                    .font(.system(size: 22))
-                    .foregroundStyle(Theme.inkSoft)
+                InsetPanel()
                     .frame(width: 34, height: 34)
                 Text("Empty shelf")
                     .font(Theme.label(15))
@@ -286,16 +269,15 @@ struct ShelfCard: View {
         return percent > 0 ? "+\(percent)%" : "−\(-percent)%"
     }
 
-    private func stepButton(_ symbol: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+    private func stepButton(_ sign: String, enabled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: 13, weight: .bold))
+            Text(sign)
+                .font(HUD.font(18, .black))
                 .foregroundStyle(Theme.ink)
-                .frame(width: 34, height: 30)
-                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Theme.parchment))
-                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Theme.border, lineWidth: 1))
+                .frame(width: 30, height: 30)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SlotButtonStyle())
+        .accessibilityLabel(sign == "+" ? "Raise the price" : "Lower the price")
         .disabled(!enabled)
         .opacity(enabled ? 1 : 0.4)
     }

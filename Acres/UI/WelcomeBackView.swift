@@ -17,12 +17,9 @@ struct WelcomeBackView: View {
                 ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
                     HStack(alignment: .center, spacing: 10) {
                         if let asset = line.asset {
-                            ItemIcon(name: asset, size: 26)
+                            ItemIcon(name: asset, size: 24)
                         } else {
-                            Image(systemName: line.symbol)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(line.tint)
-                                .frame(width: 26)
+                            MenuIcon(symbol: line.symbol, tint: line.tint)
                         }
                         Text(line.text)
                             .font(Theme.label(15))

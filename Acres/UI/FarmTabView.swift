@@ -6,8 +6,8 @@ import AcresCore
 /// It opens up with the farmer: only what's here now or next level shows.
 struct FarmTabView: View {
     let game: GameController
-    @State private var pendingLand: PropertyDefinition?
-    @State private var pendingDismissal: Worker?
+    /// Asks "are you sure?" over the whole journal.
+    let ask: (ConfirmRequest) -> Void
 
     /// Shown if it's open now or opens at the next level (something to look forward to).
     private func isInView(_ unlockLevel: Int) -> Bool { unlockLevel <= game.level + 1 }
@@ -23,29 +23,13 @@ struct FarmTabView: View {
                 || game.nextTruckBedUpgrade.map({ isInView($0.level) }) == true { buildings }
             if PropertyCatalog.forSale.contains(where: { isInView($0.unlockLevel) || game.ownedLand.contains($0.id) }) { land }
         }
-        .confirmationDialog(pendingLand.map { "Buy \($0.name)?" } ?? "", isPresented: Binding(
-            get: { pendingLand != nil }, set: { if !$0 { pendingLand = nil } }), titleVisibility: .visible) {
-            if let land = pendingLand {
-                Button("Buy for \(land.price ?? 0) coins") { game.buyLand(land.id) }
-            }
-        } message: {
-            Text("Every property is taxed \(game.balance.propertyTaxPerWeek) coins on Mondays.")
-        }
-        .confirmationDialog(pendingDismissal.map { "Let \($0.name) go?" } ?? "", isPresented: Binding(
-            get: { pendingDismissal != nil }, set: { if !$0 { pendingDismissal = nil } }), titleVisibility: .visible) {
-            if let worker = pendingDismissal {
-                Button("Let \(worker.name) go", role: .destructive) { game.dismissWorker(worker.id) }
-            }
-        } message: {
-            Text("Wages already paid aren't refunded.")
-        }
     }
 
     // MARK: Farmhands
 
     @ViewBuilder
     private var workers: some View {
-        FarmSectionTitle(title: "Farmhands", trailing: "\(game.balance.workerWagePerWeek) coins a week each")
+        PageHeading(title: "Farmhands", trailing: "\(game.balance.workerWagePerWeek) coins a week each")
         ForEach(game.estateState.workers) { worker in
             workerCard(worker)
         }
@@ -74,11 +58,7 @@ struct FarmTabView: View {
     private func workerCard(_ worker: Worker) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
-                Image(systemName: worker.job.symbol)
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 36, height: 36)
-                    .background(Circle().fill(Theme.leafDark))
+                HUDIcon(name: "ui_icon_worker", size: 36)
                 VStack(alignment: .leading, spacing: 1) {
                     Text("\(worker.name) · \(worker.job.title)")
                         .font(Theme.label(15, weight: .semibold))
@@ -87,16 +67,21 @@ struct FarmTabView: View {
                         .foregroundStyle(Theme.inkSoft)
                 }
                 Spacer()
-                Button("Let go") { pendingDismissal = worker }
-                    .font(Theme.label(12, weight: .semibold))
-                    .foregroundStyle(Theme.danger)
-            }
-            Picker("Job", selection: Binding(get: { worker.job }, set: { game.assign(worker.id, to: $0) })) {
-                ForEach(WorkerJob.allCases, id: \.self) { job in
-                    Text(job.title).tag(job)
+                Button("Let go") {
+                    ask(ConfirmRequest(title: "Let \(worker.name) go?", message: "Wages already paid aren't refunded.",
+                                       confirmTitle: "Let \(worker.name) go", destructive: true) {
+                        game.dismissWorker(worker.id)
+                    })
                 }
+                .font(Theme.label(12, weight: .bold))
+                .foregroundStyle(Theme.danger)
+                .padding(.horizontal, 6)
+                .frame(height: 30)
+                .buttonStyle(SlotButtonStyle())
             }
-            .pickerStyle(.segmented)
+            PaperTabs(tabs: WorkerJob.allCases,
+                      selection: Binding(get: { worker.job }, set: { game.assign(worker.id, to: $0) }),
+                      title: { $0.title })
         }
         .foregroundStyle(Theme.ink)
         .card()
@@ -106,7 +91,7 @@ struct FarmTabView: View {
 
     @ViewBuilder
     private var machines: some View {
-        FarmSectionTitle(title: "Machines", trailing: nil)
+        PageHeading(title: "Machines", trailing: nil)
         ForEach(MachineCatalog.all.filter { isInView($0.unlockLevel) }) { machine in
             machineCard(machine)
         }
@@ -118,7 +103,7 @@ struct FarmTabView: View {
     @ViewBuilder
     private var fields: some View {
         let owned = FieldCatalog.all.filter { game.ownedFields.contains($0.id) }
-        FarmSectionTitle(title: "Fields", trailing: "\(owned.map(\.tileCount).reduce(0, +)) tiles to farm")
+        PageHeading(title: "Fields", trailing: "\(owned.map(\.tileCount).reduce(0, +)) tiles to farm")
         let forSale = game.fieldsForSale.filter { isInView($0.unlockLevel) }.sorted { ($0.unlockLevel, $0.price) < ($1.unlockLevel, $1.price) }
         if forSale.isEmpty {
             LockedNote(text: game.fieldsForSale.isEmpty
@@ -134,9 +119,8 @@ struct FarmTabView: View {
         let locked = game.level < field.unlockLevel
         let where_ = PropertyCatalog.property(field.propertyID)?.name ?? ""
         return HStack(spacing: 10) {
-            Image(systemName: "square.grid.3x3.fill")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(locked ? Theme.inkSoft : Theme.leafDark)
+            MenuIcon(symbol: "square.grid.3x3.fill", size: 36)
+                .opacity(locked ? 0.4 : 1)
                 .frame(width: 40, height: 40)
             VStack(alignment: .leading, spacing: 2) {
                 Text(field.name)
@@ -147,9 +131,7 @@ struct FarmTabView: View {
             }
             Spacer(minLength: 4)
             if locked {
-                Label("Level \(field.unlockLevel)", systemImage: "lock.fill")
-                    .font(Theme.label(12, weight: .semibold))
-                    .foregroundStyle(Theme.inkSoft)
+                PaperTag(text: "Level \(field.unlockLevel)", symbol: "lock.fill")
             } else {
                 ActionCapsule(title: "Buy · \(field.price)", enabled: game.money >= field.price) { game.buyField(field.id) }
             }
@@ -179,9 +161,7 @@ struct FarmTabView: View {
             Spacer(minLength: 4)
             VStack(spacing: 6) {
                 if locked {
-                    Label("Level \(machine.unlockLevel)", systemImage: "lock.fill")
-                        .font(Theme.label(12, weight: .semibold))
-                        .foregroundStyle(Theme.inkSoft)
+                    PaperTag(text: "Level \(machine.unlockLevel)", symbol: "lock.fill")
                 } else {
                     ActionCapsule(title: "Buy · \(machine.price)", enabled: game.money >= machine.price) { game.buyMachine(machine.id) }
                     if owned > 0 {
@@ -198,7 +178,7 @@ struct FarmTabView: View {
 
     @ViewBuilder
     private var workshops: some View {
-        FarmSectionTitle(title: "Workshops", trailing: "Turn crops into goods worth more")
+        PageHeading(title: "Workshops", trailing: "Turn crops into goods worth more")
         ForEach(WorkshopCatalog.all.filter { isInView($0.unlockLevel) }) { workshop in
             workshopCard(workshop)
         }
@@ -227,9 +207,7 @@ struct FarmTabView: View {
             Spacer(minLength: 4)
             VStack(spacing: 6) {
                 if locked {
-                    Label("Level \(workshop.unlockLevel)", systemImage: "lock.fill")
-                        .font(Theme.label(12, weight: .semibold))
-                        .foregroundStyle(Theme.inkSoft)
+                    PaperTag(text: "Level \(workshop.unlockLevel)", symbol: "lock.fill")
                 } else {
                     ActionCapsule(title: "Buy · \(workshop.price)", enabled: game.money >= workshop.price) { game.buyMachine(workshop.id) }
                     if owned > 0 {
@@ -246,7 +224,7 @@ struct FarmTabView: View {
 
     @ViewBuilder
     private var buildings: some View {
-        FarmSectionTitle(title: "Buildings", trailing: nil)
+        PageHeading(title: "Buildings", trailing: nil)
         upgradeCard(title: "Storage", symbol: "archivebox.fill", now: "Holds \(game.storageCapacity)",
                     next: game.nextStorageUpgrade, nextName: game.estateState.storageLevel == 0 ? "a storage shed" : "a silo") {
             game.upgradeStorage()
@@ -260,9 +238,7 @@ struct FarmTabView: View {
     private func upgradeCard(title: String, symbol: String, now: String, next: (capacity: Int, cost: Int, level: Int)?,
                              nextName: String, action: @escaping () -> Void) -> some View {
         HStack(spacing: 10) {
-            Image(systemName: symbol)
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(Theme.leafDark)
+            MenuIcon(symbol: symbol, size: 36)
                 .frame(width: 40, height: 40)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
@@ -274,9 +250,7 @@ struct FarmTabView: View {
             Spacer(minLength: 4)
             if let next {
                 if game.level < next.level {
-                    Label("Level \(next.level)", systemImage: "lock.fill")
-                        .font(Theme.label(12, weight: .semibold))
-                        .foregroundStyle(Theme.inkSoft)
+                    PaperTag(text: "Level \(next.level)", symbol: "lock.fill")
                 } else {
                     ActionCapsule(title: "Build · \(next.cost)", enabled: game.money >= next.cost, action: action)
                 }
@@ -290,7 +264,7 @@ struct FarmTabView: View {
 
     @ViewBuilder
     private var land: some View {
-        FarmSectionTitle(title: "Land for sale", trailing: nil)
+        PageHeading(title: "Land for sale", trailing: nil)
         ForEach(PropertyCatalog.forSale.filter { isInView($0.unlockLevel) || game.ownedLand.contains($0.id) }) { property in
             landCard(property)
         }
@@ -301,9 +275,7 @@ struct FarmTabView: View {
         let price = property.price ?? 0
         let locked = game.level < property.unlockLevel
         return HStack(spacing: 10) {
-            Image(systemName: owned ? "checkmark.seal.fill" : "signpost.right.fill")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(owned ? Theme.leaf : Theme.inkSoft)
+            MenuIcon(symbol: owned ? "checkmark.seal.fill" : "signpost.right.fill", size: 36)
                 .frame(width: 40, height: 40)
             VStack(alignment: .leading, spacing: 2) {
                 Text(property.name)
@@ -316,11 +288,15 @@ struct FarmTabView: View {
             Spacer(minLength: 4)
             if !owned {
                 if locked {
-                    Label("Level \(property.unlockLevel)", systemImage: "lock.fill")
-                        .font(Theme.label(12, weight: .semibold))
-                        .foregroundStyle(Theme.inkSoft)
+                    PaperTag(text: "Level \(property.unlockLevel)", symbol: "lock.fill")
                 } else {
-                    ActionCapsule(title: "Buy · \(price)", enabled: game.money >= price) { pendingLand = property }
+                    ActionCapsule(title: "Buy · \(price)", enabled: game.money >= price) {
+                        ask(ConfirmRequest(title: "Buy \(property.name)?",
+                                           message: "Every property is taxed \(game.balance.propertyTaxPerWeek) coins on Mondays.",
+                                           confirmTitle: "Buy for \(price) coins") {
+                            game.buyLand(property.id)
+                        })
+                    }
                 }
             }
         }
@@ -331,35 +307,11 @@ struct FarmTabView: View {
 
 // MARK: - Pieces
 
-private struct FarmSectionTitle: View {
-    let title: String
-    let trailing: String?
-
-    var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(title)
-                .font(Theme.title(19))
-            Spacer()
-            if let trailing {
-                Text(trailing)
-                    .font(Theme.label(12))
-                    .foregroundStyle(Theme.inkSoft)
-            }
-        }
-        .foregroundStyle(Theme.ink)
-        .padding(.top, 4)
-    }
-}
-
 private struct LockedNote: View {
     let text: String
 
     var body: some View {
-        Label(text, systemImage: "lock.fill")
-            .font(Theme.label(13))
-            .foregroundStyle(Theme.inkSoft)
-            .fixedSize(horizontal: false, vertical: true)
-            .card()
+        PaperNote(symbol: "lock.fill", text: text)
     }
 }
 

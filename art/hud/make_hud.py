@@ -38,6 +38,7 @@ PAL = {
     "h": hexc("f0c090"), "H": hexc("c08a5a"),
     "c": hexc("f4f6fa"), "C": hexc("c4cede"), "x": hexc("8a8f98"),
     "L": hexc("8a4a2a"), "M": hexc("5e2f1a"), "N": hexc("b06a3e"),
+    "P": hexc("f6b0c8"), "Q": hexc("d8709a"), "O": hexc("f2a33a"), "q": hexc("c85a1c"),
 }
 WOOD = {"out": hexc("3a2416"), "hi": hexc("d79a58"), "mid": hexc("b0723c"), "lo": hexc("8a5428"),
         "seam": hexc("6e4222"), "in": hexc("5a3a20"), "paper": hexc("f2e4c0"), "paper_sh": hexc("d8c69c"),
@@ -213,6 +214,375 @@ def board(colour, light, dark):
 # -------------------------------------------------------------------- icons
 
 ASCII = {
+    "ui_icon_close": """
+.kk......kk.
+kppk....kppk
+kpppk..kpppk
+.kpppkkpppk.
+..kppppppk..
+...kppppk...
+...kppppk...
+..kppppppk..
+.kpppkkpppk.
+kpppk..kpppk
+kppk....kppk
+.kk......kk.
+""",
+    "ui_icon_goals": """
+....kkkk....
+.kkkdSSdkkk.
+kwwkkkkkkwwk
+kwppppppppwk
+kwpGgpTTTpwk
+kwpggpppppwk
+kwppppppppwk
+kwpGgpTTTpwk
+kwpggpppppwk
+kwppppppppwk
+kwvvvvvvvvwk
+kkkkkkkkkkkk
+""",
+    "ui_icon_lock": """
+...kkkkkk...
+..kSddddSk..
+..kdk..kdk..
+..ksk..ksk..
+.kkkkkkkkkk.
+.kYyyyyyyok.
+.kyyykkyyok.
+.kyyykkyyok.
+.kyyyykyyok.
+.kyyyyyyyok.
+.kooooooook.
+.kkkkkkkkkk.
+""",
+    "ui_icon_unlock": """
+.kkkkkk.....
+kSddddSk....
+kdk..kdk....
+ksk..ksk....
+ksk.........
+.kkkkkkkkkk.
+.kYyyyyyyok.
+.kyyykkyyok.
+.kyyyykyyok.
+.kyyyyyyyok.
+.kooooooook.
+.kkkkkkkkkk.
+""",
+    "ui_icon_gift": """
+..kk....kk..
+.kyYk..kYyk.
+.kyyYkkYyyk.
+..kkkyykkk..
+kkkkkyykkkkk
+kRRRRYYRRRRk
+krrrryyrrrrk
+kkkkkyykkkkk
+.krrryyrrrk.
+.krrryyrrmk.
+.kmmmyommmk.
+.kkkkkkkkkk.
+""",
+    "ui_icon_truck": """
+....kkkkk...
+....kBBBrk..
+....kBBnrrk.
+kkkkkrrrrrrk
+kRRRRRRRRRRk
+krrrrrrrrrYk
+kmkkkmmkkkmk
+.kxSxkkxSxk.
+..kkk..kkk..
+""",
+    "ui_icon_blossom": """
+....kkkk....
+...kPPPQk...
+.kkkPPPQkkk.
+kPPPkPQkPPQk
+kPPPPkkPPPQk
+kQPPkYykPQQk
+.kQQkyokQQk.
+.kPPPkkPPPk.
+kPPPQkkPPPQk
+kPPQk..kPQQk
+.kkk....kkk.
+""",
+    "ui_icon_snowflake": """
+....kck....
+..k.kck.k..
+.kckkckkck.
+..kckckck..
+kkkkcccdkkk
+kccccBccccd
+kkkkcccdkkk
+..kckckck..
+.kckkckkck.
+..k.kck.k..
+....kck....
+""",
+    "ui_icon_shop": """
+kkkkkkkkkkkk
+kRcRcRcRcRck
+krcrcrcrcrck
+.kkkkkkkkkk.
+.kwwwwwwwwk.
+.kwBBkwppwk.
+.kwBnkwppwk.
+.kwkkkwpTwk.
+.kwwwwwppwk.
+.kvvvvvppvk.
+.kkkkkkkkkk.
+""",
+    "ui_icon_bank": """
+.....kk.....
+...kkSSkk...
+.kkSSSSSSkk.
+kSSSSSSSSSSk
+kddddddddddk
+kkkkkkkkkkkk
+kSdkkSdkkSdk
+kSdkkSdkkSdk
+kSdkkSdkkSdk
+kSdkkSdkkSdk
+kSSSSSSSSSdk
+kkkkkkkkkkkk
+""",
+    "ui_icon_hammer": """
+kkkkkkkkkk..
+kSSSSSSssdk.
+kssssssdddk.
+kkkkkwwkkkk.
+....kwwk....
+....kwwk....
+....kwwk....
+....kwvk....
+....kwvk....
+....kvvk....
+....kkkk....
+""",
+    "ui_icon_trophy": """
+..kkkkkkkk..
+kkkYYyyyokkk
+k.kYyyyyok.k
+k.kYyyyyok.k
+.kkYyyyyokk.
+...kyyyok...
+....kyok....
+....kyok....
+...kkkkkk...
+..kYyyyyok..
+..kooooook..
+..kkkkkkkk..
+""",
+    "ui_icon_rosette": """
+...kkkkkk...
+..kYYyyyok..
+..kYyyyyok..
+..kyyyyyok..
+..kyyyyook..
+...kooook...
+...kkkkkk...
+..kbbkkrrk..
+.kbbk..krrk.
+.kbnk..kmrk.
+.kbkk..kkrk.
+.kk......kk.
+""",
+    "ui_icon_house": """
+.....kk.....
+....kRRk....
+...kRrrrk...
+..kRrrrrrk..
+.kRrrrrrrrk.
+kkkkkkkkkkkk
+.kppppppppk.
+.kpBBpwwppk.
+.kpBnpwwppk.
+.kppppwwppk.
+.kTTTTwvTTk.
+.kkkkkkkkkk.
+""",
+    "ui_icon_crate": """
+kkkkkkkkkkkk
+kWWWWWWWWWWk
+kWkkkkkkkkWk
+kWkwwwwwWkWk
+kWkwwwwWvkWk
+kWkwwwWvwkWk
+kWkwwWvwwkWk
+kWkwWvwwwkWk
+kWkWvwwwwkWk
+kWkkkkkkkkWk
+kvvvvvvvvvvk
+kkkkkkkkkkkk
+""",
+    "ui_icon_leaf": """
+........kkkk
+......kkGGgk
+.....kGGGgek
+....kGGGgegk
+...kGGGgeggk
+...kGGgeggk.
+..kGGgeggek.
+..kGgeggek..
+..kgeggeek..
+..kegeekk...
+.kekkkk.....
+kk..........
+""",
+    "ui_icon_tree": """
+....kkkk....
+..kkGGggkk..
+.kGGGgggggk.
+kGGGgggggeek
+kGGgggggggek
+kGggggggggek
+kgggggggeeek
+.kggggeeeek.
+..kkkwwkkk..
+....kwvk....
+....kwvk....
+...kkkkkk...
+""",
+    "ui_icon_drop": """
+.....kk.....
+....kBbk....
+....kBbk....
+...kBbbbk...
+...kBbbbk...
+..kBbbbbbk..
+.kBcbbbbbnk.
+.kBcbbbbbnk.
+.kBbbbbbbnk.
+..kbbbbbnk..
+...knnnnk...
+....kkkk....
+""",
+    "ui_icon_heart": """
+.kkkk..kkkk.
+kRRrrkkRrrrk
+kRrrrrrrrrmk
+kRrrrrrrrrmk
+krrrrrrrrrmk
+.krrrrrrrmk.
+..krrrrrmk..
+...krrrmk...
+....krmk....
+.....kk.....
+""",
+    "ui_icon_bill": """
+.kkkkkkkkkk.
+.kppppppppk.
+.kpTTTTTTpk.
+.kppppppppk.
+.kpTTTTTppk.
+.kppppppppk.
+.kpTTTTTTpk.
+.kppppppppk.
+.kpTTTpprpk.
+.kppppprrpk.
+.kttttttttk.
+.kkkkkkkkkk.
+""",
+    "ui_icon_signpost": """
+.kkkkkkkkk..
+.kWWWWWWWWk.
+.kwwwwwwwwwk
+.kvvvvvvvvk.
+.kkkkkkkkk..
+....kwvk....
+....kwvk....
+....kwvk....
+...kGwvGk...
+..kGGgggGk..
+..kkkkkkkk..
+""",
+    "ui_icon_field": """
+kkkkkkkkkkkk
+ktGttGttGttk
+kTgTTgTTgTTk
+kvvvvvvvvvvk
+kttGttGttGtk
+kTTgTTgTTgTk
+kvvvvvvvvvvk
+ktGttGttGttk
+kTgTTgTTgTTk
+kvvvvvvvvvvk
+kttttttttttk
+kkkkkkkkkkkk
+""",
+    "ui_icon_flame": """
+......k.....
+.....krk....
+....krrk....
+...krRrk.k..
+...krRrrkrk.
+..krRYrrrrk.
+..krRYYrrrk.
+.krRYYYYrmk.
+.krYYYyYrmk.
+.krYyyyYrmk.
+..kmYyyrmk..
+...kkkkkk...
+""",
+    "ui_icon_fish": """
+...kkkkk....
+..kBBBBBk.kk
+.kBkBBBbbkbk
+kBBBBBbbbbbk
+.kbbbbbbnkbk
+..knnnnnk.kk
+...kkkkk....
+""",
+    "ui_icon_bowl": """
+..C..C..C...
+...C..C..C..
+..C..C..C...
+kkkkkkkkkkkk
+kyYyyyyyyyok
+kRrrrrrrrrmk
+.krrrrrrrmk.
+..kmmmmmmk..
+...kkkkkk...
+""",
+    "ui_icon_bread": """
+...kkkkkk...
+.kkWWWWWWkk.
+kWWWvWWvWWWk
+kWWvWWvWWvwk
+kwwwwwwwwwvk
+.kvvvvvvvvk.
+..kkkkkkkk..
+""",
+    "ui_icon_worker": """
+....kkkk....
+...kYYyyk...
+.kkYYyyyokk.
+kYYyyyyyyyok
+kkkkkkkkkkkk
+..khhhhhhk..
+..khkhhkhk..
+..khhhhhHk..
+...khhhHk...
+..kgkkkkgk..
+.kgGgggggek.
+.kkkkkkkkkk.
+""",
+    "ui_icon_hen": """
+..kkk.......
+.krrrk......
+..kccck.....
+.kcckck..kk.
+kycccck.kck.
+.kkccckkcck.
+..kccccccck.
+..kcccccCCk.
+...kcccCCk..
+....kkkkk...
+.....y.y....
+....yy.yy...
+""",
     "ui_icon_hoe": """
 ......kkkkk.
 .....kSSssdk
@@ -486,13 +856,89 @@ def cloud(extra=None):
     return img
 
 
+def gear():
+    def draw(d):
+        d.ellipse([2, 2, 9, 9], fill=255)
+        for box in ((5, 1, 6, 10), (1, 5, 10, 6)):
+            d.rectangle(box, fill=255)
+        for (x, y) in ((2, 2), (8, 2), (2, 8), (8, 8)):
+            d.rectangle([x, y, x + 1, y + 1], fill=255)
+        d.rectangle([5, 5, 6, 6], fill=0)
+    img = shaded(mask(draw), PAL["s"], PAL["S"], PAL["d"])
+    ImageDraw.Draw(img).rectangle([5, 5, 6, 6], fill=PAL["k"])
+    return img
+
+
+def badge(fill, light, dark, marks):
+    """A round badge with a white mark on it (check, arrows)."""
+    img = shaded(mask(lambda d: d.ellipse([1, 1, 10, 10], fill=255)), fill, light, dark).copy()
+    px = img.load()
+    for (x, y) in marks:
+        px[x, y] = PAL["c"]
+    return img
+
+
+CHECK = [(3, 6), (4, 7), (5, 8), (6, 7), (7, 6), (8, 5), (8, 4), (3, 5), (4, 6), (5, 7), (6, 6), (7, 5)]
+ARROW_UP = [(5, 3), (6, 3), (4, 4), (5, 4), (6, 4), (7, 4), (3, 5), (4, 5), (5, 5), (6, 5), (7, 5), (8, 5),
+            (5, 6), (6, 6), (5, 7), (6, 7), (5, 8), (6, 8)]
+ARROW_DOWN = [(x, 11 - y) for (x, y) in ARROW_UP]
+
+
+def clock():
+    img = shaded(mask(lambda d: d.ellipse([1, 1, 10, 10], fill=255)), PAL["p"], hexc("fffaf0"), PAL["t"])
+    d = ImageDraw.Draw(img)
+    d.line([5, 3, 5, 6], fill=PAL["k"])
+    d.line([6, 6, 7, 6], fill=PAL["k"])
+    d.point([(5, 2), (2, 5), (9, 5), (5, 9)], fill=PAL["T"])
+    return img
+
+
+def sparkle():
+    def draw(d):
+        d.line([4, 1, 4, 11], fill=255)
+        d.line([0, 6, 8, 6], fill=255)
+        d.rectangle([3, 4, 5, 8], fill=255)
+        d.rectangle([2, 5, 6, 7], fill=255)
+        d.line([9, 1, 9, 3], fill=255)
+        d.line([8, 2, 10, 2], fill=255)
+    return shaded(mask(draw), PAL["Y"], hexc("fff3b8"), PAL["y"])
+
+
+def note():
+    """Two beamed notes (sound)."""
+    def draw(d):
+        d.rectangle([5, 1, 10, 2], fill=255)
+        d.line([5, 1, 5, 8], fill=255)
+        d.line([10, 1, 10, 7], fill=255)
+        d.ellipse([2, 7, 5, 10], fill=255)
+        d.ellipse([7, 6, 10, 9], fill=255)
+    return shaded(mask(draw), PAL["b"], PAL["B"], PAL["n"])
+
+
+def recolour(img, table):
+    a = np.asarray(img).copy()
+    for src, dst in table.items():
+        hit = np.all(a == np.array(PAL[src], np.uint8), axis=-1)
+        a[hit] = PAL[dst]
+    return Image.fromarray(a, "RGBA")
+
+
+SEASON_ART = ("ui_icon_blossom", "ui_icon_snowflake")  # drawn as the season icons
+
 ICONS = {
     "ui_icon_coin": coin, "ui_icon_level": star,
     "ui_icon_time_day": sun, "ui_icon_time_morning": lambda: sun(low=True),
     "ui_icon_time_evening": lambda: sun(low=True), "ui_icon_time_night": moon,
     "ui_icon_weather_cloudy": cloud, "ui_icon_weather_rain": lambda: cloud("rain"),
     "ui_icon_weather_snow": lambda: cloud("snow"),
-    **{name: (lambda a=art: from_ascii(a)) for name, art in ASCII.items()},
+    "ui_icon_settings": gear, "ui_icon_clock": clock, "ui_icon_sparkle": sparkle, "ui_icon_note": note,
+    "ui_icon_check": lambda: badge(PAL["g"], PAL["G"], PAL["e"], CHECK),
+    "ui_icon_arrow_up": lambda: badge(PAL["g"], PAL["G"], PAL["e"], ARROW_UP),
+    "ui_icon_arrow_down": lambda: badge(PAL["O"], hexc("ffc870"), PAL["q"], ARROW_DOWN),
+    "ui_icon_season_spring": lambda: from_ascii(ASCII["ui_icon_blossom"]), "ui_icon_season_summer": sun,
+    "ui_icon_season_winter": lambda: from_ascii(ASCII["ui_icon_snowflake"]),
+    "ui_icon_season_autumn": lambda: recolour(from_ascii(ASCII["ui_icon_leaf"]), {"G": "O", "g": "q", "e": "m"}),
+    **{name: (lambda a=art: from_ascii(a)) for name, art in ASCII.items() if name not in SEASON_ART},
 }
 
 # name → (picture, art cap inset); frames are saved at 2× (cap inset in points = 2 × this).

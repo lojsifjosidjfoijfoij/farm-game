@@ -8,10 +8,15 @@ struct ShopView: View {
     let shop: ShopDefinition
 
     var body: some View {
-        NavigationStack {
+        MenuSheet(title: shop.name, icon: MenuIcon.art[GameController.symbol(for: shop.kind)],
+                  onClose: { game.openShop = nil }) {
+            HeaderCoins(amount: game.money)
+        } content: {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    wallet
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(subtitle)
+                        .font(Theme.label(13))
+                        .foregroundStyle(Theme.inkSoft)
                     switch shop.kind {
                     case .seedShop: seedShop
                     case .market: market
@@ -22,28 +27,6 @@ struct ShopView: View {
                 }
                 .padding(16)
             }
-            .background(PaperBackground())
-            .navigationTitle(shop.name)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { game.openShop = nil }
-                }
-            }
-        }
-    }
-
-    private var wallet: some View {
-        HStack(spacing: 6) {
-            CoinIcon(size: 20)
-            Text("\(game.money)")
-                .font(Theme.number(18))
-                .foregroundStyle(Theme.ink)
-                .contentTransition(.numericText())
-            Spacer()
-            Text(subtitle)
-                .font(Theme.label(13))
-                .foregroundStyle(Theme.inkSoft)
         }
     }
 
@@ -69,10 +52,7 @@ struct ShopView: View {
             }
             let saplings = TreeCatalog.all.filter { isInView($0.unlockLevel) }
             if !saplings.isEmpty {
-                Text("Saplings")
-                    .font(Theme.title(18))
-                    .foregroundStyle(Theme.ink)
-                    .padding(.top, 6)
+                PageHeading(title: "Saplings")
                 Text("Plant them on plowed soil. Wood trees give logs, fruit trees give fruit again and again.")
                     .font(Theme.label(13))
                     .foregroundStyle(Theme.inkSoft)
@@ -82,7 +62,7 @@ struct ShopView: View {
                 }
             }
             if CropCatalog.all.contains(where: { !isInView($0.unlockLevel) }) {
-                Label("More seeds come in as you level up.", systemImage: "sparkles")
+                IconLabel("More seeds come in as you level up.", symbol: "sparkles", size: 12)
                     .font(Theme.label(12))
                     .foregroundStyle(Theme.inkSoft)
             }
@@ -104,9 +84,7 @@ struct ShopView: View {
                 .foregroundStyle(Theme.inkSoft)
         } actions: {
             if locked {
-                Label("Level \(tree.unlockLevel)", systemImage: "lock.fill")
-                    .font(Theme.label(13, weight: .semibold))
-                    .foregroundStyle(Theme.inkSoft)
+                PaperTag(text: "Level \(tree.unlockLevel)", symbol: "lock.fill")
             } else {
                 PriceButton(title: "1", price: tree.saplingCost, enabled: game.money >= tree.saplingCost) {
                     game.buySaplings(tree.id, count: 1)
@@ -129,9 +107,7 @@ struct ShopView: View {
                 .font(Theme.label(16, weight: .semibold))
             HStack(spacing: 4) {
                 ForEach(crop.seasonList, id: \.self) { season in
-                    Image(systemName: Theme.seasonSymbol(season))
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Theme.seasonColor(season))
+                    MenuIcon(symbol: Theme.seasonSymbol(season), size: 12, tint: Theme.seasonColor(season))
                 }
                 Text("· \(Format.duration(crop.growthSeconds)) · owned \(owned)")
                     .font(Theme.label(12))
@@ -139,9 +115,7 @@ struct ShopView: View {
             }
         } actions: {
             if locked {
-                Label("Level \(crop.unlockLevel)", systemImage: "lock.fill")
-                    .font(Theme.label(13, weight: .semibold))
-                    .foregroundStyle(Theme.inkSoft)
+                PaperTag(text: "Level \(crop.unlockLevel)", symbol: "lock.fill")
             } else {
                 PriceButton(title: "1", price: crop.seedCost, enabled: game.money >= crop.seedCost) {
                     game.buySeeds(crop.id, count: 1)
@@ -163,7 +137,7 @@ struct ShopView: View {
     @ViewBuilder
     private var market: some View {
         if cargo.isEmpty {
-            EmptyNote(symbol: "shippingbox",
+            PaperNote(symbol: "shippingbox",
                       text: "The truck bed is empty. Load your harvest at the farm (basket → Load all), then drive back here.")
             priceBoard
         } else {
@@ -173,7 +147,7 @@ struct ShopView: View {
                     marketRow(item)
                 }
             }
-            BigButton(title: "Sell everything", price: total, tint: Theme.leaf) { game.sellAll() }
+            BigButton(title: "Sell everything", price: total, tint: .green) { game.sellAll() }
         }
     }
 
@@ -213,6 +187,7 @@ struct ShopView: View {
                 }
             }
         }
+        .card()
         .padding(.top, 6)
     }
 
@@ -232,10 +207,7 @@ struct ShopView: View {
             ForEach(AnimalCatalog.all.filter { isInView($0.unlockLevel) }) { species in
                 animalRow(species)
             }
-            Text("Feed")
-                .font(Theme.title(18))
-                .foregroundStyle(Theme.ink)
-                .padding(.top, 6)
+            PageHeading(title: "Feed")
             ShopRow {
                 ItemIcon(name: "item_animal_feed", size: 42)
             } info: {
@@ -279,9 +251,7 @@ struct ShopView: View {
                 .fixedSize(horizontal: false, vertical: true)
         } actions: {
             if locked {
-                Label("Level \(species.unlockLevel)", systemImage: "lock.fill")
-                    .font(Theme.label(13, weight: .semibold))
-                    .foregroundStyle(Theme.inkSoft)
+                PaperTag(text: "Level \(species.unlockLevel)", symbol: "lock.fill")
             } else {
                 PriceButton(title: "Buy", price: species.price, enabled: status == nil && game.money >= species.price) {
                     game.buyAnimal(species.id)
@@ -304,18 +274,16 @@ struct ShopView: View {
                         .foregroundStyle(Theme.inkSoft)
                         .fixedSize(horizontal: false, vertical: true)
                     let total = max(1, Double(loan.amount) * (1 + interest))
-                    ProgressView(value: min(total, max(0, total - Double(loan.balance))), total: total)
-                        .tint(Theme.leaf)
+                    HUDBar(fraction: min(1, max(0, total - Double(loan.balance)) / total))
+                        .frame(height: 12)
                 }
                 .foregroundStyle(Theme.ink)
+                .card()
                 BigButton(title: game.money >= loan.balance ? "Pay it all off now" : "Not enough to pay it off yet",
-                          price: loan.balance, tint: game.money >= loan.balance ? Theme.leaf : Color.gray) { game.repayLoan() }
+                          price: loan.balance, tint: game.money >= loan.balance ? .green : .gray) { game.repayLoan() }
                     .disabled(game.money < loan.balance)
             }
-            Text("Borrow")
-                .font(Theme.title(18))
-                .foregroundStyle(Theme.ink)
-                .padding(.top, 4)
+            PageHeading(title: "Borrow")
             Text("Get coins now for seeds, animals or repairs. You pay back \(Int((interest * 100).rounded()))% more, a little every Monday with your bills. One loan at a time.")
                 .font(Theme.label(13))
                 .foregroundStyle(Theme.inkSoft)
@@ -330,9 +298,8 @@ struct ShopView: View {
         let locked = game.level < offer.unlockLevel
         let busy = game.finance.loan != nil
         return ShopRow {
-            Image(systemName: "building.columns.fill")
-                .font(.system(size: 24, weight: .semibold))
-                .foregroundStyle(Theme.ink.opacity(locked ? 0.35 : 0.8))
+            MenuIcon(symbol: "building.columns.fill", size: 36)
+                .opacity(locked ? 0.4 : 1)
                 .frame(width: 42, height: 42)
         } info: {
             HStack(spacing: 4) {
@@ -345,17 +312,11 @@ struct ShopView: View {
                 .foregroundStyle(Theme.inkSoft)
         } actions: {
             if locked {
-                Label("Level \(offer.unlockLevel)", systemImage: "lock.fill")
-                    .font(Theme.label(13, weight: .semibold))
-                    .foregroundStyle(Theme.inkSoft)
+                PaperTag(text: "Level \(offer.unlockLevel)", symbol: "lock.fill")
             } else {
                 Button("Borrow") { game.takeLoan(offer.amount) }
-                    .font(Theme.label(15, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 14)
-                    .frame(height: 40)
-                    .background(Capsule().fill(busy ? Color.gray : Theme.leafDark))
-                    .buttonStyle(.plain)
+                    .font(Theme.display(15))
+                    .buttonStyle(CandyButtonStyle(tint: busy ? .gray : .green))
                     .disabled(busy)
             }
         }
@@ -367,22 +328,21 @@ struct ShopView: View {
         let cost = game.fullTankCost
         return VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
-                Image(systemName: "fuelpump.fill")
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(Theme.ink)
+                MenuIcon(symbol: "fuelpump.fill")
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Tank \(Int((game.fuelFraction * 100).rounded()))%")
                         .font(Theme.label(16, weight: .semibold))
                         .foregroundStyle(Theme.ink)
-                    ProgressView(value: game.fuelFraction)
-                        .tint(game.fuelFraction < 0.2 ? Color(red: 0.8, green: 0.3, blue: 0.25) : Theme.gold)
+                    HUDBar(fraction: game.fuelFraction, color: game.fuelFraction < 0.2 ? HUD.danger : HUD.gold)
+                        .frame(height: 12)
                 }
             }
+            .card()
             if cost <= 0 {
-                EmptyNote(symbol: "checkmark.circle", text: "The tank is full. Safe travels!")
+                PaperNote(symbol: "checkmark.circle", text: "The tank is full. Safe travels!")
             } else {
                 BigButton(title: game.money >= cost ? "Fill up" : "Fill what I can afford",
-                          price: max(0, min(cost, game.money)), tint: Theme.gold) { game.refuel() }
+                          price: max(0, min(cost, game.money)), tint: .gold) { game.refuel() }
             }
         }
     }
@@ -390,7 +350,7 @@ struct ShopView: View {
 
 // MARK: - Pieces
 
-/// One line in a shop: icon, name and details, buttons.
+/// One line in a shop: icon, name and details, buttons, on a paper card.
 struct ShopRow<Icon: View, Info: View, Actions: View>: View {
     @ViewBuilder let icon: () -> Icon
     @ViewBuilder let info: () -> Info
@@ -409,11 +369,11 @@ struct ShopRow<Icon: View, Info: View, Actions: View>: View {
             }
         }
         .padding(10)
-        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.parchmentDark.opacity(0.55)))
+        .background(PixelArtFrame(name: "ui_card", border: 4))
     }
 }
 
-/// A small "buy/sell N for X coins" button.
+/// A small "buy/sell N for X coins" button: a paper slot that presses in.
 struct PriceButton: View {
     let title: String
     let price: Int
@@ -426,45 +386,41 @@ struct PriceButton: View {
                 Text(title)
                     .font(Theme.label(13, weight: .bold))
                 HStack(spacing: 2) {
-                    CoinIcon(size: 10)
+                    CoinIcon(size: 12)
                     Text("\(price)")
                         .font(Theme.number(11))
                 }
             }
             .foregroundStyle(Theme.ink)
-            .frame(minWidth: 46, minHeight: 40)
-            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.parchment))
-            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Theme.border, lineWidth: 1))
+            .frame(minWidth: 48, minHeight: 42)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SlotButtonStyle())
         .disabled(!enabled)
         .opacity(enabled ? 1 : 0.45)
     }
 }
 
-/// A wide call-to-action button with a price.
+/// A wide painted board with a price on it.
 struct BigButton: View {
     let title: String
     let price: Int
-    let tint: Color
+    let tint: CandyTint
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Text(title)
-                    .font(Theme.label(18, weight: .semibold))
+                    .font(Theme.display(18))
                 Spacer()
-                CoinIcon(size: 18)
+                CoinIcon(size: 24)
                 Text("\(price)")
                     .font(Theme.number(18))
             }
-            .foregroundStyle(.white)
-            .padding(.horizontal, 18)
-            .padding(.vertical, 14)
-            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(tint))
+            .padding(.horizontal, 4)
+            .padding(.vertical, 2)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(CandyButtonStyle(tint: tint))
     }
 }
 
@@ -482,45 +438,19 @@ private struct PriceTag: View {
                 .font(Theme.label(13))
                 .foregroundStyle(Theme.inkSoft)
             if t >= 0.67 {
-                Image(systemName: "arrow.up.circle.fill").foregroundStyle(Theme.leaf)
+                MenuIcon(symbol: "arrow.up.circle.fill", size: 12)
                     .accessibilityLabel("Good price")
             } else if t <= 0.33 {
-                Image(systemName: "arrow.down.circle.fill").foregroundStyle(Color(red: 0.8, green: 0.4, blue: 0.25))
+                MenuIcon(symbol: "arrow.down.circle.fill", size: 12)
                     .accessibilityLabel("Low price")
             }
         }
-        .font(.system(size: 12, weight: .semibold))
     }
 }
 
 /// "★ Special": today's market special pays extra.
 private struct SpecialBadge: View {
     var body: some View {
-        Label("Special", systemImage: "star.fill")
-            .font(Theme.label(11, weight: .bold))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(Capsule().fill(Theme.gold))
-    }
-}
-
-struct EmptyNote: View {
-    let symbol: String
-    let text: String
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: symbol)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(Theme.inkSoft)
-            Text(text)
-                .font(Theme.label(15))
-                .foregroundStyle(Theme.inkSoft)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.parchmentDark.opacity(0.4)))
+        PaperTag(text: "Special", symbol: "star.fill", tint: Theme.goldDark)
     }
 }

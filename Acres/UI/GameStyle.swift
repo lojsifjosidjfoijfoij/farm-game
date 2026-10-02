@@ -92,6 +92,17 @@ struct CandyButtonStyle: ButtonStyle {
     }
 }
 
+/// A small paper button in a list (prices, choices): a paper slot that
+/// presses in a pixel.
+struct SlotButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding(.horizontal, 4)
+            .background(PixelFrame(configuration.isPressed ? .slotSelected : .slot))
+            .offset(y: configuration.isPressed ? HUD.pixel : 0)
+    }
+}
+
 // MARK: - Surfaces
 
 /// The paper every menu is written on: pixel-art paper, tiled.
@@ -110,6 +121,15 @@ extension View {
         padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(PixelArtFrame(name: "ui_card", border: 4))
+    }
+}
+
+/// A thin ink line across a card (above a total).
+struct PixelRule: View {
+    var body: some View {
+        Rectangle()
+            .fill(HUD.edge.opacity(0.3))
+            .frame(height: HUD.pixel)
     }
 }
 
@@ -154,16 +174,14 @@ struct MenuSheet<Accessory: View, Content: View>: View {
                 Spacer(minLength: 8)
                 accessory
                 Button(action: onClose) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 15, weight: .black))
-                        .foregroundStyle(HUD.text)
+                    HUDIcon(name: "ui_icon_close")
                 }
                 .buttonStyle(HUDButtonStyle(size: 40))
                 .accessibilityLabel("Close")
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
-            .background(PixelFrame(.leather))
+            .background(PixelFrame(.leather).ignoresSafeArea())  // under the notch too
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
@@ -256,12 +274,14 @@ struct PaperToggleStyle: ToggleStyle {
     }
 }
 
-/// "Are you sure?" on a paper card, instead of the system's grey sheet.
+/// "Are you sure?" on a paper card, instead of the system's grey sheet (and,
+/// with no cancel button, a notice with just "OK").
 struct PaperConfirm: ViewModifier {
     let title: String
     @Binding var isPresented: Bool
     var message: String?
     let confirmTitle: String
+    var cancelTitle: String? = "Cancel"
     var destructive = false
     let action: () -> Void
 
@@ -271,7 +291,7 @@ struct PaperConfirm: ViewModifier {
                 ZStack {
                     Color.black.opacity(0.45)
                         .ignoresSafeArea()
-                        .onTapGesture { isPresented = false }
+                        .onTapGesture { if cancelTitle != nil { isPresented = false } }
                     VStack(spacing: 12) {
                         Text(title)
                             .font(Theme.display(19))
@@ -285,9 +305,11 @@ struct PaperConfirm: ViewModifier {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         HStack(spacing: 12) {
-                            Button("Cancel") { isPresented = false }
-                                .font(Theme.display(16))
-                                .buttonStyle(CandyButtonStyle(tint: .wood))
+                            if let cancelTitle {
+                                Button(cancelTitle) { isPresented = false }
+                                    .font(Theme.display(16))
+                                    .buttonStyle(CandyButtonStyle(tint: .wood))
+                            }
                             Button(confirmTitle) {
                                 isPresented = false
                                 action()
@@ -309,11 +331,33 @@ struct PaperConfirm: ViewModifier {
     }
 }
 
+/// A question for `paperConfirm(_:)`, asked from deep inside a page (the
+/// card covers the whole sheet, not just the part that asked).
+struct ConfirmRequest {
+    let title: String
+    var message: String?
+    let confirmTitle: String
+    var destructive = false
+    let action: () -> Void
+}
+
 extension View {
     func paperConfirm(_ title: String, isPresented: Binding<Bool>, message: String? = nil,
-                      confirmTitle: String, destructive: Bool = false, action: @escaping () -> Void) -> some View {
+                      confirmTitle: String, cancelTitle: String? = "Cancel", destructive: Bool = false,
+                      action: @escaping () -> Void) -> some View {
         modifier(PaperConfirm(title: title, isPresented: isPresented, message: message,
-                              confirmTitle: confirmTitle, destructive: destructive, action: action))
+                              confirmTitle: confirmTitle, cancelTitle: cancelTitle, destructive: destructive, action: action))
+    }
+
+    func paperConfirm(_ request: Binding<ConfirmRequest?>) -> some View {
+        let current = request.wrappedValue
+        return paperConfirm(current?.title ?? "",
+                            isPresented: Binding(get: { request.wrappedValue != nil },
+                                                 set: { if !$0 { request.wrappedValue = nil } }),
+                            message: current?.message, confirmTitle: current?.confirmTitle ?? "OK",
+                            destructive: current?.destructive ?? false) {
+            current?.action()
+        }
     }
 }
 
@@ -428,5 +472,145 @@ struct MentorPortrait: View {
                 .padding(6)
         }
         .frame(width: size, height: size)
+    }
+}
+
+// MARK: - Icons
+
+/// The menus' little pictures: the pixel icon for a thing the farm has art
+/// for (`art/hud/make_hud.py`), otherwise the system symbol in ink. Menus
+/// name things by SF symbol (some come from the game: shops, clients,
+/// tiles), and this table turns them into pixel art.
+struct MenuIcon: View {
+    let symbol: String
+    /// Pixel icons are 12 art px; 24 pt (2 pt per art px) like the HUD, 12 for small tags.
+    var size: CGFloat = HUD.iconSize
+    var tint: Color = Theme.ink
+
+    var body: some View {
+        if let art = Self.art[symbol] {
+            HUDIcon(name: art, size: size)
+        } else {
+            Image(systemName: symbol)
+                .font(.system(size: size * 0.75, weight: .bold))
+                .foregroundStyle(tint)
+                .frame(width: size, height: size)
+        }
+    }
+
+    static let art: [String: String] = [
+        "lock.fill": "ui_icon_lock", "lock.open.fill": "ui_icon_unlock",
+        "checkmark.seal.fill": "ui_icon_check", "checkmark.circle.fill": "ui_icon_check", "checkmark.circle": "ui_icon_check",
+        "gift.fill": "ui_icon_gift",
+        "star.fill": "ui_icon_level", "star.circle.fill": "ui_icon_level", "star.bubble.fill": "ui_icon_level",
+        "sparkles": "ui_icon_sparkle", "flame.fill": "ui_icon_flame",
+        "truck.pickup.side.fill": "ui_icon_truck", "truck.pickup.side": "ui_icon_truck",
+        "storefront.fill": "ui_icon_shop", "storefront": "ui_icon_shop", "door.left.hand.open": "ui_icon_shop",
+        "door.left.hand.closed": "ui_icon_lock",
+        "building.columns.fill": "ui_icon_bank", "hammer.fill": "ui_icon_hammer",
+        "trophy.fill": "ui_icon_trophy", "rosette": "ui_icon_rosette", "house.fill": "ui_icon_house",
+        "shippingbox": "ui_icon_crate", "shippingbox.fill": "ui_icon_crate", "archivebox.fill": "ui_icon_crate",
+        "tray.and.arrow.down.fill": "ui_icon_arrow_down", "arrow.down.circle.fill": "ui_icon_arrow_down",
+        "arrow.up.bin.fill": "ui_icon_arrow_up", "arrow.up.bin": "ui_icon_arrow_up", "arrow.up.circle.fill": "ui_icon_arrow_up",
+        "leaf": "ui_icon_leaf", "leaf.fill": "ui_icon_leaf", "leaf.arrow.triangle.circlepath": "ui_icon_leaf",
+        "tree.fill": "ui_icon_tree", "drop.fill": "ui_icon_drop", "heart.fill": "ui_icon_heart",
+        "doc.text.fill": "ui_icon_bill", "signpost.right.fill": "ui_icon_signpost",
+        "square.grid.3x3.fill": "ui_icon_field", "square.dashed": "ui_icon_field",
+        "fish.fill": "ui_icon_fish", "fork.knife": "ui_icon_bowl", "birthday.cake.fill": "ui_icon_bread",
+        "hare.fill": "ui_icon_hen", "basket.fill": "ui_icon_inventory", "fuelpump.fill": "ui_icon_fuel",
+        "location.fill": "ui_icon_map", "map.fill": "ui_icon_map", "book.closed.fill": "ui_icon_journal",
+        "clock.fill": "ui_icon_clock", "clock.arrow.circlepath": "ui_icon_clock", "hourglass": "ui_icon_clock",
+        "gearshape.fill": "ui_icon_settings", "person.fill": "ui_icon_worker",
+        "hand.tap.fill": "ui_icon_hand", "speaker.wave.2.fill": "ui_icon_note",
+        "calendar": "ui_icon_clock", "banknote.fill": "ui_icon_coin", "book.fill": "ui_icon_journal",
+        "flag.fill": "ui_icon_goals", "checklist": "ui_icon_goals", "xmark": "ui_icon_close",
+        "moon.stars.fill": "ui_icon_time_night", "moon.stars": "ui_icon_time_night", "moon.zzz.fill": "ui_icon_time_night",
+        "sun.max.fill": "ui_icon_time_day", "sunrise.fill": "ui_icon_time_morning", "sunset.fill": "ui_icon_time_evening",
+        "cloud.fill": "ui_icon_weather_cloudy", "cloud.rain.fill": "ui_icon_weather_rain", "cloud.snow.fill": "ui_icon_weather_snow",
+        "camera.macro": "ui_icon_season_spring", "snowflake": "ui_icon_season_winter",
+    ]
+}
+
+/// A pixel icon and a line of text (where a system `Label` would go).
+struct IconLabel: View {
+    let text: String
+    let symbol: String
+    var size: CGFloat = HUD.iconSize
+    var spacing: CGFloat = 6
+
+    init(_ text: String, symbol: String, size: CGFloat = HUD.iconSize, spacing: CGFloat = 6) {
+        self.text = text
+        self.symbol = symbol
+        self.size = size
+        self.spacing = spacing
+    }
+
+    var body: some View {
+        HStack(spacing: spacing) {
+            MenuIcon(symbol: symbol, size: size)
+            Text(text)
+        }
+    }
+}
+
+/// A small paper tag: "Level 5" with a padlock, "Special", a count.
+struct PaperTag: View {
+    let text: String
+    var symbol: String?
+    var tint: Color = Theme.inkSoft
+
+    var body: some View {
+        HStack(spacing: 4) {
+            if let symbol { MenuIcon(symbol: symbol, size: 12) }
+            Text(text)
+                .font(Theme.label(12, weight: .bold))
+                .foregroundStyle(tint)
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(InsetPanel())
+    }
+}
+
+/// A section heading on a page: the title, and a quiet note on the right.
+struct PageHeading: View {
+    let title: String
+    var trailing: String?
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(title)
+                .font(Theme.title(18))
+                .foregroundStyle(Theme.ink)
+            Spacer(minLength: 8)
+            if let trailing {
+                Text(trailing)
+                    .font(Theme.label(12, weight: .semibold))
+                    .foregroundStyle(Theme.inkSoft)
+                    .multilineTextAlignment(.trailing)
+            }
+        }
+        .padding(.top, 6)
+    }
+}
+
+/// A short note when a list is empty: a pixel icon and a line of ink.
+struct PaperNote: View {
+    let symbol: String
+    let text: String
+
+    var body: some View {
+        HStack(spacing: 10) {
+            MenuIcon(symbol: symbol)
+            Text(text)
+                .font(Theme.label(14))
+                .foregroundStyle(Theme.inkSoft)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(InsetPanel())
     }
 }
