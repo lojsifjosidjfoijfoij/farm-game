@@ -80,11 +80,20 @@ goodbye to him. To meet him: gear → *Show me around again*, or start a new far
 The whole game is moving to the look agreed on the mock (`art/style_test`): richer pixel art at
 32 pixels per tile. Done so far:
 
-1. **Sharper, richer art:** every Blender sprite (farmhouse, barn, trees, bushes, rocks, wheat,
-   props, the truck) is re-rendered at 32 pixels per tile with cool shadows, warm light, boards
-   and shingles in varied tones and leafy trees, and crisp edges. New: pines (all four seasons) and
-   the iron lamp post. Everything else (the farmer, animals, the village, other crops) is still
-   drawn art, now on the same pixel grid; it gets converted next, in batches.
+1. **Everything in the new art:** the whole game is now modelled in Blender and rendered at 32
+   pixels per tile, with cool shadows, warm light and crisp edges. That covers:
+   - the farmer in all 39 frames, the three farmhands and three villagers;
+   - every animal and its young, in all their poses;
+   - all 15 crops at every stage;
+   - every tree in all four seasons, with fruit, blossom, young trees and saplings;
+   - the farmhouse at every tier, and the farm buildings;
+   - the whole village, with night windows;
+   - the 11 workshops and all the props.
+
+   The pond and Willow Lake are drawn pixel art, and so are the small effects. All 107 item
+   icons and Arne's portrait are rendered in the same style. Nothing the game shows is a
+   placeholder painting any more (the asset list still names a few things the game doesn't
+   use yet).
 2. **The ground:** pixel-art grass with tufts, clover and flowers; dirt paths with pebbles, ragged
    edges, a darker rim and grass poking over it; gravel and asphalt roads. No blur anywhere, and
    the pattern doesn't visibly repeat.

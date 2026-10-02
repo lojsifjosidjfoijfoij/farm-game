@@ -20,6 +20,8 @@ LOOKS = {
     "worker3": dict(hat="straw", hair="7a4a2a", beard=True, shirt="f2efe6", pants="3e5a8a", bib=True, boots="4a3024"),
     "villager1": dict(hat=None, hair="3a2a24", long_hair=True, shirt="3f9a9a", pants="7a5232", boots="3a2a24"),
     "villager2": dict(hat="cap", cap="c8483a", hair="5a3a24", shirt="d8a83a", pants="3e5a8a", boots="3a2a24"),
+    "arne": dict(hat="straw", hair="d8d8d4", beard=True, shirt="4f8a4a", pants="3e64a8", bib=True, boots="5a3a24",
+                 skin="eebc96"),
     "villager3": dict(hat=None, hair="ecebf0", bun=True, shirt="a890d0", skirt="8a8a90", boots="5a4a4a", skin="f0c8b0"),
 }
 

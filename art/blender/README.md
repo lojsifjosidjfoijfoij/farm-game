@@ -81,6 +81,10 @@ AI model generation off: those bring in other people's models, in other styles.
    eat, asleep, facing left) and `models_village.py` the village buildings (with their night
    windows), village props and the farm's workshops. Flat water (the pond, Willow Lake, lily
    pads) is drawn as pixel art by `art/terrain/make_water.py` instead.
+4. Item icons and Arne's portrait come from `icons.py` (run it like `render.py`): small models
+   framed to fill a 20 × 20 icon (26 × 26 for the portrait), rendered through the same toon
+   pass. The small world effects (puffs, sparkles, drops, the tile ring, bubbles) are drawn by
+   `art/fx/make_fx.py`.
 3. Register it in `ASSETS` in `render.py`, render it, and look at it with `preview.py` and
    `mockup.py`.
 
