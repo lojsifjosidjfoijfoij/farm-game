@@ -4,18 +4,32 @@ import AcresCore
 /// Keeps soil and crop sprites in step with `GameState.plots`.
 ///
 /// It only rebuilds a plot's sprites when something visible changes (wet/dry
-/// soil, crop, growth stage), and only for plots in loaded chunks.
+/// soil, crop, growth stage, which sides border the meadow), and only for
+/// plots in loaded chunks. Each plot picks one of three soil pictures from
+/// its position, so a field isn't one repeated tile, and grass creeps over
+/// the soil on every side that has no plot next to it.
 @MainActor
 final class FieldRenderer {
     private struct Shown: Equatable {
         var wet: Bool
         var cropID: String?
         var stage: Int
+        /// Sides with no plot next to them (north, east, south, west).
+        var edges: Edges = []
+    }
+
+    struct Edges: OptionSet, Equatable {
+        let rawValue: UInt8
+        static let north = Edges(rawValue: 1)
+        static let east = Edges(rawValue: 2)
+        static let south = Edges(rawValue: 4)
+        static let west = Edges(rawValue: 8)
     }
 
     private final class PlotNodes {
         let soil: SKSpriteNode
         var crop: SKSpriteNode?
+        var edgeNodes: [SKSpriteNode] = []
         var shown: Shown
 
         init(soil: SKSpriteNode, shown: Shown) {
@@ -38,7 +52,12 @@ final class FieldRenderer {
     /// Brings sprites up to date. `isVisible` says whether a tile's chunk is loaded.
     func sync(plots: FarmPlots, now: TimeInterval, isVisible: (TileCoord) -> Bool) {
         for (tile, plot) in plots.byTile where isVisible(tile) {
-            let shown = Shown(wet: plot.isWet(at: now), cropID: plot.crop?.cropID, stage: plot.crop?.stage ?? 0)
+            var edges: Edges = []
+            if plots[TileCoord(tile.x, tile.y + 1)] == nil { edges.insert(.north) }
+            if plots[TileCoord(tile.x + 1, tile.y)] == nil { edges.insert(.east) }
+            if plots[TileCoord(tile.x, tile.y - 1)] == nil { edges.insert(.south) }
+            if plots[TileCoord(tile.x - 1, tile.y)] == nil { edges.insert(.west) }
+            let shown = Shown(wet: plot.isWet(at: now), cropID: plot.crop?.cropID, stage: plot.crop?.stage ?? 0, edges: edges)
             if let existing = nodes[tile] {
                 if existing.shown != shown { update(existing, tile: tile, to: shown) }
             } else {
@@ -65,12 +84,12 @@ final class FieldRenderer {
     // MARK: Private
 
     private func create(_ tile: TileCoord, _ shown: Shown) {
-        let soil = SKSpriteNode(texture: assets.texture(soilName(wet: shown.wet)))
+        let soil = SKSpriteNode(texture: assets.texture(soilName(wet: shown.wet, tile: tile)))
         soil.size = CGSize(width: World.tileSize, height: World.tileSize)
         soil.position = World.point(tile.center)
         soil.zPosition = 0.5  // above the ground, below contact shadows
         flatLayer.addChild(soil)
-        let plotNodes = PlotNodes(soil: soil, shown: Shown(wet: shown.wet, cropID: nil, stage: 0))
+        let plotNodes = PlotNodes(soil: soil, shown: Shown(wet: shown.wet, cropID: nil, stage: 0, edges: []))
         nodes[tile] = plotNodes
         update(plotNodes, tile: tile, to: shown)
     }
@@ -78,7 +97,10 @@ final class FieldRenderer {
     private func update(_ plotNodes: PlotNodes, tile: TileCoord, to shown: Shown) {
         let old = plotNodes.shown
         if old.wet != shown.wet {
-            plotNodes.soil.texture = assets.texture(soilName(wet: shown.wet))
+            plotNodes.soil.texture = assets.texture(soilName(wet: shown.wet, tile: tile))
+        }
+        if old.edges != shown.edges {
+            setEdges(plotNodes, shown.edges)
         }
         if old.cropID != shown.cropID || old.stage != shown.stage || plotNodes.crop == nil {
             if let cropID = shown.cropID {
@@ -134,7 +156,27 @@ final class FieldRenderer {
         sparkle.run(.repeatForever(twinkle))
     }
 
-    private func soilName(wet: Bool) -> String { wet ? "field_soil_watered" : "field_soil_plowed" }
+    /// One of three pictures of the soil, picked by position (so it stays the
+    /// same when the plot gets watered).
+    private func soilName(wet: Bool, tile: TileCoord) -> String {
+        let variant = ["", "_2", "_3"][abs(tile.x * 7 + tile.y * 13) % 3]
+        return (wet ? "field_soil_watered" : "field_soil_plowed") + variant
+    }
+
+    /// Grass over the soil's border on each side that meets the meadow.
+    private func setEdges(_ plotNodes: PlotNodes, _ edges: Edges) {
+        for node in plotNodes.edgeNodes { node.removeFromParent() }
+        plotNodes.edgeNodes = []
+        let sides: [(Edges, String)] = [(.north, "field_edge_n"), (.east, "field_edge_e"),
+                                        (.south, "field_edge_s"), (.west, "field_edge_w")]
+        for (side, name) in sides where edges.contains(side) {
+            let node = SKSpriteNode(texture: assets.texture(name))
+            node.size = plotNodes.soil.size
+            node.zPosition = 0.01
+            plotNodes.soil.addChild(node)
+            plotNodes.edgeNodes.append(node)
+        }
+    }
 }
 
 /// Short, satisfying feedback animations for farming actions.

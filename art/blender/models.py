@@ -217,8 +217,6 @@ def barn_old():
 # ----------------------------------------------------------------------- nature
 
 FENCE_WOOD = hexrgb("9c7d5a")
-SOIL = hexrgb("8f5a34")
-SOIL_WET = hexrgb("6a4024")
 GRASS_GREEN = hexrgb("5fae34")
 SNOW = hexrgb("f2f6fb")
 LEAVES = {
@@ -391,11 +389,6 @@ def wheat(stage):
                 tip = (x + dx + lean, y, height)
                 stick((x + dx, y, 0), tip, 0.022, stalk, verts=4)
                 blob(0.065, (tip[0], y, height + 0.02), ear, squash=(0.75, 0.75, 1.7), seed=k)
-
-
-def soil(wet=False):
-    colour = SOIL_WET if wet else SOIL
-    box((1.0, 1.0, 0.02), (0, 0, 0), mat("soil", colour, noise=0.12, noise_scale=10, lines=("y", 0.2, 0.07, 0.62)))
 
 
 # ------------------------------------------------------------------------ props

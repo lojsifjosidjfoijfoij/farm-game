@@ -84,7 +84,7 @@ something the game points at (the farmhouse chimney's smoke), the point is in
 
 Batch 1, the first screen: the run-down farmhouse (and its night lights), the old barn, oaks in
 four seasons, young oak and birch, bushes, rocks, stump, grass tufts, wheat in all five stages,
-plowed and watered soil, well, hay bale, crate, log pile, mailbox, the wooden fence and the truck
+well, hay bale, crate, log pile, mailbox, the wooden fence and the truck
 in 16 directions with both loads.
 
 ## The look (v2)

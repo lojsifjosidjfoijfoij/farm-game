@@ -38,8 +38,6 @@ ASSETS = {
     "nature_grass_tuft_a": (lambda: models.grass_tuft(False), {"outline": False}),
     "nature_grass_tuft_b": (lambda: models.grass_tuft(True), {"outline": False}),
     **{f"crop_wheat_stage{k}": ((lambda k=k: models.wheat(k)), {} if k else {"outline": False}) for k in range(5)},
-    "field_soil_plowed": (lambda: models.soil(False), FLAT),
-    "field_soil_watered": (lambda: models.soil(True), FLAT),
     "prop_well": (models.well, {}),
     "prop_hay_bale": (models.hay_bale, {}),
     "prop_crate": (models.crate, {}),

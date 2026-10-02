@@ -37,7 +37,7 @@ procedurally in code.
 | Category | Assets | Needed in Phase 1 |
 |---|---:|---:|
 | Terrain (tileable ground textures) | 11 | 5 |
-| Fields | 4 | 0 |
+| Fields | 14 | 0 |
 | Crops | 75 | 0 |
 | Trees | 40 | 4 |
 | Nature props | 15 | 10 |
@@ -49,7 +49,7 @@ procedurally in code.
 | Item icons | 107 | 0 |
 | Effects & particles | 36 | 4 |
 | User interface | 45 | 15 |
-| **Total** | **751** | **52** |
+| **Total** | **761** | **52** |
 | Audio files | 58 | 0 |
 
 ## Terrain (tileable ground textures)
@@ -72,9 +72,19 @@ procedurally in code.
 
 | Name | Pixels | World size (tiles) | Anchor | Phase | Description |
 |---|---|---|---|---:|---|
-| `field_soil_plowed` | 128 × 128 | 1 × 1 | — | 2 | One tile of freshly plowed soil, furrows running left-right, rich dark brown, soft edges so tiles merge. *(flat)* |
-| `field_soil_watered` | 128 × 128 | 1 × 1 | — | 2 | Same as plowed but darker, slightly glossy: wet soil. *(flat)* |
+| `field_soil_plowed` | 128 × 128 | 1 × 1 | — | 2 | One tile of plowed soil, pixel art: four furrows running left-right (lit crest, ridge, dark trough) that join into rows across tiles, clods, pebbles, bits of straw. *(flat)* |
+| `field_soil_plowed_2` | 128 × 128 | 1 × 1 | — | 2 | Plowed soil, a second picture. *(flat)* |
+| `field_soil_plowed_3` | 128 × 128 | 1 × 1 | — | 2 | Plowed soil, a third picture. *(flat)* |
+| `field_soil_watered` | 128 × 128 | 1 × 1 | — | 2 | The same tile wet: darker and cooler, with glints on the crests (same layout, so a plot only darkens). *(flat)* |
+| `field_soil_watered_2` | 128 × 128 | 1 × 1 | — | 2 | Wet soil, the second picture. *(flat)* |
+| `field_soil_watered_3` | 128 × 128 | 1 × 1 | — | 2 | Wet soil, the third picture. *(flat)* |
 | `field_soil_fertilized` | 128 × 128 | 1 × 1 | — | 7 | Plowed soil with pale specks of fertilizer. *(flat)* |
+| `field_soil_fertilized_2` | 128 × 128 | 1 × 1 | — | 7 | Fertilized soil, the second picture. *(flat)* |
+| `field_soil_fertilized_3` | 128 × 128 | 1 × 1 | — | 7 | Fertilized soil, the third picture. *(flat)* |
+| `field_edge_n` | 128 × 128 | 1 × 1 | — | 2 | Laid over a plot with no plot to the north: grass creeping over the soil's border, a dark lip, upright tufts. Transparent elsewhere. *(flat)* |
+| `field_edge_e` | 128 × 128 | 1 × 1 | — | 2 | The same, on the east side. *(flat)* |
+| `field_edge_s` | 128 × 128 | 1 × 1 | — | 2 | The same, on the south side. *(flat)* |
+| `field_edge_w` | 128 × 128 | 1 × 1 | — | 2 | The same, on the west side. *(flat)* |
 | `field_weeds` | 128 × 141 | 1 × 1.1 | 0.1 | 2 | Overgrown weeds and dry grass covering a tile that must be cleared. |
 
 ## Crops

@@ -74,12 +74,25 @@ public enum AssetManifest {
     // MARK: - Fields
 
     static let fields: [AssetSpec] = [
+        // Soil is pixel art from art/terrain/make_soil.py: three pictures of each,
+        // picked by position, so a field isn't one repeated tile.
         .sprite("field_soil_plowed", .field, tiles: 1, 1, layer: .flat, phase: 2,
-                "One tile of freshly plowed soil, furrows running left-right, rich dark brown, soft edges so tiles merge."),
+                "One tile of plowed soil, pixel art: four furrows running left-right (lit crest, ridge, dark trough) that join into rows across tiles, clods, pebbles, bits of straw."),
+        .sprite("field_soil_plowed_2", .field, tiles: 1, 1, layer: .flat, phase: 2, "Plowed soil, a second picture."),
+        .sprite("field_soil_plowed_3", .field, tiles: 1, 1, layer: .flat, phase: 2, "Plowed soil, a third picture."),
         .sprite("field_soil_watered", .field, tiles: 1, 1, layer: .flat, phase: 2,
-                "Same as plowed but darker, slightly glossy: wet soil."),
+                "The same tile wet: darker and cooler, with glints on the crests (same layout, so a plot only darkens)."),
+        .sprite("field_soil_watered_2", .field, tiles: 1, 1, layer: .flat, phase: 2, "Wet soil, the second picture."),
+        .sprite("field_soil_watered_3", .field, tiles: 1, 1, layer: .flat, phase: 2, "Wet soil, the third picture."),
         .sprite("field_soil_fertilized", .field, tiles: 1, 1, layer: .flat, phase: 7,
                 "Plowed soil with pale specks of fertilizer."),
+        .sprite("field_soil_fertilized_2", .field, tiles: 1, 1, layer: .flat, phase: 7, "Fertilized soil, the second picture."),
+        .sprite("field_soil_fertilized_3", .field, tiles: 1, 1, layer: .flat, phase: 7, "Fertilized soil, the third picture."),
+        .sprite("field_edge_n", .field, tiles: 1, 1, layer: .flat, phase: 2,
+                "Laid over a plot with no plot to the north: grass creeping over the soil's border, a dark lip, upright tufts. Transparent elsewhere."),
+        .sprite("field_edge_e", .field, tiles: 1, 1, layer: .flat, phase: 2, "The same, on the east side."),
+        .sprite("field_edge_s", .field, tiles: 1, 1, layer: .flat, phase: 2, "The same, on the south side."),
+        .sprite("field_edge_w", .field, tiles: 1, 1, layer: .flat, phase: 2, "The same, on the west side."),
         .sprite("field_weeds", .field, tiles: 1, 1.1, anchorY: 0.1, phase: 2,
                 "Overgrown weeds and dry grass covering a tile that must be cleared."),
     ]
