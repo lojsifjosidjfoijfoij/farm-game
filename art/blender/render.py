@@ -16,6 +16,7 @@ from frames import frame  # noqa: E402,F401  (live.py uses render.frame too)
 import models  # noqa: E402
 import models_farm as farm  # noqa: E402
 import models_people as people  # noqa: E402
+import models_animals as animals  # noqa: E402
 
 PREVIEW = os.environ.get("ACRES_ART_PREVIEW") or os.path.join(os.path.dirname(__file__), ".renders", "preview")
 
@@ -85,6 +86,7 @@ ASSETS = {
        for n in (1, 2, 3) for f in ("down", "up", "side") for p in people.WORKER_POSES},
     **{f"character_villager{n}_{f}_{p}": ((lambda n=n, f=f, p=p: people.person(f"villager{n}", f, p)), {})
        for n in (1, 2, 3) for f in ("down", "up", "side") for p in people.VILLAGER_POSES},
+    **{f"animal_{a}_{p}": ((lambda a=a, p=p: animals.animal(a, p)), {}) for a in animals.ANIMALS for p in animals.POSES},
     **{f"vehicle_truck_old_dir{d:02d}": ((lambda d=d: models.truck(d)), {}) for d in range(16)},
     **{f"vehicle_truck_old_load{n}_dir{d:02d}": ((lambda d=d, n=n: models.truck(d, load=n, overlay=True)), {})
        for n in (1, 2) for d in range(16)},
