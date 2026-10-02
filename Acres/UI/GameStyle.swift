@@ -456,7 +456,7 @@ struct BannerView: View {
     }
 }
 
-/// Tom, who ran the farm before you and shows you the ropes: his portrait
+/// Arne, who ran the farm before you and shows you the ropes: his portrait
 /// on a sky-blue square in a paper frame.
 struct MentorPortrait: View {
     var size: CGFloat = 56

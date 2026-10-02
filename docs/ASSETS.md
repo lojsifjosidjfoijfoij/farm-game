@@ -48,8 +48,8 @@ procedurally in code.
 | Animals | 70 | 0 |
 | Item icons | 107 | 0 |
 | Effects & particles | 36 | 4 |
-| User interface | 91 | 15 |
-| **Total** | **807** | **52** |
+| User interface | 92 | 15 |
+| **Total** | **808** | **52** |
 | Audio files | 58 | 0 |
 
 ## Terrain (tileable ground textures)
@@ -757,7 +757,7 @@ procedurally in code.
 | `ui_icon_journal` | 72 × 72 | UI | — | 6 | Leather-bound farm journal with a paper label and a red ribbon bookmark (orders, the accounts, farm plans, the almanac). |
 | `ui_icon_worker` | 72 × 72 | UI | — | 6 | Farmhand in a straw hat. |
 | `ui_icon_collection` | 96 × 96 | UI | — | 7 | Leather-bound book (collection). |
-| `ui_portrait_mentor` | 192 × 192 | UI | — | 13 | Tom, the old farmer who teaches you (tutorial card): head and shoulders, grey hair and beard, straw hat, green shirt, overalls. Transparent; the card puts it on a sky-blue disc. |
+| `ui_portrait_mentor` | 192 × 192 | UI | — | 13 | Arne, the old farmer who keeps you company while you learn the farm: head and shoulders, grey hair and beard, straw hat, green shirt, overalls. Transparent; the HUD puts it on a sky-blue square. |
 | `ui_joystick_base` | 420 × 420 | UI | — | 3 | Joystick ring, soft translucent. |
 | `ui_joystick_knob` | 192 × 192 | UI | — | 3 | Joystick knob. |
 | `ui_panel_parchment` | 288 × 288 | UI | — | 1 | 9-slice panel: warm parchment with a subtle hand-drawn border (slice 32 pt). |
@@ -790,6 +790,7 @@ procedurally in code.
 | `ui_icon_weather_rain` | 72 × 72 | UI | — | 13 | Cloud with rain. |
 | `ui_icon_weather_snow` | 72 × 72 | UI | — | 13 | Cloud with snow. |
 | `ui_icon_close` | 72 × 72 | UI | — | 13 | A cream paper X with a dark edge (close a menu). |
+| `ui_icon_tuck` | 72 × 72 | UI | — | 13 | A cream chevron pointing left (tuck Arne away to the side). |
 | `ui_icon_lock` | 72 × 72 | UI | — | 13 | Gold padlock (not unlocked yet). |
 | `ui_icon_unlock` | 72 × 72 | UI | — | 13 | Open padlock (just unlocked). |
 | `ui_icon_check` | 72 × 72 | UI | — | 13 | Green round badge with a white check (done, owned). |

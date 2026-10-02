@@ -49,11 +49,12 @@ struct DebugPanelView: View {
                     Button("Level up (+1)") { game.debugLevelUp() }
                 }
 
-                Section("Truck & tutorial") {
+                Section("Truck & Arne") {
                     Button("Fill the tank") { game.debugFillTank() }
                     Button("Load the truck with goods") { game.debugLoadTruckWithGoods() }
-                    Button("Skip the tutorial") { game.skipTutorial() }
-                    Button("Restart the tutorial") { game.restartTutorial() }
+                    Button("Send Arne home") { game.skipTutorial() }
+                    Button("Arne shows you around again") { game.restartTutorial() }
+                    Button("Arne drops by now") { game.debugGuideDropIn() }
                 }
 
                 Section("World") {

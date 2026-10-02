@@ -14,7 +14,7 @@ enum PixelArt {
     /// How many times smaller than the painted picture, in the world:
     /// 128 px per tile → 32, the same grid as the Blender art. Bigger is chunkier.
     static let worldShrink = 4
-    /// Menu and HUD pictures (item icons, Tom) are a little finer, so they read at icon size.
+    /// Menu and HUD pictures (item icons, Arne) are a little finer, so they read at icon size.
     static let uiShrink = 4
     /// Art pixels per world tile (the ground shader snaps to the same grid).
     static var pixelsPerTile: Double { AssetSpec.pixelsPerTile / Double(worldShrink) }

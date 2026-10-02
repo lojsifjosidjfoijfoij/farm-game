@@ -233,10 +233,55 @@ final class TutorialTests: XCTestCase {
         XCTAssertEqual(TutorialState.order.last, .done)
     }
 
-    func testSkipping() {
+    func testSendingArneHome() {
         var t = TutorialState.new
         t.skip()
         XCTAssertFalse(t.isActive)
+        XCTAssertTrue(t.isRetired, "he won't drop by later either")
         XCTAssertFalse(t.handle(.next))
+        XCTAssertNil(t.nextTopic(in: GameState.newGame(seed: 1)))
+    }
+
+    func testArneSaysLessAsTheFirstLoopGoesOn() {
+        let details = TutorialState.order.map(\.detail)
+        XCTAssertEqual(details.first, .walkthrough, "he walks you through the first moves")
+        XCTAssertEqual(details, details.sorted(), "never more detail again once it has faded")
+        XCTAssertEqual(TutorialStep.sleep.detail, .walkthrough, "the whole first day is walked through")
+        XCTAssertEqual(TutorialStep.harvest.detail, .pointer)
+        XCTAssertEqual(TutorialStep.acceptOrder.detail, .nudge)
+    }
+
+    func testArneDropsByWithWhatsNewThenSaysGoodbye() {
+        var state = GameState.newGame(seed: 1)
+        state.tutorial = TutorialState(step: .welcome)
+        state.progress.level = 2
+        XCTAssertNil(state.tutorial.nextTopic(in: state), "not during the first loop")
+
+        state.tutorial = TutorialState(step: .done)
+        state.progress.level = 1
+        XCTAssertNil(state.tutorial.nextTopic(in: state), "nothing new at level 1")
+
+        state.progress.level = 2
+        var heard: [GuideTopic] = []
+        while let topic = state.tutorial.nextTopic(in: state), topic != .farewell {
+            heard.append(topic)
+            state.tutorial.tell(topic)
+        }
+        XCTAssertEqual(heard, [.chores, .axe, .coop, .workshop], "one at a time, in order")
+        XCTAssertNil(state.tutorial.nextTopic(in: state), "then he waits for level 3")
+
+        state.progress.level = 4
+        state.ranch["coop"].isRepaired = true
+        state.store.isRented = true
+        while let topic = state.tutorial.nextTopic(in: state), topic != .farewell {
+            heard.append(topic)
+            state.tutorial.tell(topic)
+        }
+        XCTAssertEqual(Array(heard.dropFirst(4)), [.fishing, .foraging, .almanac, .farmhand],
+                       "the shop is skipped: the player rented it on their own")
+        XCTAssertEqual(state.tutorial.nextTopic(in: state), .farewell)
+        state.tutorial.tell(.farewell)
+        XCTAssertTrue(state.tutorial.isRetired)
+        XCTAssertNil(state.tutorial.nextTopic(in: state))
     }
 }

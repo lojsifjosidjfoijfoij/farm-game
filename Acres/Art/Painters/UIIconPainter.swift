@@ -25,7 +25,7 @@ enum UIIconPainter {
         }
     }
 
-    /// Tom, head and shoulders, for the tutorial card. The figure is drawn by
+    /// Arne, head and shoulders, for his speech bubble. The figure is drawn by
     /// `FarmerPainter` on a larger virtual canvas so the head fills the frame.
     private static func mentorPortrait(_ spec: AssetSpec) -> UIImage {
         let side = CGFloat(spec.pixelWidth)

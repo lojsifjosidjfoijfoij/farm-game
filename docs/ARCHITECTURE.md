@@ -108,14 +108,22 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   the **truck bed** (30 items), so harvest has to be loaded at the farm and driven to market.
   Prices drift daily inside each crop's range (`MarketPricing`, deterministic per day). Every
   trade is a typed `TradeFailure` or success, applied atomically through `Simulation.trade`.
-- **Tutorial** (`TutorialState`, saved): Tom walks a whole first loop in 17 steps: plow → plow a
-  row → plant → water → sleep → harvest → claim a goal → load → drive → sell → buy seeds → drive
-  home → replant → open the phone → take an order → a tour of the fields. Saved step numbers never
-  change; the play order is `TutorialState.order`, so steps can be added anywhere. Steps advance
-  from game events (an event can complete a step up to two ahead, so doing things early counts);
-  only card steps advance with a button. They can be skipped and restarted from Settings. The
-  scene highlights a target tile, the HUD pulses the right button and a guide arrow points the
-  way while driving.
+- **Arne** (`TutorialState`, saved; `GameController+Guide.swift`): not a tutorial but an old
+  farmer at the side of the screen. He walks a whole first loop: plow → plow a row → plant →
+  water → sleep → harvest → claim a goal → load → drive → sell → buy seeds → drive home →
+  replant → open the journal → take an order → fields. Saved step numbers never change; the play
+  order is `TutorialState.order`. Steps advance from game events (an event can complete a step up
+  to two ahead, so doing things early counts); his introduction, "Will do" and goodbye advance
+  with a reply. What he says fades (`TutorialStep.detail`): **walkthrough** (the first day: every
+  move, the target glows), **pointer** (a line; the glow, the ring and the details only when the
+  player taps *Show me* or makes no progress for 25 s of quiet play), **nudge** (a word in
+  passing, then he tucks himself away; the button pulses). After the loop he drops by with
+  `GuideTopic`s (chores, axe, coop, workshop, fishing, foraging, shop, almanac, farmhand) as
+  they open up, one at a time after two minutes of quiet play, skipping what the player already
+  found (`isMoot`), then says goodbye (`farewell`, `isRetired`); `told` records them (v14).
+  The player can tuck him away at any time: he stays tucked and news lights a dot on his
+  portrait; tapped with nothing to say, he names the next goal. Settings: *Show me around
+  again* (restart) and *I'll manage* (`skip`, retire). His name is `Mentor.name`.
 
 ## Animals and trees (Phase 4)
 

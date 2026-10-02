@@ -154,7 +154,7 @@ struct HUDButtonStyle: ButtonStyle {
     }
 }
 
-/// The main board button ("Sell at the market", Tom's "Next"): painted
+/// The main board button ("Sell at the market", Arne's replies): painted
 /// orange (or plain wood when it can't be used yet), white lettering, and a
 /// darker bottom edge it presses into.
 struct HUDBoardButtonStyle: ButtonStyle {

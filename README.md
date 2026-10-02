@@ -35,10 +35,11 @@ iOS 17+ simulator or iPhone. No third-party dependencies.
 The game is played **sideways (landscape)**, either way round. In the simulator, turn it with
 ⌘← / ⌘→ if it opens upright.
 
-**Starting over:** basket → *Settings* → *From the beginning*:
-- **Replay the tutorial** runs the tutorial again on your current farm.
-- **Start a new farm…** deletes the current farm (after asking) and starts on day one with the
-  tutorial.
+**Starting over:** basket → gear (*Settings*):
+- **Show me around again** (under *Arne*) has Arne walk you through the first loop again on your
+  current farm.
+- **Start a new farm…** (under *From the beginning*) deletes the current farm (after asking) and
+  starts on day one, with Arne showing you around.
 
 Tests: press **⌘U** in Xcode (runs the simulation tests in `AcresCore`), or from a terminal:
 
@@ -46,6 +47,33 @@ Tests: press **⌘U** in Xcode (runs the simulation tests in `AcresCore`), or fr
 cd Packages/AcresCore
 swift test
 ```
+
+## Arne instead of a tutorial: what to test
+
+There's no tutorial any more, no step counter and no "Skip tutorial". Instead **Arne**, the old
+farmer who worked this land for forty years, keeps you company from the left side of the screen.
+(He was called Tom, but Hay Day already has a Tom. His name is one constant, `Mentor.name`.)
+Your save carries over (format v14): a farm that finished the old tutorial has already said
+goodbye to him. To meet him: gear → *Show me around again*, or start a new farm.
+
+1. **He introduces himself**, then walks you through the first day move by move: the hoe, plow
+   a spot, plow a row, sow, water, go to bed. The thing to tap glows, as before.
+2. **Then he says less.** From the harvest on (claim the goal, load the truck, drive to the
+   market, sell, buy seeds, drive home, plant again) he says where to go in a line, without the
+   glow. If you seem stuck for about 25 seconds, or tap **Show me**, he adds the details and the
+   glow comes on.
+3. **Then just a word in passing.** Orders in your journal, taking one on, buying fields: he
+   says it, steps back to the side after a few seconds, and the button you need pulses.
+4. **Tuck him away** any time with the arrow on his speech bubble (or tap his portrait). He
+   stays tucked: when he has news, a dot appears on his portrait; tap it and he comes out. Tap
+   his portrait when he has nothing to say and he tells you which goal he'd go for next.
+5. **He drops by when something new opens up**, one thing at a time with a couple of minutes
+   of quiet play in between, never while a menu or card is open: the chores, the axe, the
+   chicken coop, workshops, fishing, foraging, the corner shop, the almanac, a farmhand.
+   Anything you already found by yourself (the coop fixed, the shop rented…) he skips.
+6. **Then he says goodbye** ("I'll be on the porch with my coffee") and is gone. Settings has
+   *Show me around again*, and *I'll manage, thanks* to send him home early. The debug panel
+   has *Arne drops by now* to skip the wait.
 
 ## The new look: what to test
 
@@ -65,7 +93,7 @@ The whole game is moving to the look agreed on the mock (`art/style_test`): rich
 4. **The HUD in wood and paper:** one panel top left with the level, coins and energy (and fuel
    when it matters), the goal and today's chores under it, the clock top right, a wooden tool tray
    with paper slots (the tool in hand lifts in an orange-edged slot), paper buttons for the
-   journal, basket and bed, orange board buttons for places, and Tom's card on paper. New font:
+   journal, basket and bed, orange board buttons for places, and Arne's speech bubble on paper. New font:
    Fredoka.
 5. **The farm journal instead of the phone:** the same orders, money, farm and almanac, now in a
    leather-bound journal (a stitched leather band on top, paper tabs, paper pages), with a journal
@@ -134,7 +162,7 @@ beginning* → *Start a new farm…*.
 1. **Pixel art:** the whole world is crisp indie pixel art with small pixels (32 per tile) and
    punchier, saturated colours: every placeholder picture is painted big, then shrunk 4× onto the
    pixel grid with hard edges and a limited palette, and drawn with no smoothing. The ground uses
-   the same grid. Item icons in the menus and Tom's portrait are pixel art too; the HUD itself
+   the same grid. Item icons in the menus and Arne's portrait are pixel art too; the HUD itself
    stays smooth.
 2. **A small farm to start:** at level 1 you have the house, the old barn and one field. The pens
    behind the house are overgrown until their level (coop 2, cows 4, sheep 5, pigs 6), and clear in

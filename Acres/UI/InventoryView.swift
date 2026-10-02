@@ -127,7 +127,7 @@ struct InventoryView: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(CandyButtonStyle(tint: .green))
-                    .pulsing(game.tutorial.step == .load)
+                    .pulsing(game.tutorial.step == .load && game.guideShowsHints)
                 }
             } else {
                 Text("Loading and unloading happens at the farm.")
@@ -230,26 +230,50 @@ struct SettingsView: View {
                 }
                 .card()
 
-                PageHeading(title: "From the beginning")
+                PageHeading(title: Mentor.name)
                 VStack(alignment: .leading, spacing: 12) {
+                    HStack(spacing: 12) {
+                        MentorPortrait(size: 48)
+                        Text(game.tutorial.isRetired
+                             ? "\(Mentor.name) is on his porch. He'll happily show you around again."
+                             : "\(Mentor.name) keeps you company while you learn the farm, and drops by when something new opens up.")
+                            .font(Theme.label(14))
+                            .foregroundStyle(Theme.ink)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                     HStack(spacing: 12) {
                         Button {
                             game.restartTutorial()
                             game.showsInventory = false
                         } label: {
-                            Text("Replay the tutorial")
+                            Text("Show me around again")
                                 .font(Theme.display(15))
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(CandyButtonStyle(tint: .wood))
-                        Button { confirmsNewFarm = true } label: {
-                            Text("Start a new farm…")
-                                .font(Theme.display(15))
-                                .frame(maxWidth: .infinity)
+                        if !game.tutorial.isRetired {
+                            Button { game.skipTutorial() } label: {
+                                Text("I'll manage, thanks")
+                                    .font(Theme.display(15))
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(CandyButtonStyle(tint: .wood))
                         }
-                        .buttonStyle(CandyButtonStyle(tint: .red))
                     }
-                    note("Replaying the tutorial keeps your farm. A new farm starts over on day one with the tutorial, "
+                    note("Showing you around again keeps your farm. \"I'll manage\" sends \(Mentor.name) home: "
+                         + "no more tips or drop-ins. (To just hide him for a while, tap the arrow on his speech bubble.)")
+                }
+                .card()
+
+                PageHeading(title: "From the beginning")
+                VStack(alignment: .leading, spacing: 12) {
+                    Button { confirmsNewFarm = true } label: {
+                        Text("Start a new farm…")
+                            .font(Theme.display(15))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(CandyButtonStyle(tint: .red))
+                    note("A new farm starts over on day one, with \(Mentor.name) showing you around, "
                          + "and your current farm is gone for good.")
                 }
                 .card()

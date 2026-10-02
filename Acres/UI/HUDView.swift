@@ -23,10 +23,11 @@ struct HUDView: View {
                     statsPanel
                     if game.tutorial.hasReached(.claimGoal), let goal = game.openGoals.first { goalTracker(goal) }
                     if !game.tutorial.isActive, game.has(.chores), !game.todaysChores.isEmpty { choresChip }
-                    // The tutorial talks from the side, so the field in the middle stays in view.
-                    if let card = game.tutorialCard {
-                        TutorialCardView(card: card, onButton: { game.advanceTutorial(.next) }, onSkip: { game.skipTutorial() })
-                            .frame(width: 340)
+                    // Arne keeps you company from the side, so the field in the middle stays in view.
+                    if game.guideIsAround {
+                        GuideView(message: game.guideTucked ? nil : game.guideMessage, hasNews: game.guideHasNews,
+                                  onCall: { game.callGuide() }, onTuck: { game.tuckGuide() },
+                                  onAnswer: { game.answerGuide() }, onShowMe: { game.guideShowMe() })
                             .transition(.move(edge: .leading).combined(with: .opacity))
                     }
                 }
@@ -65,7 +66,8 @@ struct HUDView: View {
         .animation(.spring(duration: 0.35), value: game.nearbyShop)
         .animation(.spring(duration: 0.35), value: game.nearbyClient)
         .animation(.spring(duration: 0.35), value: game.nearbyStore)
-        .animation(.spring(duration: 0.35), value: game.tutorialCard)
+        .animation(.spring(duration: 0.35), value: game.guideTucked ? nil : game.guideMessage)
+        .animation(.spring(duration: 0.35), value: game.guideIsAround)
         .animation(.spring(duration: 0.35), value: game.isDriving)
         .animation(.spring(duration: 0.35), value: game.jobCount > 0)
     }
@@ -474,7 +476,7 @@ struct HUDView: View {
             }
         }
         .onDisappear { showsMap = false }
-        .pulsing(game.tutorial.step == .drive)
+        .pulsing(game.tutorial.step == .drive && game.guideShowsHints)
         .accessibilityLabel("Map: drive somewhere")
     }
 
@@ -793,83 +795,119 @@ struct SeedPicker: View {
     }
 }
 
-/// The tutorial's instruction card: Tom talking, from the side of the screen,
-/// on paper in a wooden frame. His portrait sits over the card's corner.
-struct TutorialCardView: View {
-    let card: TutorialCard
-    let onButton: () -> Void
-    let onSkip: () -> Void
+/// Arne at the side of the screen. Talking, his speech bubble is out on paper
+/// with his portrait over its corner, and a button to tuck him away. Tucked
+/// away, only his portrait peeks in (a dot when he has news): tap it, and he
+/// comes out with his news or says what he'd do next.
+struct GuideView: View {
+    /// What he's saying (nil: tucked away, or nothing to say).
+    let message: GuideMessage?
+    let hasNews: Bool
+    let onCall: () -> Void
+    let onTuck: () -> Void
+    let onAnswer: () -> Void
+    let onShowMe: () -> Void
 
     var body: some View {
+        if let message {
+            bubble(message)
+                .frame(width: 340, alignment: .leading)
+                .transition(.move(edge: .leading).combined(with: .opacity))
+        } else {
+            tucked
+                .transition(.scale(scale: 0.6, anchor: .leading).combined(with: .opacity))
+        }
+    }
+
+    private func bubble(_ message: GuideMessage) -> some View {
         ZStack(alignment: .topLeading) {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(card.title)
-                        .font(HUD.font(17, .black))
-                        .foregroundStyle(HUD.text)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.75)
-                    Spacer(minLength: 4)
-                    if card.steps > 0 {
-                        Text("\(card.step)/\(card.steps)")
-                            .font(HUD.number(12))
-                            .foregroundStyle(HUD.textSoft)
-                            .accessibilityLabel("Step \(card.step) of \(card.steps)")
-                    }
-                }
-                Text(card.body)
+            VStack(alignment: .leading, spacing: 8) {
+                Text(message.text)
                     .font(HUD.font(14, .semibold))
                     .foregroundStyle(HUD.text)
                     .fixedSize(horizontal: false, vertical: true)
-                if card.steps > 0 {
-                    HUDBar(fraction: Double(card.step) / Double(card.steps), color: HUD.accent)
-                        .frame(height: 8)
-                        .accessibilityHidden(true)
-                }
-                HStack {
-                    if card.button == nil {
-                        Button("Skip tutorial", action: onSkip)
-                            .font(HUD.font(12))
-                            .foregroundStyle(HUD.textSoft)
-                            .accessibilityLabel("Skip the tutorial")
-                    }
-                    Spacer(minLength: 0)
-                    if let title = card.button {
-                        Button {
-                            Haptics.tap()
-                            onButton()
-                        } label: {
-                            Text(title)
-                                .frame(minWidth: 100)
+                    .padding(.trailing, 26)  // room for the tuck button
+                if message.offersHelp || message.button != nil {
+                    HStack {
+                        if message.offersHelp {
+                            Button("Show me", action: onShowMe)
+                                .font(HUD.font(13, .heavy))
+                                .foregroundStyle(HUD.text)
+                                .padding(.horizontal, 10)
+                                .frame(height: 30)
+                                .buttonStyle(SlotButtonStyle())
                         }
-                        .buttonStyle(HUDBoardButtonStyle(height: 40, fontSize: 16))
+                        Spacer(minLength: 0)
+                        if let title = message.button {
+                            Button(action: onAnswer) {
+                                Text(title)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
+                                    .frame(minWidth: 100)
+                            }
+                            .buttonStyle(HUDBoardButtonStyle(height: 40, fontSize: 15))
+                        }
                     }
                 }
-                .padding(.top, 2)
             }
             .padding(.leading, 46)
-            .padding(.trailing, 6)
             .hudPanel(horizontal: 12, vertical: 14)
+            .overlay(alignment: .topTrailing) {
+                Button(action: onTuck) {
+                    HUDIcon(name: "ui_icon_tuck", size: 12)
+                        .frame(width: 28, height: 28)
+                }
+                .buttonStyle(SlotButtonStyle())
+                .padding(8)
+                .accessibilityLabel("Tuck \(Mentor.name) away")
+            }
             .padding(.leading, 20)
             .padding(.top, 18)
 
-            VStack(spacing: 2) {
-                MentorPortrait(size: 64)
-                Text("Tom")
-                    .font(HUD.font(11, .black))
-                    .foregroundStyle(.white)
-                    .shadow(color: HUD.edge, radius: 0, x: 0, y: 1)
-                    .padding(.horizontal, 8)
-                    .frame(height: 18)
-                    .background(Rectangle().fill(HUD.accent))
-                    .overlay(Rectangle().stroke(HUD.edge, lineWidth: HUD.pixel))
-            }
+            portrait(size: 64)
+                .onTapGesture(perform: onTuck)
+                .accessibilityHidden(true)
+        }
+    }
+
+    private var tucked: some View {
+        Button(action: onCall) {
+            portrait(size: 52)
+                .overlay(alignment: .topTrailing) {
+                    if hasNews {
+                        Text("!")
+                            .font(HUD.number(12))
+                            .foregroundStyle(.white)
+                            .hudOutline()
+                            .frame(width: 20, height: 20)
+                            .background(Rectangle().fill(HUD.accent))
+                            .overlay(Rectangle().stroke(HUD.edge, lineWidth: HUD.pixel))
+                            .offset(x: 6, y: -4)
+                            .pulsing(true)
+                    }
+                }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(hasNews ? "\(Mentor.name) has something to tell you" : "Ask \(Mentor.name) what to do next")
+    }
+
+    private func portrait(size: CGFloat) -> some View {
+        VStack(spacing: 2) {
+            MentorPortrait(size: size)
+            Text(Mentor.name)
+                .font(HUD.font(11, .black))
+                .foregroundStyle(.white)
+                .shadow(color: HUD.edge, radius: 0, x: 0, y: 1)
+                .padding(.horizontal, 8)
+                .frame(height: 18)
+                .background(Rectangle().fill(HUD.accent))
+                .overlay(Rectangle().stroke(HUD.edge, lineWidth: HUD.pixel))
         }
     }
 }
 
 
-/// A gentle pulsing glow that says "tap me" (tutorial).
+/// A gentle pulsing glow that says "tap me" (Arne's hints, rewards).
 struct Pulsing: ViewModifier {
     let active: Bool
     @State private var phase = false

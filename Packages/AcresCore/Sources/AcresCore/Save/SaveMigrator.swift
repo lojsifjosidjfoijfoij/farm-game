@@ -132,6 +132,18 @@ public struct SaveMigrator: Sendable {
                 state["ownedFields"] = FieldCatalog.earned(level: level, properties: properties).sorted()
                 json["state"] = state
             },
+            13: { json in
+                // Arne drops by after the first loop now. Farms that finished the old
+                // tutorial have seen it all: he's already gone home. (The topics as of v14.)
+                var state = json["state"] as? [String: Any] ?? [:]
+                var tutorial = state["tutorial"] as? [String: Any] ?? ["step": 11, "progress": 0]
+                let finished = Self.intValue(tutorial["step"]) == 11
+                tutorial["told"] = finished
+                    ? ["chores", "axe", "coop", "workshop", "fishing", "foraging", "shop", "almanac", "farmhand", "farewell"]
+                    : [String]()
+                state["tutorial"] = tutorial
+                json["state"] = state
+            },
         ]
     )
 

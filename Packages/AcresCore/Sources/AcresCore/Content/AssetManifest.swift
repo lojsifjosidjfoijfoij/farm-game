@@ -530,7 +530,7 @@ public enum AssetManifest {
         .ui("fx_vignette", .effect, points: 128, 128, phase: 13,
             "Screen-edge vignette: clear centre, soft warm-brown edges (about 50 % at the corners). Stretched over the whole view."),
         .ui("ui_portrait_mentor", points: 64, 64, phase: 13,
-            "Tom, the old farmer who teaches you (tutorial card): head and shoulders, grey hair and beard, straw hat, green shirt, overalls. Transparent; the card puts it on a sky-blue disc."),
+            "Arne, the old farmer who keeps you company while you learn the farm: head and shoulders, grey hair and beard, straw hat, green shirt, overalls. Transparent; the HUD puts it on a sky-blue square."),
         .ui("ui_joystick_base", points: 140, 140, phase: 3, "Joystick ring, soft translucent."),
         .ui("ui_joystick_knob", points: 64, 64, phase: 3, "Joystick knob."),
         .ui("ui_panel_parchment", points: 96, 96, phase: 1, "9-slice panel: warm parchment with a subtle hand-drawn border (slice 32 pt)."),
@@ -570,6 +570,7 @@ public enum AssetManifest {
         .ui("ui_icon_weather_snow", points: 24, 24, phase: 13, "Cloud with snow."),
         // The menus' icons (12 × 12 art px at 2 pt each; art/hud/make_hud.py). `MenuIcon` maps SF symbols to them.
         .ui("ui_icon_close", points: 24, 24, phase: 13, "A cream paper X with a dark edge (close a menu)."),
+        .ui("ui_icon_tuck", points: 24, 24, phase: 13, "A cream chevron pointing left (tuck Arne away to the side)."),
         .ui("ui_icon_lock", points: 24, 24, phase: 13, "Gold padlock (not unlocked yet)."),
         .ui("ui_icon_unlock", points: 24, 24, phase: 13, "Open padlock (just unlocked)."),
         .ui("ui_icon_check", points: 24, 24, phase: 13, "Green round badge with a white check (done, owned)."),

@@ -182,9 +182,21 @@ final class GameController {
     /// The goals on show and whether one can be claimed.
     private(set) var openGoals: [GoalProgress] = []
 
-    // MARK: Tutorial (observed)
+    // MARK: Arne (observed)
 
+    /// Arne's walk through the first loop, and what he has dropped by about since.
     var tutorial: TutorialState = .complete
+    /// Arne has stepped to the side: only his portrait peeks in.
+    var guideTucked = false
+    /// He has something new to say while tucked away (a dot on his portrait).
+    var guideHasNews = false
+    /// What he's dropping by about right now (after the first loop).
+    var guideTopic: GuideTopic?
+    /// The player tapped him to ask what to do next.
+    var guideAsked = false
+    /// At a "pointer" step: the player asked him to show them, or seemed stuck.
+    var guideHelping = false
+    @ObservationIgnored var guideClock = GuideClock()
 
     // MARK: Debug (observed)
 
@@ -361,6 +373,7 @@ final class GameController {
                 refreshInspection()
             }
         }
+        updateGuide(dt: dt)
         // The world politely waits while the welcome-back card is open.
         guard welcome == nil else { return }
         if sleep != nil {
@@ -1031,6 +1044,7 @@ final class GameController {
         tool = .hand
         cancelJobs()
         tutorial = simulation.state.tutorial
+        resetGuide()
         pickSeedsIfNoneInHand()
         endPaint()
         refreshDisplay()

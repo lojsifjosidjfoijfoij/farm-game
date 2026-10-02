@@ -1,8 +1,16 @@
 import Foundation
 
-/// The steps of the new-player tutorial. The raw values are what saves
-/// store, so they never change; `TutorialState.order` is the order they're
-/// played in (steps added later were given new numbers).
+// Arne, who farmed this land for forty years, keeps the new farmer company
+// while they learn it. It shouldn't feel like a tutorial: he introduces
+// himself, walks you through your first day move by move, then only points
+// the way, then mentions things in passing. After that first loop he drops
+// by now and then when something new opens up (chores, the axe, the coop,
+// fishing…), and once the start of the game is behind you he says goodbye.
+// The player can tuck him away at any time (that part is the app's).
+
+/// The steps of Arne's walk through the first loop. The raw values are what
+/// saves store, so they never change; `TutorialState.order` is the order
+/// they're played in (steps added later were given new numbers).
 public enum TutorialStep: Int, Codable, CaseIterable, Sendable {
     case welcome = 0
     case plow = 1
@@ -28,6 +36,64 @@ public enum TutorialStep: Int, Codable, CaseIterable, Sendable {
     case fieldsTour = 18
 }
 
+/// How much Arne says at a step. It fades as the first loop goes on.
+public enum GuideDetail: Int, Comparable, Sendable {
+    /// Every move, with the thing to tap glowing (the first day).
+    case walkthrough
+    /// Where to go, in a line; the glow only comes if the player seems stuck.
+    case pointer
+    /// A word in passing; he tucks himself away again.
+    case nudge
+
+    public static func < (a: GuideDetail, b: GuideDetail) -> Bool { a.rawValue < b.rawValue }
+}
+
+extension TutorialStep {
+    public var detail: GuideDetail {
+        switch self {
+        case .welcome, .plow, .plowMore, .plant, .water, .sleep: .walkthrough
+        case .harvest, .claimGoal, .load, .drive, .sell, .buySeeds, .driveHome, .replant: .pointer
+        case .phone, .acceptOrder, .fieldsTour, .finished, .done: .nudge
+        }
+    }
+}
+
+/// Something new Arne drops by to mention after the first loop, once it has
+/// opened up. The last one is his goodbye. The raw values are saved.
+public enum GuideTopic: String, CaseIterable, Sendable {
+    case chores, axe, coop, workshop, fishing, foraging, shop, almanac, farmhand
+    /// "That's everything I know." After this he's retired.
+    case farewell
+
+    /// Open: worth mentioning now.
+    func isOpen(in state: GameState, balance: Balance) -> Bool {
+        let level = state.progress.level
+        switch self {
+        case .chores: return state.has(.chores)
+        case .axe: return state.has(.axe)
+        case .coop: return level >= (PenCatalog.pen("coop")?.unlockLevel ?? 2)
+        case .workshop: return WorkshopCatalog.all.contains { $0.unlockLevel <= level }
+        case .fishing: return state.has(.rod)
+        case .foraging: return state.has(.foraging)
+        case .shop: return level >= balance.storeUnlockLevel
+        case .almanac: return state.has(.almanac)
+        case .farmhand: return balance.workerUnlockLevels.first.map { level >= $0 } ?? false
+        case .farewell: return true
+        }
+    }
+
+    /// Moot: the player already found it on their own, so there's nothing to say.
+    func isMoot(in state: GameState) -> Bool {
+        switch self {
+        case .coop: state.ranch["coop"].isRepaired
+        case .workshop: !state.estate.workshops.isEmpty
+        case .shop: state.store.isRented
+        case .farmhand: !state.estate.workers.isEmpty
+        default: false
+        }
+    }
+}
+
 /// Things the player does that the tutorial listens for.
 public enum TutorialEvent: Equatable, Sendable {
     /// The player tapped the card's button (welcome, the fields tour, finished).
@@ -47,21 +113,26 @@ public enum TutorialEvent: Equatable, Sendable {
     case acceptedOrder
 }
 
-/// Tutorial progress (saved). Steps advance on matching events; doing one
-/// of the next couple of steps early skips ahead, so the player never gets
-/// stuck, but doing something again later never jumps far ahead.
+/// Arne's guidance (saved): the step of the first loop, then the topics he
+/// has dropped by about. Steps advance on matching events; doing one of the
+/// next couple of steps early skips ahead, so the player never gets stuck,
+/// but doing something again later never jumps far ahead.
 public struct TutorialState: Codable, Equatable, Sendable {
     public var step: TutorialStep
     /// Counter within a step (e.g. tiles plowed for "plow a row").
     public var progress: Int
+    /// Topics Arne has dropped by about (`GuideTopic` raw values). (v14)
+    public var told: [String]
 
-    public init(step: TutorialStep, progress: Int = 0) {
+    public init(step: TutorialStep, progress: Int = 0, told: [String] = []) {
         self.step = step
         self.progress = progress
+        self.told = told
     }
 
     public static let new = TutorialState(step: .welcome)
-    public static let complete = TutorialState(step: .done)
+    /// Arne has shown you everything and gone home.
+    public static let complete = TutorialState(step: .done, told: GuideTopic.allCases.map(\.rawValue))
 
     /// The steps in the order they're played.
     public static let order: [TutorialStep] = [
@@ -76,7 +147,26 @@ public struct TutorialState: Codable, Equatable, Sendable {
     /// How far ahead an event may skip (so repeating an old action never jumps far).
     static let lookahead = 2
 
+    /// Arne is walking you through the first loop.
     public var isActive: Bool { step != .done }
+
+    /// He has said goodbye: no more drop-ins.
+    public var isRetired: Bool { told.contains(GuideTopic.farewell.rawValue) }
+
+    /// What Arne would drop by about next, if anything: the first topic that
+    /// has opened up and that he hasn't mentioned (skipping ones the player
+    /// found by themselves), and his goodbye once nothing is left. Nothing
+    /// during the first loop.
+    public func nextTopic(in state: GameState, balance: Balance = .standard) -> GuideTopic? {
+        guard !isActive, !isRetired else { return nil }
+        let left = GuideTopic.allCases.filter { $0 != .farewell && !told.contains($0.rawValue) && !$0.isMoot(in: state) }
+        if left.isEmpty { return .farewell }
+        return left.first { $0.isOpen(in: state, balance: balance) }
+    }
+
+    public mutating func tell(_ topic: GuideTopic) {
+        if !told.contains(topic.rawValue) { told.append(topic.rawValue) }
+    }
 
     /// Extra tiles to plow in the "plow a row" step.
     public static let rowLength = 3
@@ -117,9 +207,9 @@ public struct TutorialState: Codable, Equatable, Sendable {
         return true
     }
 
+    /// Sends Arne home: the first loop ends and he won't drop by again.
     public mutating func skip() {
-        step = .done
-        progress = 0
+        self = .complete
     }
 
     private mutating func advance(past completed: TutorialStep) {
