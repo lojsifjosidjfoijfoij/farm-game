@@ -94,16 +94,16 @@ extension GameController {
     func message(for failure: StoreFailure) -> String {
         switch failure {
         case .notAtStore: "Go to the corner shop in the village first."
-        case .truckNotHere: "Bring the truck: the goods ride in the truck bed."
+        case .truckNotHere: "The goods are in the truck: park it by the shop."
         case .notRented: "Rent the shop first."
         case .alreadyRented: "The shop is already yours."
         case .locked(let level): "The landlord wants an experienced farmer: come back at level \(level)."
         case .notEnoughMoney: money < 0 ? "You're in debt. Earn some coins first." : "Not enough coins for the first rent."
         case .notSellable: "Customers don't buy that."
-        case .nothingToStock: "Nothing to put on the shelves. Load goods into the truck at the farm."
+        case .nothingToStock: "Nothing to put on the shelves. Bring goods in your bag, or in the truck."
         case .shelvesFull: "The shelves are full."
-        case .cargoFull: "The truck bed is full."
-        case .shelvesNotEmpty: "Clear the shelves first (take the goods back into the truck)."
+        case .cargoFull: "No room to take them back (the truck bed, or your bag, is full)."
+        case .shelvesNotEmpty: "Clear the shelves first (take the goods back)."
         case .unknownShelf: "That shelf doesn't exist."
         }
     }

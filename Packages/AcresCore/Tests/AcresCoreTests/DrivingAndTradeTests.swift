@@ -151,6 +151,56 @@ final class TradingTests: XCTestCase {
         XCTAssertEqual(market.state.truck.cargoCount, 0)
     }
 
+    func testSellingWorksWhereverTheMarketButtonShows() {
+        // The button shows within a tile of the market square: stopping the truck
+        // at its edge must sell too (it used to fail with "bring the truck").
+        let zone = HomeValleyMap.marketZone
+        var edge = sim(at: Vec2(zone.minX - 0.8, zone.center.y))
+        edge.modify { $0.truck.cargo.add("wheat", 4) }
+        XCTAssertNotNil(Place.near(edge.state.farmerPosition), "the market's button shows here")
+        guard case .success = edge.trade({ try $0.sellAll(state: &$1) }) else { return XCTFail("selling from the edge failed") }
+        XCTAssertEqual(edge.state.truck.cargoCount, 0)
+
+        // On foot with the truck parked just outside: still close enough.
+        var parked = sim(at: Vec2(zone.maxX + 1.5, zone.center.y))
+        parked.modify { $0.truck.cargo.add("wheat", 4); $0.farmer.inTruck = false; $0.farmer.position = zone.center }
+        XCTAssertEqual(parked.trade { try $0.sell("wheat", count: 4, state: &$1) }.map { $0 > 0 }, .success(true))
+    }
+
+    func testSellingFromTheBagOnFoot() {
+        var market = sim()
+        market.modify { state in
+            state.farmer.position = HomeValleyMap.marketZone.center
+            state.farmer.bag.add("carrot", 3)
+            state.truck.cargo.add("wheat", 5)  // left at the farm
+        }
+        let price = Trading(balance: .standard).price(of: "carrot", in: market.state)!
+        XCTAssertEqual(market.trade { try $0.sellAll(state: &$1) }, .success(price * 3), "the bag sells; the far truck doesn't")
+        XCTAssertEqual(market.state.farmer.bagCount, 0)
+        XCTAssertEqual(market.state.truck.cargo.count("wheat"), 5)
+        XCTAssertEqual(market.trade { try $0.sell("wheat", count: 1, state: &$1) }, .failure(.truckNotHere(.market)),
+                       "goods only in a far-away truck: bring the truck")
+        market.modify { $0.truck.cargo = Inventory() }
+        XCTAssertEqual(market.trade { try $0.sellAll(state: &$1) }, .failure(.nothingToSell))
+    }
+
+    func testTheBagFillsOnTheFarmAndHoldsTen() {
+        var farm = sim()
+        let room = farm.balance.bagCapacity
+        farm.modify { $0.inventory.add("wheat", 20); $0.inventory.add("potato", 4); $0.inventory.add("seeds_wheat", 5) }
+        XCTAssertEqual(farm.trade { try $0.fillBag(state: &$1) }, .success(room))
+        XCTAssertEqual(farm.state.farmer.bag.count("potato"), 4, "most valuable first")
+        XCTAssertEqual(farm.state.farmer.bagCount, room)
+        XCTAssertEqual(farm.trade { try $0.takeToBag("wheat", count: 1, state: &$1) }, .failure(.bagFull))
+        XCTAssertEqual(farm.trade { try $0.emptyBag("potato", count: 4, state: &$1) }, .success(4))
+        XCTAssertEqual(farm.trade { try $0.takeToBag("seeds_wheat", count: 1, state: &$1) }, .failure(.unknownItem),
+                       "seeds stay in the pouch")
+
+        var away = sim()
+        away.modify { $0.inventory.add("wheat", 3); $0.farmer.position = HomeValleyMap.marketZone.center }
+        XCTAssertEqual(away.trade { try $0.takeToBag("wheat", count: 3, state: &$1) }, .failure(.notOnFarm))
+    }
+
     func testRefuelFillsAsFarAsMoneyAllows() {
         var gas = sim(at: HomeValleyMap.gasStationZone.center)
         XCTAssertEqual(gas.trade { try $0.refuel(state: &$1) }.map(\.cost), .failure(.tankFull))

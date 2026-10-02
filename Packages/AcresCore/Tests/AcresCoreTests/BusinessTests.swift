@@ -162,6 +162,20 @@ final class ContractTests: XCTestCase {
         XCTAssertEqual(sim.state.contracts.active.map(\.id), [1])
     }
 
+    func testDeliveringFromTheBagOnFoot() {
+        var sim = sim()
+        let bakery = ClientCatalog.client("hansens_bakery")!
+        sim.modify { state in
+            state.contracts.active = [self.contract(for: bakery.id, ["wheat": 5])]
+            state.farmer.inTruck = false
+            state.farmer.position = bakery.zone.center
+            state.farmer.bag.add("wheat", 3)
+        }
+        XCTAssertEqual(sim.contracts { try $0.deliver(to: bakery.id, state: &$1) }.map(\.delivered), .success(["wheat": 3]))
+        XCTAssertEqual(sim.state.farmer.bagCount, 0)
+        XCTAssertEqual(sim.state.contracts.active.first?.remaining("wheat"), 2)
+    }
+
     func testDeliveryNeedsTheTruckAtTheClientDuringOpeningHours() {
         var sim = sim()
         let bakery = ClientCatalog.client("hansens_bakery")!

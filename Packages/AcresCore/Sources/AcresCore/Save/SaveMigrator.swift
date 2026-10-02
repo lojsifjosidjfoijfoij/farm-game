@@ -144,6 +144,14 @@ public struct SaveMigrator: Sendable {
                 state["tutorial"] = tutorial
                 json["state"] = state
             },
+            14: { json in
+                // The farmer carries a bag now; it starts empty.
+                var state = json["state"] as? [String: Any] ?? [:]
+                var farmer = state["farmer"] as? [String: Any] ?? [:]
+                farmer["bag"] = ["items": [String: Any]()] as [String: Any]
+                state["farmer"] = farmer
+                json["state"] = state
+            },
         ]
     )
 

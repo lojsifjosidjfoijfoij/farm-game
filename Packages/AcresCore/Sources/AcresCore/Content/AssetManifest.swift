@@ -571,6 +571,7 @@ public enum AssetManifest {
         // The menus' icons (12 × 12 art px at 2 pt each; art/hud/make_hud.py). `MenuIcon` maps SF symbols to them.
         .ui("ui_icon_close", points: 24, 24, phase: 13, "A cream paper X with a dark edge (close a menu)."),
         .ui("ui_icon_tuck", points: 24, 24, phase: 13, "A cream chevron pointing left (tuck Arne away to the side)."),
+        .ui("ui_icon_bag", points: 24, 24, phase: 13, "A canvas tote bag with a red stripe (what the farmer carries)."),
         .ui("ui_icon_lock", points: 24, 24, phase: 13, "Gold padlock (not unlocked yet)."),
         .ui("ui_icon_unlock", points: 24, 24, phase: 13, "Open padlock (just unlocked)."),
         .ui("ui_icon_check", points: 24, 24, phase: 13, "Green round badge with a white check (done, owned)."),

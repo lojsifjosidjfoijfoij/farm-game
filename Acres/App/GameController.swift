@@ -112,6 +112,11 @@ final class GameController {
     var fuelFraction = 1.0
     var cargoItems: [String: Int] = [:]
     var cargoCount = 0
+    /// What the farmer carries in their bag.
+    var bagItems: [String: Int] = [:]
+    var bagCount = 0
+    /// The farmer is on the home farm (where the bag fills from storage).
+    var farmerOnFarm = true
     /// The shop the truck is stopped at, if any (shows the shop button).
     var nearbyShop: ShopDefinition?
     /// True when the parked truck is on the home farm (enables loading).

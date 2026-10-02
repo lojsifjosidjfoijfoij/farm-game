@@ -208,12 +208,12 @@ public struct Contracts: Sendable {
         state.contracts.offers.removeAll { $0.id == id }
     }
 
-    /// Hands over what the truck carries for this client's contracts
-    /// (oldest deadline first). Finished contracts pay out at once.
+    /// Hands over what the farmer has on hand for this client's contracts (the
+    /// bag, and the truck bed if it's parked close by), oldest deadline first.
+    /// Finished contracts pay out at once.
     public func deliver(to clientID: String, state: inout GameState) throws(ContractFailure) -> DeliveryResult {
         guard let client = ClientCatalog.client(clientID) else { throw .notFound }
         guard client.zone.insetBy(-1).contains(state.farmerPosition) else { throw .notAtClient }
-        guard client.zone.contains(state.truck.position) else { throw .truckNotHere }
         guard client.isOpen(atHour: state.clock.hour) else { throw .closed(opens: client.opens) }
         var delivered: [String: Int] = [:]
         var completed: [Contract] = []
@@ -224,15 +224,17 @@ public struct Contracts: Sendable {
         for index in order {
             var contract = state.contracts.active[index]
             for item in contract.sortedItems {
-                let amount = min(contract.remaining(item), state.truck.cargo.count(item))
+                let amount = Goods.take(item, contract.remaining(item), near: client.zone, from: &state)
                 guard amount > 0 else { continue }
-                state.truck.cargo.remove(item, amount)
                 contract.delivered[item, default: 0] += amount
                 delivered[item, default: 0] += amount
             }
             state.contracts.active[index] = contract
         }
-        guard !delivered.isEmpty else { throw .nothingToDeliver }
+        guard !delivered.isEmpty else {
+            let wanted = state.contracts.active.filter { $0.clientID == clientID }.flatMap { $0.items.keys }
+            throw Goods.truckHasThemButIsFar(wanted, near: client.zone, in: state) ? .truckNotHere : .nothingToDeliver
+        }
         for contract in state.contracts.active where contract.isComplete {
             completed.append(contract)
             state.money += contract.reward

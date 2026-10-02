@@ -96,7 +96,7 @@ public struct Storekeeping: Sendable {
 
     public func isAtStore(_ state: GameState) -> Bool { store.zone.insetBy(-1).contains(state.farmerPosition) }
 
-    public func truckIsHere(_ state: GameState) -> Bool { store.zone.contains(state.truck.position) }
+    public func truckIsHere(_ state: GameState) -> Bool { Goods.truckIsNear(store.zone, in: state) }
 
     // MARK: Renting
 
@@ -132,48 +132,59 @@ public struct Storekeeping: Sendable {
 
     // MARK: Shelves
 
-    /// Puts goods from the truck on the shelves (shelves with that item first,
-    /// then empty ones); returns how many went up.
+    /// Puts goods on hand (the bag, and the truck if it's close by) on the
+    /// shelves, shelves with that item first, then empty ones; returns how many went up.
     public func stock(_ itemID: String, count: Int = .max, state: inout GameState) throws(StoreFailure) -> Int {
         try requireShelves(state)
         guard let item = ItemCatalog.item(itemID), item.category.isSellable else { throw .notSellable }
-        let available = min(count, state.truck.cargo.count(itemID))
-        guard available > 0 else { throw .nothingToStock }
+        let available = min(count, Goods.count(itemID, near: store.zone, in: state))
+        guard available > 0 else {
+            throw Goods.truckHasThemButIsFar([itemID], near: store.zone, in: state) ? .truckNotHere : .nothingToStock
+        }
         let moved = place(itemID, amount: available, on: &state.store.shelves)
         guard moved > 0 else { throw .shelvesFull }
-        state.truck.cargo.remove(itemID, moved)
+        Goods.take(itemID, moved, near: store.zone, from: &state)
         return moved
     }
 
-    /// Stocks everything sellable on the truck, most valuable first.
+    /// Stocks everything sellable on hand, most valuable first.
     public func stockAll(state: inout GameState) throws(StoreFailure) -> Int {
         try requireShelves(state)
-        let items = state.truck.cargo.items.keys
+        let onHand = Goods.onHand(near: store.zone, in: state)
+        let items = onHand.keys
             .compactMap { ItemCatalog.item($0) }
-            .filter { $0.category.isSellable && state.truck.cargo.count($0.id) > 0 }
+            .filter { $0.category.isSellable }
             .sorted { ($0.value.lowerBound + $0.value.upperBound, $1.id) > ($1.value.lowerBound + $1.value.upperBound, $0.id) }
-        guard !items.isEmpty else { throw .nothingToStock }
+        guard !items.isEmpty else {
+            throw Goods.truckHasThemButIsFar(Array(state.truck.cargo.items.keys), near: store.zone, in: state) ? .truckNotHere : .nothingToStock
+        }
         var total = 0
         for item in items {
-            let moved = place(item.id, amount: state.truck.cargo.count(item.id), on: &state.store.shelves)
-            state.truck.cargo.remove(item.id, moved)
+            let moved = place(item.id, amount: Goods.count(item.id, near: store.zone, in: state), on: &state.store.shelves)
+            Goods.take(item.id, moved, near: store.zone, from: &state)
             total += moved
         }
         guard total > 0 else { throw .shelvesFull }
         return total
     }
 
-    /// Takes a shelf's goods back into the truck; returns how many.
+    /// Takes a shelf's goods back: into the truck if it's close by, otherwise
+    /// into the bag; returns how many.
     public func takeBack(shelf index: Int, state: inout GameState) throws(StoreFailure) -> Int {
         try requireShelves(state)
         guard state.store.shelves.indices.contains(index) else { throw .unknownShelf }
         let shelf = state.store.shelves[index]
         guard let itemID = shelf.itemID, shelf.stock > 0 else { throw .nothingToStock }
-        let room = state.truckCapacity(balance) - state.truck.cargoCount
+        let toTruck = truckIsHere(state)
+        let room = toTruck ? state.truckCapacity(balance) - state.truck.cargoCount : balance.bagCapacity - state.farmer.bagCount
         let amount = min(shelf.stock, room)
         guard amount > 0 else { throw .cargoFull }
         state.store.shelves[index].stock -= amount
-        state.truck.cargo.add(itemID, amount)
+        if toTruck {
+            state.truck.cargo.add(itemID, amount)
+        } else {
+            state.farmer.bag.add(itemID, amount)
+        }
         return amount
     }
 
@@ -190,7 +201,6 @@ public struct Storekeeping: Sendable {
     private func requireShelves(_ state: GameState) throws(StoreFailure) {
         guard isAtStore(state) else { throw .notAtStore }
         guard state.store.isRented else { throw .notRented }
-        guard truckIsHere(state) else { throw .truckNotHere }
     }
 
     private func place(_ itemID: String, amount: Int, on shelves: inout [Shelf]) -> Int {

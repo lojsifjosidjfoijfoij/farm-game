@@ -33,6 +33,7 @@ struct InventoryView: View {
     private var storage: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                bagSection
                 truckSection
                 storageBar
                 ForEach(ItemCategory.allCases, id: \.self) { category in
@@ -138,6 +139,78 @@ struct InventoryView: View {
         .card()
     }
 
+    // MARK: Bag
+
+    private var bagItems: [ItemDefinition] {
+        ItemCatalog.all.filter { (game.bagItems[$0.id] ?? 0) > 0 }
+    }
+
+    /// What the farmer carries: a few goods to sell, deliver or stock without the truck.
+    private var bagSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                MenuIcon(symbol: "bag.fill")
+                Text("Your bag")
+                    .font(Theme.title(18))
+                Spacer()
+                Text("\(game.bagCount) / \(game.bagCapacity)")
+                    .font(Theme.number(16))
+            }
+            .foregroundStyle(Theme.ink)
+            HUDBar(fraction: min(1, Double(game.bagCount) / Double(max(1, game.bagCapacity))), color: HUD.xp)
+                .frame(height: 12)
+            if !bagItems.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(bagItems) { item in
+                            bagChip(item, count: game.bagItems[item.id] ?? 0)
+                        }
+                    }
+                    .padding(.bottom, 2)
+                }
+            }
+            if game.farmerOnFarm {
+                if hasSellables && game.bagCount < game.bagCapacity {
+                    Button { game.fillBag() } label: {
+                        IconLabel("Fill my bag", symbol: "bag.fill")
+                            .font(Theme.display(16))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(CandyButtonStyle(tint: .wood))
+                }
+                Text("A few things to sell, deliver or stock on foot. For more, use the truck.")
+                    .font(Theme.label(12))
+                    .foregroundStyle(Theme.inkSoft)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                Text("Your bag goes with you. Sell at the market, deliver orders or stock your shop straight from it.")
+                    .font(Theme.label(12))
+                    .foregroundStyle(Theme.inkSoft)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .card()
+    }
+
+    private func bagChip(_ item: ItemDefinition, count: Int) -> some View {
+        HStack(spacing: 6) {
+            ItemIcon(name: item.icon, size: 24)
+            Text("×\(count)")
+                .font(Theme.number(14))
+                .foregroundStyle(Theme.ink)
+            if game.farmerOnFarm {
+                Button { game.emptyBag(item.id, count: count) } label: {
+                    MenuIcon(symbol: "arrow.down.circle.fill")
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Put \(item.plural) back in storage")
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(InsetPanel())
+    }
+
     private func cargoChip(_ item: ItemDefinition, count: Int) -> some View {
         HStack(spacing: 6) {
             ItemIcon(name: item.icon, size: 24)
@@ -193,12 +266,21 @@ struct InventoryView: View {
                         .font(Theme.label(11))
                         .foregroundStyle(Theme.inkSoft)
                 }
-                if game.truckAtFarm && game.cargoCount < game.truckCapacity {
-                    Button("Load") { game.load(item.id, count: count) }
-                        .font(Theme.display(13))
-                        .buttonStyle(CandyButtonStyle(tint: .green))
-                        .padding(.top, 2)
+                VStack(spacing: 4) {
+                    if game.farmerOnFarm && game.bagCount < game.bagCapacity {
+                        Button("Take") { game.takeToBag(item.id, count: count) }
+                            .font(Theme.display(13))
+                            .buttonStyle(CandyButtonStyle(tint: .wood))
+                            .accessibilityLabel("Put \(item.plural) in your bag")
+                    }
+                    if game.truckAtFarm && game.cargoCount < game.truckCapacity {
+                        Button("Load") { game.load(item.id, count: count) }
+                            .font(Theme.display(13))
+                            .buttonStyle(CandyButtonStyle(tint: .green))
+                            .accessibilityLabel("Load \(item.plural) into the truck")
+                    }
                 }
+                .padding(.top, 2)
             }
         }
         .padding(.vertical, 10)

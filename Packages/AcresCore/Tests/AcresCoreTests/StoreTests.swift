@@ -112,6 +112,20 @@ final class StoreTests: XCTestCase {
         XCTAssertEqual(onFoot.store { try $0.stock("carrot", state: &$1) }, .failure(.truckNotHere))
     }
 
+    func testStockingFromTheBagAndTakingBackIntoIt() {
+        var sim = sim(rented: true)
+        sim.modify { state in
+            state.truck.position = HomeValleyMap.truckParkingSpot
+            state.farmer.inTruck = false
+            state.farmer.position = self.store.zone.center
+            state.farmer.bag.add("carrot", 4)
+        }
+        XCTAssertEqual(sim.store { try $0.stock("carrot", state: &$1) }, .success(4))
+        XCTAssertEqual(sim.state.farmer.bagCount, 0)
+        XCTAssertEqual(sim.store { try $0.takeBack(shelf: 0, state: &$1) }, .success(4), "back into the bag (the truck's at the farm)")
+        XCTAssertEqual(sim.state.farmer.bag.count("carrot"), 4)
+    }
+
     func testStockAllAndFullShelves() {
         var sim = sim(rented: true)
         sim.modify { $0.truck.cargo.add("pumpkin", 60); $0.truck.cargo.add("wheat", 100) }

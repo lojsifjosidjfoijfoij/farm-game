@@ -129,19 +129,29 @@ struct ShopView: View {
 
     // MARK: Market
 
-    /// Sellable goods in the truck bed.
+    /// Goods on hand here: the bag, and the truck bed if it's parked close by.
+    /// (Read with the bag and the bed, so the list updates as they change.)
+    private var onHand: [String: Int] {
+        _ = (game.bagItems, game.cargoItems)
+        return game.goodsOnHand(near: shop.zone)
+    }
+
     private var cargo: [ItemDefinition] {
-        ItemCatalog.all.filter { $0.category.isSellable && (game.cargoItems[$0.id] ?? 0) > 0 }
+        let goods = onHand
+        return ItemCatalog.all.filter { $0.category.isSellable && (goods[$0.id] ?? 0) > 0 }
     }
 
     @ViewBuilder
     private var market: some View {
         if cargo.isEmpty {
             PaperNote(symbol: "shippingbox",
-                      text: "The truck bed is empty. Load your harvest at the farm (basket → Load all), then drive back here.")
+                      text: game.cargoCount > 0
+                        ? "Your goods are in the truck: park it by the market square to sell them."
+                        : "Nothing to sell on you. Fill your bag at the farm (it holds \(game.bagCapacity)), or load the truck for more.")
             priceBoard
         } else {
-            let total = cargo.reduce(0) { $0 + game.price(of: $1.id) * (game.cargoItems[$1.id] ?? 0) }
+            let goods = onHand
+            let total = cargo.reduce(0) { $0 + game.price(of: $1.id) * (goods[$1.id] ?? 0) }
             VStack(spacing: 10) {
                 ForEach(cargo) { item in
                     marketRow(item)
@@ -152,7 +162,7 @@ struct ShopView: View {
     }
 
     private func marketRow(_ item: ItemDefinition) -> some View {
-        let count = game.cargoItems[item.id] ?? 0
+        let count = onHand[item.id] ?? 0
         let price = game.price(of: item.id)
         return ShopRow {
             ItemIcon(name: item.icon, size: 42)

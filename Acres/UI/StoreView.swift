@@ -90,17 +90,18 @@ struct StoreView: View {
         StoreTakings(game: game)
 
         let truckHere = game.storekeeping.truckIsHere(game.simulation.state)
-        let goods = truckGoods
-        if !truckHere {
-            PaperNote(symbol: "truck.pickup.side", text: "Park the truck in front of the shop to stock the shelves or take goods back.")
-        } else if goods.isEmpty {
-            PaperNote(symbol: "shippingbox", text: "Nothing to sell on the truck. Load your harvest at the farm and bring it here.")
+        let goods = goodsHere
+        let onHand = onHandHere
+        if goods.isEmpty {
+            PaperNote(symbol: "shippingbox", text: game.cargoCount > 0 && !truckHere
+                      ? "Your goods are in the truck: park it in front of the shop."
+                      : "Nothing to stock on you. Bring goods in your bag (it holds \(game.bagCapacity)), or in the truck.")
         } else {
-            let total = goods.reduce(0) { $0 + (game.cargoItems[$1.id] ?? 0) }
+            let total = goods.reduce(0) { $0 + (onHand[$1.id] ?? 0) }
             Button { game.stockAll() } label: {
                 HStack {
                     MenuIcon(symbol: "tray.and.arrow.down.fill")
-                    Text("Stock everything from the truck")
+                    Text(truckHere ? "Stock everything you brought" : "Stock everything in your bag")
                         .font(Theme.display(17))
                     Spacer()
                     Text("\(total)")
@@ -115,7 +116,7 @@ struct StoreView: View {
                         Button { game.stock(item.id) } label: {
                             HStack(spacing: 6) {
                                 ItemIcon(name: item.icon, size: 24)
-                                Text("×\(game.cargoItems[item.id] ?? 0)")
+                                Text("×\(onHand[item.id] ?? 0)")
                                     .font(Theme.number(13))
                                     .foregroundStyle(Theme.ink)
                             }
@@ -131,7 +132,7 @@ struct StoreView: View {
 
         PageHeading(title: "Shelves")
         ForEach(Array(state.shelves.enumerated()), id: \.offset) { index, shelf in
-            ShelfCard(game: game, shelf: shelf, index: index, editable: true, truckHere: truckHere)
+            ShelfCard(game: game, shelf: shelf, index: index, editable: true, truckHere: true)
         }
         Text("Tip: about 25% over the usual price earns the most per hour. A wider choice of goods brings more customers.")
             .font(Theme.label(12))
@@ -146,9 +147,15 @@ struct StoreView: View {
         }
     }
 
-    /// Sellable goods in the truck bed.
-    private var truckGoods: [ItemDefinition] {
-        ItemCatalog.all.filter { $0.category.isSellable && (game.cargoItems[$0.id] ?? 0) > 0 }
+    /// Goods on hand at the shop: the bag, and the truck bed if it's parked close by.
+    private var onHandHere: [String: Int] {
+        _ = (game.bagItems, game.cargoItems)
+        return game.goodsOnHand(near: store.zone)
+    }
+
+    private var goodsHere: [ItemDefinition] {
+        let goods = onHandHere
+        return ItemCatalog.all.filter { $0.category.isSellable && (goods[$0.id] ?? 0) > 0 }
     }
 }
 

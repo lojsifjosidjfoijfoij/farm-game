@@ -84,6 +84,7 @@ public enum Almanac {
     static func seen(in state: GameState) -> Set<String> {
         var result = Set(state.inventory.items.keys)
         result.formUnion(state.truck.cargo.items.keys)
+        result.formUnion(state.farmer.bag.items.keys)
         for shelf in state.store.shelves where shelf.stock > 0 {
             if let item = shelf.itemID { result.insert(item) }
         }
@@ -180,6 +181,7 @@ public enum NetWorth {
         // Goods, at their usual value (machines at their price).
         total += value(of: state.inventory.items)
         total += value(of: state.truck.cargo.items)
+        total += value(of: state.farmer.bag.items)
         for shelf in state.store.shelves {
             if let item = shelf.itemID { total += value(of: [item: shelf.stock]) }
         }

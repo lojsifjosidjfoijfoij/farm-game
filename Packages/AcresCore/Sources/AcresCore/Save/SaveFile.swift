@@ -25,7 +25,8 @@ public struct SaveFile: Codable, Equatable, Sendable {
     /// - v12: `almanac` (discoveries, sets claimed) and `rank` (farm rank, the finale).
     /// - v13: `ownedFields` (crops grow only in fields).
     /// - v14: `tutorial.told` (what Arne has dropped by about after the first loop).
-    public static let currentVersion = 14
+    /// - v15: `farmer.bag` (a few goods the farmer carries without the truck).
+    public static let currentVersion = 15
 
     /// Format version of this file.
     public var version: Int

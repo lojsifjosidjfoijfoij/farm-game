@@ -163,8 +163,26 @@ struct HUDView: View {
             moneyLabel
             energyLabel
             if game.isDriving || game.fuelFraction < 0.999 { fuelLabel }
+            if game.bagCount > 0 { bagLabel }
         }
         .hudPanel(horizontal: 12, vertical: 8)
+    }
+
+    /// What the farmer carries, while they carry something (tap: storage, with the bag on top).
+    private var bagLabel: some View {
+        Button {
+            game.showsInventory = true
+            Haptics.tap()
+        } label: {
+            HStack(spacing: 5) {
+                HUDIcon(name: "ui_icon_bag")
+                Text("\(game.bagCount)")
+                    .font(HUD.number(16))
+                    .foregroundStyle(HUD.text)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Your bag: \(game.bagCount) of \(game.bagCapacity)")
     }
 
     /// The level by a gold star, with a bar filling toward the next one. Tap for the roadmap.

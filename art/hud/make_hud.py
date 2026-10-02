@@ -214,6 +214,20 @@ def board(colour, light, dark):
 # -------------------------------------------------------------------- icons
 
 ASCII = {
+    "ui_icon_bag": """
+....kkkk....
+...kk..kk...
+...k....k...
+.kkkkkkkkkk.
+kttttttttttk
+kTtttttttttk
+kTttrrrrtttk
+kTttrrrrtttk
+kTtttttttttk
+kTtttttttTtk
+.kTTTTTTTTk.
+..kkkkkkkk..
+""",
     "ui_icon_tuck": """
 ......kk....
 .....kppk...

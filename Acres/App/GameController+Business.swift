@@ -122,14 +122,14 @@ extension GameController {
         case .notFound: return "That order is gone."
         case .tooManyActive: return "You can take \(balance.maxActiveContracts) orders at a time. Finish one first."
         case .notAtClient: return "Drive over to \(name) to deliver."
-        case .truckNotHere: return "Bring the truck: the goods ride in the truck bed."
+        case .truckNotHere: return "The goods are in the truck: park it closer to \(name)."
         case .closed(let opens): return "\(name) is closed. It opens at \(String(format: "%02d:00", opens))."
         case .nothingToDeliver:
             let wanted = contractBoard.active.filter { $0.clientID == client?.id }
                 .flatMap { contract in contract.sortedItems.filter { contract.remaining($0) > 0 } }
             let names = Array(Set(wanted)).sorted().compactMap { ItemCatalog.item($0)?.plural }
-            return names.isEmpty ? "Nothing on the truck for this order."
-                : "Nothing on the truck for this order. They want \(names.joined(separator: ", ")). Load them at the farm."
+            return names.isEmpty ? "Nothing for this order on you or in the truck."
+                : "Nothing for this order on you. They want \(names.joined(separator: ", ")): bring them in your bag or the truck."
         }
     }
 

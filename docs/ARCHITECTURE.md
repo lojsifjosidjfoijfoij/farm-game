@@ -103,9 +103,12 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
 - **The village** (east of the farm, `HomeValleyMap.buildVillageAndBeyond`): gas station, seed
   shop, market square, cottages, lamps. The map grew to 144 × 96 tiles; the original farm is
   unchanged (same seed, same objects).
-- **Shops** (`ShopCatalog`, `Trading`): each shop is a stop zone. When the truck is stopped
-  inside one, a button opens the shop sheet. Buying seeds needs the level; selling happens from
-  the **truck bed** (30 items), so harvest has to be loaded at the farm and driven to market.
+- **Shops** (`ShopCatalog`, `Trading`): each shop is a stop zone. When the truck stops (or the
+  farmer walks) within a tile of one, a button opens the shop sheet. Buying seeds needs the
+  level. Selling, deliveries and stocking your own shop take **goods on hand** (`Goods`): the
+  farmer's **bag** (`FarmerState.bag`, 10 goods, filled from storage anywhere on the farm),
+  then the **truck bed** (30) if the truck stands within `Goods.truckReach` (2 tiles) of the
+  place. The rule is one place, so a place's button and its trades agree.
   Prices drift daily inside each crop's range (`MarketPricing`, deterministic per day). Every
   trade is a typed `TradeFailure` or success, applied atomically through `Simulation.trade`.
 - **Arne** (`TutorialState`, saved; `GameController+Guide.swift`): not a tutorial but an old

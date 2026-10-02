@@ -274,6 +274,7 @@ private struct ContractCard: View {
         let ordered = contract.items[item] ?? 0
         let delivered = contract.delivered[item] ?? 0
         let onTruck = game.cargoItems[item] ?? 0
+        let inBag = game.bagItems[item] ?? 0
         let atFarm = game.inventoryItems[item] ?? 0
         return HStack(spacing: 10) {
             ItemIcon(name: definition?.icon ?? "item_\(item)", size: 32)
@@ -286,15 +287,16 @@ private struct ContractCard: View {
                 }
             }
             Spacer()
-            Text(have(onTruck: onTruck, atFarm: atFarm))
+            Text(have(inBag: inBag, onTruck: onTruck, atFarm: atFarm))
                 .font(Theme.label(12))
                 .foregroundStyle(Theme.inkSoft)
                 .multilineTextAlignment(.trailing)
         }
     }
 
-    private func have(onTruck: Int, atFarm: Int) -> String {
+    private func have(inBag: Int, onTruck: Int, atFarm: Int) -> String {
         var parts: [String] = []
+        if inBag > 0 { parts.append("\(inBag) in your bag") }
         if onTruck > 0 { parts.append("\(onTruck) on truck") }
         if atFarm > 0 { parts.append("\(atFarm) at farm") }
         return parts.isEmpty ? "none yet" : parts.joined(separator: "\n")

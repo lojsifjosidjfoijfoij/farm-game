@@ -51,6 +51,8 @@ public struct Balance: Sendable, Equatable {
     /// Items the farm can store (seeds and saplings don't count). Harvesting,
     /// collecting and chopping stop when full.
     public var storageCapacity: Int = 300
+    /// What the farmer carries in their bag (goods to sell or deliver without the truck).
+    public var bagCapacity: Int = 10
 
     /// What's in the seed pouch at the start of a new game.
     public var startingItems: [String: Int] = ["seeds_wheat": 12, "seeds_carrot": 8, "seeds_potato": 4]

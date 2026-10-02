@@ -186,6 +186,13 @@ extension GameController {
             cargoItems = truck.cargo.items
             cargoCount = truck.cargoCount
         }
+        let bag = simulation.state.farmer.bag
+        if bagItems != bag.items {
+            bagItems = bag.items
+            bagCount = simulation.state.farmer.bagCount
+        }
+        let onFarm = trading.isOnFarm(simulation.state)
+        if onFarm != farmerOnFarm { farmerOnFarm = onFarm }
         let stopped = !isDriving || motion.isStopped
         let here = simulation.state.farmerPosition
         let place = stopped ? Place.near(here) : nil

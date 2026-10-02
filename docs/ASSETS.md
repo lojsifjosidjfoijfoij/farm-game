@@ -48,8 +48,8 @@ procedurally in code.
 | Animals | 70 | 0 |
 | Item icons | 107 | 0 |
 | Effects & particles | 36 | 4 |
-| User interface | 92 | 15 |
-| **Total** | **808** | **52** |
+| User interface | 93 | 15 |
+| **Total** | **809** | **52** |
 | Audio files | 58 | 0 |
 
 ## Terrain (tileable ground textures)
@@ -791,6 +791,7 @@ procedurally in code.
 | `ui_icon_weather_snow` | 72 × 72 | UI | — | 13 | Cloud with snow. |
 | `ui_icon_close` | 72 × 72 | UI | — | 13 | A cream paper X with a dark edge (close a menu). |
 | `ui_icon_tuck` | 72 × 72 | UI | — | 13 | A cream chevron pointing left (tuck Arne away to the side). |
+| `ui_icon_bag` | 72 × 72 | UI | — | 13 | A canvas tote bag with a red stripe (what the farmer carries). |
 | `ui_icon_lock` | 72 × 72 | UI | — | 13 | Gold padlock (not unlocked yet). |
 | `ui_icon_unlock` | 72 × 72 | UI | — | 13 | Open padlock (just unlocked). |
 | `ui_icon_check` | 72 × 72 | UI | — | 13 | Green round badge with a white check (done, owned). |

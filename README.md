@@ -48,6 +48,21 @@ cd Packages/AcresCore
 swift test
 ```
 
+## Your bag, and selling that works: what to test
+
+1. **Selling at the stops works wherever the button shows.** The market, client and shop
+   buttons appear when the truck stops within a tile of a place, but selling, delivering and
+   stocking used to need the truck strictly inside it, so they often failed with "bring the
+   truck". Now the truck counts if it's within two tiles, and you can also get out and walk in.
+2. **You carry a bag (10 goods).** Anywhere on the farm, open storage: *Fill my bag* packs
+   the most valuable goods, or tap *Take* on an item. The bag goes with you, on foot or in the
+   truck. The market, a client's order and your own shop all take from your bag first, then
+   from the truck if it's parked close by. A bag counter shows on the HUD while you carry
+   something. For bigger loads, use the truck as before. Your save carries over (format v15,
+   the bag starts empty).
+3. **Clearer messages when something's missing:** "Your goods are in the truck: park it by the
+   market", or "Nothing to sell on you. Fill your bag at the farm, or load the truck."
+
 ## Arne instead of a tutorial: what to test
 
 There's no tutorial any more, no step counter and no "Skip tutorial". Instead **Arne**, the old

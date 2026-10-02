@@ -104,6 +104,9 @@ public enum TradeFailure: Error, Equatable, Sendable {
     case truckNotHere(ShopKind)
     case alreadyHaveLoan
     case noLoan
+    /// Filling the bag happens on the farm, where the goods are stored.
+    case notOnFarm
+    case bagFull
 }
 
 /// Buying, selling, fuel and loading the truck. Pure rules over `GameState`.
@@ -129,15 +132,23 @@ public struct Trading: Sendable {
         state.daily.specialItem == itemID && state.daily.day == today(state)
     }
 
-    /// The farmer must be at the shop while it's open; for the market and the
-    /// gas station the truck must be there too.
-    private func requireShop(_ kind: ShopKind, _ state: GameState) throws(TradeFailure) {
+    /// The farmer must be at the shop while it's open (within a tile of it, the
+    /// same reach as the shop's button); the gas station needs the truck close
+    /// by too. The market takes goods from the bag and a nearby truck (`Goods`).
+    @discardableResult
+    private func requireShop(_ kind: ShopKind, _ state: GameState) throws(TradeFailure) -> ShopDefinition {
         guard let shop = ShopCatalog.all.first(where: { $0.kind == kind && $0.zone.insetBy(-1).contains(state.farmerPosition) })
         else { throw .notAtShop(kind) }
-        if kind == .market || kind == .gasStation {
-            guard shop.zone.contains(state.truck.position) else { throw .truckNotHere(kind) }
+        if kind == .gasStation {
+            guard Goods.truckIsNear(shop.zone, in: state) else { throw .truckNotHere(kind) }
         }
         guard shop.isOpen(atHour: state.clock.hour) else { throw .closed(opens: shop.opens) }
+        return shop
+    }
+
+    /// Whether the farmer is on the home farm (where storage is: the bag fills here).
+    public func isOnFarm(_ state: GameState) -> Bool {
+        PropertyCatalog.homeFarm.area.insetBy(-3).contains(state.farmerPosition)
     }
 
     /// Whether the truck is parked on the home farm (where loading happens).
@@ -206,13 +217,15 @@ public struct Trading: Sendable {
 
     // MARK: Market
 
-    /// Sells items from the truck bed; returns the coins earned.
+    /// Sells goods from the bag and a nearby truck bed; returns the coins earned.
     public func sell(_ itemID: String, count: Int, state: inout GameState) throws(TradeFailure) -> Int {
-        try requireShop(.market, state)
+        let shop = try requireShop(.market, state)
         guard let unitPrice = price(of: itemID, in: state) else { throw .unknownItem }
-        let amount = min(count, state.truck.cargo.count(itemID))
-        guard amount > 0 else { throw .nothingToSell }
-        state.truck.cargo.remove(itemID, amount)
+        let amount = min(count, Goods.count(itemID, near: shop.zone, in: state))
+        guard amount > 0 else {
+            throw Goods.truckHasThemButIsFar([itemID], near: shop.zone, in: state) ? .truckNotHere(.market) : .nothingToSell
+        }
+        Goods.take(itemID, amount, near: shop.zone, from: &state)
         let earned = unitPrice * amount
         state.money += earned
         state.finance.earn(earned, LedgerCategory.marketSales)
@@ -220,14 +233,17 @@ public struct Trading: Sendable {
         return earned
     }
 
-    /// Sells everything the market buys from the bed; returns the coins earned.
+    /// Sells everything the market buys from the bag and a nearby truck; returns the coins earned.
     public func sellAll(state: inout GameState) throws(TradeFailure) -> Int {
-        try requireShop(.market, state)
-        let items = state.truck.cargo.items.keys.sorted().filter { price(of: $0, in: state) != nil }
-        guard !items.isEmpty else { throw .nothingToSell }
+        let shop = try requireShop(.market, state)
+        let items = Goods.onHand(near: shop.zone, in: state).keys.sorted().filter { price(of: $0, in: state) != nil }
+        guard !items.isEmpty else {
+            let sellable = state.truck.cargo.items.keys.filter { price(of: $0, in: state) != nil }
+            throw Goods.truckHasThemButIsFar(Array(sellable), near: shop.zone, in: state) ? .truckNotHere(.market) : .nothingToSell
+        }
         var total = 0
         for item in items {
-            total += try sell(item, count: state.truck.cargo.count(item), state: &state)
+            total += try sell(item, count: Goods.count(item, near: shop.zone, in: state), state: &state)
         }
         return total
     }
@@ -314,6 +330,48 @@ public struct Trading: Sendable {
             moved += try load(item.id, count: room, state: &state)
         }
         return moved
+    }
+
+    // MARK: The bag
+
+    /// Puts goods from farm storage in the bag (anywhere on the farm); returns how many moved.
+    public func takeToBag(_ itemID: String, count: Int, state: inout GameState) throws(TradeFailure) -> Int {
+        guard isOnFarm(state) else { throw .notOnFarm }
+        guard ItemCatalog.item(itemID)?.category.isSellable == true else { throw .unknownItem }
+        let room = balance.bagCapacity - state.farmer.bagCount
+        guard room > 0 else { throw .bagFull }
+        let amount = min(count, room, state.inventory.count(itemID))
+        guard amount > 0 else { throw .unknownItem }
+        state.inventory.remove(itemID, amount)
+        state.farmer.bag.add(itemID, amount)
+        return amount
+    }
+
+    /// Fills the bag with the most valuable goods in storage; returns how many moved.
+    public func fillBag(state: inout GameState) throws(TradeFailure) -> Int {
+        guard isOnFarm(state) else { throw .notOnFarm }
+        guard state.farmer.bagCount < balance.bagCapacity else { throw .bagFull }
+        let goods = ItemCatalog.all
+            .filter { $0.category.isSellable && state.inventory.count($0.id) > 0 }
+            .sorted { $0.value.upperBound != $1.value.upperBound ? $0.value.upperBound > $1.value.upperBound : $0.id < $1.id }
+        guard !goods.isEmpty else { throw .unknownItem }
+        var moved = 0
+        for item in goods where state.farmer.bagCount < balance.bagCapacity {
+            moved += try takeToBag(item.id, count: balance.bagCapacity, state: &state)
+        }
+        return moved
+    }
+
+    /// Puts goods from the bag back into farm storage (on the farm).
+    public func emptyBag(_ itemID: String, count: Int, state: inout GameState) throws(TradeFailure) -> Int {
+        guard isOnFarm(state) else { throw .notOnFarm }
+        let room = state.storageCapacity(balance) - state.inventory.storageUsed
+        guard room > 0 else { throw .storageFull }
+        let amount = min(count, room, state.farmer.bag.count(itemID))
+        guard amount > 0 else { throw .unknownItem }
+        state.farmer.bag.remove(itemID, amount)
+        state.inventory.add(itemID, amount)
+        return amount
     }
 
     /// Moves items from the truck back into farm storage.

@@ -523,7 +523,7 @@ struct MenuIcon: View {
         "gearshape.fill": "ui_icon_settings", "person.fill": "ui_icon_worker",
         "hand.tap.fill": "ui_icon_hand", "speaker.wave.2.fill": "ui_icon_note",
         "calendar": "ui_icon_clock", "banknote.fill": "ui_icon_coin", "book.fill": "ui_icon_journal",
-        "flag.fill": "ui_icon_goals", "checklist": "ui_icon_goals", "xmark": "ui_icon_close",
+        "flag.fill": "ui_icon_goals", "checklist": "ui_icon_goals", "xmark": "ui_icon_close", "bag.fill": "ui_icon_bag",
         "moon.stars.fill": "ui_icon_time_night", "moon.stars": "ui_icon_time_night", "moon.zzz.fill": "ui_icon_time_night",
         "sun.max.fill": "ui_icon_time_day", "sunrise.fill": "ui_icon_time_morning", "sunset.fill": "ui_icon_time_evening",
         "cloud.fill": "ui_icon_weather_cloudy", "cloud.rain.fill": "ui_icon_weather_rain", "cloud.snow.fill": "ui_icon_weather_snow",

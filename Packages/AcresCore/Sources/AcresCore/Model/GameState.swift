@@ -210,12 +210,18 @@ public struct FarmerState: Codable, Equatable, Sendable {
     /// 0…`Balance.energyMax`. Work and hours awake use it up; sleep refills it.
     public var energy: Double
     public var inTruck: Bool
+    /// What they carry themselves: a few goods to sell or deliver without the truck. (v15)
+    public var bag: Inventory
 
-    public init(position: Vec2 = HomeValleyMap.farmhouseDoor, energy: Double = 100, inTruck: Bool = false) {
+    public init(position: Vec2 = HomeValleyMap.farmhouseDoor, energy: Double = 100, inTruck: Bool = false,
+                bag: Inventory = Inventory()) {
         self.position = position
         self.energy = energy
         self.inTruck = inTruck
+        self.bag = bag
     }
+
+    public var bagCount: Int { bag.items.values.reduce(0, +) }
 }
 
 /// Lifetime statistics, handy for achievements and for debugging saves.

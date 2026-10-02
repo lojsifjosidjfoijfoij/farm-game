@@ -595,10 +595,57 @@ enum SaveFixtures {
     }
     """
 
+    static let v15 = """
+    {
+      "createdAt": 1800000000,
+      "deviceID": "fixture-device",
+      "presentation": { "cameraCenter": { "x": 28, "y": 33 }, "cameraZoom": 1.3, "selectedSeed": "wheat" },
+      "revision": 360,
+      "savedAt": 1800060000,
+      "state": {
+        "clock": { "totalMinutes": 50400 },
+        "contracts": { "active": [], "completed": 0, "failed": 0, "nextID": 25, "offers": [], "reputation": 10 },
+        "daily": { "bestStreak": 2, "bonusClaimed": false, "chores": [], "day": 35, "streak": 1 },
+        "estate": {
+          "nextWorkerID": 1, "sprinklers": [], "storageLevel": 0, "truckBedLevel": 0, "workers": [],
+          "workshops": [
+            { "kind": "mill", "lastRecipe": "flour", "progress": 120, "queued": 2, "ready": 2, "recipe": "flour",
+              "tile": { "x": 20, "y": 30 } },
+            { "kind": "beehive", "progress": 0, "queued": 0, "ready": 0, "tile": { "x": 24, "y": 30 } }
+          ]
+        },
+        "farmer": { "bag": { "items": { "carrot": 3 } }, "energy": 95, "inTruck": false, "position": { "x": 21, "y": 35.5 } },
+        "finance": { "lastProcessedDay": 35, "thisWeek": { "expenses": {}, "income": {}, "week": 6 } },
+        "almanac": { "claimedSets": ["orchard"], "discovered": ["apple", "cherry", "wheat"] },
+        "forage": { "day": 35, "picked": [3, 17] },
+        "goals": { "claimed": [], "counters": { "crafted": 4, "fishCaught": 2 } },
+        "inventory": { "items": { "wheat": 8 } },
+        "money": 4200,
+        "ownedFields": ["home_1", "home_2"],
+        "ownedProperties": ["home_farm"],
+        "plots": [],
+        "progress": { "level": 5, "xp": 30 },
+        "rank": { "finaleDay": 30, "rank": 6 },
+        "ranch": { "nextAnimalID": 1, "pens": {} },
+        "rng": "32",
+        "stats": { "offlineSeconds": 12000, "playSeconds": 25000, "returns": 11 },
+        "store": { "isRented": false, "shelves": [], "today": { "coins": 0, "day": 35, "items": 0, "sales": {} }, "totalCoins": 0 },
+        "truck": { "cargo": { "items": {} }, "fuel": 70, "heading": 3.1, "position": { "x": 26.2, "y": 30.2 } },
+        "tutorial": {
+          "progress": 0, "step": 11,
+          "told": ["chores", "axe", "coop", "workshop", "fishing", "foraging", "shop", "almanac", "farmhand", "farewell"]
+        },
+        "woodland": { "hiddenMapTrees": [], "trees": [] },
+        "worldTime": 70000
+      },
+      "version": 15
+    }
+    """
+
     /// All fixtures, oldest first.
     static let all: [(version: Int, json: String)] = [(1, v1), (2, v2), (3, v3), (4, v4), (5, v5), (6, v6), (7, v7), (8, v8), (9, v9),
                                                       (10, v10), (11, v11), (12, v12), (13, v13),
-                                                      (14, v14)]
+                                                      (14, v14), (15, v15)]
     static var latest: (version: Int, json: String) { all.last! }
 
     /// What `v1` must decode to after migrating to the current version.
@@ -1038,15 +1085,19 @@ enum SaveFixtures {
         return file
     }()
 
-    /// What `v14` must decode to.
-    static let v14Expected: SaveFile = {
+    /// What `v14` becomes after migrating (an empty bag).
+    static var v14Migrated: SaveFile { v13Migrated }
+
+    /// What `v15` must decode to.
+    static let v15Expected: SaveFile = {
         var file = v13Migrated
-        file.version = 14
+        file.version = 15
+        file.state.farmer.bag = Inventory(items: ["carrot": 3])
         return file
     }()
 
     /// The value whose encoding must have the same shape as the latest fixture.
-    static var latestExpected: SaveFile { v14Expected }
+    static var latestExpected: SaveFile { v15Expected }
 }
 
 /// In-memory store for tests.
@@ -1175,10 +1226,17 @@ final class SaveTests: XCTestCase {
         XCTAssertEqual(file, SaveFixtures.v13Migrated)
     }
 
-    func testVersion14FixtureDecodesExactly() throws {
+    func testVersion14FixtureMigratesExactly() throws {
         let system = SaveSystem(store: MemorySaveStore(), deviceID: "test")
         let file = try system.decode(Data(SaveFixtures.v14.utf8)).get()
-        XCTAssertEqual(file, SaveFixtures.v14Expected)
+        XCTAssertEqual(file, SaveFixtures.v14Migrated)
+        XCTAssertEqual(file.state.farmer.bag, Inventory(), "the bag starts empty")
+    }
+
+    func testVersion15FixtureDecodesExactly() throws {
+        let system = SaveSystem(store: MemorySaveStore(), deviceID: "test")
+        let file = try system.decode(Data(SaveFixtures.v15.utf8)).get()
+        XCTAssertEqual(file, SaveFixtures.v15Expected)
     }
 
     func testAFarmMidwayThroughTheFirstLoopKeepsArne() throws {

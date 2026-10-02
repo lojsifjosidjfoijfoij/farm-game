@@ -31,6 +31,13 @@ extension GameController {
 
     var fullTankCost: Int { trading.fullTankCost(simulation.state) }
 
+    /// Goods on hand at a place: the bag, plus the truck bed if it's parked close by.
+    func goodsOnHand(near zone: TileRect) -> [String: Int] {
+        Goods.onHand(near: zone, in: simulation.state)
+    }
+
+    var bagCapacity: Int { balance.bagCapacity }
+
     // MARK: Actions
 
     func buySeeds(_ cropID: String, count: Int) {
@@ -118,6 +125,29 @@ extension GameController {
         }
     }
 
+    func takeToBag(_ itemID: String, count: Int) {
+        let result = simulation.trade { try $0.takeToBag(itemID, count: count, state: &$1) }
+        finish(result) { moved in
+            Haptics.tap()
+            showMessage("Put \(ItemCatalog.describe(moved, itemID)) in your bag.")
+            advanceTutorial(.loaded)
+        }
+    }
+
+    func fillBag() {
+        let result = simulation.trade { try $0.fillBag(state: &$1) }
+        finish(result) { moved in
+            Haptics.success()
+            showMessage("Your bag's packed: \(moved) goods to sell or deliver.")
+            advanceTutorial(.loaded)
+        }
+    }
+
+    func emptyBag(_ itemID: String, count: Int) {
+        let result = simulation.trade { try $0.emptyBag(itemID, count: count, state: &$1) }
+        finish(result) { _ in Haptics.tap() }
+    }
+
     func unload(_ itemID: String, count: Int) {
         let result = simulation.trade { try $0.unload(itemID, count: count, state: &$1) }
         finish(result) { _ in Haptics.tap() }
@@ -149,13 +179,15 @@ extension GameController {
         case .penNotRepaired(let penID): "Fix up the \(PenCatalog.pen(penID)?.name.lowercased() ?? "pen") at your farm first."
         case .penFull(let penID): "The \(PenCatalog.pen(penID)?.name.lowercased() ?? "pen") is full."
         case .closed(let opens): "Closed for the night. Opens at \(String(format: "%02d:00", opens))."
-        case .truckNotHere(.market): "Bring the truck: your goods are in the truck bed."
+        case .truckNotHere(.market): "Your goods are in the truck: park it by the market."
         case .truckNotHere: "Bring the truck to fill it up."
         case .notAtFarm: "Park the truck at your farm to load it."
         case .notEnoughMoney: money < 0 ? "You're in debt. Earn some coins to get back in the black first." : "Not enough coins."
         case .locked(let level): "Unlocks at level \(level)."
         case .unknownItem: "Nothing to move."
-        case .nothingToSell: "The truck is empty. Load your harvest at the farm."
+        case .nothingToSell: "Nothing to sell on you. Fill your bag at the farm, or load the truck."
+        case .notOnFarm: "Fill your bag at the farm, where your harvest is stored."
+        case .bagFull: "Your bag is full (it holds \(balance.bagCapacity)). The truck carries more."
         case .cargoFull: "The truck bed is full."
         case .storageFull: "Farm storage is full."
         case .tankFull: "The tank is already full."
