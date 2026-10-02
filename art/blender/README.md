@@ -77,7 +77,10 @@ AI model generation off: those bring in other people's models, in other styles.
    young, saplings, fruit overlays), the farmhouse tiers, farm buildings and props, and
    `models_people.py` one adjustable figure for the farmer, farmhands and villagers (`LOOKS`
    for clothes and hair, `POSES` for hands and feet per frame, built facing the camera and
-   turned for "up" and "side").
+   turned for "up" and "side"), `models_animals.py` one adjustable animal body (idle, walk,
+   eat, asleep, facing left) and `models_village.py` the village buildings (with their night
+   windows), village props and the farm's workshops. Flat water (the pond, Willow Lake, lily
+   pads) is drawn as pixel art by `art/terrain/make_water.py` instead.
 3. Register it in `ASSETS` in `render.py`, render it, and look at it with `preview.py` and
    `mockup.py`.
 
