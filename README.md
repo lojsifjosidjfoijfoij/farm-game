@@ -48,6 +48,18 @@ cd Packages/AcresCore
 swift test
 ```
 
+## Fences on foot, and seeds for the right season: what to test
+
+1. **The farmer can't walk through fences either.** Tap a spot on the other side of the farm
+   fence: the farmer walks round through the gate or a gap where a section is missing, instead of
+   straight through the rails. Stepping out of the truck never puts you on the wrong side of one.
+2. **The seed shop says what you can plant now.** Seeds for this season come first, under
+   "Plant now". The others are under "Later in the year", soonest first, each saying when
+   ("Can't be planted now: plant in autumn, in 3 days"), and buying them asks first ("Buy
+   anyway"), so nobody buys carrots in summer by mistake. In-season seeds whose season ends
+   tonight or tomorrow say "Plant soon". Seeds you've bought keep in your pouch until their
+   season comes round.
+
 ## Driving that works: what to test
 
 1. **Smaller hitboxes, solid fences.** Trees are just their trunks now, bushes and rocks their

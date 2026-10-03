@@ -40,6 +40,12 @@ extension GameController {
 
     var fullTankCost: Int { trading.fullTankCost(simulation.state) }
 
+    /// When a crop can be planted, seen from today.
+    func plantingWindow(_ crop: CropDefinition) -> CropDefinition.PlantingWindow {
+        let date = simulation.state.clock.date(daysPerSeason: balance.daysPerSeason)
+        return crop.plantingWindow(on: date, daysPerSeason: balance.daysPerSeason)
+    }
+
     /// Goods on hand at a place: the bag, plus the truck bed if it's parked close by.
     func goodsOnHand(near zone: TileRect) -> [String: Int] {
         Goods.onHand(near: zone, in: simulation.state)

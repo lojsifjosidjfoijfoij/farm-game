@@ -6,6 +6,8 @@ import AcresCore
 struct ShopView: View {
     let game: GameController
     let shop: ShopDefinition
+    /// "Are you sure?" (seeds that can't be planted yet).
+    @State private var confirm: ConfirmRequest?
 
     var body: some View {
         MenuSheet(title: shop.name, icon: MenuIcon.art[GameController.symbol(for: shop.kind)],
@@ -28,6 +30,7 @@ struct ShopView: View {
                 .padding(16)
             }
         }
+        .paperConfirm($confirm)
     }
 
     private var subtitle: String {
@@ -45,10 +48,27 @@ struct ShopView: View {
     /// Only what the farmer can buy now, or at the next level (the shop grows with you).
     private func isInView(_ unlockLevel: Int) -> Bool { unlockLevel <= game.level + 1 }
 
+    /// Seeds you can plant now first; the rest under "later in the year",
+    /// soonest first, each saying when.
     private var seedShop: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            ForEach(CropCatalog.all.filter { isInView($0.unlockLevel) }) { crop in
+        let crops = CropCatalog.all.filter { isInView($0.unlockLevel) }
+        let now = crops.filter { if case .now = game.plantingWindow($0) { true } else { false } }
+        let later = crops.filter { if case .later = game.plantingWindow($0) { true } else { false } }
+            .sorted { laterDays($0) < laterDays($1) }
+        return VStack(alignment: .leading, spacing: 10) {
+            PageHeading(title: "Plant now · \(game.season.name)")
+            ForEach(now) { crop in
                 seedRow(crop)
+            }
+            if !later.isEmpty {
+                PageHeading(title: "Later in the year")
+                Text("These can't go in the ground this season. Seeds keep in your pouch until their season comes round.")
+                    .font(Theme.label(13))
+                    .foregroundStyle(Theme.inkSoft)
+                    .fixedSize(horizontal: false, vertical: true)
+                ForEach(later) { crop in
+                    seedRow(crop)
+                }
             }
             let saplings = TreeCatalog.all.filter { isInView($0.unlockLevel) }
             if !saplings.isEmpty {
@@ -96,12 +116,19 @@ struct ShopView: View {
         }
     }
 
+    private func laterDays(_ crop: CropDefinition) -> Int {
+        if case .later(_, let days) = game.plantingWindow(crop) { return days }
+        return 0
+    }
+
     private func seedRow(_ crop: CropDefinition) -> some View {
         let locked = game.level < crop.unlockLevel
         let owned = game.inventoryItems[crop.seedItemID] ?? 0
+        let window = game.plantingWindow(crop)
+        let outOfSeason: Bool = if case .later = window { true } else { false }
         return ShopRow {
             ItemIcon(name: "item_seeds_\(crop.id)", size: 42)
-                .opacity(locked ? 0.4 : 1)
+                .opacity(locked ? 0.4 : (outOfSeason ? 0.6 : 1))
         } info: {
             Text(crop.name)
                 .font(Theme.label(16, weight: .semibold))
@@ -113,18 +140,54 @@ struct ShopView: View {
                     .font(Theme.label(12))
                     .foregroundStyle(Theme.inkSoft)
             }
+            if let note = seasonNote(window) {
+                Text(note.text)
+                    .font(Theme.label(12, weight: .semibold))
+                    .foregroundStyle(note.urgent ? Theme.danger : Theme.inkSoft)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         } actions: {
             if locked {
                 PaperTag(text: "Level \(crop.unlockLevel)", symbol: "lock.fill")
             } else {
                 PriceButton(title: "1", price: crop.seedCost, enabled: game.money >= crop.seedCost) {
-                    game.buySeeds(crop.id, count: 1)
+                    buySeeds(crop, count: 1, window: window)
                 }
                 PriceButton(title: "10", price: crop.seedCost * 10, enabled: game.money >= crop.seedCost * 10) {
-                    game.buySeeds(crop.id, count: 10)
+                    buySeeds(crop, count: 10, window: window)
                 }
             }
         }
+    }
+
+    /// When to plant it, if that's worth saying: not this season, or not for much longer.
+    private func seasonNote(_ window: CropDefinition.PlantingWindow) -> (text: String, urgent: Bool)? {
+        switch window {
+        case .later(let season, let days):
+            return ("Can't be planted now: plant in \(season.name.lowercased()), \(Self.inDays(days)).", true)
+        case .now(let left?) where left <= 2:
+            return ("Plant soon: the season for it ends \(left == 1 ? "tonight" : "tomorrow night").", true)
+        case .now:
+            return nil
+        }
+    }
+
+    private static func inDays(_ days: Int) -> String {
+        days == 1 ? "starting tomorrow" : "in \(days) days"
+    }
+
+    /// Seeds for a later season: ask first, so nobody buys them by mistake.
+    private func buySeeds(_ crop: CropDefinition, count: Int, window: CropDefinition.PlantingWindow) {
+        guard case .later(let season, let days) = window else {
+            game.buySeeds(crop.id, count: count)
+            return
+        }
+        confirm = ConfirmRequest(
+            title: "\(crop.name) can't be planted this season",
+            message: "\(crop.name) grows from seed in \(crop.seasonList.map { $0.name.lowercased() }.joined(separator: " and ")). "
+                + "\(season.name) starts \(days == 1 ? "tomorrow" : "in \(days) days"); the seeds keep in your pouch until then.",
+            confirmTitle: "Buy anyway",
+            action: { game.buySeeds(crop.id, count: count) })
     }
 
     // MARK: Market

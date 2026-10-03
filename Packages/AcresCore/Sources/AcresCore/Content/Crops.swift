@@ -69,6 +69,36 @@ public struct CropDefinition: Sendable, Hashable, Identifiable {
 
     public func canBePlanted(in season: Season) -> Bool { seasons.contains(season) }
 
+    /// When it can be planted, seen from a day: now (and how many days are
+    /// left to do it, today included; nil all year round), or the next season
+    /// it can and how many days off that is.
+    public enum PlantingWindow: Equatable, Sendable {
+        case now(daysLeft: Int?)
+        case later(Season, inDays: Int)
+    }
+
+    public func plantingWindow(on date: CalendarDate, daysPerSeason: Int) -> PlantingWindow {
+        if Season.allCases.allSatisfy(canBePlanted(in:)) || seasons.isEmpty { return .now(daysLeft: nil) }
+        let restOfSeason = daysPerSeason - date.dayOfSeason + 1
+        if canBePlanted(in: date.season) {
+            // This season, and the ones after it in a row.
+            var left = restOfSeason
+            var season = date.season.next
+            while canBePlanted(in: season) {
+                left += daysPerSeason
+                season = season.next
+            }
+            return .now(daysLeft: left)
+        }
+        var days = restOfSeason
+        var season = date.season.next
+        while !canBePlanted(in: season) {
+            days += daysPerSeason
+            season = season.next
+        }
+        return .later(season, inDays: days)
+    }
+
     /// Seasons in calendar order, for display.
     public var seasonList: [Season] { Season.allCases.filter(seasons.contains) }
 }

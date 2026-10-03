@@ -97,7 +97,8 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
   its trunk, a prop its base, a building its walls, a fence its rails (so fences stop the truck but
   you can pass close to a tree); cleared trees drop out, planted ones and the farm's and village's
   buildings join in, and brush stays tile by tile. The truck slides along what it hits and reports a
-  bump (haptic). Farming and the farmer's walks still use whole tiles (`Obstacles`). Fuel drains
+  bump (haptic). Farming and the farmer's walks still use whole tiles (`Obstacles`), but walks
+  go round fences too. Fuel drains
   per tile; an empty tank limps along at 35 % speed, so the player is never stranded.
 - **Controls:** tap to drive, or pick a place from the map card (on foot, the farmer walks to the
   truck first). `Pathfinder.drivingRoute` plans in the background: A* over tiles with room for the
@@ -506,5 +507,5 @@ fingers move the camera. Plant jobs carry the packet that was in hand when they 
 - There is one market, with one price per item per day that falls as you sell. Contracts (Phase 6)
   and your own shop (Phase 7) are the other ways to sell; the shop only sells while the game is open.
 - Animals are delivered straight to their pen; carrying them home in the truck could come later.
-- Fences stop the truck (by their rails) but not the farmer on foot, whose walks are planned on
-  whole tiles; a missing fence section is a gap the truck can squeeze through.
+- Fences stop the truck (by their rails) and the farmer on foot (`WorldMap.crossesFence`: no step
+  of a walk may cross a rail or post); a missing fence section is a gap either can get through.

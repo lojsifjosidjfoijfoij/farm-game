@@ -98,4 +98,22 @@ final class DrivingRoutesTests: XCTestCase {
         let cleared = TruckPhysics(map: map, tuning: tuning, woodland: woodland)
         XCTAssertFalse(cleared.collides(tree.position))
     }
+
+    func testTheFarmerWalksRoundFencesNotOverThem() {
+        // A rail on the farm's north fence, with a spot on each side of it.
+        let rail = map.objects.first { $0.kind == "prop_fence_wood_h" && $0.position.y > 35 && $0.position.y < 45 }!
+        let inside = rail.position + Vec2(0, -0.6), outside = rail.position + Vec2(0, 0.6)
+        XCTAssertTrue(map.crossesFence(from: inside, to: outside))
+        XCTAssertFalse(map.crossesFence(from: inside, to: inside + Vec2(1, 0)))
+        guard let path = Pathfinder.path(on: map, from: inside, to: outside) else { return XCTFail("no way round") }
+        let points = [inside] + path
+        for (a, b) in zip(points, points.dropFirst()) {
+            XCTAssertFalse(map.crossesFence(from: a, to: b), "the walk climbs the fence between \(a) and \(b)")
+        }
+        XCTAssertGreaterThan(path.count, 2, "it goes round, through a gap or the gate")
+        // Out of the farm gate and on to the village: still no climbing.
+        let village = Pathfinder.path(on: map, from: HomeValleyMap.farmhouseDoor, to: HomeValleyMap.marketZone.center)!
+        let walk = [HomeValleyMap.farmhouseDoor] + village
+        XCTAssertFalse(zip(walk, walk.dropFirst()).contains { map.crossesFence(from: $0, to: $1) })
+    }
 }

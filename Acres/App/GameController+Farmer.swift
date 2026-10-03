@@ -191,7 +191,8 @@ extension GameController {
         }
         cancelJobs()
         let truck = simulation.state.truck.position
-        if simulation.state.farmer.position.distance(to: truck) < 1.8 {
+        let farmer = simulation.state.farmer.position
+        if farmer.distance(to: truck) < 1.8 && !map.crossesFence(from: farmer, to: truck) {
             enterTruck()
         } else {
             enqueueJob(FarmerJob(kind: .enterTruck, spot: truck, marker: truck))
@@ -428,7 +429,7 @@ extension GameController {
         let from = simulation.state.farmer.position
         if from.distance(to: job.spot) < 0.15 {
             arrive()
-        } else if from.distance(to: job.spot) < 2.5 {
+        } else if from.distance(to: job.spot) < 2.5 && !map.crossesFence(from: from, to: job.spot) {
             farmerPath = [job.spot]
             farmerActivity = .walking
         } else if var path = Pathfinder.path(on: map, woodland: simulation.state.woodland, built: builtTiles, wild: wildLand,

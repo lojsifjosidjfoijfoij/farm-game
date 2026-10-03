@@ -4,6 +4,7 @@ import Foundation
 /// asphalt is cheapest, grass most expensive, obstacles are impassable.
 public enum Pathfinder {
 
+    /// The farmer's walks: over whole tiles (what farming uses), round fences.
     /// Waypoints (tile units) from `start` to `goal`, or nil if unreachable.
     /// The first waypoint is the first step away from `start`; the last is `goal`
     /// (or the nearest reachable spot next to it).
@@ -39,9 +40,10 @@ public enum Pathfinder {
             for (dx, dy, step) in neighbours {
                 let next = TileCoord(tile.x + dx, tile.y + dy)
                 guard passable(next) || next == startTile else { continue }
-                // No cutting corners past obstacles.
+                // No cutting corners past obstacles, and no climbing over fences.
                 if dx != 0 && dy != 0 &&
                     (!passable(TileCoord(tile.x + dx, tile.y)) || !passable(TileCoord(tile.x, tile.y + dy))) { continue }
+                if map.crossesFence(from: tile.center, to: next.center) { continue }
                 let n = index(next)
                 if closed[n] { continue }
                 let newCost = cost[current] + step * terrainCost(map.terrain(at: next))

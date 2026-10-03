@@ -127,7 +127,7 @@ public struct WorldMap: Sendable {
         for object in objects {
             guard let rect = ObjectFootprint.collider(for: object) else { continue }
             let foot = TreeCatalog.isMapTree(object.kind) ? TileCoord(containing: object.position) : nil
-            addCollider(Collider(rect: rect, treeFoot: foot))
+            addCollider(Collider(rect: rect, treeFoot: foot, isFence: object.kind.hasPrefix("prop_fence")))
         }
         for area in solidAreas { addCollider(Collider(rect: area)) }
         self.colliders = colliders
@@ -154,6 +154,41 @@ public struct WorldMap: Sendable {
 
     /// The colliders overlapping a tile (indices into `colliders`).
     public func colliderIndex(at tile: TileCoord) -> [Int] { collidersByTile[tile] ?? [] }
+
+    /// True if walking straight from `a` to `b` would cross a fence (its rails
+    /// or a post; touching one counts). Where a section is missing, you can
+    /// walk through.
+    public func crossesFence(from a: Vec2, to b: Vec2) -> Bool {
+        let x0 = Int((min(a.x, b.x) - 0.1).rounded(.down)), x1 = Int((max(a.x, b.x) + 0.1).rounded(.down))
+        let y0 = Int((min(a.y, b.y) - 0.1).rounded(.down)), y1 = Int((max(a.y, b.y) + 0.1).rounded(.down))
+        var checked = Set<Int>()
+        for ty in y0...y1 {
+            for tx in x0...x1 {
+                for index in colliderIndex(at: TileCoord(tx, ty)) where colliders[index].isFence && checked.insert(index).inserted {
+                    if Self.segment(a, b, touches: colliders[index].rect) { return true }
+                }
+            }
+        }
+        return false
+    }
+
+    /// Whether a line segment touches a rectangle (edges included).
+    static func segment(_ a: Vec2, _ b: Vec2, touches rect: TileRect) -> Bool {
+        var t0 = 0.0, t1 = 1.0
+        let d = b - a
+        for (p, dp, lo, hi) in [(a.x, d.x, rect.minX, rect.maxX), (a.y, d.y, rect.minY, rect.maxY)] {
+            if abs(dp) < 1e-12 {
+                if p < lo || p > hi { return false }
+            } else {
+                var ta = (lo - p) / dp, tb = (hi - p) / dp
+                if ta > tb { swap(&ta, &tb) }
+                t0 = max(t0, ta)
+                t1 = min(t1, tb)
+                if t0 > t1 { return false }
+            }
+        }
+        return true
+    }
 
     public var bounds: TileRect { TileRect(x: 0, y: 0, width: Double(width), height: Double(height)) }
 

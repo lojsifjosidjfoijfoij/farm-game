@@ -7,10 +7,13 @@ public struct Collider: Sendable, Equatable {
     /// A wild tree's or stump's trunk tile: once the player chops or clears
     /// it (`Woodland.hiddenMapTrees`), it's gone.
     public let treeFoot: TileCoord?
+    /// A fence's rails or post: the farmer on foot can't cross them either.
+    public let isFence: Bool
 
-    public init(rect: TileRect, treeFoot: TileCoord? = nil) {
+    public init(rect: TileRect, treeFoot: TileCoord? = nil, isFence: Bool = false) {
         self.rect = rect
         self.treeFoot = treeFoot
+        self.isFence = isFence
     }
 }
 

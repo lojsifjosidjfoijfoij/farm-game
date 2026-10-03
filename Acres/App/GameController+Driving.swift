@@ -101,7 +101,7 @@ extension GameController {
         }
         return candidates.first { spot in
             let tile = TileCoord(containing: spot)
-            return map.isInside(tile) && !obstacles.isBlocked(tile)
+            return map.isInside(tile) && !obstacles.isBlocked(tile) && !map.crossesFence(from: truck.position, to: spot)
         } ?? truck.position
     }
 
