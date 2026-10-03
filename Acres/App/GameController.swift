@@ -246,6 +246,14 @@ final class GameController {
     // Driving (not saved: a saved truck is always parked).
     @ObservationIgnored var motion = TruckMotion()
     @ObservationIgnored var autopilot: Autopilot?
+    /// Route planning runs in the background; only the latest request counts.
+    @ObservationIgnored var routeRequest = 0
+    /// Where the current drive is headed (to plan again after a bump) and how
+    /// many times it has.
+    @ObservationIgnored var routeGoal: Vec2?
+    @ObservationIgnored var routeRetries = 0
+    /// A place picked from the drive menu on foot: off to the truck first.
+    @ObservationIgnored var pendingDrive: Destination?
     /// The farmer's lined-up work and what they're doing now (not saved).
     @ObservationIgnored var jobs: [FarmerJob] = []
     @ObservationIgnored var currentJob: FarmerJob?
@@ -1038,8 +1046,7 @@ final class GameController {
         timeScale = 1
         isDriving = false
         motion = TruckMotion()
-        autopilot = nil
-        destination = nil
+        stopRoute()
         openShop = nil
         showsBusiness = false
         showsStore = false

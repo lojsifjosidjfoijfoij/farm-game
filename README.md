@@ -48,6 +48,24 @@ cd Packages/AcresCore
 swift test
 ```
 
+## Driving that works: what to test
+
+1. **Smaller hitboxes, solid fences.** Trees are just their trunks now, bushes and rocks their
+   base, lamp posts and signs their post, so you can drive close past them instead of bouncing
+   off thin air. Fences stop the truck (gaps where a section is missing let you through, and the
+   gate is open). Buildings and water are as before.
+2. **The map card** (bottom left) shows every place on one card that fits the screen: home, the
+   village, your customers (the ones with an order marked), and the lake and Goat Hill. Tap
+   outside it to close it. It's there on foot too: pick a place and the farmer walks to the
+   truck, hops in and drives off.
+3. **Routes that make sense.** The truck keeps to the roads, takes corners gently instead of
+   cutting them, and goes round things instead of into them; if something still gets in the
+   way it finds another way round. (In the tests it drives between every pair of places
+   without a single bump.) Tapping the ground to drive works the same way.
+4. **Name plaques** over every shop and customer, with the same icon as the map card: Village
+   Gas, Seed Shop, Village Market, Valley Livestock, the bank, the Corner Shop (or "Your shop"),
+   The Rusty Spoon, Hansen's Bakery, North Woods Lumber and the Valley Deli.
+
 ## A market that wants variety, and village projects: what to test
 
 1. **Selling a mountain of one thing lowers its price; a normal load barely does.** A starter

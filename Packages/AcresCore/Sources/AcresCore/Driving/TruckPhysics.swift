@@ -40,23 +40,20 @@ public enum DriveEvent: Equatable, Sendable {
 public struct TruckPhysics: Sendable {
     public let map: WorldMap
     public let tuning: DrivingTuning
+    /// What's solid, shape by shape: trunks, rocks, walls, fence rails, the
+    /// farm's buildings, brush (see `DrivingObstacles`).
+    public let obstacles: DrivingObstacles
 
-    /// Trees as the player changed them (chopped, cleared, planted).
-    public let woodland: Woodland
-    public let built: Set<TileCoord>
-    /// Brush the truck can't drive through (see `WildLand`).
-    public let wild: WildLand
-
-    public init(map: WorldMap, tuning: DrivingTuning, woodland: Woodland = Woodland(), built: Set<TileCoord> = [],
+    public init(map: WorldMap, tuning: DrivingTuning, woodland: Woodland = Woodland(), built: [TileRect] = [],
                 wild: WildLand = .none) {
-        self.built = built
-        self.map = map
-        self.woodland = woodland
-        self.tuning = tuning
-        self.wild = wild
+        self.init(tuning: tuning, obstacles: DrivingObstacles(map: map, woodland: woodland, built: built, wild: wild))
     }
 
-    var obstacles: Obstacles { Obstacles(map: map, woodland: woodland, built: built, wild: wild) }
+    public init(tuning: DrivingTuning, obstacles: DrivingObstacles) {
+        self.map = obstacles.map
+        self.tuning = tuning
+        self.obstacles = obstacles
+    }
 
     public func surface(at position: Vec2) -> Terrain {
         map.terrain(at: TileCoord(containing: position))
@@ -131,19 +128,7 @@ public struct TruckPhysics: Sendable {
 
     /// True if the truck's collision circle at `p` touches an obstacle or the map edge.
     public func collides(_ p: Vec2) -> Bool {
-        let r = tuning.collisionRadius
-        if p.x - r < 0 || p.y - r < 0 || p.x + r > Double(map.width) || p.y + r > Double(map.height) { return true }
-        let x0 = Int((p.x - r).rounded(.down)), x1 = Int((p.x + r).rounded(.down))
-        let y0 = Int((p.y - r).rounded(.down)), y1 = Int((p.y + r).rounded(.down))
-        for ty in y0...y1 {
-            for tx in x0...x1 where obstacles.isBlocked(TileCoord(tx, ty)) {
-                let cx = min(max(p.x, Double(tx)), Double(tx + 1))
-                let cy = min(max(p.y, Double(ty)), Double(ty + 1))
-                let dx = p.x - cx, dy = p.y - cy
-                if dx * dx + dy * dy < r * r { return true }
-            }
-        }
-        return false
+        obstacles.blocks(p, radius: tuning.collisionRadius)
     }
 
     /// Smallest signed angle from `b` to `a`, in (-π, π].

@@ -386,7 +386,7 @@ public enum VillageLayout {
         return TileRect(minX: p.x - half, minY: p.y - 0.3, maxX: p.x + half, maxY: p.y + max(1, spec.tilesHigh * 0.85))
     }
 
-    private static func blocks(_ kind: String) -> Bool {
+    static func blocks(_ kind: String) -> Bool {
         kind.hasPrefix("building_") || kind == "prop_flower_planter" || kind == "prop_prize_table" || kind == "prop_hay_bale"
     }
 }

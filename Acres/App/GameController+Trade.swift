@@ -14,8 +14,7 @@ extension GameController {
         }
         if isDriving {
             motion = TruckMotion()
-            autopilot = nil
-            destination = nil
+            stopRoute()
         }
         openShop = shop
         Haptics.tap()

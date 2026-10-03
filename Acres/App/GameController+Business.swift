@@ -84,8 +84,7 @@ extension GameController {
         }
         if isDriving {
             motion = TruckMotion()
-            autopilot = nil
-            destination = nil
+            stopRoute()
         }
         let result = simulation.contracts { try $0.deliver(to: client.id, state: &$1) }
         switch result {

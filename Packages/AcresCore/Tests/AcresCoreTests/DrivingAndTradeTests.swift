@@ -94,7 +94,8 @@ final class DrivingTests: XCTestCase {
         let market = ShopCatalog.first(.market)!
         var truck = TruckState(position: HomeValleyMap.truckParkingSpot, heading: .pi)
         var motion = TruckMotion()
-        var pilot = Autopilot(path: Pathfinder.path(on: map, from: truck.position, to: market.zone.center)!)
+        let route = Pathfinder.drivingPath(on: DrivingObstacles(map: map), radius: 0.6, from: truck.position, to: market.zone.center)
+        var pilot = Autopilot(path: route!)
         var seconds = 0.0
         while let input = pilot.input(for: truck), seconds < 90 {
             physics.step(&truck, &motion, input: input, dt: 1.0 / 30)

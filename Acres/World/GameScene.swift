@@ -30,6 +30,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
     private var store: StoreRenderer?
     private var estate: EstateRenderer?
     private var village: VillageRenderer?
+    private var placeSigns: PlaceSignRenderer?
     private var outdoors: OutdoorsRenderer?
     private var terrain: TerrainRenderer?
     private var weather: WeatherRenderer?
@@ -150,6 +151,8 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         estate?.sync(game: game, force: true)
         village = VillageRenderer(assets: assets, objectLayer: objectLayer, flatLayer: flatLayer)
         village?.sync(game: game, force: true)
+        placeSigns = PlaceSignRenderer(layer: objectLayer, map: game.map)
+        placeSigns?.sync(game: game)
         outdoors = OutdoorsRenderer(assets: assets, objectLayer: objectLayer, effectsLayer: effectsLayer)
         weather = WeatherRenderer(layer: effectsLayer, assets: assets)
         updateSeason()
@@ -301,6 +304,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         ranch?.sync(ranch: state.ranch, now: state.worldTime, inventory: state.inventory, level: state.progress.level)
         estate?.sync(game: game)
         village?.sync(game: game)
+        placeSigns?.sync(game: game)
         updateMarkers()
     }
 

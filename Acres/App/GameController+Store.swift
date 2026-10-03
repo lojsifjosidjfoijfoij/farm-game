@@ -9,8 +9,7 @@ extension GameController {
         guard nearbyStore != nil else { return }
         if isDriving {
             motion = TruckMotion()
-            autopilot = nil
-            destination = nil
+            stopRoute()
         }
         showsSeedPicker = false
         showsStore = true

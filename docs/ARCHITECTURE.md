@@ -92,12 +92,22 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
 - **Driving** (`TruckPhysics`, core, tested): arcade physics in tile units. The truck turns toward
   the stick direction at `turnRate`, accelerates to a surface-dependent top speed (asphalt >
   gravel > dirt > grass), and its velocity bends toward its heading at a surface-dependent grip,
-  so gravel and dirt drift a little. Collisions are a circle against blocked tiles
-  (`WorldMap.blockedTiles`): the truck slides along walls and reports a bump (haptic). Fuel drains
+  so gravel and dirt drift a little. Collisions are a circle against precise shapes
+  (`DrivingObstacles`, built from `WorldMap.colliders` and `ObjectFootprint.collider`): a tree is
+  its trunk, a prop its base, a building its walls, a fence its rails (so fences stop the truck but
+  you can pass close to a tree); cleared trees drop out, planted ones and the farm's and village's
+  buildings join in, and brush stays tile by tile. The truck slides along what it hits and reports a
+  bump (haptic). Farming and the farmer's walks still use whole tiles (`Obstacles`). Fuel drains
   per tile; an empty tank limps along at 35 % speed, so the player is never stranded.
-- **Controls:** tap to drive (A* over drivable tiles, `Pathfinder`, followed by an `Autopilot`
-  that produces `DriveInput`s). Phase 3 also had a joystick; Phase 5 removed it. The camera follows
-  the truck with a little look-ahead.
+- **Controls:** tap to drive, or pick a place from the map card (on foot, the farmer walks to the
+  truck first). `Pathfinder.drivingRoute` plans in the background: A* over tiles with room for the
+  truck, steps that don't cross a rail or clip a trunk, a strong taste for roads; then the route is
+  pulled straight wherever that doesn't leave better ground. It tries a roomy margin first and
+  narrows only for tight tracks. The `Autopilot` follows the line (aiming a tile ahead along it,
+  slowing for sharp turns); after a bump it plans again, twice. `DrivingRoutesTests` drives the
+  truck between every pair of places. The camera follows the truck with a little look-ahead.
+- **Which place is which:** a paper name plaque with the place's icon floats over every shop and
+  customer (`PlaceSignRenderer`, drawn by SwiftUI in the menus' style into a texture).
 - **A driving truck is never saved.** Physics state (`TruckMotion`) lives in the app; the save
   holds the truck's position, heading, fuel and cargo. Backgrounding the app parks the truck.
 - **The village** (east of the farm, `HomeValleyMap.buildVillageAndBeyond`): gas station, seed
@@ -496,5 +506,5 @@ fingers move the camera. Plant jobs carry the packet that was in hand when they 
 - There is one market, with one price per item per day that falls as you sell. Contracts (Phase 6)
   and your own shop (Phase 7) are the other ways to sell; the shop only sells while the game is open.
 - Animals are delivered straight to their pen; carrying them home in the truck could come later.
-- Old wooden fences don't block the truck (they run along tile edges); pens, trees and
-  buildings do.
+- Fences stop the truck (by their rails) but not the farmer on foot, whose walks are planned on
+  whole tiles; a missing fence section is a gap the truck can squeeze through.

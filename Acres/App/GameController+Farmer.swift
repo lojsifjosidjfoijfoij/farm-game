@@ -337,6 +337,7 @@ extension GameController {
 
     /// Clears the job line (the current walk stops where it is).
     func cancelJobs() {
+        pendingDrive = nil
         if fishing != nil {
             fishing = nil
             fishingHint = nil

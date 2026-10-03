@@ -219,7 +219,10 @@ final class EstateTests: XCTestCase {
         let built = EstateLayout.blockedTiles(sim.state.estate)
         XCTAssertNotNil(Pathfinder.path(on: map, built: built, from: HomeValleyMap.truckParkingSpot,
                                         to: HomeValleyMap.marketZone.center))
-        XCTAssertFalse(TruckPhysics(map: map, tuning: balance.driving, built: built).collides(HomeValleyMap.truckParkingSpot))
+        let obstacles = DrivingObstacles(map: map, state: sim.state)
+        XCTAssertNotNil(Pathfinder.drivingPath(on: obstacles, radius: 0.6, from: HomeValleyMap.truckParkingSpot,
+                                               to: HomeValleyMap.marketZone.center))
+        XCTAssertFalse(TruckPhysics(tuning: balance.driving, obstacles: obstacles).collides(HomeValleyMap.truckParkingSpot))
     }
 
     func testABiggerTruckBedCarriesMore() {

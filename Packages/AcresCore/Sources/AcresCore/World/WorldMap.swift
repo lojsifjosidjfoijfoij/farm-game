@@ -83,6 +83,10 @@ public struct WorldMap: Sendable {
     public let treesByFoot: [TileCoord: [MapObject]]
     /// For each tile a wild tree covers, the trunk tiles of the trees covering it.
     public let treeCover: [TileCoord: [TileCoord]]
+    /// What the truck bumps into, shape by shape (see `DrivingObstacles`).
+    public let colliders: [Collider]
+    /// The colliders overlapping each tile (indices into `colliders`).
+    private let collidersByTile: [TileCoord: [Int]]
 
     public init(name: String, width: Int, height: Int, terrain: [Terrain], objects: [MapObject],
                 solidAreas: [TileRect] = []) {
@@ -113,6 +117,21 @@ public struct WorldMap: Sendable {
             }
         }
         for area in solidAreas { solid.formUnion(Self.tiles(covering: area)) }
+
+        var colliders: [Collider] = []
+        var collidersByTile: [TileCoord: [Int]] = [:]
+        func addCollider(_ collider: Collider) {
+            for tile in Self.tiles(covering: collider.rect) { collidersByTile[tile, default: []].append(colliders.count) }
+            colliders.append(collider)
+        }
+        for object in objects {
+            guard let rect = ObjectFootprint.collider(for: object) else { continue }
+            let foot = TreeCatalog.isMapTree(object.kind) ? TileCoord(containing: object.position) : nil
+            addCollider(Collider(rect: rect, treeFoot: foot))
+        }
+        for area in solidAreas { addCollider(Collider(rect: area)) }
+        self.colliders = colliders
+        self.collidersByTile = collidersByTile
         self.solidTiles = solid
         self.treesByFoot = treesByFoot
         self.treeCover = treeCover
@@ -132,6 +151,9 @@ public struct WorldMap: Sendable {
     }
 
     public func isBlocked(_ tile: TileCoord) -> Bool { blockedTiles.contains(tile) }
+
+    /// The colliders overlapping a tile (indices into `colliders`).
+    public func colliderIndex(at tile: TileCoord) -> [Int] { collidersByTile[tile] ?? [] }
 
     public var bounds: TileRect { TileRect(x: 0, y: 0, width: Double(width), height: Double(height)) }
 

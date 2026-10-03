@@ -56,6 +56,22 @@ struct HUDView: View {
                     .frame(maxWidth: Self.centerWidth)
                 bottomBar
             }
+
+            if showsMap {
+                // Tap anywhere else to put the map away.
+                Color.black.opacity(0.12)
+                    .ignoresSafeArea()
+                    .onTapGesture { withAnimation(.spring(duration: 0.25)) { showsMap = false } }
+                DrivePicker(destinations: game.destinations, current: game.destination) { destination in
+                    withAnimation(.spring(duration: 0.25)) { showsMap = false }
+                    game.drive(to: destination)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                .padding(.leading, 10)
+                .padding(.top, 8)
+                .padding(.bottom, 70)
+                .transition(.scale(scale: 0.92, anchor: .bottomLeading).combined(with: .opacity))
+            }
         }
         .animation(.spring(duration: 0.35), value: game.banner)
         .animation(.spring(duration: 0.35), value: game.inspection)
@@ -137,7 +153,7 @@ struct HUDView: View {
                 #if DEBUG
                 debugButton
                 #endif
-                if game.isDriving { mapMenu }
+                if game.isDriving || game.tutorial.hasReached(.drive) { mapMenu }
                 Spacer(minLength: 0)
                 if !game.isDriving && (game.isBedtime || game.tutorialFocus == .bedButton) { bedButton }
                 // The phone (orders, the books, the Farm tab) arrives at level 2
@@ -444,10 +460,11 @@ struct HUDView: View {
 
     // MARK: Bottom
 
-    /// The GPS: pick a place and the truck drives there.
+    /// The GPS: pick a place and the truck drives there (on foot, the farmer
+    /// walks to the truck first). The places open as a card above the button.
     private var mapMenu: some View {
         Button {
-            showsMap.toggle()
+            withAnimation(.spring(duration: 0.25)) { showsMap.toggle() }
             Haptics.tap()
         } label: {
             GameIcon(asset: "ui_icon_map", fallbackSymbol: "map.fill", tint: HUD.text, size: HUD.iconSize)
@@ -455,46 +472,8 @@ struct HUDView: View {
                 .background(PixelFrame(showsMap ? .slotSelected : .panel))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Map")
-        // The places, on paper above the button (not the system's pop-up menu).
-        .overlay(alignment: .bottomLeading) {
-            if showsMap {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Drive to…")
-                        .font(HUD.font(13, .black))
-                        .foregroundStyle(HUD.textSoft)
-                        .padding(.horizontal, 8)
-                        .padding(.bottom, 2)
-                    ForEach(game.destinations) { destination in
-                        Button {
-                            showsMap = false
-                            game.drive(to: destination)
-                        } label: {
-                            HStack(spacing: 8) {
-                                MenuIcon(symbol: destination.symbol)
-                                Text(destination.menuTitle)
-                                    .font(HUD.font(15, .heavy))
-                                    .foregroundStyle(HUD.text)
-                                    .lineLimit(1)
-                                Spacer(minLength: 0)
-                            }
-                            .padding(.horizontal, 8)
-                            .frame(height: 36)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 10)
-                .frame(width: 260)
-                .background(PixelFrame(.panel))
-                .offset(y: -60)
-                .transition(.scale(scale: 0.9, anchor: .bottomLeading).combined(with: .opacity))
-            }
-        }
         .onDisappear { showsMap = false }
-        .pulsing(game.tutorial.step == .drive && game.guideShowsHints)
+        .pulsing(game.tutorial.step == .drive && game.guideShowsHints && !showsMap)
         .accessibilityLabel("Map: drive somewhere")
     }
 
@@ -957,5 +936,77 @@ struct Pulsing: ViewModifier {
 extension View {
     func pulsing(_ active: Bool) -> some View {
         modifier(Pulsing(active: active))
+    }
+}
+
+/// Where to drive: every place on one card, grouped, two to a row, that
+/// always fits on the screen (it scrolls on a short one).
+private struct DrivePicker: View {
+    let destinations: [Destination]
+    /// Where the truck is headed now (marked).
+    let current: Vec2?
+    let onPick: (Destination) -> Void
+
+    var body: some View {
+        ViewThatFits(in: .vertical) {
+            card
+            ScrollView(.vertical, showsIndicators: false) { card }
+        }
+        .frame(width: 400)
+        .background(PixelFrame(.panel))
+    }
+
+    private var card: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Drive to…")
+                .font(HUD.font(15, .black))
+                .foregroundStyle(HUD.text)
+            ForEach(Destination.Group.allCases, id: \.self) { group in
+                let places = destinations.filter { $0.group == group }
+                if !places.isEmpty {
+                    if group != .home {
+                        Text(group.rawValue.uppercased())
+                            .font(HUD.font(10, .black))
+                            .foregroundStyle(HUD.textSoft)
+                            .padding(.top, 2)
+                    }
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 6), GridItem(.flexible(), spacing: 6)], spacing: 6) {
+                        ForEach(places) { place in tile(place) }
+                    }
+                }
+            }
+        }
+        .padding(10)
+    }
+
+    private func tile(_ place: Destination) -> some View {
+        let isCurrent = current.map { $0.distance(to: place.target) < 1.5 } ?? false
+        return Button {
+            Haptics.tap()
+            onPick(place)
+        } label: {
+            HStack(spacing: 6) {
+                MenuIcon(symbol: place.symbol, size: 20)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(place.name)
+                        .font(HUD.font(13, .heavy))
+                        .foregroundStyle(HUD.text)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    if let note = place.note {
+                        Text(note)
+                            .font(HUD.font(10, .black))
+                            .foregroundStyle(note == "order" ? HUD.danger : HUD.textSoft)
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 8)
+            .frame(height: 40)
+            .background(PixelFrame(isCurrent ? .slotSelected : .slot))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(place.menuTitle)
     }
 }
