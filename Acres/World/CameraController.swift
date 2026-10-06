@@ -18,6 +18,11 @@ final class CameraController {
                 viewSize = oldValue
                 return
             }
+            // The first real size sets the starting zoom for this screen.
+            if !hasRealSize {
+                hasRealSize = true
+                zoom = zoom(forTilePoints: Self.defaultTilePoints)
+            }
             zoom = clamp(zoom, minZoom, maxZoom)
             clampCenter()
             apply()
@@ -26,11 +31,15 @@ final class CameraController {
     private(set) var center: CGPoint
     private(set) var zoom: CGFloat
 
-    // How many tiles fit across the screen's short side (its height, held
-    // sideways) at the zoom limits.
-    static let closestTilesAcross: CGFloat = 5.5
-    static let farthestTilesAcross: CGFloat = 14
-    static let defaultTilesAcross: CGFloat = 9
+    /// How big a tile looks on screen (points) at the zoom limits and to begin
+    /// with: on a phone held sideways, 5.5, 14 and 9 tiles across its height.
+    /// An iPad or a Mac window shows more of the world at the same size, up to
+    /// `maxTilesAcross` (beyond that big windows zoom in instead).
+    static let closestTilePoints: CGFloat = 390 / 5.5
+    static let farthestTilePoints: CGFloat = 390 / 14
+    static let defaultTilePoints: CGFloat = 390 / 9
+    static let maxTilesAcross: CGFloat = 30
+    private var hasRealSize = false
 
     private var velocity = CGVector.zero      // inertia, world points / s
     private var isDragging = false
@@ -45,13 +54,20 @@ final class CameraController {
         self.camera = camera
         self.worldBounds = worldBounds
         self.center = center
-        self.zoom = Self.defaultTilesAcross * World.tileSize / 390
+        self.zoom = World.tileSize / Self.defaultTilePoints
         apply()
     }
 
     private var shortSide: CGFloat { max(min(viewSize.width, viewSize.height), 1) }
-    var minZoom: CGFloat { Self.closestTilesAcross * World.tileSize / shortSide }
-    var maxZoom: CGFloat { Self.farthestTilesAcross * World.tileSize / shortSide }
+    var minZoom: CGFloat { zoom(forTiles: min(Self.maxTilesAcross * 0.45, shortSide / Self.closestTilePoints)) }
+    var maxZoom: CGFloat { zoom(forTiles: min(Self.maxTilesAcross, shortSide / Self.farthestTilePoints)) }
+
+    /// The zoom that shows tiles at this size on screen (within the limit).
+    private func zoom(forTilePoints points: CGFloat) -> CGFloat {
+        zoom(forTiles: min(Self.maxTilesAcross, shortSide / points))
+    }
+
+    private func zoom(forTiles across: CGFloat) -> CGFloat { across * World.tileSize / shortSide }
 
     /// The part of the world currently on screen.
     var visibleRect: CGRect {

@@ -99,6 +99,8 @@ final class GameController {
     /// The tool in hand: taps and drags on the field only ever do its job.
     var tool: BeltTool = .hand
     var showsInventory = false
+    /// The drive-to card over the map button.
+    var showsDriveMap = false
     var showsGoals = false
     private(set) var remindersEnabled: Bool
     private(set) var hapticsEnabled: Bool
@@ -246,6 +248,9 @@ final class GameController {
     // Driving (not saved: a saved truck is always parked).
     @ObservationIgnored var motion = TruckMotion()
     @ObservationIgnored var autopilot: Autopilot?
+    /// Held arrow or WASD keys: where they point (zero when none are down).
+    @ObservationIgnored var keyDirection = Vec2.zero
+    @ObservationIgnored var isKeyWalking = false
     /// Route planning runs in the background; only the latest request counts.
     @ObservationIgnored var routeRequest = 0
     /// Where the current drive is headed (to plan again after a bump) and how
@@ -296,7 +301,7 @@ final class GameController {
         let now = Date()
         let saveSystem: SaveSystem?
         do {
-            let store = FileSaveStore(directory: try FileSaveStore.defaultDirectory())
+            let store = FileSaveStore(directory: try Self.saveDirectory())
             saveSystem = SaveSystem(store: store, deviceID: Self.deviceID())
         } catch {
             saveSystem = nil
@@ -897,6 +902,20 @@ final class GameController {
         if inventoryItems != items { inventoryItems = items }
         let used = simulation.state.inventory.storageUsed
         if storageUsed != used { storageUsed = used }
+    }
+
+    /// `Application Support/Saves`. On the Mac, outside the app sandbox,
+    /// Application Support is shared with every other app, so there the
+    /// saves get a folder of the game's own.
+    private static func saveDirectory() throws -> URL {
+        #if targetEnvironment(macCatalyst)
+        let base = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
+                                               appropriateFor: nil, create: true)
+        return base.appendingPathComponent(Bundle.main.bundleIdentifier ?? "Acres", isDirectory: true)
+            .appendingPathComponent("Saves", isDirectory: true)
+        #else
+        return try FileSaveStore.defaultDirectory()
+        #endif
     }
 
     private static func deviceID() -> String {

@@ -12,7 +12,7 @@ import PackageDescription
 
 let package = Package(
     name: "AcresCore",
-    platforms: [.iOS(.v17), .macOS(.v14)],
+    platforms: [.iOS(.v17), .macCatalyst(.v17), .macOS(.v14)],
     products: [
         .library(name: "AcresCore", targets: ["AcresCore"]),
     ],

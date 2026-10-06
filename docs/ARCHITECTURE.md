@@ -367,7 +367,11 @@ All rules live in `OfflineCatchUp.swift` and `FarmerSystem.swift`, with tests.
 ## Saves
 
 - File: `Application Support/Saves/farm.json` plus `farm.backup.json` (the previous save).
-  Writes are atomic; a crash can never lose both.
+  Writes are atomic; a crash can never lose both. On the Mac (Catalyst, not sandboxed)
+  Application Support is shared with every app, so there it's
+  `~/Library/Application Support/<bundle id>/Saves/` (`GameController.saveDirectory`). The Mac
+  also saves on quit (`UIApplication.willTerminateNotification`), since ⌘Q doesn't always pass
+  through the background scene phase.
 - Envelope (`SaveFile`): `version`, `revision` (increments every save), `deviceID`, `createdAt`,
   `savedAt`, `state`, `presentation` (camera). The metadata is what a future iCloud sync needs to
   resolve conflicts; storage sits behind the `SaveStore` protocol, so iCloud is a new store.
@@ -486,6 +490,39 @@ avatar and farmed wherever the truck was parked; Phase 5 replaced that with the 
 side) and taps or drags only ever do that tool's job, checked by `Farming.toolAction` (core).
 The hand walks, picks and tends animals; one-finger drags with a field tool paint jobs, two
 fingers move the camera. Plant jobs carry the packet that was in hand when they were lined up.
+## iPad and Mac
+
+One target for all three: iPhone, iPad, and the Mac through Mac Catalyst with "Optimize for
+Mac" (`TARGETED_DEVICE_FAMILY = 1,2,6`), so a point is a Mac point and the pixel art stays 1:1.
+Landscape only on iPad; full screen there (`UIRequiresFullScreen`), a resizable window on the
+Mac (at least 960 × 600, `MacWindow`).
+
+**Camera.** `CameraController` sizes the world in screen points per tile, not tiles per screen:
+the phone's numbers (a 390-point-high screen showing 9 tiles by default, 5.5 to 14 when zooming)
+become 43, 71 and 28 points per tile. A bigger screen shows more of the valley at the same tile
+size, capped at 30 tiles across the short side (`maxTilesAcross`). Chunks, weather and night
+lights already follow `visibleRect`, so they stream whatever the window shows.
+
+**Keyboard.** `GameSKView` (an `SKView` subclass in `GameView.swift`) is the first responder and
+hands each `UIPress` to `GameScene.handlePress`, passing on the ones the game doesn't use (so ⌘
+shortcuts stay the system's). Held direction keys add up to `GameController.keyDirection`:
+on foot `walkByKeys` moves the farmer by `walkSpeed` (sliding along whatever blocks one axis,
+never across a fence; it drops queued jobs once), in the truck `updateDriving` uses it as the
+stick and takes over from the autopilot. Directions and 1–7 go by where the key sits
+(`keyCode`, so WASD is WASD on any layout); the letters and + / − by what it types
+(`charactersIgnoringModifiers`, so a Danish + key zooms in). One-press keys become a `KeyAction` for
+`GameController.handleKey`, which ignores them while a card or sheet is in front of the field
+(`keysReachTheField`). While a sheet is presented the view resigns first responder
+(`keepKeyboard`), so the sheet gets the keyboard: `MenuSheet`'s close button is
+`.keyboardShortcut(.cancelAction)` (Esc), celebration cards' `RewardButton` is `.defaultAction`
+(Return). Losing the keyboard lets go of every held key.
+
+**Mouse and trackpad.** UIKit turns clicks into touches, so the touch gestures just work.
+Additions in `GameScene`: the pan recognizer also takes continuous scrolls (trackpad two-finger
+scroll pans; a scroll has no touches, so it never paints jobs), a second pan recognizer takes
+discrete scrolls (the mouse wheel) and zooms around the pointer, and a secondary-button tap
+(right-click) does what a long press does (`inspect(atScreen:)`).
+
 ## Adding content
 
 - **Map objects:** `HomeValleyMap.swift` (`place` for landmarks, `scatter` for nature). Every
@@ -496,7 +533,10 @@ fingers move the camera. Plant jobs carry the packet that was in hand when they 
 ## Known limitations
 
 - The core is compiled and tested on Linux; the app code is type-checked there against stand-in
-  modules, so each change's first real build happens in Xcode.
+  modules, so each change's first real build happens in Xcode. That goes double for iPad and Mac:
+  the layouts, key handling and window code have not been run on either yet.
+- The Mac app isn't sandboxed. Putting it on the Mac App Store needs the App Sandbox entitlement
+  (and then the saves move into the app's container, so a Mac farm from before would need copying).
 - Sound effects are synthesized placeholders until recordings are added; there is no music yet.
 - The shop and the farmhands only work while the game is open (like the calendar); crops,
   animals and sprinklers keep going while it's closed.

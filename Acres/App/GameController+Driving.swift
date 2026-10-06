@@ -210,7 +210,12 @@ extension GameController {
     func updateDriving(dt: TimeInterval) {
         guard isDriving else { return }
         var input = DriveInput.idle
-        if var pilot = autopilot {
+        if keyDirection != .zero && keysReachTheField {
+            // The keyboard steers: the autopilot lets go.
+            if autopilot != nil || destination != nil { stopRoute() }
+            cameraFollowPaused = false
+            input = DriveInput(direction: keyDirection, throttle: 1)
+        } else if var pilot = autopilot {
             if let next = pilot.input(for: simulation.state.truck) {
                 input = next
                 autopilot = pilot

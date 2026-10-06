@@ -1,6 +1,6 @@
 # Acres
 
-A cozy, top-down farming and business game for iPhone: a farmer's version of Big Ambitions.
+A cozy, top-down farming and business game for iPhone, iPad and Mac: a farmer's version of Big Ambitions.
 You start with a run-down farm, a beat-up pickup truck and one farmer, and grow it into an
 agricultural empire.
 
@@ -25,12 +25,16 @@ whatever playtesting says: balance, art, more content.
 ## Running it
 
 Requirements: **Xcode 16 or newer** (the project uses Xcode 16's folder-synced groups) and an
-iOS 17+ simulator or iPhone. No third-party dependencies.
+iOS 17+ simulator, iPhone or iPad, or a Mac on macOS 14 or newer. No third-party dependencies.
 
 1. Open `Acres.xcodeproj`.
 2. Pick an iPhone simulator (e.g. iPhone 16) and press **Run** (⌘R).
 3. For a real device: select the *Acres* target → *Signing & Capabilities* → choose your Team.
    You may need to change the bundle ID (`com.acresgame.Acres`) to something unique.
+4. **iPad:** pick an iPad simulator or your iPad as the run destination.
+5. **Mac:** pick **My Mac (Mac Catalyst)** as the run destination. The first time, Xcode may ask
+   to register your Mac with your team; say yes. The game opens in a window you can resize
+   (or make full screen with the green button).
 
 The game is played **sideways (landscape)**, either way round. In the simulator, turn it with
 ⌘← / ⌘→ if it opens upright.
@@ -47,6 +51,42 @@ Tests: press **⌘U** in Xcode (runs the simulation tests in `AcresCore`), or fr
 cd Packages/AcresCore
 swift test
 ```
+
+## iPad and Mac: what to test
+
+The same game and the same save format on all three; each device keeps its own farm.
+
+1. **iPad:** the game fills the screen sideways. The world is drawn at the same size as on the
+   iPhone (a tile is the same size under your finger), so you simply see more of the valley,
+   and you can pinch out further than on the phone (to about 30 tiles top to bottom).
+2. **Mac:** the game runs in a normal Mac window ("Optimize for Mac", so the pixel art stays
+   sharp, 1:1). Drag the window bigger or smaller (down to 960 × 600) and the view just shows more
+   or less. Quitting with ⌘Q saves first, like putting the phone down.
+3. **Mouse and trackpad** (Mac, or an iPad with a keyboard and trackpad):
+   - Click = tap. Click-drag = a one-finger drag (paints a row of jobs with a field tool, pans
+     otherwise).
+   - Two-finger scroll on the trackpad pans the camera; pinch zooms.
+   - The mouse wheel zooms, towards the pointer.
+   - Right-click = a long press: what's this?
+4. **Keyboard** (Mac, or an iPad with a keyboard):
+
+   | Key | Does |
+   |---|---|
+   | W A S D or the arrow keys | Walk (round anything solid, never through a fence), or steer the truck |
+   | Space | Get in or out of the truck |
+   | M | The drive-to card (where to drive) |
+   | E or Return | Use what you're standing at: the shop, the customer's door, your shop |
+   | 1 … 7 | The tool belt, left to right |
+   | B or I | The bag |
+   | J | The farm journal |
+   | G | Goals and chores |
+   | + / − | Zoom in / out |
+   | Esc | Close: the open menu, the drive-to card, the seed picker, "what's this?" |
+   | Return (on a celebration card) | Collect |
+
+   Walking with the keys drops whatever the farmer had lined up. Steering with the keys while the
+   truck is driving itself somewhere takes over from it. While a menu is open the keys belong to
+   it, not to the farm behind it.
 
 ## Fences on foot, and seeds for the right season: what to test
 

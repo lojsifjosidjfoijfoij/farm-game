@@ -103,6 +103,7 @@ struct RewardButton: View {
                 .padding(.vertical, 2)
         }
         .buttonStyle(CandyButtonStyle(tint: .green))
+        .keyboardShortcut(.defaultAction)  // Return carries on (keyboard, Mac)
         .padding(.top, 4)
     }
 }

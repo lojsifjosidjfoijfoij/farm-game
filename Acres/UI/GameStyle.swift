@@ -177,6 +177,7 @@ struct MenuSheet<Accessory: View, Content: View>: View {
                     HUDIcon(name: "ui_icon_close")
                 }
                 .buttonStyle(HUDButtonStyle(size: 40))
+                .keyboardShortcut(.cancelAction)  // Esc closes it (keyboard, Mac)
                 .accessibilityLabel("Close")
             }
             .padding(.horizontal, 16)

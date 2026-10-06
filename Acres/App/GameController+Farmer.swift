@@ -401,6 +401,12 @@ extension GameController {
             if farmerActivity != .idle { farmerActivity = .idle }
             return
         }
+        // The keyboard: walk where the keys point.
+        if keyDirection != .zero && keysReachTheField {
+            walkByKeys(dt: dt)
+            return
+        }
+        stopKeyWalking()
         switch farmerActivity {
         case .working(let tool, let progress):
             let duration = currentJob.map(workDuration) ?? 0.5

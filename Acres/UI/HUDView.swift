@@ -11,7 +11,6 @@ import AcresCore
 struct HUDView: View {
     @Bindable var game: GameController
     /// The map's list of places, open above the map button while driving.
-    @State private var showsMap = false
 
     /// How wide the things in the middle may get, so the corners stay clear.
     static let centerWidth: CGFloat = 440
@@ -57,13 +56,13 @@ struct HUDView: View {
                 bottomBar
             }
 
-            if showsMap {
+            if game.showsDriveMap {
                 // Tap anywhere else to put the map away.
                 Color.black.opacity(0.12)
                     .ignoresSafeArea()
-                    .onTapGesture { withAnimation(.spring(duration: 0.25)) { showsMap = false } }
+                    .onTapGesture { withAnimation(.spring(duration: 0.25)) { game.showsDriveMap = false } }
                 DrivePicker(destinations: game.destinations, current: game.destination) { destination in
-                    withAnimation(.spring(duration: 0.25)) { showsMap = false }
+                    withAnimation(.spring(duration: 0.25)) { game.showsDriveMap = false }
                     game.drive(to: destination)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
@@ -85,6 +84,7 @@ struct HUDView: View {
         .animation(.spring(duration: 0.35), value: game.guideTucked ? nil : game.guideMessage)
         .animation(.spring(duration: 0.35), value: game.guideIsAround)
         .animation(.spring(duration: 0.35), value: game.isDriving)
+        .animation(.spring(duration: 0.25), value: game.showsDriveMap)
         .animation(.spring(duration: 0.35), value: game.jobCount > 0)
     }
 
@@ -464,16 +464,16 @@ struct HUDView: View {
     /// walks to the truck first). The places open as a card above the button.
     private var mapMenu: some View {
         Button {
-            withAnimation(.spring(duration: 0.25)) { showsMap.toggle() }
+            withAnimation(.spring(duration: 0.25)) { game.showsDriveMap.toggle() }
             Haptics.tap()
         } label: {
             GameIcon(asset: "ui_icon_map", fallbackSymbol: "map.fill", tint: HUD.text, size: HUD.iconSize)
                 .frame(width: 52, height: 52)
-                .background(PixelFrame(showsMap ? .slotSelected : .panel))
+                .background(PixelFrame(game.showsDriveMap ? .slotSelected : .panel))
         }
         .buttonStyle(.plain)
-        .onDisappear { showsMap = false }
-        .pulsing(game.tutorial.step == .drive && game.guideShowsHints && !showsMap)
+        .onDisappear { game.showsDriveMap = false }
+        .pulsing(game.tutorial.step == .drive && game.guideShowsHints && !game.showsDriveMap)
         .accessibilityLabel("Map: drive somewhere")
     }
 

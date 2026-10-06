@@ -241,6 +241,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         lastUpdateTime = currentTime
 
         game.update(dt: dt)
+        keepKeyboard(dt: dt)
         guard let camera = cameraController else { return }
         updateTruck()
         farmer?.update(game.farmerVisual, dt: dt)
@@ -427,7 +428,15 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
         longPress.minimumPressDuration = 0.4
         longPress.delegate = self
-        gestures = [pan, pinch, tap, longPress]
+        // A trackpad's two-finger scroll moves the camera like a drag; a mouse
+        // wheel zooms; a right click looks closer, like a long press.
+        pan.allowedScrollTypesMask = .continuous
+        let wheel = UIPanGestureRecognizer(target: self, action: #selector(handleWheel(_:)))
+        wheel.allowedScrollTypesMask = .discrete
+        wheel.maximumNumberOfTouches = 0
+        let rightClick = UITapGestureRecognizer(target: self, action: #selector(handleRightClick(_:)))
+        rightClick.buttonMaskRequired = .secondary
+        gestures = [pan, pinch, tap, longPress, wheel, rightClick]
         for gesture in gestures { view.addGestureRecognizer(gesture) }
     }
 
@@ -531,9 +540,27 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         showTapRipple(at: point, color: .white)
     }
 
+    @objc private func handleWheel(_ gesture: UIPanGestureRecognizer) {
+        guard let view = gesture.view, let camera = cameraController, gesture.state == .changed else { return }
+        let scroll = gesture.translation(in: view).y
+        gesture.setTranslation(.zero, in: view)
+        camera.zoom(by: exp(-scroll / 240), around: gesture.location(in: view))
+    }
+
+    @objc private func handleRightClick(_ gesture: UITapGestureRecognizer) {
+        guard let view = gesture.view else { return }
+        inspect(atScreen: gesture.location(in: view))
+    }
+
     @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
-        guard gesture.state == .began, let view = gesture.view, let camera = cameraController else { return }
-        let spot = World.tiles(camera.worldPoint(fromScreen: gesture.location(in: view)))
+        guard gesture.state == .began, let view = gesture.view else { return }
+        inspect(atScreen: gesture.location(in: view))
+    }
+
+    /// What's here? (A long press, or a right click.)
+    private func inspect(atScreen point: CGPoint) {
+        guard let camera = cameraController else { return }
+        let spot = World.tiles(camera.worldPoint(fromScreen: point))
         let tile = TileCoord(containing: spot)
         guard game.map.isInside(tile) else { return }
         if game.simulation.state.plots[tile] == nil {
@@ -548,6 +575,83 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         }
         game.inspect(.tile(tile))
         showTileHighlight(tile)
+    }
+
+    // MARK: Keyboard
+
+    private var heldKeys = Set<UIKeyboardHIDUsage>()
+    private var focusTimer: TimeInterval = 0
+
+    private static let directions: [UIKeyboardHIDUsage: Vec2] = [
+        .keyboardW: Vec2(0, 1), .keyboardUpArrow: Vec2(0, 1),
+        .keyboardS: Vec2(0, -1), .keyboardDownArrow: Vec2(0, -1),
+        .keyboardA: Vec2(-1, 0), .keyboardLeftArrow: Vec2(-1, 0),
+        .keyboardD: Vec2(1, 0), .keyboardRightArrow: Vec2(1, 0),
+    ]
+
+    private static let toolKeys: [UIKeyboardHIDUsage] = [
+        .keyboard1, .keyboard2, .keyboard3, .keyboard4, .keyboard5, .keyboard6, .keyboard7,
+    ]
+
+    /// A key went down or up (from `GameSKView`). Returns true if the game used it.
+    func handlePress(_ press: UIPress, down: Bool) -> Bool {
+        guard let key = press.key else { return false }
+        if Self.directions[key.keyCode] != nil {
+            if down { heldKeys.insert(key.keyCode) } else { heldKeys.remove(key.keyCode) }
+            game.keyDirection = heldKeys.reduce(Vec2.zero) { $0 + (Self.directions[$1] ?? .zero) }
+            return true
+        }
+        // One-press keys, on the way down, without ⌘, ⌃ or ⌥ (those stay the system's).
+        guard down, key.modifierFlags.isDisjoint(with: [.command, .control, .alternate]) else { return false }
+        if let index = Self.toolKeys.firstIndex(of: key.keyCode) { return game.handleKey(.tool(index)) }
+        switch key.keyCode {
+        case .keyboardSpacebar: return game.handleKey(.truck)
+        case .keyboardReturnOrEnter, .keypadEnter: return game.handleKey(.use)
+        case .keyboardEscape: return game.handleKey(.escape)
+        case .keypadPlus: return zoomStep(1 / 1.2)
+        case .keypadHyphen: return zoomStep(1.2)
+        default: break
+        }
+        // Letters and + / − go by what the key types, so they follow the
+        // keyboard's layout (the + key on a Danish keyboard is where - is on
+        // an American one). Walking and the belt go by where the keys sit.
+        switch key.charactersIgnoringModifiers.lowercased() {
+        case "m": return game.handleKey(.map)
+        case "j": return game.handleKey(.journal)
+        case "b", "i": return game.handleKey(.bag)
+        case "g": return game.handleKey(.goals)
+        case "e": return game.handleKey(.use)
+        case "+", "=": return zoomStep(1 / 1.2)
+        case "-": return zoomStep(1.2)
+        default: return false
+        }
+    }
+
+    /// The keyboard went elsewhere (a sheet opened): let go of every key.
+    func keyboardLost() {
+        heldKeys.removeAll()
+        game.keyDirection = .zero
+    }
+
+    private func zoomStep(_ factor: CGFloat) -> Bool {
+        guard let camera = cameraController else { return false }
+        camera.zoom(by: factor, around: CGPoint(x: camera.viewSize.width / 2, y: camera.viewSize.height / 2))
+        return true
+    }
+
+    /// Hands the keyboard to a sheet while one is up (so its Esc closes it and
+    /// nothing moves behind it), and takes it back once the sheet is gone.
+    private func keepKeyboard(dt: TimeInterval) {
+        guard let view = view as? GameSKView else { return }
+        if view.window?.rootViewController?.presentedViewController != nil {
+            if view.isFirstResponder { _ = view.resignFirstResponder() }
+            focusTimer = 0
+            return
+        }
+        focusTimer += dt
+        guard focusTimer > 0.3 else { return }
+        focusTimer = 0
+        if !view.isFirstResponder { _ = view.becomeFirstResponder() }
     }
 
     // MARK: Feedback
