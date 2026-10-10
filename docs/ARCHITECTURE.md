@@ -523,6 +523,22 @@ scroll pans; a scroll has no touches, so it never paints jobs), a second pan rec
 discrete scrolls (the mouse wheel) and zooms around the pointer, and a secondary-button tap
 (right-click) does what a long press does (`inspect(atScreen:)`).
 
+## The computer player and screenshots
+
+`AutoPlayer` (in `acres-tools`) plays a farm from day one: each day it claims goals and chores,
+buys what's next (fields, farmhands, storage, the truck bed, land, workshops, big sprinklers),
+tends the animals, chops wood and fishes when the village needs planks or trout, works the
+fields (one crop per field, picked from what pays and what the workshops and village need),
+drives to the village to sell (while prices hold up), buy seeds and animals, then gives to the
+village and sleeps. Every action is a `Simulation` call the app also makes; positions are set
+directly and the time a walk or drive takes is passed. It's a balance check too: with the
+current numbers it reaches the finale on about day 52 and every village project by day 61.
+
+`ScreenshotMode` reads `-AcresShot`, `-AcresCamera` and `-AcresTiles` from the launch arguments
+(debug builds only). It skips the offline catch-up and saving, hides the title screen (unless the
+scene is `title`), opens the chosen card or sheet, and the scene frames the camera once the view
+has its size. `scripts/screenshots.sh` drives it in the Simulator.
+
 ## Adding content
 
 - **Map objects:** `HomeValleyMap.swift` (`place` for landmarks, `scatter` for nature). Every

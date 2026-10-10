@@ -747,4 +747,21 @@ docs/
 - **The map:** `Packages/AcresCore/Sources/AcresCore/World/HomeValleyMap.swift`.
   `swift run acres-tools map-dump` in `Packages/AcresCore` prints it as text.
 
+## Screenshots of the real game
+
+`scripts/screenshots.sh` (on a Mac with Xcode), or on GitHub: **Actions → Screenshots → Run
+workflow**, then download the *screenshots* artifact. It:
+
+1. has a computer player play a new farm to the finale by the game's own rules
+   (`swift run -c release acres-tools autoplay <folder>` in `Packages/AcresCore`; it prints the
+   farm's story: what it bought when, the ranks, the village projects), saving the farm early, in
+   the middle and at the end;
+2. builds the app and runs it in the iOS Simulator on an iPhone and an iPad, loading each save and
+   opening a scene with launch options (debug builds only, see `ScreenshotMode.swift`);
+3. grabs each screen with `simctl io screenshot`: nothing is drawn or edited afterwards (the
+   pictures are only turned sideways, the way the game is held).
+
+The computer player doesn't animate its walks and drives (it lets their time pass) and always
+lands the fish it hooks; everything else goes through the same rules as your taps.
+
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the details.
