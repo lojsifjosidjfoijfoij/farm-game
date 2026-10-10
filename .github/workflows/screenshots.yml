@@ -1,19 +1,25 @@
 # Screenshots of the real game: a computer player plays a farm to the finale,
 # then the app runs in the iOS Simulator on an iPhone and an iPad and each
-# screen is captured (scripts/screenshots.sh). Run it from the Actions tab; the
-# pictures come out as the "screenshots" artifact.
+# screen is captured (scripts/screenshots.sh). Run it from the Actions tab.
+# The pictures come out as the "screenshots" artifact and as a pre-release
+# ("screenshots-<run id>") with every picture attached.
 name: Screenshots
 
 on:
   workflow_dispatch:
-  push:
-    branches: [claude/acres-farming-game-6cq3hj]
-    paths:
-      - .github/workflows/screenshots.yml
-      - scripts/screenshots.sh
+    inputs:
+      reuse_run:
+        description: Publish the screenshots of an earlier run instead of taking new ones (its run ID)
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+  actions: read
 
 jobs:
   screenshots:
+    if: ${{ inputs.reuse_run == '' }}
     runs-on: macos-15
     timeout-minutes: 60
     steps:
@@ -34,3 +40,26 @@ jobs:
           name: screenshots
           path: screenshots
           if-no-files-found: warn
+
+  publish:
+    needs: screenshots
+    if: ${{ always() && (needs.screenshots.result == 'success' || inputs.reuse_run != '') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: screenshots
+          path: screenshots
+          run-id: ${{ inputs.reuse_run || github.run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Publish them as a pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: screenshots-${{ inputs.reuse_run || github.run_id }}
+        run: |
+          gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$TAG" screenshots/*.png screenshots/autoplay.txt \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
+            --title "Screenshots ($TAG)" \
+            --notes "Screenshots of the real game, taken in the iOS Simulator on an iPhone and an iPad by scripts/screenshots.sh. The late-game farm was played to the finale by the computer player (acres-tools autoplay; its story is in autoplay.txt). Nothing is drawn or edited afterwards: the pictures are only turned sideways, the way the game is held."

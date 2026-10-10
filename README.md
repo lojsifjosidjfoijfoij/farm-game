@@ -750,7 +750,8 @@ docs/
 ## Screenshots of the real game
 
 `scripts/screenshots.sh` (on a Mac with Xcode), or on GitHub: **Actions → Screenshots → Run
-workflow**, then download the *screenshots* artifact. It:
+workflow**. The pictures come out as a pre-release on the repository's *Releases* page
+(`screenshots-<run id>`, every picture attached) and as the run's *screenshots* artifact. It:
 
 1. has a computer player play a new farm to the finale by the game's own rules
    (`swift run -c release acres-tools autoplay <folder>` in `Packages/AcresCore`; it prints the
