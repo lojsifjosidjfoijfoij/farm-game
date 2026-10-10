@@ -5,8 +5,16 @@ import AcresCore
 struct RootView: View {
     @Bindable var game: GameController
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.horizontalSizeClass) private var widthClass
+    @Environment(\.verticalSizeClass) private var heightClass
     /// The title screen, once per launch.
     @State private var showsTitle = ScreenshotMode.current.map(\.showsTitle) ?? true
+
+    /// Menus open half way on a phone (the farm stays in view) and full
+    /// height on an iPad or a Mac, where half is a small card in a big screen.
+    private var menuDetents: Set<PresentationDetent> {
+        widthClass == .regular && heightClass == .regular ? [.large] : [.medium, .large]
+    }
 
     var body: some View {
         ZStack {
@@ -115,23 +123,23 @@ struct RootView: View {
         }
         .sheet(isPresented: $game.showsDebugPanel) {
             DebugPanelView(game: game)
-                .presentationDetents([.medium, .large])
+                .presentationDetents(menuDetents)
         }
         .sheet(isPresented: $game.showsInventory) {
             InventoryView(game: game)
-                .presentationDetents([.medium, .large])
+                .presentationDetents(menuDetents)
         }
         .sheet(isPresented: $game.showsGoals) {
             GoalsView(game: game)
-                .presentationDetents([.medium, .large])
+                .presentationDetents(menuDetents)
         }
         .sheet(isPresented: $game.showsRoadmap) {
             LevelRoadmapView(game: game)
-                .presentationDetents([.medium, .large])
+                .presentationDetents(menuDetents)
         }
         .sheet(isPresented: $game.showsBusiness) {
             BusinessView(game: game)
-                .presentationDetents([.medium, .large])
+                .presentationDetents(menuDetents)
         }
         .sheet(isPresented: $game.showsStore) {
             StoreView(game: game)
@@ -139,11 +147,11 @@ struct RootView: View {
         }
         .sheet(item: $game.openWorkshop) { sheet in
             WorkshopView(game: game, sheet: sheet)
-                .presentationDetents([.medium, .large])
+                .presentationDetents(menuDetents)
         }
         .sheet(item: $game.openShop) { shop in
             ShopView(game: game, shop: shop)
-                .presentationDetents([.medium, .large])
+                .presentationDetents(menuDetents)
         }
         // Save trouble at launch, on a paper card over everything (the title screen too).
         .paperConfirm(game.alert?.title ?? "",

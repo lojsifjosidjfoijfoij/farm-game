@@ -88,13 +88,14 @@ case "autoplay":
     }
     let farm = Vec2(34, 36)
 
-    // A few days in: the first fields up and growing.
-    player.play(maxDays: 3) { _ in false }
+    // A few days in: the first fields up and growing (late afternoon, the
+    // morning's planting half grown).
+    player.play(maxDays: 4) { _ in false }
     player.homeMorning()
-    player.wait(until: 11)
+    player.wait(until: 17)
     player.stroll(to: Vec2(31, 30.4))
     save(player, as: "early", camera: farm)
-    player.afternoon(); player.evening(); player.sleep()
+    player.evening(); player.sleep()
 
     // A thriving farm.
     player.play(maxDays: 600) { $0.sim.state.rank.rank >= 3 }

@@ -57,8 +57,7 @@ take() {
     xcrun simctl launch "$UDID" "$BUNDLE" "${args[@]}" > /dev/null
     sleep "$WAIT"
     local file="$OUT/$LABEL-$name.png"
-    # (--mask=ignored: the screen as a screenshot on the device has it, without
-    # the Simulator's black Dynamic Island.)
+    # (--mask=ignored: the whole screen, without the notch and corners cut out.)
     xcrun simctl io "$UDID" screenshot --type=png --mask=ignored "$file" > /dev/null 2>&1
     # The Simulator hands the screen back the way the device is held (upright);
     # the game is played sideways, so turn the picture with it.
@@ -94,7 +93,7 @@ shoot() {
     take 07-fields          end_day     farm            45,33   15
     take 08-animals         end_day     farm            30,47   12
     take 09-farm-at-night   end_night   farm            24,36.5 11
-    take 10-village         end_village farm            94,27   14
+    take 10-village         end_village farm            89,26.5 14
     take 11-seed-shop       end_village shop:seedShop   80,25   14
     take 12-windmill        end_day     farm            109.5,41.5 13
     take 13-harvest-fair    end_day     farm            110,12.5 12
@@ -111,7 +110,9 @@ shoot() {
     xcrun simctl delete "$UDID"
 }
 
-shoot iphone "$(pick "iPhone 17 Pro Max" "iPhone 16 Pro Max" "iPhone 15 Pro Max")"
+# A big iPhone with a notch: the Simulator draws the Dynamic Island into
+# its screenshots (a black pill a real iPhone's screenshot doesn't have).
+shoot iphone "$(pick "iPhone 14 Plus" "iPhone 13 Pro Max" "iPhone 11 Pro Max")"
 # The iPad on iPadOS 18: iPadOS 26 letterboxes a sideways-only game while the
 # iPad is held upright, and a Simulator without a window never turns.
 IPAD_RUNTIME="$(xcrun simctl list runtimes | grep -o 'com.apple.CoreSimulator.SimRuntime.iOS-18-[0-9]*' | tail -n 1)"

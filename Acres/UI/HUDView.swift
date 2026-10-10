@@ -288,6 +288,8 @@ struct HUDView: View {
                 .font(HUD.font(12.5, .semibold))
                 .foregroundStyle(HUD.textSoft)
         }
+        .lineLimit(1)
+        .fixedSize()  // one line, however long the season and week (the banner in the middle gives way)
         .hudPanel(horizontal: 12, vertical: 8)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(game.clockText), \(game.season.name), \(game.weekText)")
