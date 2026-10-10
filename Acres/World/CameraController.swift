@@ -117,6 +117,11 @@ final class CameraController {
         apply()
     }
 
+    /// Zooms so about this many tiles fit the screen's short side (within the usual limits).
+    func show(tilesAcross tiles: CGFloat) {
+        setZoom(zoom(forTiles: tiles))
+    }
+
     func setZoom(_ value: CGFloat) {
         zoom = clamp(value, minZoom, maxZoom)
         clampCenter()

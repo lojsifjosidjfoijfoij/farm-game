@@ -326,7 +326,9 @@ final class GameController {
 
         case .loaded(let file, let fromBackup):
             var sim = Simulation(state: file.state, balance: balance)
-            report = OfflineCatchUp.run(&sim, lastSeen: file.savedAt, now: now)
+            if ScreenshotMode.current == nil {
+                report = OfflineCatchUp.run(&sim, lastSeen: file.savedAt, now: now)
+            }
             simulation = sim
             presentation = file.presentation
             lastSave = file
@@ -359,7 +361,7 @@ final class GameController {
             }
         }
 
-        savingEnabled = canSave
+        savingEnabled = canSave && ScreenshotMode.current == nil
         alert = pendingAlert
         selectedSeed = presentation.selectedSeed
         tutorial = simulation.state.tutorial
@@ -379,6 +381,7 @@ final class GameController {
             showWelcomeIfWorthIt(report)
             save()  // don't re-simulate the same absence after a crash
         }
+        if let shot = ScreenshotMode.current { setUpScreenshot(shot) }
     }
 
     /// Called by the scene once per frame.

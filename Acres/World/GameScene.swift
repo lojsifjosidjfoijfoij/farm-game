@@ -243,6 +243,7 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         game.update(dt: dt)
         keepKeyboard(dt: dt)
         guard let camera = cameraController else { return }
+        frameScreenshot(camera)
         updateTruck()
         farmer?.update(game.farmerVisual, dt: dt)
         if game.jobRevision != shownJobRevision {
@@ -575,6 +576,18 @@ final class GameScene: SKScene, UIGestureRecognizerDelegate {
         }
         game.inspect(.tile(tile))
         showTileHighlight(tile)
+    }
+
+    // MARK: Screenshots
+
+    private var screenshotFramed = false
+
+    /// A screenshot's camera (`ScreenshotMode`), once the view has its real size.
+    private func frameScreenshot(_ camera: CameraController) {
+        guard !screenshotFramed, let shot = ScreenshotMode.current, camera.viewSize.width > 0 else { return }
+        screenshotFramed = true
+        if let tiles = shot.tilesAcross { camera.show(tilesAcross: CGFloat(tiles)) }
+        if let spot = shot.camera { camera.focus(on: World.point(spot), animated: false) }
     }
 
     // MARK: Keyboard

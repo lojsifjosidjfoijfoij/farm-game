@@ -1,0 +1,36 @@
+# Screenshots of the real game: a computer player plays a farm to the finale,
+# then the app runs in the iOS Simulator on an iPhone and an iPad and each
+# screen is captured (scripts/screenshots.sh). Run it from the Actions tab; the
+# pictures come out as the "screenshots" artifact.
+name: Screenshots
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/acres-farming-game-6cq3hj]
+    paths:
+      - .github/workflows/screenshots.yml
+      - scripts/screenshots.sh
+
+jobs:
+  screenshots:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xcode and simulators
+        run: |
+          xcodebuild -version
+          xcrun simctl list devicetypes | grep -E "iPhone 1[5-9] Pro Max|iPad Pro 13|iPad Pro \(12.9" || true
+          xcrun simctl list runtimes
+
+      - name: Take the screenshots
+        run: scripts/screenshots.sh screenshots
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: screenshots
+          if-no-files-found: warn

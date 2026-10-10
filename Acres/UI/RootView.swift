@@ -6,7 +6,7 @@ struct RootView: View {
     @Bindable var game: GameController
     @Environment(\.scenePhase) private var scenePhase
     /// The title screen, once per launch.
-    @State private var showsTitle = true
+    @State private var showsTitle = ScreenshotMode.current.map(\.showsTitle) ?? true
 
     var body: some View {
         ZStack {
