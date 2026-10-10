@@ -49,6 +49,8 @@ struct AutoPlayer {
     mutating func morning() {
         claimRewards()
         invest()
+        takeOrders()
+        forage()
         tendAnimals()
         workWorkshops()
         chopForPlanks()
@@ -61,14 +63,14 @@ struct AutoPlayer {
         giveToVillage()
     }
 
-    /// A short morning (for a picture at midday): the chores, the workshops
-    /// and a trip to the market, the fields left to the field hand.
-    mutating func lightMorning() {
+    /// A morning at home (for a picture at midday): the chores, the
+    /// workshops and the fields, no trip to the village.
+    mutating func homeMorning() {
         claimRewards()
         invest()
+        tendAnimals()
         workWorkshops()
-        tripToVillage()
-        giveToVillage()
+        workFields()
         claimRewards()
     }
 
@@ -304,10 +306,51 @@ struct AutoPlayer {
                 keep[need.item, default: 0] += need.needed
             }
         }
-        for species in AnimalCatalog.all where state.ranch[species.penID].animals.count > 0 {
-            keep["animal_feed", default: 0] += 0  // feed isn't sold anyway
+        for contract in state.contracts.active {
+            for item in contract.sortedItems { keep[item, default: 0] += contract.remaining(item) }
         }
         return keep
+    }
+
+    /// Takes the orders the farm can fill from what's in the barn.
+    private mutating func takeOrders() {
+        for offer in state.contracts.offers where state.contracts.active.count < balance.maxActiveContracts {
+            let committed = keep
+            guard offer.sortedItems.allSatisfy({ item in
+                state.inventory.count(item) - (committed[item] ?? 0) >= offer.remaining(item)
+            }) else { continue }
+            _ = sim.contracts { try $0.accept(offer.id, state: &$1) }
+        }
+    }
+
+    /// Rents the corner shop once there's money to spare, and fills its
+    /// shelves with what the market didn't take.
+    private mutating func tendShop() {
+        let shop = StoreDefinition.corner
+        guard level >= balance.storeUnlockLevel, shop.isOpen(atHour: state.clock.hour) else { return }
+        if !state.store.isRented {
+            guard state.money > reserve + 2_500 else { return }
+            drive(to: spot(in: shop.zone))
+            _ = sim.store { try $0.rent(state: &$1) }
+        }
+        guard state.store.isRented, state.truck.cargoCount > 0 else { return }
+        drive(to: spot(in: shop.zone))
+        _ = sim.store { try $0.stockAll(state: &$1) }
+        pass(60)
+    }
+
+    /// Picks up wild finds near the farm on the way about.
+    private mutating func forage() {
+        let foraging = Foraging(balance: balance)
+        let home = HomeValleyMap.farmhouseDoor
+        let finds = foraging.today(state)
+            .filter { $0.position.distance(to: home) < 30 }
+            .sorted { $0.position.distance(to: home) < $1.position.distance(to: home) }
+            .prefix(5)
+        for find in finds {
+            walk(to: find.position + Vec2(0, -0.5))
+            if case .success = sim.outdoors({ _, foraging, state in try foraging.pick(find.id, state: &state) }) { pass(1) }
+        }
     }
 
     /// Loads the goods, drives to the village: sells at the market (while
@@ -317,6 +360,18 @@ struct AutoPlayer {
         guard hour < 18 else { return }
         goHome()
         let keep = keep
+        // Goods for orders that can be filled today go in first.
+        var stops: [ClientDefinition] = []
+        for contract in state.contracts.active.sorted(by: { $0.deadlineDay < $1.deadlineDay }) {
+            guard let client = contract.client, client.isOpen(atHour: max(state.clock.hour, 9)),
+                  contract.sortedItems.allSatisfy({ state.inventory.count($0) + state.truck.cargo.count($0) >= contract.remaining($0) })
+            else { continue }
+            for item in contract.sortedItems {
+                let missing = contract.remaining(item) - state.truck.cargo.count(item)
+                if missing > 0 { _ = sim.trade { try $0.load(item, count: missing, state: &$1) } }
+            }
+            if !stops.contains(where: { $0.id == client.id }) { stops.append(client) }
+        }
         let room = state.truckCapacity(balance) - state.truck.cargoCount
         if room > 0 {
             let trading = Trading(balance: balance)
@@ -335,10 +390,16 @@ struct AutoPlayer {
             drive(to: spot(in: HomeValleyMap.gasStationZone))
             _ = sim.trade { try $0.refuel(state: &$1) }
         }
+        for client in stops where client.isOpen(atHour: state.clock.hour) {
+            drive(to: spot(in: client.zone))
+            _ = sim.contracts { try $0.deliver(to: client.id, state: &$1) }
+            pass(30)
+        }
         if state.truck.cargoCount > 0 {
             drive(to: spot(in: HomeValleyMap.marketZone))
             sell()
         }
+        tendShop()
         buySeeds()
         buyAnimals()
         goHome()
@@ -681,6 +742,9 @@ struct AutoPlayer {
         }
         lines.append("Workshops: " + state.estate.workshops.map { "\($0.kind)@\($0.tile.x),\($0.tile.y)" }.joined(separator: " "))
         lines.append("Workers: " + state.estate.workers.map { $0.job.rawValue }.joined(separator: ", "))
+        lines.append("Orders: \(state.contracts.completed) done, \(state.contracts.failed) missed, reputation \(state.contracts.reputation); "
+            + "shop rented \(state.store.isRented); wild finds \(state.goals.count(GoalCounter.foraged)); "
+            + "best streak \(state.daily.bestStreak); fish \(state.goals.count(GoalCounter.fishCaught))")
         lines.append("Fields: \(state.ownedFields.count), plots \(state.plots.count), sprinklers \(state.estate.sprinklers.count)")
         lines.append("Storage \(state.inventory.storageUsed)/\(state.storageCapacity(balance)): "
             + state.inventory.items.filter { $0.value > 0 }.sorted { $0.key < $1.key }.map { "\($0.key) \($0.value)" }.joined(separator: ", "))

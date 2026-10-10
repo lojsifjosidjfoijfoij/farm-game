@@ -294,7 +294,7 @@ struct FinaleCardView: View {
                     statRow("hammer.fill", "Goods made", stats.crafted.formatted())
                     statRow("shippingbox.fill", "Orders", stats.ordersDone.formatted())
                     statRow("book.fill", "Almanac", "\(Int((stats.almanac * 100).rounded()))%")
-                    statRow("flame.fill", "Best streak", "\(stats.bestStreak) days")
+                    statRow("flame.fill", "Best streak", stats.bestStreak == 1 ? "1 day" : "\(stats.bestStreak) days")
                 }
             }
             .padding(12)

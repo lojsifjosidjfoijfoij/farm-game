@@ -237,6 +237,8 @@ struct HUDView: View {
             Text(game.money, format: .number)
                 .font(HUD.number(17))
                 .foregroundStyle(debt ? HUD.danger : HUD.text)
+                .lineLimit(1)
+                .fixedSize()  // a big number widens the panel rather than wrapping
                 .contentTransition(.numericText(value: Double(game.money)))
                 .animation(.snappy, value: game.money)
                 .frame(minWidth: 44, alignment: .leading)

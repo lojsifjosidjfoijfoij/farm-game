@@ -57,7 +57,9 @@ take() {
     xcrun simctl launch "$UDID" "$BUNDLE" "${args[@]}" > /dev/null
     sleep "$WAIT"
     local file="$OUT/$LABEL-$name.png"
-    xcrun simctl io "$UDID" screenshot --type=png "$file" > /dev/null 2>&1
+    # (--mask=ignored: the screen as a screenshot on the device has it, without
+    # the Simulator's black Dynamic Island.)
+    xcrun simctl io "$UDID" screenshot --type=png --mask=ignored "$file" > /dev/null 2>&1
     # The Simulator hands the screen back the way the device is held (upright);
     # the game is played sideways, so turn the picture with it.
     local width height
@@ -67,11 +69,11 @@ take() {
     echo "   $LABEL-$name"
 }
 
-# shoot <label> <device type>
+# shoot <label> <device type> [runtime]
 shoot() {
     LABEL="$1"
-    echo "== $LABEL ($2)"
-    UDID="$(xcrun simctl create "Acres $LABEL" "$2")"
+    echo "== $LABEL ($2 ${3:-})"
+    UDID="$(xcrun simctl create "Acres $LABEL" "$2" ${3:+"$3"})"
     xcrun simctl boot "$UDID"
     xcrun simctl bootstatus "$UDID" -b > /dev/null
     xcrun simctl install "$UDID" "$APP"
@@ -94,7 +96,7 @@ shoot() {
     take 09-farm-at-night   end_night   farm            24,36.5 11
     take 10-village         end_village farm            94,27   14
     take 11-seed-shop       end_village shop:seedShop   80,25   14
-    take 12-windmill        end_day     farm            108,37  13
+    take 12-windmill        end_day     farm            109.5,41.5 13
     take 13-harvest-fair    end_day     farm            110,12.5 12
     take 14-willow-lake     end_day     farm            99,9    13
     take 15-journal-village end_day     journal:village
@@ -110,6 +112,9 @@ shoot() {
 }
 
 shoot iphone "$(pick "iPhone 17 Pro Max" "iPhone 16 Pro Max" "iPhone 15 Pro Max")"
-shoot ipad "$(pick "iPad Pro 13-inch (M5)" "iPad Pro 13-inch (M4)" "iPad Pro (12.9-inch) (6th generation)")"
+# The iPad on iPadOS 18: iPadOS 26 letterboxes a sideways-only game while the
+# iPad is held upright, and a Simulator without a window never turns.
+IPAD_RUNTIME="$(xcrun simctl list runtimes | grep -o 'com.apple.CoreSimulator.SimRuntime.iOS-18-[0-9]*' | tail -n 1)"
+shoot ipad "$(pick "iPad Pro 13-inch (M4)" "iPad Pro (12.9-inch) (6th generation)")" "$IPAD_RUNTIME"
 
 echo "== Done: $OUT"

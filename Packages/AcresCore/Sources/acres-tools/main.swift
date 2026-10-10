@@ -90,7 +90,7 @@ case "autoplay":
 
     // A few days in: the first fields up and growing.
     player.play(maxDays: 3) { _ in false }
-    player.lightMorning()
+    player.homeMorning()
     player.wait(until: 11)
     player.stroll(to: Vec2(31, 30.4))
     save(player, as: "early", camera: farm)
@@ -98,7 +98,7 @@ case "autoplay":
 
     // A thriving farm.
     player.play(maxDays: 600) { $0.sim.state.rank.rank >= 3 }
-    player.lightMorning()
+    player.homeMorning()
     player.wait(until: 13)
     player.stroll(to: Vec2(33, 30.4))
     save(player, as: "mid", camera: farm)
@@ -116,14 +116,14 @@ case "autoplay":
     // Farming goes on: until the village has everything the farm can help build.
     player.play(maxDays: finaleDay + 120) { $0.sim.state.village.finished.count >= Village.all.count }
     print("Village: \(player.sim.state.village.finished.count) of \(Village.all.count) projects done by day \(player.day + 1).")
-    player.lightMorning()
+    player.homeMorning()
     player.wait(until: 13)
     player.stroll(to: Vec2(33, 30.4))
     save(player, as: "end_day", camera: farm)
     player.visit(HomeValleyMap.seedShopZone)
     save(player, as: "end_village", camera: Vec2(92, 26))
     player.afternoon()
-    player.evening(until: 21.5)
+    player.evening(until: 21)
     player.stroll(to: Vec2(23, 34.6))
     save(player, as: "end_night", camera: Vec2(27, 36))
 
