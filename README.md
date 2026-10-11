@@ -747,6 +747,29 @@ docs/
 - **The map:** `Packages/AcresCore/Sources/AcresCore/World/HomeValleyMap.swift`.
   `swift run acres-tools map-dump` in `Packages/AcresCore` prints it as text.
 
+## Releasing on the App Store
+
+Ready in the project: version 1.0 (build 1), the privacy manifest (`Acres/PrivacyInfo.xcprivacy`:
+no tracking, nothing collected, `UserDefaults` for the game's own settings), "no encryption"
+for export compliance, the launch screen, and screenshots at App Store sizes (below).
+
+Still to do outside the code:
+
+1. **The developer account.** The account holder invites your Apple ID in App Store Connect
+   (*Users and Access*, role App Manager or Admin). To sign in Xcode, add the account under
+   *Xcode → Settings → Accounts* and pick its team under *Signing & Capabilities*. The App Store
+   shows the account holder as the seller.
+2. **A privacy policy URL** (required even when nothing is collected): a page saying the farm
+   is saved on the device and nothing is sent anywhere.
+3. **The listing:** name, subtitle, description, keywords, category (Simulation), age rating
+   questionnaire, support URL, price.
+4. **Upload:** in Xcode, pick *Any iOS Device*, then *Product → Archive → Distribute App →
+   App Store Connect*. Test it with TestFlight before submitting for review. Raise the build
+   number (`CURRENT_PROJECT_VERSION`) for every upload.
+
+For the Mac App Store the Mac build also needs the App Sandbox (not set up yet); iPhone and iPad
+don't.
+
 ## Screenshots of the real game
 
 `scripts/screenshots.sh` (on a Mac with Xcode), or on GitHub: **Actions → Screenshots → Run
