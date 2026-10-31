@@ -79,17 +79,17 @@ describe('farmhands', () => {
 
   it('water thirsty crops, then harvest ripe ones', () => {
     const state = withHand()
-    step(state, DAY / 20)
+    step(state, DAY / BALANCE.workerTasksPerDay)
     expect(plotAt(state, 9, 6)!.wetUntil).toBeGreaterThan(state.worldTime)
     plotAt(state, 9, 6)!.crop!.growth = DAY
-    step(state, DAY / 20)
+    step(state, DAY / BALANCE.workerTasksPerDay)
     expect(state.inventory.wheat).toBeGreaterThan(0)
   })
 
   it('harvest before they water', () => {
     const state = withHand()
     state.plots[tileKey(10, 6)] = { x: 10, y: 6, crop: { cropId: 'wheat', growth: DAY, harvests: 0 }, wetUntil: 0 }
-    step(state, DAY / 20)
+    step(state, DAY / BALANCE.workerTasksPerDay)
     expect(plotAt(state, 10, 6)!.crop).toBeNull()
     expect(plotAt(state, 9, 6)!.wetUntil).toBe(0)
   })
@@ -171,7 +171,7 @@ describe('automation', () => {
     state.workers = [{ x: 8, y: 5, progress: 0 }]
     state.automation = ['drill']
     state.seed = 'carrot'
-    step(state, DAY / 20)
+    step(state, DAY / BALANCE.workerTasksPerDay)
     expect(plotAt(state, 9, 6)!.crop?.cropId).toBe('carrot')
   })
 
@@ -180,17 +180,17 @@ describe('automation', () => {
     state.plots = {}
     state.money = 0
     state.workers = [{ x: 8, y: 5, progress: 0 }]
-    step(state, DAY / 20)
+    step(state, DAY / BALANCE.workerTasksPerDay)
     expect(Object.keys(state.plots)).toHaveLength(0)
     state.automation = ['foreman']
-    step(state, DAY / 20)
+    step(state, DAY / BALANCE.workerTasksPerDay)
     expect(Object.keys(state.plots).length).toBeGreaterThan(0)
   })
 
   it('has a foreman buy what the coins allow', () => {
     const state = planted('wheat')
     state.automation = ['foreman']
-    state.money = 1_000
+    state.money = 10_000
     step(state, BALANCE.foremanInterval + 1)
     expect(state.training.seeds).toBeGreaterThan(0)
   })

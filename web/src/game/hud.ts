@@ -1,11 +1,11 @@
 import { boostCost, boostReadyIn, coinBoostLeft, type BoostKind } from '../core/boosts'
-import { BALANCE, cropDef, MUTATIONS, PERKS, xpToNextLevel, type PerkDef } from '../core/content'
+import { BALANCE, cropDef, MUTATIONS, PERKS, xpToNextLevel, type CropDef, type PerkDef } from '../core/content'
 import { availableUpgrades, type Upgrade } from '../core/estate'
 import { currentGoal } from '../core/goals'
 import { basePrice, marketFactor, marketSpecial, quote, sellAllQuote } from '../core/market'
 import { formatNumber } from '../core/numbers'
 import { REAL_SECONDS_PER_DAY } from '../core/pace'
-import { cropsFor, masteryLevel, nextCrop, trophies, valueMultiplier } from '../core/progress'
+import { cropsFor, growthSpeed, lockedCrops, masteryLevel, trophies, valueMultiplier } from '../core/progress'
 import {
   canAscend, canBigBang, canRebirth, goldenSeedsFor, perkCost, rebirthRequirement, starsFor,
 } from '../core/rebirth'
@@ -33,7 +33,7 @@ export interface HudActions {
   cancelPlacing: () => void
 }
 
-export type Panel = 'market' | 'farm' | 'rebirth'
+export type Panel = 'seeds' | 'market' | 'farm' | 'rebirth'
 
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag)
@@ -56,12 +56,34 @@ function icon(name: string, className = 'icon'): HTMLImageElement {
 
 export const coins = formatNumber
 
-/** The seed bar holds this many. Older crops still sell, and the Foreman still uses them. */
-const SEEDS_SHOWN = 10
+/** The Market lists this many crops you aren't holding, or it would grow without end. */
+const MARKET_ROWS = 10
 
-/** The crops worth showing: the latest few, so the bar never grows without end. */
-export function seedsShown(state: GameState): ReturnType<typeof cropsFor> {
-  return cropsFor(state).slice(-SEEDS_SHOWN)
+/** The Seeds list shows this many crops still locked, so there's always something to work toward. */
+const LOCKED_SHOWN = 3
+
+const TABS: { panel: Panel; label: string }[] = [
+  { panel: 'seeds', label: 'Seeds' },
+  { panel: 'market', label: 'Market' },
+  { panel: 'farm', label: 'Farm' },
+  { panel: 'rebirth', label: 'Rebirth' },
+]
+
+/** The Farm menu, in the order you'd look for things. */
+const FARM_SECTIONS: { title: string; kinds: Upgrade['kind'][] }[] = [
+  { title: 'Land', kinds: ['parcel'] },
+  { title: 'Buildings', kinds: ['storage', 'farmhouse', 'windmill'] },
+  { title: 'Helpers and machines', kinds: ['worker', 'machine', 'automation'] },
+  { title: 'Endless upgrades', kinds: ['training'] },
+]
+
+/** Rebirth stays out of the way until there's a reason to look at it. */
+function rebirthOpen(state: GameState): boolean {
+  return state.level >= 5 || state.totalRebirths > 0
+}
+
+function seconds(sim: number): string {
+  return `${Math.max(1, Math.round((sim / 1440) * REAL_SECONDS_PER_DAY))}s`
 }
 
 function setText(node: HTMLElement, text: string): void {
@@ -102,7 +124,12 @@ export class Hud {
   private readonly arneText = element('p')
   private readonly arneBar = element('div', 'goal-bar')
   private readonly arneFill = element('i')
-  private readonly seedBar = element('div', 'seeds')
+  private readonly seedButton = element('button', 'seed-pick')
+  private readonly seedIcon = element('img', 'icon')
+  private readonly seedName = element('strong')
+  private readonly seedNote = element('small')
+  private readonly arneCount = element('small', 'goal-count')
+  private readonly multiplierChip = element('div', 'chip multiplier')
   private readonly sellButton = element('button', 'action sell')
   private readonly sellLabel = element('span', 'action-label', 'Sell')
   private readonly marketButton = element('button', 'action')
@@ -111,7 +138,7 @@ export class Hud {
   private readonly soundButton = element('button', 'chip-button')
   private readonly panel = element('section', 'panel')
   private readonly panelBody = element('div', 'panel-body')
-  private readonly panelTitle = element('h2')
+  private readonly tabs = element('nav', 'tabs')
   private readonly toasts = element('div', 'toasts')
   private readonly banner = element('div', 'banner')
   private readonly placingNote = element('div', 'placing-note')
@@ -128,10 +155,6 @@ export class Hud {
   constructor(private readonly root: HTMLElement, private readonly actions: HudActions) {
     this.buildTop()
     this.buildBottom()
-    // A mouse wheel only scrolls up and down; the seed row runs sideways.
-    this.seedBar.addEventListener('wheel', (event) => {
-      this.seedBar.scrollLeft += event.deltaY
-    }, { passive: true })
     this.buildPanel()
     this.panel.addEventListener('pointerdown', () => {
       this.panelHeld = true
@@ -163,15 +186,14 @@ export class Hud {
     const storage = element('div', 'chip')
     storage.append(icon('ui_icon_crate'), this.storage)
 
-    const multiplier = element('div', 'chip multiplier')
-    multiplier.title = 'Everything multiplying your crop prices'
-    multiplier.append(icon('ui_icon_sparkle'), this.multiplier)
-    stats.append(money, multiplier, level, storage)
+    this.multiplierChip.title = 'Everything multiplying your crop prices'
+    this.multiplierChip.append(icon('ui_icon_sparkle'), this.multiplier)
+    stats.append(money, level, storage, this.multiplierChip)
 
     this.arne.append(icon('ui_portrait_mentor', 'portrait'))
     const words = element('div', 'words')
     this.arneBar.append(this.arneFill)
-    words.append(this.arneText, this.arneBar)
+    words.append(this.arneText, this.arneBar, this.arneCount)
     this.arne.append(words)
 
     this.soundButton.addEventListener('click', this.actions.toggleSound)
@@ -194,9 +216,16 @@ export class Hud {
     this.rebirthButton.append(icon('ui_icon_sparkle'), element('span', 'action-label', 'Rebirth'))
     this.rebirthButton.addEventListener('click', () => this.actions.togglePanel('rebirth'))
 
+    const seedWords = element('span', 'stack')
+    seedWords.append(this.seedName, this.seedNote)
+    this.seedIcon.alt = ''
+    this.seedIcon.draggable = false
+    this.seedButton.append(this.seedIcon, seedWords)
+    this.seedButton.addEventListener('click', () => this.actions.togglePanel('seeds'))
+
     const buttons = element('div', 'actions')
     buttons.append(this.sellButton, this.marketButton, this.farmButton, this.rebirthButton)
-    bottom.append(this.seedBar, buttons)
+    bottom.append(this.seedButton, buttons)
     this.root.append(bottom)
   }
 
@@ -206,7 +235,13 @@ export class Hud {
     close.append(icon('ui_icon_close'))
     close.setAttribute('aria-label', 'Close')
     close.addEventListener('click', this.actions.closePanel)
-    header.append(this.panelTitle, close)
+    for (const { panel, label } of TABS) {
+      const tab = element('button', 'tab', label)
+      tab.dataset.panel = panel
+      tab.addEventListener('click', () => this.actions.togglePanel(panel))
+      this.tabs.append(tab)
+    }
+    header.append(this.tabs, close)
     this.panel.append(header, this.panelBody)
     this.panel.hidden = true
     this.root.append(this.panel)
@@ -218,14 +253,16 @@ export class Hud {
     this.panel.hidden = panel === null
     this.panelBody.scrollTop = 0
     this.confirming = null
-    if (panel) setText(this.panelTitle, { market: 'Market', farm: 'Your farm', rebirth: 'Rebirth' }[panel])
+    for (const tab of this.tabs.querySelectorAll<HTMLElement>('.tab')) tab.classList.toggle('open', tab.dataset.panel === panel)
   }
 
   /** Runs every frame, so it only touches what changed. */
   update(state: GameState, seed: string, placing: string | null): void {
     setText(this.money, coins(state.money))
     setText(this.income, state.income >= 1 ? `+${coins(state.income)}/s` : '')
-    setText(this.multiplier, `×${coins(valueMultiplier(state))}`)
+    const multiplier = valueMultiplier(state)
+    setText(this.multiplier, `×${coins(multiplier)}`)
+    this.multiplierChip.hidden = multiplier < 2
     setText(this.level, `Level ${state.level}`)
     const needed = xpToNextLevel(state.level)
     this.xpFill.style.width = `${Math.min(100, (state.xp / needed) * 100)}%`
@@ -237,25 +274,34 @@ export class Hud {
 
     const goal = currentGoal(state)
     setText(this.arneText, goal.text)
-    this.arneBar.hidden = goal.needed <= 1
-    this.arneFill.style.width = `${Math.min(1, goal.progress(state) / goal.needed) * 100}%`
+    // A goal to buy something shows the coins saved toward it.
+    const cost = goal.saveFor?.(state) ?? 0
+    const have = cost > 0 ? state.money : goal.progress(state)
+    const target = cost > 0 ? cost : goal.needed
+    this.arneBar.hidden = target <= 1
+    this.arneFill.style.width = `${Math.min(1, have / target) * 100}%`
+    setText(this.arneCount, target > 1 ? `${coins(Math.min(have, target))} / ${coins(target)}${cost > 0 ? ' coins' : ''}` : '')
 
     const quoted = sellAllQuote(state)
     setText(this.sellLabel, quoted > 0 ? `Sell ${coins(quoted)}` : 'Sell')
     this.sellButton.disabled = quoted === 0
     this.sellButton.classList.toggle('pulse', goal.target === 'sell' && quoted > 0)
-    this.marketButton.classList.toggle('pulse', goal.target === 'market' && this.panelOpen === null && quoted > 0)
+    this.marketButton.classList.toggle('pulse', goal.target === 'market' && this.panelOpen === null)
 
     const ready = availableUpgrades(state).filter((item) => item.level <= state.level && item.cost <= state.money).length
     setText(this.farmBadge, ready > 0 ? String(ready) : '')
     this.farmBadge.hidden = ready === 0
-    this.farmButton.classList.toggle('pulse', goal.target === 'farm' && ready > 0 && this.panelOpen === null)
+    this.farmButton.classList.toggle('pulse', goal.target === 'farm' && this.panelOpen === null)
     this.rebirthButton.classList.toggle('pulse', this.panelOpen === null && (canRebirth(state) || canAscend(state) || canBigBang(state)))
+    const hasRebirth = rebirthOpen(state)
+    this.rebirthButton.hidden = !hasRebirth
+    this.tabs.querySelector<HTMLElement>('[data-panel="rebirth"]')!.hidden = !hasRebirth
 
     setText(this.soundButton, isMuted() ? 'Sound off' : 'Sound on')
 
-    this.renderSeeds(state, seed, goal.target === 'seeds')
+    this.renderSeedButton(state, seed, goal.target === 'seeds' && this.panelOpen === null)
     if (!this.panelHeld) {
+      if (this.panelOpen === 'seeds') this.renderSeeds(state, seed)
       if (this.panelOpen === 'market') this.renderMarket(state)
       if (this.panelOpen === 'farm') this.renderFarm(state)
       if (this.panelOpen === 'rebirth') this.renderRebirth(state)
@@ -274,51 +320,80 @@ export class Hud {
     this.placingNote.append(element('span', '', 'Click a spot in your field. Not on a crop.'), cancel)
   }
 
-  /** The latest crops you can grow, plus the next one coming up. */
-  private renderSeeds(state: GameState, seed: string, pulse: boolean): void {
-    const shown = seedsShown(state)
-    const next = nextCrop(state)
-    const signature = [seed, state.level, state.totalRebirths, pulse].join('|')
+  /** What's being planted, always in view. The choosing happens in the Seeds tab. */
+  private renderSeedButton(state: GameState, seed: string, pulse: boolean): void {
+    this.seedButton.classList.toggle('pulse', pulse)
+    const signature = [seed, state.level].join('|')
     if (signature === this.seedSignature) return
     this.seedSignature = signature
-    this.seedBar.replaceChildren()
-    this.seedBar.classList.toggle('pulse', pulse)
+    const crop = cropDef(seed)
+    if (!crop) return
+    this.seedIcon.src = cropIconURL(crop)
+    setText(this.seedName, `Planting ${crop.name}`)
+    setText(this.seedNote, `${coins(crop.seedCost)} coins each. Click to change`)
+  }
 
-    shown.forEach((crop, index) => {
-      const slot = element('button', crop.id === seed ? 'seed selected' : 'seed')
-      const days = (crop.growthSeconds / 1440) * REAL_SECONDS_PER_DAY
-      slot.title = `${crop.name}: ${coins(crop.seedCost)} coins a seed, ripe in ${Math.round(days)}s when watered`
-      slot.append(picture(cropIconURL(crop)), element('span', 'seed-cost', coins(crop.seedCost)))
-      if (index < 9) slot.append(element('kbd', '', String(index + 1)))
-      slot.addEventListener('click', () => this.actions.selectSeed(crop.id))
-      this.seedBar.append(slot)
-      if (crop.id === seed) slot.scrollIntoView({ block: 'nearest', inline: 'nearest' })
-    })
-    const slot = element('div', 'seed locked')
-    const needs = next.unlockRebirths > state.totalRebirths ? `${next.unlockRebirths - state.totalRebirths} more` : `Lv ${next.unlockLevel}`
-    slot.title = next.unlockRebirths > state.totalRebirths
-      ? `${next.name}: ${next.unlockRebirths - state.totalRebirths} more rebirths`
-      : `${next.name}: level ${next.unlockLevel}`
-    slot.append(picture(cropIconURL(next)), element('span', 'seed-cost', needs))
-    this.seedBar.append(slot)
+  private cropNote(state: GameState, crop: CropDef): string {
+    const items = (crop.yield[0] + crop.yield[1]) / 2
+    const plot = items * basePrice(state, crop.id)
+    const regrows = crop.regrowSeconds === undefined ? '' : ', keeps growing back'
+    return `Seed ${coins(crop.seedCost)}. Ripe in ${seconds(crop.growthSeconds / growthSpeed(state))}. Sells for about ${coins(plot)} a plot${regrows}`
+  }
+
+  /** Everything you can grow, cheapest first, then what's coming. */
+  private renderSeeds(state: GameState, seed: string): void {
+    const open = [...cropsFor(state)].sort((a, b) => a.seedCost - b.seedCost)
+    const locked = lockedCrops(state, LOCKED_SHOWN)
+    const signature = JSON.stringify([seed, state.level, state.totalRebirths, open.map((crop) => basePrice(state, crop.id))])
+    if (signature === this.panelSignature) return
+    this.panelSignature = signature
+    this.panelBody.replaceChildren()
+
+    this.panelBody.append(element('p', 'intro', 'Pick a crop, then click your soil to plant it. You pay for each seed as you plant.'))
+    this.panelBody.append(element('h3', '', 'Your seeds'))
+    for (const crop of open) {
+      const chosen = crop.id === seed
+      const row = element('div', chosen ? 'row is-chosen' : 'row')
+      const text = element('div', 'row-text')
+      text.append(element('strong', '', crop.name), element('small', '', this.cropNote(state, crop)))
+      row.append(picture(cropIconURL(crop)), text)
+      const button = element('button', 'small', chosen ? 'Planting' : 'Pick')
+      button.disabled = chosen
+      button.addEventListener('click', () => this.actions.selectSeed(crop.id))
+      row.append(button)
+      this.panelBody.append(row)
+    }
+    this.panelBody.append(element('h3', '', 'Coming up'))
+    for (const crop of locked) {
+      const row = element('div', 'row empty')
+      const text = element('div', 'row-text')
+      const needs = crop.unlockRebirths > state.totalRebirths
+        ? `${crop.unlockRebirths - state.totalRebirths} more rebirths` : `Level ${crop.unlockLevel}`
+      text.append(element('strong', '', crop.name), element('small', '', needs))
+      row.append(picture(cropIconURL(crop)), text)
+      this.panelBody.append(row)
+    }
   }
 
   private renderMarket(state: GameState): void {
     const items = Object.entries(state.inventory).filter(([, amount]) => amount > 0)
     const special = marketSpecial(state)
     const held = items.map(([id]) => cropDef(id)).filter((crop) => crop !== undefined)
-    const rows = [...new Set([...held, ...seedsShown(state)])]
+    const others = cropsFor(state).filter((crop) => !held.includes(crop)).slice(-MARKET_ROWS)
+    const rows = [...held, ...others]
     const signature = JSON.stringify([
       items, special, rows.map((crop) => [basePrice(state, crop.id), Math.round(marketFactor(state, crop.id) * 100)]),
-      BOOSTS.map(({ kind }) => [Math.ceil(boostReadyIn(state, kind)), boostCost(state, kind), boostCost(state, kind) <= state.money]),
+      BOOSTS.map(({ kind }) => [Math.ceil(boostReadyIn(state, kind)), boostCost(state, kind)]), coins(state.money),
       Math.ceil(coinBoostLeft(state)), adsOffered(),
     ])
     if (signature === this.panelSignature) return
     this.panelSignature = signature
     this.panelBody.replaceChildren()
 
+    this.panelBody.append(element('h3', '', 'Boosts'))
     for (const boost of BOOSTS) this.panelBody.append(this.boostRow(state, boost))
 
+    this.panelBody.append(element('h3', '', 'Sell crops'))
     const specialDef = cropDef(special)
     if (specialDef) {
       const note = element('div', 'special')
@@ -361,44 +436,56 @@ export class Hud {
       row.append(watch)
     }
     const cost = boostCost(state, boost.kind)
-    const pay = element('button', 'small', coins(cost))
-    pay.disabled = cost > state.money
-    pay.addEventListener('click', () => this.actions.buyBoost(boost.kind))
-    row.append(pay)
+    row.append(this.priceButton(state.money, cost, () => this.actions.buyBoost(boost.kind)))
     return row
+  }
+
+  /** A buy button. Until you can afford it, it shows what you've saved toward the price. */
+  private priceButton(have: number, cost: number, onBuy: () => void): HTMLElement {
+    if (have >= cost) {
+      const button = element('button', 'small', coins(cost))
+      button.addEventListener('click', onBuy)
+      return button
+    }
+    const saving = element('div', 'small saving')
+    const fill = element('i')
+    fill.style.width = `${(have / cost) * 100}%`
+    saving.append(fill, element('span', '', `${coins(have)} / ${coins(cost)}`))
+    return saving
   }
 
   private renderFarm(state: GameState): void {
     const upgrades = availableUpgrades(state)
-    const signature = JSON.stringify(upgrades.map((item) => [item.name, item.cost, item.level <= state.level, item.cost <= state.money]))
+    const signature = JSON.stringify([coins(state.money), upgrades.map((item) => [item.name, item.cost, item.level <= state.level])])
     if (signature === this.panelSignature) return
     this.panelSignature = signature
     this.panelBody.replaceChildren()
 
-    const training = upgrades.filter((item) => item.kind === 'training')
-    const rest = upgrades.filter((item) => item.kind !== 'training')
-    if (rest.length > 0) this.panelBody.append(element('h3', '', 'Build'))
-    for (const upgrade of rest) this.panelBody.append(this.upgradeRow(state, upgrade))
-    this.panelBody.append(element('h3', '', 'Endless upgrades'))
-    for (const upgrade of training) this.panelBody.append(this.upgradeRow(state, upgrade))
+    for (const section of FARM_SECTIONS) {
+      const rows = upgrades.filter((item) => section.kinds.includes(item.kind))
+      if (rows.length === 0) continue
+      this.panelBody.append(element('h3', '', section.title))
+      for (const upgrade of rows) this.panelBody.append(this.upgradeRow(state, upgrade))
+    }
   }
 
   private upgradeRow(state: GameState, upgrade: Upgrade): HTMLElement {
     const open = upgrade.level <= state.level
     const row = element('div', open ? 'row' : 'row empty')
     const text = element('div', 'row-text')
-    const name = upgrade.kind === 'training' ? `${upgrade.name} · ${upgrade.owned}` : upgrade.name
+    const name = upgrade.kind === 'training' ? `${upgrade.name} · level ${upgrade.owned}` : upgrade.name
     text.append(element('strong', '', name), element('small', '', upgrade.blurb))
     const art = upgrade.kind === 'machine' ? `prop_${upgrade.id}`
       : upgrade.kind === 'training' ? TRAINING_ICONS[upgrade.id] : UPGRADE_ICONS[upgrade.kind]
     row.append(icon(art), text)
-    const button = element('button', 'small', open ? coins(upgrade.cost) : `Level ${upgrade.level}`)
-    button.disabled = !open || upgrade.cost > state.money
-    button.addEventListener('click', () => this.actions.buy(upgrade))
-    row.append(button)
-    if (upgrade.kind === 'training') {
-      const max = element('button', 'small max', 'Max')
-      max.disabled = button.disabled
+    if (!open) {
+      text.append(element('small', '', `${coins(upgrade.cost)} coins`))
+      row.append(element('div', 'small saving', `Level ${upgrade.level}`))
+      return row
+    }
+    row.append(this.priceButton(state.money, upgrade.cost, () => this.actions.buy(upgrade)))
+    if (upgrade.kind === 'training' && upgrade.cost <= state.money) {
+      const max = element('button', 'small quiet', 'Max')
       max.addEventListener('click', () => this.actions.buyMax(upgrade.id))
       row.append(max)
     }
@@ -455,7 +542,7 @@ export class Hud {
     for (const perk of PERKS) this.panelBody.append(this.perkRow(state, perk))
 
     if (state.rebirths >= 5 || state.ascensions > 0) {
-      const ascend = element('div', 'reset-card ascend')
+      const ascend = element('div', 'reset-card')
       ascend.append(element('strong', '', `Ascend ${state.ascensions + 1}`))
       ascend.append(element('small', '', `Gives up your rebirths, Golden Seeds and endless perks for stars. Each star doubles every crop, for good. You have ${state.stars}.`))
       const possible = canAscend(state)
@@ -464,7 +551,7 @@ export class Hud {
       this.panelBody.append(ascend)
     }
     if (state.ascensions > 0 || state.universes > 0) {
-      const bang = element('div', 'reset-card bang')
+      const bang = element('div', 'reset-card')
       bang.append(element('strong', '', `Big Bang ${state.universes + 1}`))
       bang.append(element('small', '', `Earn ${coins(BALANCE.bigBangCoins)} on one farm to start a new universe. Everything resets but your levels, mastery and trophies, and every crop is worth ×${coins(BALANCE.universeValue)} more.`))
       bang.append(this.resetButton('bigBang', canBigBang(state) ? 'Big Bang' : 'Not yet', canBigBang(state), this.actions.bigBang))
@@ -490,10 +577,11 @@ export class Hud {
     text.append(element('strong', '', level > 0 ? `${perk.name} · ${level}` : perk.name), element('small', '', perk.blurb))
     row.append(text)
     const cost = perkCost(perk, level)
-    const button = element('button', 'small gold', maxed ? 'Done' : coins(cost))
-    button.disabled = maxed || cost > state.goldenSeeds
-    button.addEventListener('click', () => this.actions.buyPerk(perk))
-    row.append(button)
+    if (maxed) {
+      row.append(element('div', 'small saving', 'Done'))
+      return row
+    }
+    row.append(this.priceButton(state.goldenSeeds, cost, () => this.actions.buyPerk(perk)))
     return row
   }
 

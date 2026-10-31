@@ -10,9 +10,9 @@ import { growthSpeed } from './core/progress'
 import { ascend, bigBang, buyPerk, rebirth } from './core/rebirth'
 import { readSave, writeSave } from './core/save'
 import { catchUp, step, type SimEvent } from './core/simulation'
-import { earn, isWet, newGame, parcelAt, plotAt, type GameState } from './core/state'
+import { addCounter, earn, isWet, newGame, parcelAt, plotAt, type GameState } from './core/state'
 import { artURL, cropIconURL, loadArt } from './game/assets'
-import { coins, failureMessage, Hud, hoverText, seedsShown, type Panel } from './game/hud'
+import { coins, failureMessage, Hud, hoverText, type Panel } from './game/hud'
 import {
   adsOffered, celebrateOnPortal, connectPlatform, loadingFinished, loadingStarted, setGameplay, showBreakAd, showRewardedAd,
   type AdHooks,
@@ -200,9 +200,8 @@ class Game {
       this.setPanel(this.panel === 'market' ? null : 'market')
     } else if (event.key === 'r' || event.key === 'R') {
       this.setPanel(this.panel === 'rebirth' ? null : 'rebirth')
-    } else {
-      const crop = seedsShown(this.state)[Number(event.key) - 1]
-      if (crop) this.selectSeed(crop.id)
+    } else if (event.key === 'e' || event.key === 'E') {
+      this.setPanel(this.panel === 'seeds' ? null : 'seeds')
     }
   }
 
@@ -334,6 +333,7 @@ class Game {
 
   private setPanel(panel: Panel | null): void {
     if (panel !== this.panel) play('open')
+    if (panel) addCounter(this.state, `opened:${panel}`)
     this.panel = panel
     this.hud.setPanel(panel)
     setGameplay(panel === null)
@@ -342,6 +342,7 @@ class Game {
   private selectSeed(id: string): void {
     this.state.seed = id
     play('tap')
+    this.setPanel(null)
   }
 
   private celebrateSale(earned: number): void {
@@ -349,7 +350,7 @@ class Game {
     play('coins')
     this.view.sparkleAt(19.9, 4)
     const point = this.view.screenPoint(19.4, 3.6)
-    this.hud.floater(point.x, point.y, `+${coins(earned)}`, 'ui_icon_coin')
+    this.hud.floater(point.x, point.y, `+${coins(earned)}`, artURL('ui_icon_coin'))
     this.finishGoals()
   }
 

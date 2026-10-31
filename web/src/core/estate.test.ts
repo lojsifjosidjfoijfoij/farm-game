@@ -46,7 +46,7 @@ describe('the Farm menu', () => {
   it('renovates the farmhouse three times', () => {
     const state = newGame()
     state.level = 10
-    state.money = 1_000_000
+    state.money = 100_000_000
     for (let i = 0; i < 3; i++) buy(state, upgrade(state, 'farmhouse'))
     expect(state.farmhouseLevel).toBe(3)
     expect(upgrade(state, 'farmhouse')).toBeUndefined()

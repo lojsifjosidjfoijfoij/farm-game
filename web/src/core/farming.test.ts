@@ -110,7 +110,7 @@ describe('harvest', () => {
 describe('addXP', () => {
   it('climbs several levels at once and keeps the rest', () => {
     const state = farmWith()
-    expect(addXP(state, 20 + 45 + 5)).toBe(2)
+    expect(addXP(state, 40 + 100 + 5)).toBe(2)
     expect(state.level).toBe(3)
     expect(state.xp).toBe(5)
   })

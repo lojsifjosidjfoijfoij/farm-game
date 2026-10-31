@@ -18,6 +18,16 @@ export function nextCrop(state: GameState): CropDef {
   return exoticCrop(index)
 }
 
+/** The next few crops on the way, soonest first. */
+export function lockedCrops(state: GameState, count: number): CropDef[] {
+  const plain = CROPS.filter((crop) => crop.unlockLevel > state.level).sort((a, b) => a.unlockLevel - b.unlockLevel)
+  const locked = plain.slice(0, count)
+  for (let index = 0; locked.length < count; index++) {
+    if (exoticCrop(index).unlockRebirths > state.totalRebirths) locked.push(exoticCrop(index))
+  }
+  return locked
+}
+
 /** A crop's mastery: one level for each doubling of what's been harvested. Never resets. */
 export function masteryLevel(state: GameState, cropId: string): number {
   const harvested = state.counters[`harvested:${cropId}`] ?? 0

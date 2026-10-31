@@ -173,7 +173,7 @@ const TAKES = [
   {
     seconds: 5,
     setup: {
-      money: 3.2e9, runCoins: 4e9, lifetimeCoins: 9e9, income: 6.4e7, level: 24, goalIndex: 28, rebirths: 2, totalRebirths: 6, storageLevel: 2,
+      money: 3.2e9, runCoins: 4e9, lifetimeCoins: 9e9, income: 6.4e7, level: 24, goalIndex: 33, rebirths: 2, totalRebirths: 6, storageLevel: 2,
       farmhouseLevel: 2, ownedParcels: farmland(4), automation: ['drill', 'driver', 'irrigation'], seed: 'pumpkin',
       training: { seeds: 22, fertilizer: 9, reach: 4, barn: 3, clover: 7 }, inventory: { pumpkin: 60, corn: 90 },
       workers: [{ x: 12, y: 7, progress: 0 }],
@@ -189,7 +189,7 @@ const TAKES = [
   {
     seconds: 3.4,
     setup: {
-      money: 8.4e13, runCoins: 1.3e11, lifetimeCoins: 4.2e12, income: 2.1e9, level: 30, goalIndex: 30, rebirths: 3, totalRebirths: 11, goldenSeeds: 64,
+      money: 8.4e13, runCoins: 3e12, lifetimeCoins: 4.2e12, income: 2.1e9, level: 30, goalIndex: 35, rebirths: 3, totalRebirths: 11, goldenSeeds: 64,
       storageLevel: 2, farmhouseLevel: 2, ownedParcels: farmland(5), automation: ['drill', 'driver', 'irrigation', 'foreman'], seed: 'x1',
       perks: { green_thumb: 3, old_habits: 1 }, training: { seeds: 30, fertilizer: 12 },
     },
@@ -203,7 +203,7 @@ const TAKES = [
   {
     seconds: 4,
     setup: {
-      money: 4.2e18, runCoins: 9e18, lifetimeCoins: 8e19, income: 1.7e15, level: 52, goalIndex: 34, rebirths: 7, totalRebirths: 24, ascensions: 1, stars: 10,
+      money: 4.2e18, runCoins: 9e18, lifetimeCoins: 8e19, income: 1.7e15, level: 52, goalIndex: 39, rebirths: 7, totalRebirths: 24, ascensions: 1, stars: 10,
       // No Foreman here: he'd max out the farmhands, and they'd clear the fields in a second.
       storageLevel: 3, farmhouseLevel: 3, windmill: true, ownedParcels: farmland(6), automation: ['drill', 'driver', 'irrigation'], seed: 'x4',
       perks: { green_thumb: 9, old_habits: 1 }, training: { seeds: 60, fertilizer: 40, reach: 12, barn: 8, clover: 14 },

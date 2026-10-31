@@ -124,11 +124,11 @@ export interface ParcelDef {
 
 export const PARCELS: ParcelDef[] = [
   { id: 'home_field', name: 'Home field', price: null, unlockLevel: 1, minX: 9, minY: 6, maxX: 13, maxY: 8 },
-  { id: 'east_meadow', name: 'East Meadow', price: 2_500, unlockLevel: 2, minX: 15, minY: 6, maxX: 19, maxY: 8 },
-  { id: 'west_field', name: 'West Field', price: 4_000, unlockLevel: 3, minX: 3, minY: 6, maxX: 7, maxY: 8 },
-  { id: 'mill_lot', name: 'Mill Lot', price: 6_000, unlockLevel: 4, minX: 9, minY: 10, maxX: 13, maxY: 12 },
-  { id: 'goat_hill', name: 'Goat Hill', price: 9_000, unlockLevel: 5, minX: 15, minY: 10, maxX: 19, maxY: 12 },
-  { id: 'south_pasture', name: 'South Pasture', price: 12_000, unlockLevel: 7, minX: 3, minY: 10, maxX: 7, maxY: 12 },
+  { id: 'east_meadow', name: 'East Meadow', price: 6_000, unlockLevel: 2, minX: 15, minY: 6, maxX: 19, maxY: 8 },
+  { id: 'west_field', name: 'West Field', price: 15_000, unlockLevel: 3, minX: 3, minY: 6, maxX: 7, maxY: 8 },
+  { id: 'mill_lot', name: 'Mill Lot', price: 40_000, unlockLevel: 4, minX: 9, minY: 10, maxX: 13, maxY: 12 },
+  { id: 'goat_hill', name: 'Goat Hill', price: 100_000, unlockLevel: 5, minX: 15, minY: 10, maxX: 19, maxY: 12 },
+  { id: 'south_pasture', name: 'South Pasture', price: 250_000, unlockLevel: 7, minX: 3, minY: 10, maxX: 7, maxY: 12 },
 ]
 
 /** A machine that stands in the fields. Numbers are AcresCore's `MachineCatalog`. */
@@ -142,8 +142,8 @@ export interface MachineDef {
 }
 
 export const MACHINES: MachineDef[] = [
-  { id: 'sprinkler', name: 'Sprinkler', price: 450, unlockLevel: 3, radius: 1, blurb: 'Keeps the 8 tiles around it watered.' },
-  { id: 'sprinkler_pro', name: 'Big sprinkler', price: 1_500, unlockLevel: 7, radius: 2, blurb: 'Waters a 5 × 5 square around it.' },
+  { id: 'sprinkler', name: 'Sprinkler', price: 1_200, unlockLevel: 3, radius: 1, blurb: 'Keeps the 8 tiles around it watered.' },
+  { id: 'sprinkler_pro', name: 'Big sprinkler', price: 8_000, unlockLevel: 7, radius: 2, blurb: 'Waters a 5 × 5 square around it.' },
 ]
 
 export function machineDef(id: string): MachineDef | undefined {
@@ -160,10 +160,10 @@ export interface AutomationDef {
 }
 
 export const AUTOMATION: AutomationDef[] = [
-  { id: 'drill', name: 'Seed Drill', cost: 25_000, unlockLevel: 4, blurb: 'Harvested plots replant, and farmhands sow bare soil with your selected seed.' },
-  { id: 'driver', name: 'Market Driver', cost: 40_000, unlockLevel: 4, blurb: 'Your truck sells everything every 10 seconds.' },
-  { id: 'irrigation', name: 'Irrigation', cost: 250_000, unlockLevel: 5, blurb: 'Every plot stays wet.' },
-  { id: 'foreman', name: 'Foreman', cost: 2_000_000, unlockLevel: 6, blurb: 'Buys upgrades, plows new land, and replants with whatever pays best.' },
+  { id: 'drill', name: 'Seed Drill', cost: 100_000, unlockLevel: 5, blurb: 'Harvested plots replant, and farmhands sow bare soil with your selected seed.' },
+  { id: 'driver', name: 'Market Driver', cost: 200_000, unlockLevel: 5, blurb: 'Your truck sells everything every 10 seconds.' },
+  { id: 'irrigation', name: 'Irrigation', cost: 1_500_000, unlockLevel: 6, blurb: 'Every plot stays wet.' },
+  { id: 'foreman', name: 'Foreman', cost: 12_000_000, unlockLevel: 8, blurb: 'Buys upgrades, plows new land, and replants with whatever pays best.' },
 ]
 
 /** An upgrade with no last level. It resets on rebirth, and each level costs more than it pays back. */
@@ -177,12 +177,12 @@ export interface TrainingDef {
 }
 
 export const TRAINING: TrainingDef[] = [
-  { id: 'seeds', name: 'Better Seeds', blurb: 'Every crop sells for 20% more.', baseCost: 500, costGrowth: 1.5, unlockLevel: 2 },
-  { id: 'fertilizer', name: 'Fertilizer', blurb: 'Crops grow 10% faster.', baseCost: 800, costGrowth: 1.6, unlockLevel: 2 },
-  { id: 'barn', name: 'Bigger Barn', blurb: 'Store 25% more.', baseCost: 1_500, costGrowth: 1.6, unlockLevel: 3 },
-  { id: 'reach', name: 'Market Reach', blurb: 'The market takes 25% more before prices drop.', baseCost: 3_000, costGrowth: 1.6, unlockLevel: 3 },
-  { id: 'training', name: 'Farmhand Training', blurb: 'Farmhands work 25% faster.', baseCost: 4_000, costGrowth: 1.7, unlockLevel: 4 },
-  { id: 'clover', name: 'Four-Leaf Clover', blurb: 'Rare crops turn up 10% more often.', baseCost: 5_000, costGrowth: 1.9, unlockLevel: 4 },
+  { id: 'seeds', name: 'Better Seeds', blurb: 'Every crop sells for 20% more.', baseCost: 1_500, costGrowth: 1.55, unlockLevel: 2 },
+  { id: 'fertilizer', name: 'Fertilizer', blurb: 'Crops grow 10% faster.', baseCost: 3_000, costGrowth: 1.7, unlockLevel: 2 },
+  { id: 'barn', name: 'Bigger Barn', blurb: 'Store 25% more.', baseCost: 5_000, costGrowth: 1.7, unlockLevel: 3 },
+  { id: 'reach', name: 'Market Reach', blurb: 'The market takes 25% more before prices drop.', baseCost: 10_000, costGrowth: 1.7, unlockLevel: 3 },
+  { id: 'training', name: 'Farmhand Training', blurb: 'Farmhands work 25% faster.', baseCost: 15_000, costGrowth: 1.8, unlockLevel: 4 },
+  { id: 'clover', name: 'Four-Leaf Clover', blurb: 'Rare crops turn up 10% more often.', baseCost: 20_000, costGrowth: 2, unlockLevel: 4 },
 ]
 
 /** A permanent upgrade bought with Golden Seeds. `maxLevel` of null means it never tops out. */
@@ -245,19 +245,19 @@ export const BALANCE = {
   marketDaysPerPrice: 3,
 
   storageLevels: [300, 450, 650, 900],
-  storageUpgradeCosts: [1_500, 4_000, 9_000],
+  storageUpgradeCosts: [4_000, 20_000, 80_000],
   storageUpgradeLevels: [2, 4, 6],
 
-  workerHireCosts: [2_500, 6_000, 15_000],
+  workerHireCosts: [15_000, 75_000, 400_000],
   workerUnlockLevels: [4, 6, 8],
-  workerTasksPerDay: 20,
+  workerTasksPerDay: 30,
 
   /** Renovation tiers: what each costs and needs. Each pays `farmhouseBonus` more at market. */
-  farmhouseCosts: [6_000, 25_000, 80_000],
+  farmhouseCosts: [50_000, 500_000, 5_000_000],
   farmhouseLevels: [3, 6, 8],
   farmhouseBonus: 0.05,
 
-  windmillCost: 100_000,
+  windmillCost: 3_000_000,
   windmillLevel: 8,
   /** With the sails turning, buyers come from further off: the market is this much deeper. */
   windmillMarketDepth: 1.5,
@@ -272,7 +272,7 @@ export const BALANCE = {
   incomeAverageSeconds: 120,
 
   /** Coins that must be earned in one run for the first rebirth, and how much more for each next one. */
-  rebirthBase: 25_000_000,
+  rebirthBase: 500_000_000,
   rebirthGrowth: 16,
   /** Each rebirth in this ascension multiplies crop value by this. */
   rebirthValue: 1.5,
@@ -320,5 +320,5 @@ export const BALANCE = {
 /** Experience needed to go from `level` to `level + 1`. */
 export function xpToNextLevel(level: number): number {
   const l = Math.max(1, level) - 1
-  return 20 + Math.round(25 * Math.pow(l, 1.5))
+  return 40 + Math.round(60 * Math.pow(l, 1.5))
 }

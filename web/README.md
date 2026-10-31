@@ -42,10 +42,9 @@ VITE_PACING_HOURS=96 npx vitest run src/core/pacing.test.ts
 - **Big bang:** at a googol coins on one farm, a new universe and ×1,000 on every crop.
 - **Trophies:** one for each 1,000× more coins earned, with no last one. Each adds 20% for good.
 
-From the bot, playing nonstop with perfect timing: first rebirth 16 minutes in, billions at 44 minutes,
-trillions at 1.6 hours, first ascension at 4.8 hours, second at 43 hours, and 1e36 coins at 96 hours. A
-real player will be slower. Each ascension takes roughly 9× longer than the last, so a big bang is far out
-of reach. Money stops at 1e300 rather than overflowing.
+From the bot, playing nonstop with perfect timing: first rebirth at 2.7 hours, second at 5.5 hours, fourth at
+23 hours. A real player will be slower, and it stays far out of reach of a big bang. Money stops at 1e300
+rather than overflowing.
 
 ## Building for upload
 
@@ -97,7 +96,7 @@ The results land in `promo/out`, which isn't committed.
   `platform.ts` is the only file that talks to the CrazyGames SDK.
 - `src/main.ts` joins the two and handles input.
 
-`src/core/pace.ts` sets how fast time runs: a game day is 20 seconds here and 24 minutes on iOS.
+`src/core/pace.ts` sets how fast time runs: a game day is 45 seconds here and 24 minutes on iOS.
 
 ## How it differs from the iOS game
 

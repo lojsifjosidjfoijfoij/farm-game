@@ -93,7 +93,7 @@ function play(hours: number, visit = 5): { milestones: Map<string, number>; stat
 
 describe('pacing', () => {
   // Set VITE_PACING_HOURS for a longer look. A simulated day takes a few minutes.
-  const hours = Number(import.meta.env.VITE_PACING_HOURS ?? 2)
+  const hours = Number(import.meta.env.VITE_PACING_HOURS ?? 5)
   const { milestones, state } = play(hours, 5)
   const firstRebirth = [...milestones].find(([name]) => name.startsWith('rebirth 1 '))?.[1] ?? Infinity
   const at = (name: string): number => milestones.get(name) ?? Infinity
@@ -105,16 +105,16 @@ describe('pacing', () => {
   })
 
   it('reaches the first rebirth after a decent first run', () => {
-    expect(firstRebirth).toBeGreaterThan(15 * 60)
-    expect(firstRebirth).toBeLessThan(60 * 60)
+    expect(firstRebirth).toBeGreaterThan(60 * 60)
+    expect(firstRebirth).toBeLessThan(4 * 3600)
   })
 
-  it('reaches billions in the first session', () => {
-    expect(at('trophy 1.00B')).toBeLessThan(2 * 3600)
+  it('takes its time over the first million', () => {
+    expect(at('Market Driver')).toBeGreaterThan(20 * 60)
   })
 
   it('is nowhere near the end after all that', () => {
-    expect(state.runCoins).toBeLessThan(1e60)
+    expect(state.lifetimeCoins).toBeLessThan(1e60)
     expect(Number.isFinite(state.money)).toBe(true)
   })
 })
