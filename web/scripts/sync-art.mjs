@@ -23,6 +23,7 @@ const wanted = [
   /^tree_\w+_summer$/,
   /^character_(farmer|worker\d)_(down|side|up)_(idle|walk\d|hoe\d|can\d|hands\d)$/,
   /^vehicle_truck_old_dir\d+$/,
+  /^animal_chicken_walk\d$/,
   /^ui_(board_\w+|card|hud_\w+|inset|paper|portrait_mentor|ribbon_\w+)$/,
   /^ui_icon_(check|close|coin|crate|drop|field|hoe|house|level|lock|note|seeds|shop|sickle|sparkle|watering_can|worker)$/,
 ]

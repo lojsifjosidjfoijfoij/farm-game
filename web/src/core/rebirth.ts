@@ -13,6 +13,7 @@ import { addCounter, perkLevel, type GameState } from './state'
 export function rebirthRequirement(state: GameState): number {
   return BALANCE.rebirthBase
     * Math.pow(BALANCE.rebirthGrowth, state.rebirths)
+    * Math.pow(BALANCE.rebirthSteepness, state.rebirths * state.rebirths)
     * Math.pow(BALANCE.ascensionGrowth, state.ascensions)
 }
 
@@ -58,7 +59,7 @@ export function buyPerk(state: GameState, perk: PerkDef): PerkFailure | null {
 /** The coins a new farm starts with. */
 function startingCoins(state: GameState): number {
   const headStart = perkLevel(state, 'head_start')
-  return headStart === 0 ? BALANCE.startingMoney : 1_000 * Math.pow(8, headStart - 1)
+  return headStart === 0 ? BALANCE.rebirthStartMoney : 1_000 * Math.pow(8, headStart - 1)
 }
 
 /** Clears the farm for a new run. Levels, mastery, counters and trophies stay. */

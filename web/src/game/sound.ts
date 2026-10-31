@@ -1,5 +1,5 @@
 /** Every sound is synthesized, like the iOS game's `Sound.swift`, so the build carries no audio files. */
-export type SoundEffect = 'tap' | 'open' | 'plow' | 'plant' | 'water' | 'harvest' | 'coins' | 'levelUp' | 'goal' | 'refuse' | 'rare' | 'rebirth'
+export type SoundEffect = 'tap' | 'open' | 'plow' | 'plant' | 'water' | 'harvest' | 'coins' | 'levelUp' | 'goal' | 'refuse' | 'rare' | 'rebirth' | 'story'
 
 const MUTE_KEY = 'valley-farm-muted'
 
@@ -84,7 +84,7 @@ function hiss(start: number, length: number, gain: number, cutoff: number): void
 const lastPlayed = new Map<SoundEffect, number>()
 const MIN_GAP_MS = 55
 
-export function play(effect: SoundEffect): void {
+export function play(effect: SoundEffect, pitch = 1): void {
   if (isMuted() || adPlaying || !context) return
   const now = performance.now()
   if (now - (lastPlayed.get(effect) ?? -1000) < MIN_GAP_MS) return
@@ -109,7 +109,7 @@ export function play(effect: SoundEffect): void {
       hiss(0, 0.1, 0.04, 2600)
       break
     case 'harvest':
-      tone(440, 0, 0.09, 0.09, 'sine', 880)
+      tone(440 * pitch, 0, 0.09, 0.09, 'sine', 880 * pitch)
       break
     case 'coins':
       for (let i = 0; i < 5; i++) {
@@ -131,6 +131,10 @@ export function play(effect: SoundEffect): void {
       tone(110, 0, 1.4, 0.12, 'sawtooth', 880)
       hiss(0, 1.2, 0.05, 4000);
       [523, 659, 784, 1047, 1319, 1568].forEach((frequency, i) => tone(frequency, 0.5 + i * 0.1, 0.5, 0.08))
+      break
+    case 'story':
+      tone(523, 0, 0.5, 0.035, 'sine')
+      tone(784, 0.08, 0.6, 0.03, 'sine')
       break
     case 'refuse':
       tone(160, 0, 0.13, 0.08, 'square')

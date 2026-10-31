@@ -272,13 +272,17 @@ export const BALANCE = {
   incomeAverageSeconds: 120,
 
   /** Coins that must be earned in one run for the first rebirth, and how much more for each next one. */
-  rebirthBase: 500_000_000,
-  rebirthGrowth: 16,
+  rebirthBase: 150_000,
+  rebirthGrowth: 6,
+  /** Added on top, squared: the first few come quick, and each later one is a bigger leap. */
+  rebirthSteepness: 1.12,
+  /** Coins a new farm starts with after a rebirth, enough to get seeds in the ground. */
+  rebirthStartMoney: 500,
   /** Each rebirth in this ascension multiplies crop value by this. */
   rebirthValue: 1.5,
-  rebirthsToAscend: 10,
+  rebirthsToAscend: 12,
   /** Each ascension raises the first rebirth's price by this. */
-  ascensionGrowth: 7e10,
+  ascensionGrowth: 1e17,
   /** Each star doubles crop value, for good. */
   starValue: 2,
   /** A run has to reach this to set off a big bang. */
@@ -312,6 +316,19 @@ export const BALANCE = {
   skipSeconds: 120,
   skipCostSeconds: 60,
   boostCooldownSeconds: 180,
+
+  /** Each link in a harvest chain adds this share of the crop's price, up to the cap. */
+  comboStep: 0.05,
+  comboCap: 20,
+  /** Real seconds allowed between harvests before a chain breaks. */
+  comboWindow: 1.5,
+
+  /** The Golden Hen: real seconds between visits, how long she stays, and what she drops. */
+  henMinSeconds: 90,
+  henMaxSeconds: 200,
+  henSeconds: 9,
+  henIncomeSeconds: 45,
+  henMinimum: 100,
 
   /** Money stops growing here rather than breaking. A big bang comes long before it. */
   maxCoins: 1e300,

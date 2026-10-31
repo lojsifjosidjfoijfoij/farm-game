@@ -35,7 +35,7 @@ describe('rebirth', () => {
     const state = newGame()
     const first = rebirthRequirement(state)
     state.rebirths = 1
-    expect(rebirthRequirement(state)).toBe(first * BALANCE.rebirthGrowth)
+    expect(rebirthRequirement(state)).toBeGreaterThan(first * BALANCE.rebirthGrowth)
   })
 
   it('wipes the farm and pays Golden Seeds', () => {
@@ -48,7 +48,7 @@ describe('rebirth', () => {
     state.inventory.wheat = 50
     expect(rebirth(state)).toBeGreaterThan(0)
     expect(state.rebirths).toBe(1)
-    expect(state.money).toBe(BALANCE.startingMoney)
+    expect(state.money).toBe(BALANCE.rebirthStartMoney)
     expect(state.runCoins).toBe(0)
     expect(state.training).toEqual({})
     expect(state.ownedParcels).toEqual(['home_field'])

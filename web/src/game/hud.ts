@@ -1,7 +1,7 @@
 import { boostCost, boostReadyIn, coinBoostLeft, type BoostKind } from '../core/boosts'
 import { BALANCE, cropDef, MUTATIONS, PERKS, xpToNextLevel, type CropDef, type PerkDef } from '../core/content'
 import { availableUpgrades, type Upgrade } from '../core/estate'
-import { currentGoal } from '../core/goals'
+import { currentGoal, REBIRTH_INTRO, type Goal } from '../core/goals'
 import { basePrice, marketFactor, marketSpecial, quote, sellAllQuote } from '../core/market'
 import { formatNumber } from '../core/numbers'
 import { REAL_SECONDS_PER_DAY } from '../core/pace'
@@ -62,6 +62,9 @@ const MARKET_ROWS = 10
 /** The Seeds list shows this many crops still locked, so there's always something to work toward. */
 const LOCKED_SHOWN = 3
 
+const SCENE_LINE_MS = 3000
+const SCENE_TITLE_MS = 1500
+
 const TABS: { panel: Panel; label: string }[] = [
   { panel: 'seeds', label: 'Seeds' },
   { panel: 'market', label: 'Market' },
@@ -79,7 +82,7 @@ const FARM_SECTIONS: { title: string; kinds: Upgrade['kind'][] }[] = [
 
 /** Rebirth stays out of the way until there's a reason to look at it. */
 function rebirthOpen(state: GameState): boolean {
-  return state.level >= 5 || state.totalRebirths > 0
+  return state.goalIndex >= REBIRTH_INTRO || state.totalRebirths > 0
 }
 
 function seconds(sim: number): string {
@@ -635,6 +638,96 @@ export class Hud {
     buttons.append(keep, double)
     card.append(buttons)
     this.root.append(card)
+  }
+
+  /** A short scene: black bars, a line at a time, always skippable. */
+  playScene(lines: string[], options: { title?: string; onLine: () => void; onDone: () => void }): () => void {
+    const scene = element('div', 'scene')
+    const caption = element('p', 'scene-caption')
+    const skip = element('button', 'scene-skip', 'Skip')
+    scene.append(element('div', 'scene-bar top-bar'), element('div', 'scene-bar bottom-bar'), caption, skip)
+    this.root.append(scene)
+    document.body.classList.add('in-scene')
+    let timer = 0
+    let index = 0
+    const finish = (): void => {
+      if (!scene.isConnected) return
+      window.clearTimeout(timer)
+      scene.remove()
+      document.body.classList.remove('in-scene')
+      options.onDone()
+    }
+    const next = (): void => {
+      if (index < lines.length) {
+        caption.replaceChildren(element('span', 'scene-line', lines[index]))
+        index += 1
+        options.onLine()
+        timer = window.setTimeout(next, SCENE_LINE_MS)
+      } else if (options.title) {
+        caption.replaceChildren()
+        scene.append(element('div', 'scene-title', options.title))
+        timer = window.setTimeout(finish, SCENE_TITLE_MS)
+      } else {
+        finish()
+      }
+    }
+    skip.addEventListener('click', finish)
+    next()
+    return finish
+  }
+
+  /** Stops everything to point at one part of the screen. */
+  showCard(card: NonNullable<Goal['card']>, onClose: () => void): void {
+    const cover = element('div', 'guide')
+    const target = document.querySelector(card.spotlight)?.getBoundingClientRect()
+    if (target) {
+      const spot = element('div', 'guide-spot')
+      spot.style.left = `${target.left - 6}px`
+      spot.style.top = `${target.top - 6}px`
+      spot.style.width = `${target.width + 12}px`
+      spot.style.height = `${target.height + 12}px`
+      cover.append(spot)
+    }
+    const box = element('div', 'guide-card')
+    const heading = element('div', 'guide-heading')
+    heading.append(icon('ui_portrait_mentor', 'portrait'), element('strong', '', card.title))
+    const button = element('button', 'small', 'Got it')
+    button.addEventListener('click', () => {
+      cover.remove()
+      onClose()
+    })
+    box.append(heading, element('p', '', card.text), button)
+    cover.append(box)
+    this.root.append(cover)
+  }
+
+  /** The Golden Hen runs across the screen. Catch her before she's gone. */
+  showHen(seconds: number, onCatch: (x: number, y: number) => void): void {
+    const hen = element('button', 'hen')
+    hen.setAttribute('aria-label', 'Golden Hen')
+    const frames = [artURL('animal_chicken_walk1'), artURL('animal_chicken_walk2')]
+    const image = picture(frames[0], 'hen-art')
+    hen.append(image)
+    const fromLeft = Math.random() < 0.5
+    hen.classList.toggle('flip', fromLeft)
+    hen.style.top = `${30 + Math.random() * 40}%`
+    hen.style.animationName = fromLeft ? 'hen-right' : 'hen-left'
+    hen.style.animationDuration = `${seconds}s`
+    let frame = 0
+    const walking = window.setInterval(() => {
+      frame = 1 - frame
+      image.src = frames[frame]
+    }, 180)
+    const gone = (): void => {
+      window.clearInterval(walking)
+      hen.remove()
+    }
+    hen.addEventListener('animationend', gone)
+    hen.addEventListener('click', (event) => {
+      gone()
+      onCatch(event.clientX, event.clientY)
+    })
+    this.root.append(hen)
   }
 
   nudgeSell(): void {

@@ -48,9 +48,15 @@ class Actor {
   tool: Tool | null = null
   toolUntil = 0
 
-  constructor(readonly who: string, x: number, y: number, readonly speed: number) {
+  constructor(readonly who: string, x: number, y: number, public speed: number) {
     this.x = this.targetX = x
     this.y = this.targetY = y
+  }
+
+  walkTo(x: number, y: number): void {
+    this.targetX = x
+    this.targetY = y
+    this.tool = null
   }
 
   goTo(x: number, y: number, kind: FarmActionKind, now: number): void {
@@ -129,6 +135,11 @@ export class WorldView {
   private lastDraw = performance.now()
   private nextSparkle = 0
   private truckLeft = -Infinity
+  /** The opening scene, while it runs. */
+  private intro: { start: number; stepped: boolean; handedOver: boolean } | null = null
+  private readonly arne = new Actor('worker3', 4.6, 5.45, 1.6)
+  private nextBirds = performance.now() + 20_000
+  private birds: { start: number; y: number; flip: boolean } | null = null
 
   constructor(private readonly canvas: HTMLCanvasElement) {
     this.context = canvas.getContext('2d', { alpha: false })!
@@ -219,6 +230,96 @@ export class WorldView {
   sparkleAt(x: number, y: number): void {
     for (let i = 0; i < 18; i++) {
       this.spawn('fx_sparkle', x, y, (Math.random() - 0.5) * 6, -2 - Math.random() * 4, 6, 0.8)
+    }
+  }
+
+  /**
+   * The opening, played on the real farm: the truck rolls up the lane, the
+   * new farmer climbs out and walks to Arne, and Arne goes inside.
+   */
+  playIntro(): void {
+    this.intro = { start: performance.now(), stepped: false, handedOver: false }
+    this.farmer.speed = 3.2
+  }
+
+  endIntro(): void {
+    this.intro = null
+    this.farmer.speed = 9
+    this.farmer.x = this.farmer.targetX = 8.2
+    this.farmer.y = this.farmer.targetY = 5.3
+  }
+
+  private runIntro(now: number): void {
+    const intro = this.intro
+    if (!intro) return
+    const seconds = (now - intro.start) / 1000
+    if (seconds > 3.4 && !intro.stepped) {
+      intro.stepped = true
+      this.farmer.x = this.farmer.targetX = PLACES.truck.x - 1
+      this.farmer.y = this.farmer.targetY = 5.5
+      this.farmer.walkTo(5.9, 5.45)
+      this.burstAt(PLACES.truck.x - 1, 5.4)
+    }
+    if (seconds > 7.6 && !intro.handedOver) {
+      intro.handedOver = true
+      this.arne.walkTo(3.7, 4.95)
+      this.sparkleAt(5.2, 4.8)
+    }
+    this.arne.update(1 / 60)
+  }
+
+  private burstAt(x: number, y: number): void {
+    for (let i = 0; i < 5; i++) this.spawn('fx_dust_puff', x, y, (Math.random() - 0.5) * 2, -0.5 - Math.random(), 0, 0.5)
+  }
+
+  /** Something new goes up: a puff of dust, then sparkles. */
+  buildMoment(x: number, y: number, width: number, height: number): void {
+    for (let i = 0; i < 26; i++) {
+      this.spawn('fx_dust_puff', x + Math.random() * width, y + Math.random() * height, (Math.random() - 0.5) * 2, -1 - Math.random(), 0, 0.7)
+    }
+    for (let i = 0; i < 30; i++) {
+      this.spawn('fx_sparkle', x + Math.random() * width, y + Math.random() * height, (Math.random() - 0.5) * 3, -2 - Math.random() * 4, 6, 1)
+    }
+  }
+
+  placeOf(kind: 'farmhouse' | 'windmill' | 'storage'): { x: number; y: number } {
+    if (kind === 'farmhouse') return PLACES.farmhouse
+    return kind === 'windmill' ? PLACES.windmill : PLACES.shed
+  }
+
+  /** Slow cloud shadows, and now and then a flock of birds. Nothing that asks for attention. */
+  private paintAmbient(context: CanvasRenderingContext2D, now: number): void {
+    const span = this.low.width + 500
+    context.fillStyle = 'rgba(15, 35, 40, 0.1)'
+    for (const [speed, offset, y, size] of [[11, 0, 0.3, 190], [7, 420, 0.65, 240], [9, 760, 0.9, 150]]) {
+      const x = this.cameraX - 250 + ((now / 1000) * speed + offset) % span
+      context.beginPath()
+      context.ellipse(x, this.cameraY + this.low.height * y, size, size * 0.42, 0, 0, Math.PI * 2)
+      context.fill()
+    }
+    if (!this.birds && now > this.nextBirds) {
+      this.birds = { start: now, y: this.cameraY + 40 + Math.random() * 90, flip: Math.random() < 0.5 }
+      this.nextBirds = now + 45_000 + Math.random() * 60_000
+    }
+    if (!this.birds) return
+    const flight = (now - this.birds.start) / 14_000
+    if (flight >= 1) {
+      this.birds = null
+      return
+    }
+    const across = this.low.width + 200
+    const leadX = this.cameraX - 100 + (this.birds.flip ? 1 - flight : flight) * across
+    const flap = Math.floor(now / 170) % 2 === 0 ? 2 : -1
+    context.strokeStyle = 'rgba(30, 25, 25, 0.75)'
+    context.lineWidth = 1
+    for (const [dx, dy] of [[0, 0], [-11, -6], [-11, 6], [-22, -12], [-22, 12]]) {
+      const x = Math.round(leadX + (this.birds.flip ? -dx : dx))
+      const y = Math.round(this.birds.y + dy)
+      context.beginPath()
+      context.moveTo(x - 3, y - flap)
+      context.lineTo(x, y)
+      context.lineTo(x + 3, y - flap)
+      context.stroke()
     }
   }
 
@@ -423,7 +524,9 @@ export class WorldView {
     building('building_farmers_market_stall', PLACES.market)
     const trip = (now - this.truckLeft) / TRUCK_TRIP_MS
     const driving = trip >= 0 && trip < 1
-    const truckX = PLACES.truck.x + (driving ? Math.sin(trip * Math.PI) * 2.2 : 0)
+    const arrival = this.intro ? Math.min(1, (now - this.intro.start) / 3200) : 1
+    const eased = 1 - Math.pow(1 - arrival, 3)
+    const truckX = this.intro ? -6 + (PLACES.truck.x + 6) * eased : PLACES.truck.x + (driving ? Math.sin(trip * Math.PI) * 2.2 : 0)
     const truck = driving && trip > 0.5 ? 'vehicle_truck_old_dir08' : 'vehicle_truck_old_dir00'
     add(PLACES.truck.y, () => this.paint(context, truck, truckX * TILE, PLACES.truck.y * TILE, ANCHOR.truck))
     if (state.storageLevel >= 1) building('building_storage_shed', PLACES.shed)
@@ -456,7 +559,9 @@ export class WorldView {
     for (const sprinkler of state.sprinklers) {
       add(sprinkler.y + 0.8, () => this.paint(context, `prop_${sprinkler.kind}`, (sprinkler.x + 0.5) * TILE, (sprinkler.y + 0.8) * TILE, ANCHOR.sprinkler))
     }
-    for (const actor of [this.farmer, ...this.hands]) {
+    const arneThere = this.intro && (this.arne.x > 3.75 || this.arne.y > 5)
+    const farmerThere = !this.intro || this.intro.stepped
+    for (const actor of [...(farmerThere ? [this.farmer] : []), ...this.hands, ...(arneThere ? [this.arne] : [])]) {
       add(actor.y, () => {
         context.drawImage(sprite('fx_shadow_soft'), Math.round(actor.x * TILE - 11), Math.round(actor.y * TILE - 5), 22, 10)
         this.paint(context, actor.frame(now), actor.x * TILE, actor.y * TILE, ANCHOR.character, actor.flip)
@@ -470,6 +575,7 @@ export class WorldView {
     const dt = Math.min((now - this.lastDraw) / 1000, 0.1)
     this.lastDraw = now
     this.syncHands(state.workers.length)
+    this.runIntro(now)
     this.farmer.update(dt)
     for (const hand of this.hands) hand.update(dt)
 
@@ -515,6 +621,7 @@ export class WorldView {
       }
     }
     this.paintParticles(context, dt)
+    this.paintAmbient(context, now)
     this.present()
   }
 

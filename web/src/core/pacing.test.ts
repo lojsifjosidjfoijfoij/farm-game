@@ -35,6 +35,8 @@ function spendSeeds(state: GameState): void {
 /** A plain but attentive player: every few seconds, work the field, sell, buy what's affordable, rebirth when offered. */
 function play(hours: number, visit = 5): { milestones: Map<string, number>; state: GameState } {
   const state = newGame()
+  // The bot doesn't open menus, so Arne's tour counts as done.
+  for (const panel of ['seeds', 'market', 'farm', 'rebirth']) state.counters[`opened:${panel}`] = 1
   const milestones = new Map<string, number>()
   const note = (name: string, t: number): void => {
     if (!milestones.has(name)) milestones.set(name, t)
@@ -105,12 +107,12 @@ describe('pacing', () => {
   })
 
   it('reaches the first rebirth after a decent first run', () => {
-    expect(firstRebirth).toBeGreaterThan(60 * 60)
-    expect(firstRebirth).toBeLessThan(4 * 3600)
+    expect(firstRebirth).toBeGreaterThan(12 * 60)
+    expect(firstRebirth).toBeLessThan(30 * 60)
   })
 
   it('takes its time over the first million', () => {
-    expect(at('Market Driver')).toBeGreaterThan(20 * 60)
+    expect(at('Foreman')).toBeGreaterThan(20 * 60)
   })
 
   it('is nowhere near the end after all that', () => {

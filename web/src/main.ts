@@ -1,10 +1,10 @@
 import './styles.css'
 import { applyBoost, buyBoost, type BoostKind } from './core/boosts'
-import { BALANCE, CROPS, cropDef, exoticCrop, mutationDef, type PerkDef } from './core/content'
+import { BALANCE, CROPS, cropDef, exoticCrop, mutationDef, PARCELS, type PerkDef } from './core/content'
 import { buy, buyMax, placeMachine, placeProblem, type Upgrade } from './core/estate'
 import { perform, suggestedAction, toolAction, type FarmActionKind, type FarmOutcome } from './core/farming'
-import { checkGoals, currentGoal } from './core/goals'
-import { sell, sellAll } from './core/market'
+import { checkGoals, currentGoal, QUIPS, type Goal } from './core/goals'
+import { comboBonus, henReward, sell, sellAll } from './core/market'
 import { REAL_SECONDS_PER_DAY, TIME_SCALE } from './core/pace'
 import { growthSpeed } from './core/progress'
 import { ascend, bigBang, buyPerk, rebirth } from './core/rebirth'
@@ -18,6 +18,7 @@ import {
   type AdHooks,
 } from './game/platform'
 import { isMuted, play, setAdPlaying, setMuted, setPortalMuted, unlockAudio, type SoundEffect } from './game/sound'
+import { ASCEND_SCENE, BIG_BANG_SCENE, INTRO, REBIRTH_SCENES, WINDMILL_SCENE } from './game/story'
 import { WorldView } from './game/view'
 
 /** Working title. Also in index.html and the save key. */
@@ -39,6 +40,13 @@ class Game {
   private lastSave = performance.now()
   /** The world holds still while an ad is requested or playing. */
   private adBusy = false
+  /** A tutorial card is up, and the world waits for it. */
+  private cardOpen = false
+  /** A story scene is playing, and finishes it if called. */
+  private endScene: (() => void) | null = null
+  private combo = 0
+  private lastHarvest = -Infinity
+  private nextHen = performance.now() + BALANCE.henMinSeconds * 1000
   private readonly view: WorldView
   private readonly hud: Hud
   private readonly tooltip: HTMLElement
@@ -67,8 +75,13 @@ class Game {
         this.placing = null
       },
     })
-    if (saved) this.welcomeBack()
-    setGameplay(true)
+    if (saved) {
+      this.welcomeBack()
+      setGameplay(true)
+    } else {
+      this.view.playIntro()
+      this.playScene(INTRO, GAME_TITLE, () => this.view.endIntro())
+    }
     // Only in the build promo/make-promo.mjs records from.
     if (import.meta.env.VITE_PROMO === '1') Object.assign(window, { game: this })
     this.bindInput(canvas)
@@ -95,14 +108,61 @@ class Game {
   private frame(now: number): void {
     const realDt = Math.min((now - this.lastFrame) / 1000, 0.25)
     this.lastFrame = now
-    if (!this.adBusy) this.handleEvents(step(this.state, realDt * TIME_SCALE))
+    if (!this.adBusy && !this.cardOpen && !this.endScene) this.handleEvents(step(this.state, realDt * TIME_SCALE))
     this.finishGoals()
     if (now - this.lastSave > AUTOSAVE_SECONDS * 1000) this.save(now)
 
     const goal = currentGoal(this.state)
-    this.view.draw(this.state, { hover: this.hover, placing: this.placing, guide: goal?.target ?? null })
+    this.view.draw(this.state, { hover: this.hover, placing: this.placing, guide: this.endScene ? null : goal.target })
     this.hud.update(this.state, this.state.seed, this.placing)
+    this.showGuideCard(goal)
+    this.maybeSendHen(now)
     requestAnimationFrame((next) => this.frame(next))
+  }
+
+  private playScene(lines: string[], title?: string, after?: () => void): void {
+    this.setPanel(null)
+    setGameplay(false)
+    this.endScene = this.hud.playScene(lines, {
+      title,
+      onLine: () => play('story'),
+      onDone: () => {
+        this.endScene = null
+        this.lastFrame = performance.now()
+        setGameplay(true)
+        after?.()
+      },
+    })
+  }
+
+  private showGuideCard(goal: Goal): void {
+    const seen = `card:${goal.id}`
+    if (!goal.card || this.endScene || this.cardOpen || this.stroke || this.state.counters[seen]) return
+    addCounter(this.state, seen)
+    this.setPanel(null)
+    this.cardOpen = true
+    play('open')
+    setGameplay(false)
+    this.hud.showCard(goal.card, () => {
+      this.cardOpen = false
+      this.lastFrame = performance.now()
+      play('tap')
+      setGameplay(true)
+    })
+  }
+
+  private maybeSendHen(now: number): void {
+    if (now < this.nextHen || this.endScene || this.cardOpen || this.adBusy || this.state.goalIndex < 5) return
+    const wait = BALANCE.henMinSeconds + Math.random() * (BALANCE.henMaxSeconds - BALANCE.henMinSeconds)
+    this.nextHen = now + wait * 1000
+    this.hud.showHen(BALANCE.henSeconds, (x, y) => {
+      const reward = henReward(this.state)
+      earn(this.state, reward)
+      addCounter(this.state, 'hensCaught')
+      this.hud.floater(x, y, `+${coins(reward)}`, artURL('ui_icon_coin'), true)
+      this.hud.showBanner('Golden Hen caught!', `She dropped ${coins(reward)} coins. Nobody asks where from.`)
+      play('rare')
+    })
   }
 
   private handleEvents(events: SimEvent[]): void {
@@ -153,7 +213,7 @@ class Game {
         this.hud.toast('Trophy! Every crop is worth 20% more, for good.')
       } else if (goal.reward > 0) {
         play('goal')
-        this.hud.toast(`Goal done: +${coins(goal.reward)} coins`)
+        this.hud.toast(`${QUIPS[Math.floor(Math.random() * QUIPS.length)]} +${coins(goal.reward)} coins`)
       }
     }
   }
@@ -189,6 +249,10 @@ class Game {
   }
 
   private key(event: KeyboardEvent): void {
+    if (this.endScene) {
+      if (event.key === 'Escape') this.endScene()
+      return
+    }
     if (event.key === 'Escape') {
       this.placing = null
       this.setPanel(null)
@@ -258,13 +322,28 @@ class Game {
     }
     this.view.farmerActs(x, y, outcome.kind)
     const effect: Record<FarmActionKind, SoundEffect> = { plow: 'plow', plant: 'plant', water: 'water', harvest: 'harvest' }
-    play(effect[outcome.kind])
+    if (outcome.kind !== 'harvest') play(effect[outcome.kind])
     if (outcome.kind === 'harvest') {
       const point = this.view.screenPoint(x, y)
       const def = cropDef(outcome.cropId)
       if (def) this.hud.floater(point.x, point.y, `+${outcome.amount}`, cropIconURL(def))
+      this.chainHarvest(outcome.cropId, outcome.amount, point)
       if (outcome.bonus > 0) this.showRare(outcome.mutation, outcome.bonus, x, y)
       if (outcome.levelsGained > 0) this.leveledUp()
+    }
+  }
+
+  /** Quick harvests chain together: each pays a little more and sounds a little higher. */
+  private chainHarvest(cropId: string, amount: number, point: { x: number; y: number }): void {
+    const now = performance.now()
+    this.combo = now - this.lastHarvest <= BALANCE.comboWindow * 1000 ? this.combo + 1 : 1
+    this.lastHarvest = now
+    play('harvest', 1 + Math.min(this.combo, BALANCE.comboCap) * 0.04)
+    const bonus = comboBonus(this.state, cropId, amount, this.combo)
+    if (bonus > 0) earn(this.state, bonus)
+    if (this.combo % 5 === 0) {
+      this.hud.floater(point.x, point.y - 28, `Combo ×${this.combo}! +${coins(bonus)}`, artURL('ui_icon_sparkle'), true)
+      play('goal')
     }
   }
 
@@ -377,7 +456,20 @@ class Game {
     play(upgrade.kind === 'training' ? 'tap' : 'levelUp')
     if (upgrade.kind !== 'training') this.setPanel(null)
     this.hud.toast(`${upgrade.name}: done`)
+    this.showBuild(upgrade)
     this.finishGoals()
+  }
+
+  /** New land and buildings arrive with a little fuss. The windmill gets a whole scene. */
+  private showBuild(upgrade: Upgrade): void {
+    if (upgrade.kind === 'parcel') {
+      const parcel = PARCELS.find((item) => item.id === upgrade.id)
+      if (parcel) this.view.buildMoment(parcel.minX, parcel.minY, 5, 3)
+    } else if (upgrade.kind === 'farmhouse' || upgrade.kind === 'windmill' || upgrade.kind === 'storage') {
+      const place = this.view.placeOf(upgrade.kind)
+      this.view.buildMoment(place.x - 2, place.y - 3, 4, 3)
+    }
+    if (upgrade.kind === 'windmill') this.playScene(WINDMILL_SCENE)
   }
 
   private buyMaxOf(id: string): void {
@@ -482,8 +574,13 @@ class Game {
     this.save()
     this.finishGoals()
     if (kind !== 'rebirth' || this.state.totalRebirths === 1) celebrateOnPortal()
+    const scene = kind === 'ascend' ? ASCEND_SCENE : kind === 'bigBang' ? BIG_BANG_SCENE : REBIRTH_SCENES[this.state.totalRebirths]
     // A new farm is the one natural pause in the game. The SDK decides if an ad is due.
-    if (adsOffered()) showBreakAd(this.adHooks(() => undefined, () => undefined))
+    const breakAd = (): void => {
+      if (adsOffered()) showBreakAd(this.adHooks(() => undefined, () => undefined))
+    }
+    if (scene) this.playScene(scene, undefined, breakAd)
+    else breakAd()
   }
 
   /** The exotic crop this rebirth opened, if any. */

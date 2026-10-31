@@ -147,6 +147,17 @@ export function sell(state: GameState, itemId: string): number {
   return earned
 }
 
+/** The extra a harvest chain pays, right away, for this link. */
+export function comboBonus(state: GameState, cropId: string, amount: number, combo: number): number {
+  const links = Math.min(combo - 1, BALANCE.comboCap)
+  return links <= 0 ? 0 : Math.round(amount * basePrice(state, cropId) * links * BALANCE.comboStep)
+}
+
+/** What catching the Golden Hen pays: enough to matter at any size of farm. */
+export function henReward(state: GameState): number {
+  return Math.max(BALANCE.henMinimum, Math.round(state.income * BALANCE.henIncomeSeconds))
+}
+
 export function sellAllQuote(state: GameState): number {
   return Object.entries(state.inventory).reduce((sum, [id, amount]) => sum + quote(state, id, amount), 0)
 }

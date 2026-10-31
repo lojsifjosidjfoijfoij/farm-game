@@ -242,6 +242,7 @@ async function recordTake(browser, url, take, size, file) {
   await page.addStyleTag({ content: '#tooltip { display: none !important; }' })
   while (!(await page.evaluate(() => Boolean(window.game)))) await new Promise((resolve) => setTimeout(resolve, 50))
   await page.evaluate((setup) => {
+    window.game.endScene?.()
     Object.assign(window.game.state, setup)
   }, take.setup)
   await page.evaluate(fillFields, take.crops, take.rare ?? null)
