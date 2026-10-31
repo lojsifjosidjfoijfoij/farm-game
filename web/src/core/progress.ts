@@ -45,7 +45,7 @@ function coinBoost(state: GameState): number {
 /** Everything that multiplies every crop's price, shown in the HUD. */
 export function valueMultiplier(state: GameState): number {
   return coinBoost(state)
-    * Math.pow(1.2, trainingLevel(state, 'seeds'))
+    * Math.pow(1.15, trainingLevel(state, 'seeds'))
     * (1 + state.farmhouseLevel * BALANCE.farmhouseBonus)
     * (1 + (state.level - 1) * BALANCE.levelValue)
     * Math.pow(1.25, perkLevel(state, 'green_thumb'))

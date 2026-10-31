@@ -25,7 +25,7 @@ const wanted = [
   /^vehicle_truck_old_dir\d+$/,
   /^animal_chicken_walk\d$/,
   /^ui_(board_\w+|card|hud_\w+|inset|paper|portrait_mentor|ribbon_\w+)$/,
-  /^ui_icon_(check|close|coin|crate|drop|field|hoe|house|level|lock|note|seeds|shop|sickle|sparkle|watering_can|worker)$/,
+  /^ui_icon_(check|close|coin|crate|drop|field|hoe|house|level|lock|note|seeds|settings|shop|sickle|sparkle|watering_can|worker)$/,
 ]
 const cropIDs = ['blueberry', 'cabbage', 'carrot', 'corn', 'garlic', 'kale', 'lettuce', 'melon', 'onion', 'potato',
   'pumpkin', 'strawberry', 'sunflower', 'tomato', 'wheat']

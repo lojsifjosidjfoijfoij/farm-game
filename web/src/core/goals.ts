@@ -40,7 +40,7 @@ function owns(id: string): (state: GameState) => number {
  * what to do next, in the middle of play, and points at it. After these come
  * trophies, and there's always one more of those.
  */
-export const GOALS: Goal[] = [
+const GOAL_LIST: Goal[] = [
   // The first harvest: what a farm does, one move at a time.
   { id: 'first_harvest', text: "I left you some ripe wheat. You're welcome. Click it, or drag across the rows.", reward: 0, target: 'ripe', progress: counter('harvestedPlots'), needed: 6 },
   { id: 'first_sale', text: 'Lovely. Now hit Sell, before the wheat gets ideas.', reward: 0, target: 'sell', progress: counter('sales'), needed: 1,
@@ -86,6 +86,8 @@ export const GOALS: Goal[] = [
   { id: 'foreman', text: 'Hire a Foreman and the farm runs itself. I may finally sit down.', reward: 100_000, target: 'farm', progress: owns('foreman'), needed: 1, saveFor: price((item) => item.kind === 'automation' && item.id === 'foreman') },
   { id: 'windmill', text: 'That windmill has stood still for forty years. Same as me. Get its sails turning.', reward: 250_000, target: 'farm', progress: (state) => (state.windmill ? 1 : 0), needed: 1, saveFor: price((item) => item.kind === 'windmill') },
 ]
+
+export const GOALS: Goal[] = GOAL_LIST.map((goal) => ({ ...goal, reward: Math.round(goal.reward * BALANCE.priceScale) }))
 
 /** Rebirth stays hidden until Arne introduces it. */
 export const REBIRTH_INTRO = GOALS.findIndex((goal) => goal.id === 'open_rebirth')

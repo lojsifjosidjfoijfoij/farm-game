@@ -1,5 +1,5 @@
 import { BALANCE, cropDef, DAY, machineDef } from './content'
-import { availableUpgrades, buy, workerTask, type Upgrade, type WorkerTask } from './estate'
+import { availableUpgrades, buy, isUnlocked, workerTask, type Upgrade, type WorkerTask } from './estate'
 import { sellAll } from './market'
 import { TIME_SCALE } from './pace'
 import { growthSpeed, rollMutation, workerSpeed } from './progress'
@@ -86,7 +86,7 @@ function foremanStep(state: GameState, dt: number, events: SimEvent[]): void {
   state.foremanClock = 0
   // Bounded, so a big windfall still buys in visible rounds.
   for (let bought = 0; bought < 20; bought++) {
-    const upgrade = availableUpgrades(state).find((item) => item.kind !== 'machine' && item.level <= state.level && item.cost <= state.money)
+    const upgrade = availableUpgrades(state).find((item) => item.kind !== 'machine' && isUnlocked(state, item) && item.cost <= state.money)
     if (!upgrade || buy(state, upgrade)) return
     events.push({ kind: 'foremanBought', upgrade })
   }

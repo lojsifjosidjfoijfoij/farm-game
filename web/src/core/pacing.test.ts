@@ -107,8 +107,8 @@ describe('pacing', () => {
   })
 
   it('reaches the first rebirth after a decent first run', () => {
-    expect(firstRebirth).toBeGreaterThan(12 * 60)
-    expect(firstRebirth).toBeLessThan(30 * 60)
+    expect(firstRebirth).toBeGreaterThan(20 * 60)
+    expect(firstRebirth).toBeLessThan(45 * 60)
   })
 
   it('takes its time over the first million', () => {

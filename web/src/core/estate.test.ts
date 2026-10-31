@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { availableUpgrades, buy, buyMax, trainingCost, type Upgrade } from './estate'
-import { TRAINING } from './content'
+import { BALANCE, TRAINING } from './content'
 import { checkGoals, currentGoal, GOALS } from './goals'
 import { parseSave } from './save'
 import { newGame, storageCapacity, type GameState } from './state'
@@ -23,6 +23,7 @@ describe('the Farm menu', () => {
   it('buys land, and it leaves the list', () => {
     const state = newGame()
     state.level = 10
+    state.totalRebirths = 10
     state.money = 1_000_000
     const parcel = upgrade(state, 'parcel')
     expect(buy(state, parcel)).toBeNull()
@@ -33,6 +34,7 @@ describe('the Farm menu', () => {
   it('works through every storage level, then stops', () => {
     const state = newGame()
     state.level = 10
+    state.totalRebirths = 10
     state.money = 1_000_000
     const sizes = [storageCapacity(state)]
     for (let i = 0; i < 3; i++) {
@@ -46,6 +48,7 @@ describe('the Farm menu', () => {
   it('renovates the farmhouse three times', () => {
     const state = newGame()
     state.level = 10
+    state.totalRebirths = 10
     state.money = 100_000_000
     for (let i = 0; i < 3; i++) buy(state, upgrade(state, 'farmhouse'))
     expect(state.farmhouseLevel).toBe(3)
@@ -55,10 +58,23 @@ describe('the Farm menu', () => {
   it('hires three farmhands at most', () => {
     const state = newGame()
     state.level = 10
+    state.totalRebirths = 10
     state.money = 1_000_000
     for (let i = 0; i < 3; i++) buy(state, upgrade(state, 'worker'))
     expect(state.workers).toHaveLength(3)
     expect(upgrade(state, 'worker')).toBeUndefined()
+  })
+})
+
+describe('rebirth locks', () => {
+  it('keep the big purchases off a first farm', () => {
+    const state = newGame()
+    state.level = 20
+    state.money = 1e12
+    const drill = availableUpgrades(state).find((item) => item.kind === 'automation' && item.id === 'drill')!
+    expect(buy(state, drill)).toBe('locked')
+    state.totalRebirths = 1
+    expect(buy(state, drill)).toBeNull()
   })
 })
 
@@ -73,6 +89,7 @@ describe('endless upgrades', () => {
   it('stay on the list after buying', () => {
     const state = newGame()
     state.level = 10
+    state.totalRebirths = 10
     state.money = 1_000_000
     buy(state, upgrade(state, 'training'))
     expect(state.training.seeds).toBe(1)
@@ -82,6 +99,7 @@ describe('endless upgrades', () => {
   it('buy as many levels as the coins allow', () => {
     const state = newGame()
     state.level = 10
+    state.totalRebirths = 10
     state.money = trainingCost(seeds, 0) + trainingCost(seeds, 1) + trainingCost(seeds, 2) + 1
     expect(buyMax(state, 'seeds')).toBe(3)
     expect(state.money).toBe(1)
@@ -106,7 +124,7 @@ describe('goals', () => {
     state.counters.watered = 6
     const money = state.money
     expect(checkGoals(state).map((goal) => goal.id)).toEqual(['first_harvest', 'first_sale', 'replant', 'water'])
-    expect(state.money).toBe(money + 20)
+    expect(state.money).toBe(money + Math.round(20 * BALANCE.priceScale))
     expect(currentGoal(state)?.id).toBe('plow')
   })
 

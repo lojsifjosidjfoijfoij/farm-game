@@ -1,8 +1,9 @@
 import './styles.css'
 import { applyBoost, buyBoost, type BoostKind } from './core/boosts'
 import { BALANCE, CROPS, cropDef, exoticCrop, mutationDef, PARCELS, type PerkDef } from './core/content'
-import { buy, buyMax, placeMachine, placeProblem, type Upgrade } from './core/estate'
+import { buy, buyMax, placeMachine, placeProblem, removeMachine, type Upgrade } from './core/estate'
 import { perform, suggestedAction, toolAction, type FarmActionKind, type FarmOutcome } from './core/farming'
+import { claimDailyGift } from './core/daily'
 import { checkGoals, currentGoal, QUIPS, type Goal } from './core/goals'
 import { comboBonus, henReward, sell, sellAll } from './core/market'
 import { REAL_SECONDS_PER_DAY, TIME_SCALE } from './core/pace'
@@ -12,12 +13,12 @@ import { readSave, writeSave } from './core/save'
 import { catchUp, step, type SimEvent } from './core/simulation'
 import { addCounter, earn, isWet, newGame, parcelAt, plotAt, type GameState } from './core/state'
 import { artURL, cropIconURL, loadArt } from './game/assets'
-import { coins, failureMessage, Hud, hoverText, type Panel } from './game/hud'
+import { coins, failureMessage, Hud, hoverText, rebirthOpen, type Panel } from './game/hud'
 import {
   adsOffered, celebrateOnPortal, connectPlatform, loadingFinished, loadingStarted, setGameplay, showBreakAd, showRewardedAd,
   type AdHooks,
 } from './game/platform'
-import { isMuted, play, setAdPlaying, setMuted, setPortalMuted, unlockAudio, type SoundEffect } from './game/sound'
+import { play, setAdPlaying, setMusicOn, setMuted, setPortalMuted, unlockAudio, type SoundEffect } from './game/sound'
 import { ASCEND_SCENE, BIG_BANG_SCENE, INTRO, REBIRTH_SCENES, WINDMILL_SCENE } from './game/story'
 import { WorldView } from './game/view'
 
@@ -68,15 +69,24 @@ class Game {
       rebirth: () => this.startOver('rebirth'),
       ascend: () => this.startOver('ascend'),
       bigBang: () => this.startOver('bigBang'),
+      newFarm: () => this.startNewFarm(),
       togglePanel: (panel) => this.setPanel(this.panel === panel ? null : panel),
       closePanel: () => this.setPanel(null),
-      toggleSound: () => setMuted(!isMuted()),
+      setSound: (on) => {
+        unlockAudio()
+        setMuted(!on)
+      },
+      setMusic: (on) => {
+        unlockAudio()
+        setMusicOn(on)
+      },
       cancelPlacing: () => {
         this.placing = null
       },
     })
     if (saved) {
       this.welcomeBack()
+      this.dailyGift()
       setGameplay(true)
     } else {
       this.view.playIntro()
@@ -87,6 +97,13 @@ class Game {
     this.bindInput(canvas)
     this.bindLifecycle()
     requestAnimationFrame((now) => this.frame(now))
+  }
+
+  private dailyGift(): void {
+    const gift = claimDailyGift(this.state, Date.now())
+    if (!gift) return
+    const streak = gift.streak > 1 ? ` Day ${gift.streak} in a row!` : ''
+    this.hud.showBanner('Arne left you a gift', `+${coins(gift.coins)} coins.${streak}`)
   }
 
   private welcomeBack(): void {
@@ -249,10 +266,13 @@ class Game {
   }
 
   private key(event: KeyboardEvent): void {
+    // Cmd+R and the like belong to the browser, and a held key isn't a second press.
+    if (event.metaKey || event.ctrlKey || event.altKey || event.repeat) return
     if (this.endScene) {
       if (event.key === 'Escape') this.endScene()
       return
     }
+    if (this.cardOpen || this.adBusy) return
     if (event.key === 'Escape') {
       this.placing = null
       this.setPanel(null)
@@ -262,7 +282,7 @@ class Game {
       this.setPanel(this.panel === 'farm' ? null : 'farm')
     } else if (event.key === 'm' || event.key === 'M') {
       this.setPanel(this.panel === 'market' ? null : 'market')
-    } else if (event.key === 'r' || event.key === 'R') {
+    } else if ((event.key === 'r' || event.key === 'R') && rebirthOpen(this.state)) {
       this.setPanel(this.panel === 'rebirth' ? null : 'rebirth')
     } else if (event.key === 'e' || event.key === 'E') {
       this.setPanel(this.panel === 'seeds' ? null : 'seeds')
@@ -281,6 +301,11 @@ class Game {
     const parcel = parcelAt(tile.x, tile.y)
     if (parcel && !this.state.ownedParcels.includes(parcel.id)) {
       this.setPanel('farm')
+      return
+    }
+    if (removeMachine(this.state, tile.x, tile.y)) {
+      play('tap')
+      this.hud.toast('Sprinkler picked up. Coins back in your pocket.')
       return
     }
     const action = suggestedAction(this.state, tile.x, tile.y, this.state.seed)
@@ -376,7 +401,9 @@ class Game {
     const def = plot?.crop && cropDef(plot.crop.cropId)
     const parcel = parcelAt(tile.x, tile.y)
     let text: string | null = null
-    if (this.placing) {
+    if (!this.placing && this.state.sprinklers.some((item) => item.x === tile.x && item.y === tile.y)) {
+      text = 'Sprinkler. Click to pick it up, coins back'
+    } else if (this.placing) {
       text = placeProblem(this.state, tile.x, tile.y) ? "Can't go here" : 'Place it here'
     } else if (plot?.crop && def) {
       const wet = isWet(plot, this.state.worldTime)
@@ -472,6 +499,17 @@ class Game {
     if (upgrade.kind === 'windmill') this.playScene(WINDMILL_SCENE)
   }
 
+  /** Wipes the save for good and plays the game from the very start. */
+  private startNewFarm(): void {
+    this.state = newGame(Date.now())
+    this.placing = null
+    this.combo = 0
+    this.setPanel(null)
+    this.save()
+    this.view.playIntro()
+    this.playScene(INTRO, GAME_TITLE, () => this.view.endIntro())
+  }
+
   private buyMaxOf(id: string): void {
     const bought = buyMax(this.state, id)
     if (bought === 0) return
@@ -551,6 +589,8 @@ class Game {
     let title: string
     let detail: string
     if (kind === 'rebirth') {
+      // Nothing left in storage goes to waste.
+      sellAll(this.state)
       const seeds = rebirth(this.state)
       if (seeds === 0) return
       title = `Rebirth ${this.state.rebirths}`

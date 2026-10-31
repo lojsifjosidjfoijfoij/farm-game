@@ -79,6 +79,10 @@ export interface GameState {
   boostUntil: number
   boostReady: Record<string, number>
 
+  /** The last day a daily gift was claimed (days since 1970), and how many days running. */
+  giftDay: number
+  giftStreak: number
+
   /** Rebirths in this ascension, and in this universe. */
   rebirths: number
   totalRebirths: number
@@ -183,6 +187,8 @@ export function newGame(now = 0, seed = 0x5eed): GameState {
     foremanClock: 0,
     boostUntil: 0,
     boostReady: {},
+    giftDay: 0,
+    giftStreak: 0,
     rebirths: 0,
     totalRebirths: 0,
     goldenSeeds: 0,

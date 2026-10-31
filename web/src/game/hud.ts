@@ -1,6 +1,6 @@
 import { boostCost, boostReadyIn, coinBoostLeft, type BoostKind } from '../core/boosts'
 import { BALANCE, cropDef, MUTATIONS, PERKS, xpToNextLevel, type CropDef, type PerkDef } from '../core/content'
-import { availableUpgrades, type Upgrade } from '../core/estate'
+import { availableUpgrades, isUnlocked, type Upgrade } from '../core/estate'
 import { currentGoal, REBIRTH_INTRO, type Goal } from '../core/goals'
 import { basePrice, marketFactor, marketSpecial, quote, sellAllQuote } from '../core/market'
 import { formatNumber } from '../core/numbers'
@@ -13,7 +13,7 @@ import { offlineHours } from '../core/simulation'
 import { perkLevel, storageCapacity, storageUsed, type GameState } from '../core/state'
 import { artURL, cropIconURL } from './assets'
 import { adsOffered } from './platform'
-import { isMuted } from './sound'
+import { isMusicOn, isMuted, isPortalMuted } from './sound'
 
 export interface HudActions {
   selectSeed: (id: string) => void
@@ -27,13 +27,15 @@ export interface HudActions {
   rebirth: () => void
   ascend: () => void
   bigBang: () => void
+  newFarm: () => void
   togglePanel: (panel: Panel) => void
   closePanel: () => void
-  toggleSound: () => void
+  setSound: (on: boolean) => void
+  setMusic: (on: boolean) => void
   cancelPlacing: () => void
 }
 
-export type Panel = 'seeds' | 'market' | 'farm' | 'rebirth'
+export type Panel = 'seeds' | 'market' | 'farm' | 'rebirth' | 'settings'
 
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag)
@@ -65,11 +67,16 @@ const LOCKED_SHOWN = 3
 const SCENE_LINE_MS = 3000
 const SCENE_TITLE_MS = 1500
 
-const TABS: { panel: Panel; label: string }[] = [
-  { panel: 'seeds', label: 'Seeds' },
-  { panel: 'market', label: 'Market' },
-  { panel: 'farm', label: 'Farm' },
-  { panel: 'rebirth', label: 'Rebirth' },
+const PANEL_TITLES: Record<Panel, string> = { seeds: 'Seeds', market: 'Market', farm: 'Farm', rebirth: 'Rebirth', settings: 'Settings' }
+
+const CONTROLS: [string, string][] = [
+  ['Click or drag', 'Plow, plant, water and harvest'],
+  ['S', 'Sell everything'],
+  ['E', 'Seeds'],
+  ['M', 'Market'],
+  ['F', 'Farm'],
+  ['R', 'Rebirth'],
+  ['Esc', 'Close a menu'],
 ]
 
 /** The Farm menu, in the order you'd look for things. */
@@ -81,7 +88,7 @@ const FARM_SECTIONS: { title: string; kinds: Upgrade['kind'][] }[] = [
 ]
 
 /** Rebirth stays out of the way until there's a reason to look at it. */
-function rebirthOpen(state: GameState): boolean {
+export function rebirthOpen(state: GameState): boolean {
   return state.goalIndex >= REBIRTH_INTRO || state.totalRebirths > 0
 }
 
@@ -103,7 +110,7 @@ const TRAINING_ICONS: Record<string, string> = {
   training: 'ui_icon_worker', clover: 'ui_icon_sparkle',
 }
 
-type Reset = 'rebirth' | 'ascend' | 'bigBang'
+type Reset = 'rebirth' | 'ascend' | 'bigBang' | 'newFarm'
 
 function minutes(seconds: number): string {
   const whole = Math.ceil(seconds)
@@ -141,7 +148,7 @@ export class Hud {
   private readonly soundButton = element('button', 'chip-button')
   private readonly panel = element('section', 'panel')
   private readonly panelBody = element('div', 'panel-body')
-  private readonly tabs = element('nav', 'tabs')
+  private readonly panelTitle = element('h2')
   private readonly toasts = element('div', 'toasts')
   private readonly banner = element('div', 'banner')
   private readonly placingNote = element('div', 'placing-note')
@@ -199,8 +206,9 @@ export class Hud {
     words.append(this.arneText, this.arneBar, this.arneCount)
     this.arne.append(words)
 
-    this.soundButton.addEventListener('click', this.actions.toggleSound)
-    this.soundButton.title = 'Sound'
+    this.soundButton.append(icon('ui_icon_settings'), element('span', 'chip-label', 'Settings'))
+    this.soundButton.setAttribute('aria-label', 'Settings')
+    this.soundButton.addEventListener('click', () => this.actions.togglePanel('settings'))
     top.append(stats, this.arne, this.soundButton)
     this.root.append(top)
   }
@@ -238,13 +246,7 @@ export class Hud {
     close.append(icon('ui_icon_close'))
     close.setAttribute('aria-label', 'Close')
     close.addEventListener('click', this.actions.closePanel)
-    for (const { panel, label } of TABS) {
-      const tab = element('button', 'tab', label)
-      tab.dataset.panel = panel
-      tab.addEventListener('click', () => this.actions.togglePanel(panel))
-      this.tabs.append(tab)
-    }
-    header.append(this.tabs, close)
+    header.append(this.panelTitle, close)
     this.panel.append(header, this.panelBody)
     this.panel.hidden = true
     this.root.append(this.panel)
@@ -256,7 +258,7 @@ export class Hud {
     this.panel.hidden = panel === null
     this.panelBody.scrollTop = 0
     this.confirming = null
-    for (const tab of this.tabs.querySelectorAll<HTMLElement>('.tab')) tab.classList.toggle('open', tab.dataset.panel === panel)
+    if (panel) setText(this.panelTitle, PANEL_TITLES[panel])
   }
 
   /** Runs every frame, so it only touches what changed. */
@@ -291,16 +293,13 @@ export class Hud {
     this.sellButton.classList.toggle('pulse', goal.target === 'sell' && quoted > 0)
     this.marketButton.classList.toggle('pulse', goal.target === 'market' && this.panelOpen === null)
 
-    const ready = availableUpgrades(state).filter((item) => item.level <= state.level && item.cost <= state.money).length
+    const ready = availableUpgrades(state).filter((item) => isUnlocked(state, item) && item.cost <= state.money).length
     setText(this.farmBadge, ready > 0 ? String(ready) : '')
     this.farmBadge.hidden = ready === 0
     this.farmButton.classList.toggle('pulse', goal.target === 'farm' && this.panelOpen === null)
     this.rebirthButton.classList.toggle('pulse', this.panelOpen === null && (canRebirth(state) || canAscend(state) || canBigBang(state)))
     const hasRebirth = rebirthOpen(state)
     this.rebirthButton.hidden = !hasRebirth
-    this.tabs.querySelector<HTMLElement>('[data-panel="rebirth"]')!.hidden = !hasRebirth
-
-    setText(this.soundButton, isMuted() ? 'Sound off' : 'Sound on')
 
     this.renderSeedButton(state, seed, goal.target === 'seeds' && this.panelOpen === null)
     if (!this.panelHeld) {
@@ -308,6 +307,7 @@ export class Hud {
       if (this.panelOpen === 'market') this.renderMarket(state)
       if (this.panelOpen === 'farm') this.renderFarm(state)
       if (this.panelOpen === 'rebirth') this.renderRebirth(state)
+      if (this.panelOpen === 'settings') this.renderSettings()
     }
 
     this.placingNote.hidden = placing === null
@@ -459,7 +459,7 @@ export class Hud {
 
   private renderFarm(state: GameState): void {
     const upgrades = availableUpgrades(state)
-    const signature = JSON.stringify([coins(state.money), upgrades.map((item) => [item.name, item.cost, item.level <= state.level])])
+    const signature = JSON.stringify([coins(state.money), upgrades.map((item) => [item.name, item.cost, isUnlocked(state, item)])])
     if (signature === this.panelSignature) return
     this.panelSignature = signature
     this.panelBody.replaceChildren()
@@ -470,10 +470,48 @@ export class Hud {
       this.panelBody.append(element('h3', '', section.title))
       for (const upgrade of rows) this.panelBody.append(this.upgradeRow(state, upgrade))
     }
+
+  }
+
+  private settingRow(name: string, on: boolean, blocked: boolean, change: (on: boolean) => void): HTMLElement {
+    const row = element('div', 'row')
+    row.append(element('strong', 'row-text', name))
+    const button = element('button', on ? 'small' : 'small quiet', on ? 'On' : 'Off')
+    button.disabled = blocked
+    button.addEventListener('click', () => change(!on))
+    row.append(button)
+    return row
+  }
+
+  private renderSettings(): void {
+    const sound = !isMuted()
+    const portal = isPortalMuted()
+    const signature = JSON.stringify(['settings', sound, isMusicOn(), portal, this.confirming])
+    if (signature === this.panelSignature) return
+    this.panelSignature = signature
+    this.panelBody.replaceChildren()
+
+    this.panelBody.append(element('h3', '', 'Audio'))
+    this.panelBody.append(this.settingRow('Sound effects', sound, portal, this.actions.setSound))
+    this.panelBody.append(this.settingRow('Music', isMusicOn(), portal || !sound, this.actions.setMusic))
+    if (portal) this.panelBody.append(element('p', 'record', 'Muted by the CrazyGames sound setting.'))
+
+    this.panelBody.append(element('h3', '', 'Controls'))
+    for (const [key, what] of CONTROLS) {
+      const row = element('div', 'control')
+      row.append(element('kbd', '', key), element('span', '', what))
+      this.panelBody.append(row)
+    }
+
+    this.panelBody.append(element('h3', '', 'Your game'))
+    const card = element('div', 'reset-card')
+    card.append(element('small', '', 'Deletes everything, including levels, rebirths and Golden Seeds, and starts again from the very beginning.'))
+    card.append(this.resetButton('newFarm', 'Start a new farm', true, this.actions.newFarm))
+    this.panelBody.append(card)
   }
 
   private upgradeRow(state: GameState, upgrade: Upgrade): HTMLElement {
-    const open = upgrade.level <= state.level
+    const open = isUnlocked(state, upgrade)
     const row = element('div', open ? 'row' : 'row empty')
     const text = element('div', 'row-text')
     const name = upgrade.kind === 'training' ? `${upgrade.name} · level ${upgrade.owned}` : upgrade.name
@@ -483,7 +521,9 @@ export class Hud {
     row.append(icon(art), text)
     if (!open) {
       text.append(element('small', '', `${coins(upgrade.cost)} coins`))
-      row.append(element('div', 'small saving', `Level ${upgrade.level}`))
+      const waiting = upgrade.rebirths > state.totalRebirths
+      const needed = upgrade.rebirths === 1 ? 'After 1 rebirth' : `After ${upgrade.rebirths} rebirths`
+      row.append(element('div', 'small saving', waiting ? needed : `Level ${upgrade.level}`))
       return row
     }
     row.append(this.priceButton(state.money, upgrade.cost, () => this.actions.buy(upgrade)))

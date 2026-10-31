@@ -2,6 +2,7 @@
 export type SoundEffect = 'tap' | 'open' | 'plow' | 'plant' | 'water' | 'harvest' | 'coins' | 'levelUp' | 'goal' | 'refuse' | 'rare' | 'rebirth' | 'story'
 
 const MUTE_KEY = 'valley-farm-muted'
+const MUSIC_KEY = 'valley-farm-music-off'
 
 let context: AudioContext | null = null
 let noise: AudioBuffer | null = null
@@ -9,6 +10,28 @@ let muted = readMuted()
 /** Muted from outside the game: the portal's own setting wins over the in-game toggle. */
 let portalMuted = false
 let adPlaying = false
+let musicOff = readMusicOff()
+
+function readMusicOff(): boolean {
+  try {
+    return localStorage.getItem(MUSIC_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function isMusicOn(): boolean {
+  return !musicOff
+}
+
+export function setMusicOn(value: boolean): void {
+  musicOff = !value
+  try {
+    localStorage.setItem(MUSIC_KEY, value ? '0' : '1')
+  } catch {
+    // It just won't be remembered.
+  }
+}
 
 function readMuted(): boolean {
   try {
@@ -20,6 +43,11 @@ function readMuted(): boolean {
 
 export function isMuted(): boolean {
   return muted || portalMuted
+}
+
+/** The portal has silenced the game, and its word is final. */
+export function isPortalMuted(): boolean {
+  return portalMuted
 }
 
 export function setPortalMuted(value: boolean): void {
@@ -48,6 +76,7 @@ export function unlockAudio(): void {
     for (let i = 0; i < samples.length; i++) samples[i] = Math.random() * 2 - 1
   }
   if (context.state === 'suspended') void context.resume()
+  if (musicTimer === 0) musicTimer = window.setInterval(musicBeat, MUSIC_BEAT_MS)
 }
 
 function tone(frequency: number, start: number, length: number, gain: number, type: OscillatorType = 'triangle', slideTo?: number): void {
@@ -78,6 +107,23 @@ function hiss(start: number, length: number, gain: number, cutoff: number): void
   envelope.gain.exponentialRampToValueAtTime(0.0001, t + length)
   source.connect(filter).connect(envelope).connect(context.destination)
   source.start(t, Math.random() * 0.5, length)
+}
+
+/** A slow wander up and down a major pentatonic scale, soft enough to forget about. */
+const MUSIC_SCALE = [196, 220, 247, 294, 330, 392, 440, 494, 587]
+const MUSIC_BEAT_MS = 620
+const MUSIC_GAIN = 0.022
+
+let musicStep = 4
+let musicTimer = 0
+
+function musicBeat(): void {
+  if (isMuted() || musicOff || adPlaying || !context || document.hidden) return
+  // Every so often it rests, so it breathes.
+  if (Math.random() < 0.3) return
+  musicStep = Math.max(0, Math.min(MUSIC_SCALE.length - 1, musicStep + Math.floor(Math.random() * 5) - 2))
+  tone(MUSIC_SCALE[musicStep], 0, 1.3, MUSIC_GAIN, 'sine')
+  if (Math.random() < 0.35) tone(MUSIC_SCALE[Math.max(0, musicStep - 2)] / 2, 0, 1.8, MUSIC_GAIN, 'triangle')
 }
 
 /** Dragging across a field fires many jobs at once; one sound per kind per beat is plenty. */

@@ -8,15 +8,16 @@ import {
 } from './state'
 
 /** Everything on the Farm menu, each with what it costs and what it needs. */
-export type Upgrade =
-  | { kind: 'parcel'; id: string; name: string; cost: number; level: number; blurb: string }
-  | { kind: 'storage'; name: string; cost: number; level: number; blurb: string }
-  | { kind: 'machine'; id: string; name: string; cost: number; level: number; blurb: string }
-  | { kind: 'worker'; name: string; cost: number; level: number; blurb: string }
-  | { kind: 'farmhouse'; name: string; cost: number; level: number; blurb: string }
-  | { kind: 'windmill'; name: string; cost: number; level: number; blurb: string }
-  | { kind: 'automation'; id: string; name: string; cost: number; level: number; blurb: string }
-  | { kind: 'training'; id: string; name: string; cost: number; level: number; blurb: string; owned: number }
+export type Upgrade = { name: string; cost: number; level: number; blurb: string; rebirths: number } & (
+  | { kind: 'parcel' | 'machine' | 'automation'; id: string }
+  | { kind: 'storage' | 'worker' | 'farmhouse' | 'windmill' }
+  | { kind: 'training'; id: string; owned: number }
+)
+
+/** Has the farmer reached this yet? The big purchases wait for rebirths, so a first farm stays a first farm. */
+export function isUnlocked(state: GameState, upgrade: Upgrade): boolean {
+  return state.level >= upgrade.level && state.totalRebirths >= upgrade.rebirths
+}
 
 const FARMHOUSE_NAMES = ['Patch up the farmhouse', 'Renovate the farmhouse', 'Finish the farmhouse']
 
@@ -32,18 +33,18 @@ export function availableUpgrades(state: GameState): Upgrade[] {
     if (def.id === 'fertilizer' && growthSpeed(state) >= BALANCE.maxGrowthSpeed) continue
     const owned = trainingLevel(state, def.id)
     upgrades.push({
-      kind: 'training', id: def.id, name: def.name, blurb: def.blurb, level: def.unlockLevel, owned,
+      kind: 'training', id: def.id, name: def.name, blurb: def.blurb, level: def.unlockLevel, rebirths: 0, owned,
       cost: trainingCost(def, owned),
     })
   }
   for (const item of AUTOMATION) {
     if (hasAutomation(state, item.id)) continue
-    upgrades.push({ kind: 'automation', id: item.id, name: item.name, cost: item.cost, level: item.unlockLevel, blurb: item.blurb })
+    upgrades.push({ kind: 'automation', id: item.id, name: item.name, cost: item.cost, level: item.unlockLevel, rebirths: item.rebirths, blurb: item.blurb })
   }
   for (const parcel of PARCELS) {
     if (parcel.price === null || state.ownedParcels.includes(parcel.id)) continue
     upgrades.push({
-      kind: 'parcel', id: parcel.id, name: parcel.name, cost: parcel.price, level: parcel.unlockLevel,
+      kind: 'parcel', id: parcel.id, name: parcel.name, cost: parcel.price, level: parcel.unlockLevel, rebirths: parcel.rebirths ?? 0,
       blurb: 'Fifteen more plots to farm.',
     })
   }
@@ -52,18 +53,19 @@ export function availableUpgrades(state: GameState): Upgrade[] {
     upgrades.push({
       kind: 'storage', name: nextStorage === 1 ? 'Storage shed' : 'Grain silo',
       cost: BALANCE.storageUpgradeCosts[state.storageLevel], level: BALANCE.storageUpgradeLevels[state.storageLevel],
+      rebirths: BALANCE.storageUpgradeRebirths[state.storageLevel],
       blurb: `Store ${BALANCE.storageLevels[nextStorage]} items.`,
     })
   }
   for (const id of hasAutomation(state, 'irrigation') ? [] : ['sprinkler', 'sprinkler_pro']) {
     const machine = machineDef(id)!
-    upgrades.push({ kind: 'machine', id, name: machine.name, cost: machine.price, level: machine.unlockLevel, blurb: machine.blurb })
+    upgrades.push({ kind: 'machine', id, name: machine.name, cost: machine.price, level: machine.unlockLevel, rebirths: 0, blurb: machine.blurb })
   }
   const hired = state.workers.length
   if (hired < BALANCE.workerHireCosts.length) {
     upgrades.push({
       kind: 'worker', name: hired === 0 ? 'Hire a farmhand' : 'Hire another farmhand',
-      cost: BALANCE.workerHireCosts[hired], level: BALANCE.workerUnlockLevels[hired],
+      cost: BALANCE.workerHireCosts[hired], level: BALANCE.workerUnlockLevels[hired], rebirths: BALANCE.workerRebirths[hired],
       blurb: 'Harvests ripe crops and waters dry ones.',
     })
   }
@@ -71,12 +73,13 @@ export function availableUpgrades(state: GameState): Upgrade[] {
     upgrades.push({
       kind: 'farmhouse', name: FARMHOUSE_NAMES[state.farmhouseLevel],
       cost: BALANCE.farmhouseCosts[state.farmhouseLevel], level: BALANCE.farmhouseLevels[state.farmhouseLevel],
+      rebirths: BALANCE.farmhouseRebirths[state.farmhouseLevel],
       blurb: `A proper farm fetches ${Math.round(BALANCE.farmhouseBonus * 100)}% more at market.`,
     })
   }
   if (!state.windmill) {
     upgrades.push({
-      kind: 'windmill', name: 'Rebuild the old windmill', cost: BALANCE.windmillCost, level: BALANCE.windmillLevel,
+      kind: 'windmill', name: 'Rebuild the old windmill', cost: BALANCE.windmillCost, level: BALANCE.windmillLevel, rebirths: BALANCE.windmillRebirths,
       blurb: 'Buyers come from all over: the market takes half as much again.',
     })
   }
@@ -86,7 +89,7 @@ export function availableUpgrades(state: GameState): Upgrade[] {
 export type BuyFailure = 'locked' | 'noMoney'
 
 function pay(state: GameState, upgrade: Upgrade): BuyFailure | null {
-  if (state.level < upgrade.level) return 'locked'
+  if (!isUnlocked(state, upgrade)) return 'locked'
   if (state.money < upgrade.cost) return 'noMoney'
   state.money -= upgrade.cost
   return null
@@ -133,6 +136,8 @@ export function buyMax(state: GameState, id: string): number {
   if (!def || state.level < def.unlockLevel) return 0
   let bought = 0
   for (;;) {
+    // Past top speed, fertilizer does nothing, so Max must not keep paying for it.
+    if (id === 'fertilizer' && growthSpeed(state) >= BALANCE.maxGrowthSpeed) return bought
     const owned = trainingLevel(state, id)
     const cost = trainingCost(def, owned)
     if (cost > state.money) return bought
@@ -165,6 +170,15 @@ export function placeMachine(state: GameState, kind: string, x: number, y: numbe
   state.sprinklers.push({ x, y, kind })
   addCounter(state, 'sprinklersPlaced')
   return null
+}
+
+/** Takes a sprinkler back out, money back, so a misplaced one isn't a mistake for life. */
+export function removeMachine(state: GameState, x: number, y: number): boolean {
+  const index = state.sprinklers.findIndex((sprinkler) => sprinkler.x === x && sprinkler.y === y)
+  if (index < 0) return false
+  state.money += machineDef(state.sprinklers[index].kind)?.price ?? 0
+  state.sprinklers.splice(index, 1)
+  return true
 }
 
 export interface WorkerTask {

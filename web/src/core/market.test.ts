@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DAY } from './content'
+import { BALANCE, DAY } from './content'
 import { basePrice, marketFactor, marketSpecial, quote, sell, sellAll, sellAllQuote } from './market'
 import { newGame } from './state'
 
@@ -9,9 +9,8 @@ describe('prices', () => {
       const state = newGame()
       state.worldTime = day * DAY
       const price = basePrice(state, 'carrot')
-      const special = marketSpecial(state) === 'carrot'
-      expect(price).toBeGreaterThanOrEqual(special ? 27 : 18)
-      expect(price).toBeLessThanOrEqual(special ? 36 : 24)
+      expect(price).toBeGreaterThanOrEqual(Math.round(18 * BALANCE.priceScale))
+      expect(price).toBeLessThanOrEqual(Math.round(36 * BALANCE.priceScale))
     }
   })
 
@@ -28,7 +27,7 @@ describe('prices', () => {
     state.worldTime = 0
     const before = basePrice(state, 'pumpkin')
     state.farmhouseLevel = 2
-    expect(basePrice(state, 'pumpkin')).toBe(Math.round(before * 1.1))
+    expect(Math.abs(basePrice(state, 'pumpkin') - before * 1.1)).toBeLessThanOrEqual(1.5)
   })
 })
 

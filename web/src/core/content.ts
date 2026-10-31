@@ -116,6 +116,8 @@ export interface ParcelDef {
   /** Null for the land you start with. Priced to climb steadily, from the iOS game's land prices. */
   price: number | null
   unlockLevel: number
+  /** Rebirths needed before it's for sale. */
+  rebirths?: number
   minX: number
   minY: number
   maxX: number
@@ -127,8 +129,8 @@ export const PARCELS: ParcelDef[] = [
   { id: 'east_meadow', name: 'East Meadow', price: 6_000, unlockLevel: 2, minX: 15, minY: 6, maxX: 19, maxY: 8 },
   { id: 'west_field', name: 'West Field', price: 15_000, unlockLevel: 3, minX: 3, minY: 6, maxX: 7, maxY: 8 },
   { id: 'mill_lot', name: 'Mill Lot', price: 40_000, unlockLevel: 4, minX: 9, minY: 10, maxX: 13, maxY: 12 },
-  { id: 'goat_hill', name: 'Goat Hill', price: 100_000, unlockLevel: 5, minX: 15, minY: 10, maxX: 19, maxY: 12 },
-  { id: 'south_pasture', name: 'South Pasture', price: 250_000, unlockLevel: 7, minX: 3, minY: 10, maxX: 7, maxY: 12 },
+  { id: 'goat_hill', name: 'Goat Hill', price: 100_000, unlockLevel: 5, rebirths: 1, minX: 15, minY: 10, maxX: 19, maxY: 12 },
+  { id: 'south_pasture', name: 'South Pasture', price: 250_000, unlockLevel: 7, rebirths: 2, minX: 3, minY: 10, maxX: 7, maxY: 12 },
 ]
 
 /** A machine that stands in the fields. Numbers are AcresCore's `MachineCatalog`. */
@@ -157,13 +159,15 @@ export interface AutomationDef {
   blurb: string
   cost: number
   unlockLevel: number
+  /** Rebirths needed before it's for sale. */
+  rebirths: number
 }
 
 export const AUTOMATION: AutomationDef[] = [
-  { id: 'drill', name: 'Seed Drill', cost: 100_000, unlockLevel: 5, blurb: 'Harvested plots replant, and farmhands sow bare soil with your selected seed.' },
-  { id: 'driver', name: 'Market Driver', cost: 200_000, unlockLevel: 5, blurb: 'Your truck sells everything every 10 seconds.' },
-  { id: 'irrigation', name: 'Irrigation', cost: 1_500_000, unlockLevel: 6, blurb: 'Every plot stays wet.' },
-  { id: 'foreman', name: 'Foreman', cost: 12_000_000, unlockLevel: 8, blurb: 'Buys upgrades, plows new land, and replants with whatever pays best.' },
+  { id: 'drill', name: 'Seed Drill', cost: 100_000, unlockLevel: 5, rebirths: 1, blurb: 'Harvested plots replant, and farmhands sow bare soil with your selected seed.' },
+  { id: 'driver', name: 'Market Driver', cost: 200_000, unlockLevel: 5, rebirths: 1, blurb: 'Your truck sells everything every 10 seconds.' },
+  { id: 'irrigation', name: 'Irrigation', cost: 1_500_000, unlockLevel: 6, rebirths: 2, blurb: 'Every plot stays wet.' },
+  { id: 'foreman', name: 'Foreman', cost: 12_000_000, unlockLevel: 8, rebirths: 3, blurb: 'Buys upgrades, plows new land, and replants with whatever pays best.' },
 ]
 
 /** An upgrade with no last level. It resets on rebirth, and each level costs more than it pays back. */
@@ -177,7 +181,7 @@ export interface TrainingDef {
 }
 
 export const TRAINING: TrainingDef[] = [
-  { id: 'seeds', name: 'Better Seeds', blurb: 'Every crop sells for 20% more.', baseCost: 1_500, costGrowth: 1.55, unlockLevel: 2 },
+  { id: 'seeds', name: 'Better Seeds', blurb: 'Every crop sells for 15% more.', baseCost: 1_500, costGrowth: 1.55, unlockLevel: 2 },
   { id: 'fertilizer', name: 'Fertilizer', blurb: 'Crops grow 10% faster.', baseCost: 3_000, costGrowth: 1.7, unlockLevel: 2 },
   { id: 'barn', name: 'Bigger Barn', blurb: 'Store 25% more.', baseCost: 5_000, costGrowth: 1.7, unlockLevel: 3 },
   { id: 'reach', name: 'Market Reach', blurb: 'The market takes 25% more before prices drop.', baseCost: 10_000, costGrowth: 1.7, unlockLevel: 3 },
@@ -234,6 +238,8 @@ export function mutationDef(id: string | undefined): MutationDef | undefined {
 /** Every tunable number that isn't in a catalog above. */
 export const BALANCE = {
   startingMoney: 50,
+  /** Every crop's market price is scaled by this, so coins stay worth something. */
+  priceScale: 0.4,
   dryGrowthRate: 0.5,
   soilWetDuration: DAY,
 
@@ -247,18 +253,22 @@ export const BALANCE = {
   storageLevels: [300, 450, 650, 900],
   storageUpgradeCosts: [4_000, 20_000, 80_000],
   storageUpgradeLevels: [2, 4, 6],
+  storageUpgradeRebirths: [0, 0, 1],
 
   workerHireCosts: [15_000, 75_000, 400_000],
   workerUnlockLevels: [4, 6, 8],
+  workerRebirths: [0, 1, 2],
   workerTasksPerDay: 30,
 
   /** Renovation tiers: what each costs and needs. Each pays `farmhouseBonus` more at market. */
   farmhouseCosts: [50_000, 500_000, 5_000_000],
   farmhouseLevels: [3, 6, 8],
+  farmhouseRebirths: [0, 1, 3],
   farmhouseBonus: 0.05,
 
   windmillCost: 3_000_000,
   windmillLevel: 8,
+  windmillRebirths: 3,
   /** With the sails turning, buyers come from further off: the market is this much deeper. */
   windmillMarketDepth: 1.5,
 
@@ -272,12 +282,12 @@ export const BALANCE = {
   incomeAverageSeconds: 120,
 
   /** Coins that must be earned in one run for the first rebirth, and how much more for each next one. */
-  rebirthBase: 150_000,
+  rebirthBase: 60_000,
   rebirthGrowth: 6,
   /** Added on top, squared: the first few come quick, and each later one is a bigger leap. */
   rebirthSteepness: 1.12,
   /** Coins a new farm starts with after a rebirth, enough to get seeds in the ground. */
-  rebirthStartMoney: 500,
+  rebirthStartMoney: 200,
   /** Each rebirth in this ascension multiplies crop value by this. */
   rebirthValue: 1.5,
   rebirthsToAscend: 12,
@@ -328,7 +338,12 @@ export const BALANCE = {
   henMaxSeconds: 200,
   henSeconds: 9,
   henIncomeSeconds: 45,
-  henMinimum: 100,
+  henMinimum: 40,
+
+  /** A gift for coming back each day: this much income per day of the streak, up to the cap. */
+  giftIncomeSeconds: 60,
+  giftMinimum: 50,
+  giftStreakCap: 7,
 
   /** Money stops growing here rather than breaking. A big bang comes long before it. */
   maxCoins: 1e300,

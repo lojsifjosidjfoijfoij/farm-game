@@ -66,6 +66,10 @@ img {
   image-rendering: pixelated;
 }
 
+button:focus {
+  outline: none;
+}
+
 .icon {
   width: 24px;
   height: 24px;
@@ -351,29 +355,28 @@ img {
   padding: 10px 8px 6px;
 }
 
-.tabs {
+.panel h2 {
+  margin: 0 0 0 8px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.control {
   display: flex;
-  gap: 4px;
-  flex: 1;
-  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 6px;
+  font-size: 14px;
 }
 
-.tab {
-  flex: 1;
-  padding: 8px 4px;
-  border-radius: 8px;
-  font-size: 15px;
+.control kbd {
+  min-width: 96px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #e6d3ab;
+  font: inherit;
   font-weight: 600;
-  color: var(--ink-soft);
-}
-
-.tab:hover {
-  background: #f0dcb4;
-}
-
-.tab.open {
-  background: #7b5230;
-  color: var(--cream);
+  text-align: center;
 }
 
 .intro {
@@ -434,6 +437,22 @@ img {
   flex: 1;
   overflow-y: auto;
   padding: 4px 10px 12px;
+  scrollbar-width: thin;
+  scrollbar-color: #c9a86a transparent;
+}
+
+.panel-body::-webkit-scrollbar {
+  width: 10px;
+}
+
+.panel-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.panel-body::-webkit-scrollbar-thumb {
+  border: 2px solid var(--cream);
+  border-radius: 6px;
+  background: #c9a86a;
 }
 
 .special {
@@ -963,6 +982,14 @@ body.in-scene .hen {
   background: #2c1d10;
 }
 
+#loading h1 {
+  position: absolute;
+  top: 34%;
+  margin: 0;
+  font-size: clamp(40px, 8vw, 76px);
+  color: #ffe27a;
+}
+
 #loading div {
   width: 220px;
   height: 12px;
@@ -1056,11 +1083,8 @@ body.in-scene .hen {
 
 /* Narrow windows: the menus lose their names before they lose their use */
 @media (max-width: 900px) {
-  .action:not(.sell) .action-label {
-    display: none;
-  }
-
-  .chip-button {
+  .action:not(.sell) .action-label,
+  .chip-label {
     display: none;
   }
 }

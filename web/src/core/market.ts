@@ -61,9 +61,9 @@ export function basePrice(state: GameState, itemId: string): number {
   if (!def) return 0
   const [low, high] = def.sellPrice
   const drift = stableHash(`${itemId}:${priceDay(state)}`) / 0xffffffff
-  let price = (low + Math.round((high - low) * drift)) * cropValue(state, itemId)
+  let price = (low + Math.round((high - low) * drift)) * cropValue(state, itemId) * BALANCE.priceScale
   if (marketSpecial(state) === itemId) price *= 1 + BALANCE.marketSpecialBonus
-  return Math.round(price)
+  return Math.max(1, Math.round(price))
 }
 
 const bestMemo = { stamp: '', id: '' }
@@ -150,7 +150,7 @@ export function sell(state: GameState, itemId: string): number {
 /** The extra a harvest chain pays, right away, for this link. */
 export function comboBonus(state: GameState, cropId: string, amount: number, combo: number): number {
   const links = Math.min(combo - 1, BALANCE.comboCap)
-  return links <= 0 ? 0 : Math.round(amount * basePrice(state, cropId) * links * BALANCE.comboStep)
+  return links <= 0 ? 0 : Math.max(1, Math.round(amount * basePrice(state, cropId) * links * BALANCE.comboStep))
 }
 
 /** What catching the Golden Hen pays: enough to matter at any size of farm. */
