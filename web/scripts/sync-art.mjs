@@ -46,4 +46,7 @@ for (const entry of readdirSync(catalog)) {
 
 mkdirSync(join(web, 'src', 'fonts'), { recursive: true })
 cpSync(join(resources, 'Fonts', 'Fredoka.ttf'), join(web, 'src', 'fonts', 'Fredoka.ttf'))
+// The font's license has to travel with it.
+mkdirSync(join(web, 'public', 'licenses'), { recursive: true })
+cpSync(join(resources, 'Fonts', 'Fredoka-OFL.txt'), join(web, 'public', 'licenses', 'Fredoka-OFL.txt'))
 console.log(`sync-art: ${copied} sprites`)

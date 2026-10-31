@@ -49,19 +49,52 @@ of reach. Money stops at 1e300 rather than overflowing.
 
 ## Building for upload
 
+There are two builds, because CrazyGames rejects a game whose ad buttons do nothing, and ads are off during
+Basic Launch:
+
 ```sh
-npm run package
+npm run package       # farm-web.zip: no ad buttons, for Basic Launch
+npm run package:ads   # farm-web-ads.zip: ad buttons on, for Full Launch
 ```
 
-This builds `dist/` and zips it into `farm-web.zip`, with `index.html` at the root of the archive. On the
-CrazyGames developer portal, the SDK is optional for Basic Launch, and this build doesn't include it. It
-will need the SDK before Full Launch, along with ads through that SDK.
+Both connect to the CrazyGames SDK and put `index.html` at the root of the archive. Turn on the "Progress
+Save" option when submitting, or the SDK's cloud saves stay off. To check load time and errors in Chrome:
+
+```sh
+npm run build
+node promo/check-load.mjs
+```
+
+## Ads
+
+- The Market offers Coin Boost and Skip Time, each for coins or, in the ads build, for watching an ad. Both
+  ways share a 3-minute cooldown.
+- In the ads build, the welcome-back card offers to double what the farm earned, and a rebirth is followed
+  by a break ad if the SDK says one is due.
+- Rewards only come from `adFinished`. The game is paused and blocked while an ad is requested or playing.
+- Ad buttons stay in menus, because the rules forbid them on the active play screen. If the SDK reports ads
+  disabled or blocked, they disappear and the game carries on.
+
+## Covers and videos
+
+`promo/` makes the images and videos a portal asks for, from the game's own models and the game itself. If
+the game's name changes, make them again: the title is read from `GAME_TITLE`.
+
+```sh
+uv run --python 3.11 --with "bpy==4.5.*" --with pillow --with numpy \
+  python promo/cover_scene.py landscape promo/renders/landscape.png --samples 48
+# The same for portrait and square, then:
+npm run promo
+```
+
+The results land in `promo/out`, which isn't committed.
 
 ## How it's laid out
 
 - `src/core` holds the rules. Nothing in it touches the page, and it mirrors `AcresCore`: same growth,
   market, experience and farmhand rules, written in sim seconds.
 - `src/game` draws the world on a canvas, runs the HUD as ordinary HTML, and synthesizes the sound.
+  `platform.ts` is the only file that talks to the CrazyGames SDK.
 - `src/main.ts` joins the two and handles input.
 
 `src/core/pace.ts` sets how fast time runs: a game day is 20 seconds here and 24 minutes on iOS.

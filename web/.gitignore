@@ -4,3 +4,7 @@ dist
 # Copied from the iOS asset catalog by scripts/sync-art.mjs.
 src/art
 src/fonts
+public
+promo/renders
+promo/out
+promo/.build

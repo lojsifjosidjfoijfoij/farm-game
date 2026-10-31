@@ -75,6 +75,10 @@ export interface GameState {
   driverClock: number
   foremanClock: number
 
+  /** World time the coin boost runs until, and when each boost can be taken again. */
+  boostUntil: number
+  boostReady: Record<string, number>
+
   /** Rebirths in this ascension, and in this universe. */
   rebirths: number
   totalRebirths: number
@@ -177,6 +181,8 @@ export function newGame(now = 0, seed = 0x5eed): GameState {
     income: 0,
     driverClock: 0,
     foremanClock: 0,
+    boostUntil: 0,
+    boostReady: {},
     rebirths: 0,
     totalRebirths: 0,
     goldenSeeds: 0,

@@ -126,15 +126,24 @@ export function offlineHours(state: GameState): number {
   return BALANCE.offlineEarningHours + perkLevel(state, 'long_naps') * 2
 }
 
-/** Catches the farm up after an absence: crops keep growing, and a farm with a driver keeps earning. */
+/**
+ * Jumps the farm ahead: crops grow for `seconds` of real time, and a farm with
+ * a driver earns `rate` of its usual income for `paidSeconds`. Farmhands don't
+ * work the jump, so ripe crops wait for them.
+ */
+export function fastForward(state: GameState, seconds: number, paidSeconds: number, rate: number): { ripened: number; earned: number } {
+  const ripeBefore = Object.values(state.plots).filter((plot) => plot.crop && isReady(plot.crop)).length
+  step(state, seconds * TIME_SCALE, 'offline')
+  const ripeAfter = Object.values(state.plots).filter((plot) => plot.crop && isReady(plot.crop)).length
+  const earned = hasAutomation(state, 'driver') ? Math.round(state.income * paidSeconds * rate) : 0
+  if (earned > 0) earn(state, earned)
+  return { ripened: ripeAfter - ripeBefore, earned }
+}
+
+/** Catches the farm up after an absence. */
 export function catchUp(state: GameState, now: number): AwaySummary {
   const away = Math.min(Math.max(0, (now - state.lastSavedAt) / 1000), BALANCE.offlineCatchUpCap)
-  const ripeBefore = Object.values(state.plots).filter((plot) => plot.crop && isReady(plot.crop)).length
-  step(state, away * TIME_SCALE, 'offline')
   state.lastSavedAt = now
-  const ripeAfter = Object.values(state.plots).filter((plot) => plot.crop && isReady(plot.crop)).length
   const paidSeconds = Math.min(away, offlineHours(state) * 3600)
-  const earned = hasAutomation(state, 'driver') ? Math.round(state.income * paidSeconds * BALANCE.offlineEarningRate) : 0
-  if (earned > 0) earn(state, earned)
-  return { awaySeconds: away, ripened: ripeAfter - ripeBefore, earned }
+  return { awaySeconds: away, ...fastForward(state, away, paidSeconds, BALANCE.offlineEarningRate) }
 }

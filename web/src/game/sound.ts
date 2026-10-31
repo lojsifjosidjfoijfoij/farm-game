@@ -6,6 +6,9 @@ const MUTE_KEY = 'valley-farm-muted'
 let context: AudioContext | null = null
 let noise: AudioBuffer | null = null
 let muted = readMuted()
+/** Muted from outside the game: the portal's own setting wins over the in-game toggle. */
+let portalMuted = false
+let adPlaying = false
 
 function readMuted(): boolean {
   try {
@@ -16,7 +19,15 @@ function readMuted(): boolean {
 }
 
 export function isMuted(): boolean {
-  return muted
+  return muted || portalMuted
+}
+
+export function setPortalMuted(value: boolean): void {
+  portalMuted = value
+}
+
+export function setAdPlaying(value: boolean): void {
+  adPlaying = value
 }
 
 export function setMuted(value: boolean): void {
@@ -74,7 +85,7 @@ const lastPlayed = new Map<SoundEffect, number>()
 const MIN_GAP_MS = 55
 
 export function play(effect: SoundEffect): void {
-  if (muted || !context) return
+  if (isMuted() || adPlaying || !context) return
   const now = performance.now()
   if (now - (lastPlayed.get(effect) ?? -1000) < MIN_GAP_MS) return
   lastPlayed.set(effect, now)

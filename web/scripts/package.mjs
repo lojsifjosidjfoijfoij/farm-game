@@ -7,11 +7,12 @@ import { fileURLToPath } from 'node:url'
 
 const web = join(dirname(fileURLToPath(import.meta.url)), '..')
 const dist = join(web, 'dist')
-const archive = join(web, 'farm-web.zip')
+const name = process.argv[2] ?? 'farm-web.zip'
+const archive = join(web, name)
 
 rmSync(archive, { force: true })
 execFileSync('zip', ['-qr', archive, '.'], { cwd: dist })
 
 const files = readdirSync(dist, { recursive: true }).filter((file) => statSync(join(dist, String(file))).isFile())
 const megabytes = (statSync(archive).size / 1_000_000).toFixed(2)
-console.log(`package: farm-web.zip, ${files.length} files, ${megabytes} MB`)
+console.log(`package: ${name}, ${files.length} files, ${megabytes} MB`)

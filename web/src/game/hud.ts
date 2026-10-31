@@ -1,3 +1,4 @@
+import { boostCost, boostReadyIn, coinBoostLeft, type BoostKind } from '../core/boosts'
 import { BALANCE, cropDef, MUTATIONS, PERKS, xpToNextLevel, type PerkDef } from '../core/content'
 import { availableUpgrades, type Upgrade } from '../core/estate'
 import { currentGoal } from '../core/goals'
@@ -11,6 +12,7 @@ import {
 import { offlineHours } from '../core/simulation'
 import { perkLevel, storageCapacity, storageUsed, type GameState } from '../core/state'
 import { artURL, cropIconURL } from './assets'
+import { adsOffered } from './platform'
 import { isMuted } from './sound'
 
 export interface HudActions {
@@ -20,6 +22,8 @@ export interface HudActions {
   buy: (upgrade: Upgrade) => void
   buyMax: (id: string) => void
   buyPerk: (perk: PerkDef) => void
+  buyBoost: (kind: BoostKind) => void
+  watchBoost: (kind: BoostKind) => void
   rebirth: () => void
   ascend: () => void
   bigBang: () => void
@@ -76,6 +80,16 @@ const TRAINING_ICONS: Record<string, string> = {
 
 type Reset = 'rebirth' | 'ascend' | 'bigBang'
 
+function minutes(seconds: number): string {
+  const whole = Math.ceil(seconds)
+  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`
+}
+
+const BOOSTS: { kind: BoostKind; name: string; blurb: string; art: string }[] = [
+  { kind: 'coins', name: 'Coin Boost', blurb: `×${BALANCE.coinBoostMultiplier} coins for ${BALANCE.coinBoostSeconds} seconds`, art: 'ui_icon_coin' },
+  { kind: 'skip', name: 'Skip Time', blurb: `Jump the farm ${BALANCE.skipSeconds / 60} minutes ahead`, art: 'ui_icon_sparkle' },
+]
+
 export class Hud {
   private readonly money = element('span', 'value')
   private readonly income = element('small', 'income')
@@ -101,11 +115,14 @@ export class Hud {
   private readonly toasts = element('div', 'toasts')
   private readonly banner = element('div', 'banner')
   private readonly placingNote = element('div', 'placing-note')
+  private readonly adWait = element('div', 'ad-wait')
   private seedSignature = ''
   private panelSignature = ''
   private panelOpen: Panel | null = null
   /** The reset waiting for a second click. Starting over shouldn't be one slip away. */
   private confirming: Reset | null = null
+  /** A button in the panel is being pressed. Redrawing now would swallow the click. */
+  private panelHeld = false
   private confirmTimer = 0
 
   constructor(private readonly root: HTMLElement, private readonly actions: HudActions) {
@@ -116,7 +133,17 @@ export class Hud {
       this.seedBar.scrollLeft += event.deltaY
     }, { passive: true })
     this.buildPanel()
-    root.append(this.toasts, this.banner, this.placingNote)
+    this.panel.addEventListener('pointerdown', () => {
+      this.panelHeld = true
+    })
+    const letGo = (): void => {
+      this.panelHeld = false
+    }
+    window.addEventListener('pointerup', letGo)
+    window.addEventListener('pointercancel', letGo)
+    this.adWait.append(element('span', '', 'Loading ad…'))
+    this.adWait.hidden = true
+    root.append(this.toasts, this.banner, this.placingNote, this.adWait)
   }
 
   private buildTop(): void {
@@ -228,9 +255,11 @@ export class Hud {
     setText(this.soundButton, isMuted() ? 'Sound off' : 'Sound on')
 
     this.renderSeeds(state, seed, goal.target === 'seeds')
-    if (this.panelOpen === 'market') this.renderMarket(state)
-    if (this.panelOpen === 'farm') this.renderFarm(state)
-    if (this.panelOpen === 'rebirth') this.renderRebirth(state)
+    if (!this.panelHeld) {
+      if (this.panelOpen === 'market') this.renderMarket(state)
+      if (this.panelOpen === 'farm') this.renderFarm(state)
+      if (this.panelOpen === 'rebirth') this.renderRebirth(state)
+    }
 
     this.placingNote.hidden = placing === null
     if (placing) this.renderPlacing(placing)
@@ -279,10 +308,16 @@ export class Hud {
     const special = marketSpecial(state)
     const held = items.map(([id]) => cropDef(id)).filter((crop) => crop !== undefined)
     const rows = [...new Set([...held, ...seedsShown(state)])]
-    const signature = JSON.stringify([items, special, rows.map((crop) => [basePrice(state, crop.id), Math.round(marketFactor(state, crop.id) * 100)])])
+    const signature = JSON.stringify([
+      items, special, rows.map((crop) => [basePrice(state, crop.id), Math.round(marketFactor(state, crop.id) * 100)]),
+      BOOSTS.map(({ kind }) => [Math.ceil(boostReadyIn(state, kind)), boostCost(state, kind), boostCost(state, kind) <= state.money]),
+      Math.ceil(coinBoostLeft(state)), adsOffered(),
+    ])
     if (signature === this.panelSignature) return
     this.panelSignature = signature
     this.panelBody.replaceChildren()
+
+    for (const boost of BOOSTS) this.panelBody.append(this.boostRow(state, boost))
 
     const specialDef = cropDef(special)
     if (specialDef) {
@@ -308,6 +343,29 @@ export class Hud {
       }
       this.panelBody.append(row)
     }
+  }
+
+  /** Same size and style for both ways of getting it: the ad is an option, not the point. */
+  private boostRow(state: GameState, boost: (typeof BOOSTS)[number]): HTMLElement {
+    const row = element('div', 'row boost')
+    const text = element('div', 'row-text')
+    const left = boost.kind === 'coins' ? coinBoostLeft(state) : 0
+    const waiting = boostReadyIn(state, boost.kind)
+    const status = left > 0 ? `Running: ${minutes(left)} left` : waiting > 0 ? `Ready in ${minutes(waiting)}` : boost.blurb
+    text.append(element('strong', '', boost.name), element('small', '', status))
+    row.append(icon(boost.art), text)
+    if (waiting > 0) return row
+    if (adsOffered()) {
+      const watch = element('button', 'small watch', '▶ Watch ad')
+      watch.addEventListener('click', () => this.actions.watchBoost(boost.kind))
+      row.append(watch)
+    }
+    const cost = boostCost(state, boost.kind)
+    const pay = element('button', 'small', coins(cost))
+    pay.disabled = cost > state.money
+    pay.addEventListener('click', () => this.actions.buyBoost(boost.kind))
+    row.append(pay)
+    return row
   }
 
   private renderFarm(state: GameState): void {
@@ -466,6 +524,29 @@ export class Hud {
     const flash = element('div', `flash ${kind}`)
     this.root.append(flash)
     flash.addEventListener('animationend', () => flash.remove())
+  }
+
+  /** Blocks the game while an ad is requested or playing. */
+  setAdWaiting(waiting: boolean): void {
+    this.adWait.hidden = !waiting
+  }
+
+  /** The welcome-back card, when there's an ad to offer. The other choice is the same size. */
+  showWelcome(earned: number, onDouble: () => void, onKeep: () => void): void {
+    const card = element('div', 'welcome')
+    card.append(element('strong', '', 'Welcome back'), element('span', '', `Your farm earned ${coins(earned)} coins while you were away.`))
+    const buttons = element('div', 'welcome-buttons')
+    const keep = element('button', 'small', 'Keep it')
+    const double = element('button', 'small watch', '▶ Watch ad: double it')
+    const close = (then: () => void): void => {
+      card.remove()
+      then()
+    }
+    keep.addEventListener('click', () => close(onKeep))
+    double.addEventListener('click', () => close(onDouble))
+    buttons.append(keep, double)
+    card.append(buttons)
+    this.root.append(card)
   }
 
   nudgeSell(): void {

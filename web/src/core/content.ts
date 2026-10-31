@@ -305,6 +305,14 @@ export const BALANCE = {
   /** Sim seconds between the Foreman's rounds. */
   foremanInterval: 72,
 
+  /** Boosts from the Market. Times are real seconds. */
+  coinBoostMultiplier: 5,
+  coinBoostSeconds: 60,
+  coinBoostCostSeconds: 120,
+  skipSeconds: 120,
+  skipCostSeconds: 60,
+  boostCooldownSeconds: 180,
+
   /** Money stops growing here rather than breaking. A big bang comes long before it. */
   maxCoins: 1e300,
 } as const

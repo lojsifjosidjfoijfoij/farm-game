@@ -1,4 +1,5 @@
 import './styles.css'
+import { applyBoost, buyBoost, type BoostKind } from './core/boosts'
 import { BALANCE, CROPS, cropDef, exoticCrop, mutationDef, type PerkDef } from './core/content'
 import { buy, buyMax, placeMachine, placeProblem, type Upgrade } from './core/estate'
 import { perform, suggestedAction, toolAction, type FarmActionKind, type FarmOutcome } from './core/farming'
@@ -9,10 +10,14 @@ import { growthSpeed } from './core/progress'
 import { ascend, bigBang, buyPerk, rebirth } from './core/rebirth'
 import { readSave, writeSave } from './core/save'
 import { catchUp, step, type SimEvent } from './core/simulation'
-import { isWet, newGame, parcelAt, plotAt, type GameState } from './core/state'
+import { earn, isWet, newGame, parcelAt, plotAt, type GameState } from './core/state'
 import { artURL, cropIconURL, loadArt } from './game/assets'
 import { coins, failureMessage, Hud, hoverText, seedsShown, type Panel } from './game/hud'
-import { isMuted, play, setMuted, unlockAudio, type SoundEffect } from './game/sound'
+import {
+  adsOffered, celebrateOnPortal, connectPlatform, loadingFinished, loadingStarted, setGameplay, showBreakAd, showRewardedAd,
+  type AdHooks,
+} from './game/platform'
+import { isMuted, play, setAdPlaying, setMuted, setPortalMuted, unlockAudio, type SoundEffect } from './game/sound'
 import { WorldView } from './game/view'
 
 /** Working title. Also in index.html and the save key. */
@@ -32,6 +37,8 @@ class Game {
   private stroke: { kind: FarmActionKind; x: number; y: number } | null = null
   private lastFrame = performance.now()
   private lastSave = performance.now()
+  /** The world holds still while an ad is requested or playing. */
+  private adBusy = false
   private readonly view: WorldView
   private readonly hud: Hud
   private readonly tooltip: HTMLElement
@@ -48,6 +55,8 @@ class Game {
       buy: (upgrade) => this.buyUpgrade(upgrade),
       buyMax: (id) => this.buyMaxOf(id),
       buyPerk: (perk) => this.buyPerkOf(perk),
+      buyBoost: (kind) => this.takeBoost(kind),
+      watchBoost: (kind) => this.watchBoost(kind),
       rebirth: () => this.startOver('rebirth'),
       ascend: () => this.startOver('ascend'),
       bigBang: () => this.startOver('bigBang'),
@@ -59,6 +68,9 @@ class Game {
       },
     })
     if (saved) this.welcomeBack()
+    setGameplay(true)
+    // Only in the build promo/make-promo.mjs records from.
+    if (import.meta.env.VITE_PROMO === '1') Object.assign(window, { game: this })
     this.bindInput(canvas)
     this.bindLifecycle()
     requestAnimationFrame((now) => this.frame(now))
@@ -67,7 +79,13 @@ class Game {
   private welcomeBack(): void {
     const summary = catchUp(this.state, Date.now())
     if (summary.awaySeconds < 60) return
-    if (summary.earned > 0) {
+    if (summary.earned > 0 && adsOffered()) {
+      setGameplay(false)
+      this.hud.showWelcome(summary.earned, () => this.watchAd(() => {
+        earn(this.state, summary.earned)
+        this.rewardShown('Doubled!', `+${coins(summary.earned)} coins`)
+      }), () => setGameplay(this.panel === null))
+    } else if (summary.earned > 0) {
       this.hud.showBanner('Welcome back', `Your farm earned ${coins(summary.earned)} coins while you were away.`)
     } else if (summary.ripened > 0) {
       this.hud.showBanner('Welcome back', `${summary.ripened} ${summary.ripened === 1 ? 'plot' : 'plots'} ripened while you were away.`)
@@ -77,7 +95,7 @@ class Game {
   private frame(now: number): void {
     const realDt = Math.min((now - this.lastFrame) / 1000, 0.25)
     this.lastFrame = now
-    this.handleEvents(step(this.state, realDt * TIME_SCALE))
+    if (!this.adBusy) this.handleEvents(step(this.state, realDt * TIME_SCALE))
     this.finishGoals()
     if (now - this.lastSave > AUTOSAVE_SECONDS * 1000) this.save(now)
 
@@ -318,6 +336,7 @@ class Game {
     if (panel !== this.panel) play('open')
     this.panel = panel
     this.hud.setPanel(panel)
+    setGameplay(panel === null)
   }
 
   private selectSeed(id: string): void {
@@ -376,6 +395,64 @@ class Game {
     play('goal')
   }
 
+  private takeBoost(kind: BoostKind): void {
+    const failure = buyBoost(this.state, kind)
+    if (failure) {
+      play('refuse')
+      return
+    }
+    this.boostGiven(kind)
+  }
+
+  private watchBoost(kind: BoostKind): void {
+    this.watchAd(() => {
+      applyBoost(this.state, kind)
+      this.boostGiven(kind)
+    })
+  }
+
+  private boostGiven(kind: BoostKind): void {
+    if (kind === 'coins') this.rewardShown('Coin Boost!', `×${BALANCE.coinBoostMultiplier} coins for ${BALANCE.coinBoostSeconds} seconds`)
+    else this.rewardShown('Time skipped!', `The farm jumped ${BALANCE.skipSeconds / 60} minutes ahead`)
+  }
+
+  private rewardShown(title: string, detail: string): void {
+    this.hud.showBanner(title, detail)
+    play('goal')
+    this.view.celebrate()
+  }
+
+  private adHooks(after: () => void, failed: (code: string) => void): AdHooks {
+    this.adBusy = true
+    this.hud.setAdWaiting(true)
+    const finish = (): void => {
+      this.adBusy = false
+      this.hud.setAdWaiting(false)
+      setAdPlaying(false)
+      this.lastFrame = performance.now()
+    }
+    return {
+      started: () => setAdPlaying(true),
+      finished: () => {
+        finish()
+        after()
+      },
+      failed: (code) => {
+        finish()
+        failed(code)
+      },
+    }
+  }
+
+  /** The reward only comes from a finished ad. */
+  private watchAd(reward: () => void): void {
+    if (this.adBusy) return
+    showRewardedAd(this.adHooks(reward, (code) => {
+      if (code === 'adsDisabled' || code === 'adblock') this.hud.toast('Ads are off here, so boosts cost coins. Everything else still works.')
+      else this.hud.toast('No ad right now. Try again in a bit.')
+    }))
+  }
+
   private startOver(kind: 'rebirth' | 'ascend' | 'bigBang'): void {
     const before = this.state.totalRebirths
     let title: string
@@ -396,14 +473,16 @@ class Game {
       detail = `Universe ${this.state.universes + 1}`
     }
     const opened = this.openedCrop(before)
-    this.hud.setPanel(null)
-    this.panel = null
     this.placing = null
+    this.setPanel(null)
     this.hud.flash(kind)
     this.hud.showBanner(title, opened ? `${detail}. New seed: ${opened}` : detail)
     play('rebirth')
     this.save()
     this.finishGoals()
+    if (kind !== 'rebirth' || this.state.totalRebirths === 1) celebrateOnPortal()
+    // A new farm is the one natural pause in the game. The SDK decides if an ad is due.
+    if (adsOffered()) showBreakAd(this.adHooks(() => undefined, () => undefined))
   }
 
   /** The exotic crop this rebirth opened, if any. */
@@ -419,11 +498,14 @@ class Game {
 async function start(): Promise<void> {
   document.title = GAME_TITLE
   const bar = document.querySelector<HTMLElement>('#loading i')!
+  await connectPlatform(setPortalMuted)
+  loadingStarted()
   await loadArt((fraction) => {
     bar.style.width = `${fraction * 100}%`
   })
   await document.fonts.load('16px Fredoka').catch(() => undefined)
   document.querySelector('#loading')!.remove()
+  loadingFinished()
   new Game(
     document.querySelector<HTMLCanvasElement>('#world')!,
     document.querySelector<HTMLElement>('#hud')!,

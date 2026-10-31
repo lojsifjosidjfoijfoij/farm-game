@@ -603,6 +603,62 @@ kbd {
   color: var(--ink-soft);
 }
 
+.row.boost {
+  background: #fff8e6;
+}
+
+.small.watch {
+  background: #3f7ec4;
+  box-shadow: 0 2px 0 #29578b;
+  white-space: nowrap;
+}
+
+.ad-wait {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  background: rgba(20, 12, 6, 0.7);
+  font-size: 20px;
+  font-weight: 600;
+  pointer-events: auto;
+}
+
+.ad-wait[hidden] {
+  display: none;
+}
+
+.welcome {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 5;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(420px, calc(100vw - 32px));
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: var(--cream);
+  color: var(--ink);
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.3), inset 0 0 0 3px #d9b67b;
+  pointer-events: auto;
+}
+
+.welcome strong {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.welcome-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 6px;
+}
+
 /* Messages */
 .toasts {
   position: absolute;
