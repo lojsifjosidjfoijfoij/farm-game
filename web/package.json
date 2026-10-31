@@ -1,0 +1,21 @@
+{
+  "name": "farm-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "sync-art": "node scripts/sync-art.mjs",
+    "predev": "npm run sync-art",
+    "dev": "vite",
+    "prebuild": "npm run sync-art",
+    "build": "tsc --noEmit && vite build",
+    "pretest": "npm run sync-art",
+    "test": "vitest run",
+    "package": "npm run build && node scripts/package.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0",
+    "vitest": "^3.0.0"
+  }
+}
